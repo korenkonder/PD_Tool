@@ -1,0 +1,9 @@
+.vs
+build
+KKdMainLib/bin
+KKdMainLib/obj
+KKdMathLib/bin
+KKdMathLib/obj
+KKdSoundLib/bin
+KKdSoundLib/obj
+PD_Tool/obj
