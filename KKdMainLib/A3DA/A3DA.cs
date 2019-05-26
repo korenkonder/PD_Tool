@@ -289,6 +289,8 @@ namespace KKdMainLib.A3DA
                 {
                     name = "m_objhrc" + d + i0 + d;
 
+                    Dict.FindValue(out Data.MObjectHRC[i0].Name, name + "name");
+                    
                     if (Dict.StartsWith(name + "joint_orient"))
                     {
                         Data.MObjectHRC[i0].JointOrient = new Vector3<double?>();
@@ -308,7 +310,7 @@ namespace KKdMainLib.A3DA
                             Dict.FindValue(out Data.MObjectHRC[i0].Instance[i1]. Shadow, nameView +   "shadow");
                             Dict.FindValue(out Data.MObjectHRC[i0].Instance[i1].UIDName, nameView + "uid_name");
 
-                            Data.MObjectHRC[i0].Instance[i1].MT = Dict.ReadMT(name);
+                            Data.MObjectHRC[i0].Instance[i1].MT = Dict.ReadMT(nameView);
                         }
                     }
 
@@ -321,7 +323,7 @@ namespace KKdMainLib.A3DA
                             Dict.FindValue(out Data.MObjectHRC[i0].Node[i1].Name  , nameView + "name"  );
                             Dict.FindValue(out Data.MObjectHRC[i0].Node[i1].Parent, nameView + "parent");
 
-                            Data.MObjectHRC[i0].Node[i1].MT = Dict.ReadMT(name);
+                            Data.MObjectHRC[i0].Node[i1].MT = Dict.ReadMT(nameView);
                         }
                     }
                     
@@ -427,12 +429,12 @@ namespace KKdMainLib.A3DA
                         Data.ObjectHRC[i0].Node = new Node[int.Parse(value)];
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
                         {
-                            name = "objhrc" + d + i0 + d + "node" + d + i1 + d;
+                            nameView = name + "node" + d + i1 + d;
 
-                            Dict.FindValue(out Data.ObjectHRC[i0].Node[i1].Name  , name + "name"  );
-                            Dict.FindValue(out Data.ObjectHRC[i0].Node[i1].Parent, name + "parent");
+                            Dict.FindValue(out Data.ObjectHRC[i0].Node[i1].Name  , nameView + "name"  );
+                            Dict.FindValue(out Data.ObjectHRC[i0].Node[i1].Parent, nameView + "parent");
 
-                            Data.ObjectHRC[i0].Node[i1].MT = Dict.ReadMT(name);
+                            Data.ObjectHRC[i0].Node[i1].MT = Dict.ReadMT(nameView);
                         }
                     }
                 }
@@ -525,10 +527,10 @@ namespace KKdMainLib.A3DA
                     IO.Write(Data.CameraRoot[SOi0].ViewPoint.FocalLength, nameView + "focal_length" + d, A3DC);
                     IO.Write(Data.CameraRoot[SOi0].ViewPoint.FOV, nameView + "fov" + d, A3DC);
                     IO.Write(nameView + "fov_is_horizontal=", Data.CameraRoot[i0].ViewPoint.FOVHorizontal);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT, nameView, A3DC, IsX, 0b10000);
+                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT  , nameView, A3DC, IsX, 0b10000);
                     IO.Write(Data.CameraRoot[SOi0].ViewPoint.Roll, nameView + "roll" + d, A3DC);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT, nameView, A3DC, IsX, 0b01111);
-                    IO.Write(Data.CameraRoot[SOi0].MT, name, A3DC, IsX, 0b00001);
+                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT  , nameView, A3DC, IsX, 0b01111);
+                    IO.Write(Data.CameraRoot[SOi0]          .MT  , name    , A3DC, IsX, 0b00001);
                 }
                 IO.Write("camera_root.length=", Data.CameraRoot.Length);
             }
@@ -617,7 +619,7 @@ namespace KKdMainLib.A3DA
                     IO.Write(Data.Light[SOi0].Diffuse      , name, "Diffuse"      , A3DC);
                     IO.Write(Data.Light[SOi0].Incandescence, name, "Incandescence", A3DC);
                     IO.Write(Data.Light[SOi0].Specular     , name, "Specular"     , A3DC);
-                    IO.Write(name + "id=", Data.Light[SOi0].Id);
+                    IO.Write(name + "id="  , Data.Light[SOi0].Id  );
                     IO.Write(name + "name=", Data.Light[SOi0].Name);
                     IO.Write(Data.Light[SOi0].Position     , name + "position"       + d, A3DC, IsX);
                     IO.Write(Data.Light[SOi0].SpotDirection, name + "spot_direction" + d, A3DC, IsX);
@@ -677,10 +679,12 @@ namespace KKdMainLib.A3DA
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                         {
                             SOi1 = SO1[i1];
-                            IO.Write(Data.MObjectHRC[SOi0].Node[SOi1].MT, nameView + SOi1 + d, A3DC, IsX, 0b10000);
+                            IO.Write(Data.MObjectHRC[SOi0].Node[SOi1].MT,
+                                nameView + SOi1 + d, A3DC, IsX, 0b10000);
                             IO.Write(nameView + SOi1 + d +   "name=", Data.MObjectHRC[SOi0].Node[SOi1].Name  );
                             IO.Write(nameView + SOi1 + d + "parent=", Data.MObjectHRC[SOi0].Node[SOi1].Parent);
-                            IO.Write(Data.MObjectHRC[SOi0].Node[SOi1].MT, nameView + SOi1 + d, A3DC, IsX, 0b01111);
+                            IO.Write(Data.MObjectHRC[SOi0].Node[SOi1].MT,
+                                nameView + SOi1 + d, A3DC, IsX, 0b01111);
                         }
                         IO.Write(nameView + "length=", Data. MObjectHRC[SOi0].Node.Length);
                     }
@@ -874,7 +878,7 @@ namespace KKdMainLib.A3DA
                 IO.Close();
         }
 
-        private int CompressF16 => (int)Data._.CompressF16;
+        private int CompressF16 => Data._.CompressF16.GetValueOrDefault();
 
         private void A3DCReader()
         {
@@ -1640,8 +1644,8 @@ namespace KKdMainLib.A3DA
                                     {
                                         Name = _TT.ReadString("Name"),
                                         C    = _TT.ReadKeyUV ("C"   ),
-                                        O    = _TT.ReadKeyUV ("C"   ),
-                                        R    = _TT.ReadKeyUV ("C"   ),
+                                        O    = _TT.ReadKeyUV ("O"   ),
+                                        R    = _TT.ReadKeyUV ("R"   ),
                                         Ro   = _TT.ReadKey   ("Ro"  ),
                                         RF   = _TT.ReadKey   ("RF"  ),
                                         TF   = _TT.ReadKeyUV ("TF"  ),
@@ -2173,15 +2177,14 @@ namespace KKdMainLib.A3DA
             public override string ToString() => ToString(true);
             public string ToString(bool Brackets)
             {
-                if (Value == null)
-                    return Main.ToString(Frame);
+                if (Value == null) return Main.ToString(Frame);
 
                 string s = "";
                 if (Brackets && Type > 0) s += "(";
                 s += Main.ToString(Frame);
-                if (Type == 1 && Value.Length > 0) s += "," + Main.ToString(Value[0]);
-                if (Type == 2 && Value.Length > 1) s += "," + Main.ToString(Value[1]);
-                if (Type == 3 && Value.Length > 2) s += "," + Main.ToString(Value[2]);
+                if (Type > 0 && Value.Length > 0) s += "," + Main.ToString(Value[0]);
+                if (Type > 1 && Value.Length > 1) s += "," + Main.ToString(Value[1]);
+                if (Type > 2 && Value.Length > 2) s += "," + Main.ToString(Value[2]);
                 if (Brackets && Type > 0) s += ")";
                 return s;
             }

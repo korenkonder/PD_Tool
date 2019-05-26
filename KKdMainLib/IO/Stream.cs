@@ -121,12 +121,9 @@ namespace KKdMainLib.IO
         public   uint ReadUInt32Endian() => (  uint)UIntFromArray(4, IsBE);
         public   long  ReadInt64Endian() =>          IntFromArray(8, IsBE);
         public  ulong ReadUInt64Endian() =>         UIntFromArray(8, IsBE);
-        public   Half   ReadHalfEndian()
-        { ushort a = ReadUInt16Endian(); return  (  Half ) a; }
-        public  float ReadSingleEndian()
-        {   uint a = ReadUInt32Endian(); return *( float*)&a; }
-        public double ReadDoubleEndian()
-        {  ulong a = ReadUInt64Endian(); return *(double*)&a; }
+        public   Half   ReadHalfEndian() { ushort a = ReadUInt16Endian(); return  (  Half ) a; }
+        public  float ReadSingleEndian() {   uint a = ReadUInt32Endian(); return *( float*)&a; }
+        public double ReadDoubleEndian() {  ulong a = ReadUInt64Endian(); return *(double*)&a; }
 
         public  short  ReadInt16Endian(bool IsBE) => ( short) IntFromArray(2, IsBE);
         public ushort ReadUInt16Endian(bool IsBE) => (ushort)UIntFromArray(2, IsBE);
@@ -174,45 +171,26 @@ namespace KKdMainLib.IO
         public void Write( float? val) => Write(val.GetValueOrDefault());
         public void Write(double? val) => Write(val.GetValueOrDefault());
         
-        public void Write(  bool* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( sbyte* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  byte* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( short* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(ushort* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(   int* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  uint* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  long* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( ulong* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( float* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(double* val, int Length)
-        { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(  bool* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write( sbyte* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(  byte* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write( short* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(ushort* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(   int* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(  uint* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(  long* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write( ulong* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write( float* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(double* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
         
-        public void WriteEndian( short* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(ushort* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(   int* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(  uint* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(  long* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian( ulong* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian( float* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(double* val, int Length)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian( short* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian(ushort* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian(   int* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian(  uint* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian(  long* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian( ulong* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian( float* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
+        public void WriteEndian(double* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
         
         public void WriteEndian( short* val, int Length, bool IsBE)
         { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
@@ -235,18 +213,6 @@ namespace KKdMainLib.IO
         { if (UTF8) Write(val.ToString().ToUTF8()); else Write(val.ToString().ToASCII()); }
         public void Write(string val, bool UTF8 = true)
         { if (UTF8) Write(val           .ToUTF8()); else Write(val           .ToASCII()); }
-
-        public void Write(string Data, ref bool? val)         => Write(Data,  val.GetValueOrDefault() );
-        public void Write(string Data,     long? val)         => Write(Data,  val.GetValueOrDefault() );
-        public void Write(string Data,    ulong? val)         => Write(Data,  val.GetValueOrDefault() );
-        public void Write(string Data,   double? val)         => Write(Data,  val.ToString(   ));
-        public void Write(string Data,   double? val, byte r) => Write(Data,  val.ToString(r  ));
-        public void Write(string Data, ref bool  val)         => Write(Data, Main.ToString(val));
-        public void Write(string Data,     long  val)         => Write(Data,  val.ToString(   ));
-        public void Write(string Data,    ulong  val)         => Write(Data,  val.ToString(   ));
-        public void Write(string Data,   double  val)         => Write(Data,  val.ToString(   ));
-        public void Write(string Data,   double  val, byte r) => Write(Data,  val.ToString(r  ));
-        public void Write(string Data,   string  val)         => Write((Data + val + "\n").ToUTF8());
         
         public void WriteEndian( short val) => ToArray(2, Endian(val, 2, IsBE));
         public void WriteEndian(ushort val) => ToArray(2, Endian(val, 2, IsBE));
@@ -273,32 +239,6 @@ namespace KKdMainLib.IO
         public  ulong Endian( ulong BE, byte Length, bool IsBE)
         { if (IsBE) { for (byte i = 0; i < Length; i++) { buf[i] = (byte)BE; BE >>= 8; } BE = 0;
                 for (byte i = 0; i < Length; i++) { BE |= buf[i]; if (i < Length - 1) BE <<= 8; } } return BE; }
-
-        /*public void WriteEndian( short val) => ToArrayEndian(2,           val, IsBE);
-        public void WriteEndian(ushort val) => ToArrayEndian(2,           val, IsBE);
-        public void WriteEndian(   int val) => ToArrayEndian(4,           val, IsBE);
-        public void WriteEndian(  uint val) => ToArrayEndian(4,           val, IsBE);
-        public void WriteEndian(  long val) => ToArrayEndian(8,           val, IsBE);
-        public void WriteEndian( ulong val) => ToArrayEndian(8,           val, IsBE);
-        public void WriteEndian( float val) => ToArrayEndian(4, *( uint*)&val, IsBE);
-        public void WriteEndian(double val) => ToArrayEndian(8, *(ulong*)&val, IsBE);
-
-        public void WriteEndian( short val, bool IsBE) => ToArrayEndian(2,           val, IsBE);
-        public void WriteEndian(ushort val, bool IsBE) => ToArrayEndian(2,           val, IsBE);
-        public void WriteEndian(   int val, bool IsBE) => ToArrayEndian(4,           val, IsBE);
-        public void WriteEndian(  uint val, bool IsBE) => ToArrayEndian(4,           val, IsBE);
-        public void WriteEndian(  long val, bool IsBE) => ToArrayEndian(8,           val, IsBE);
-        public void WriteEndian( ulong val, bool IsBE) => ToArrayEndian(8,           val, IsBE);
-        public void WriteEndian( float val, bool IsBE) => ToArrayEndian(4, *( uint*)&val, IsBE);
-        public void WriteEndian(double val, bool IsBE) => ToArrayEndian(8, *(ulong*)&val, IsBE);
-        
-        private void ToArrayEndian(byte L,  long val, bool IsBE = false)
-        { CheckWrited(); if (IsBE) for (i = L; i > 0; i--) { buf[i - 1] = (byte)val; val >>= 8; }
-                         else      for (i = 0; i < L; i++) { buf[i    ] = (byte)val; val >>= 8; } Write(buf, L); }
-
-        private void ToArrayEndian(byte L, ulong val, bool IsBE = false)
-        { CheckWrited(); if (IsBE) for (i = L; i > 0; i--) { buf[i - 1] = (byte)val; val >>= 8; }
-                         else      for (i = 0; i < L; i++) { buf[i    ] = (byte)val; val >>= 8; } Write(buf, L); }*/
 
         private void ToArray(byte L,  long val)
         { CheckWrited(); for (i = 0; i < L; i++) { buf[i] = (byte)val; val >>= 8; } Write(buf, L); }

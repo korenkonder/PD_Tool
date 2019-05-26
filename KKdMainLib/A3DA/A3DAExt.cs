@@ -44,6 +44,7 @@ namespace KKdMainLib.A3DA
             Dict.FindValue(out Key.BinOffset, Temp + BO    );
             Dict.FindValue(out Key.Type     , Temp + "type");
 
+            if (Key.BinOffset == null && Key.Type == null) return null;
             if (Key.Type == null) return Key;
             if (Key.Type == 0x0000) return Key;
 
@@ -114,6 +115,7 @@ namespace KKdMainLib.A3DA
 
         public static void Write(this Stream IO, RGBAKey RGBA, string Temp, string Data, bool A3DC = false)
         {
+            if (RGBA.R == null && RGBA.B == null && RGBA.G == null && RGBA.A == null) return;
             IO.Write(Temp + Data + "=", "true");
             IO.Write(RGBA.A, Temp + Data + d + "a" + d, A3DC); IO.Write(RGBA.B, Temp + Data + d + "b" + d, A3DC);
             IO.Write(RGBA.G, Temp + Data + d + "g" + d, A3DC); IO.Write(RGBA.R, Temp + Data + d + "r" + d, A3DC);
@@ -178,6 +180,8 @@ namespace KKdMainLib.A3DA
                 IO.Write(Temp + "raw_data_key_type="       , Key.RawData.  KeyType    );
             }
             IO.Write(Temp + "type=", Key.Type & 0xFF);
+            if (Key.RawData == null && Key.Trans == null && Key.Value != null)
+                if (Key.Value != 0) IO.Write(Temp + "value=", Key.Value);
         }
 
         public static void ReadMT(this Stream IO, ref ModelTransform MT, int C_F16)
@@ -186,10 +190,10 @@ namespace KKdMainLib.A3DA
 
             IO.Position = IO.Offset + (int)MT.BinOffset;
 
-            IO.ReadOffset(ref MT.Scale);
-            IO.ReadOffset(ref MT.Rot  );
-            IO.ReadOffset(ref MT.Trans);
-            MT.Visibility.BinOffset = IO.ReadInt32();
+            IO.ReadOffset(out MT.Scale);
+            IO.ReadOffset(out MT.Rot  );
+            IO.ReadOffset(out MT.Trans);
+            MT.Visibility = new Key { BinOffset = IO.ReadInt32() };
 
             IO.ReadVec3(ref MT.Scale     , C_F16);
             IO.ReadVec3(ref MT.Rot       , C_F16,  true);
@@ -202,13 +206,15 @@ namespace KKdMainLib.A3DA
           IO.ReadKey(ref RGBA.B, C_F16); IO.ReadKey(ref RGBA.A, C_F16); }
 
         public static void ReadVec3(this Stream IO, ref Vector3<Key> Key, int C_F16, bool F16 = false)
-        { IO.ReadKey(ref Key.X, C_F16, F16); IO.ReadKey(ref Key.Y, C_F16, F16); IO.ReadKey(ref Key.Z, C_F16, F16); }
+        { IO.ReadKey(ref Key.X, C_F16, F16); IO.ReadKey(ref Key.Y,
+            C_F16, F16); IO.ReadKey(ref Key.Z, C_F16, F16); }
 
         public static void ReadKeyUV(this Stream IO, ref KeyUV UV, int C_F16)
         { IO.ReadKey(ref UV.U, C_F16); IO.ReadKey(ref UV.V, C_F16); }
 
         public static void ReadKey(this Stream IO, ref Key Key, int C_F16, bool F16 = false)
         {
+            if (Key == null) return;
             if (Key.BinOffset == null || Key.BinOffset < 0) return;
             
             IO.Position = IO.Offset + (int)Key.BinOffset;
@@ -238,8 +244,10 @@ namespace KKdMainLib.A3DA
             }
         }
 
-        public static void ReadOffset(this Stream IO, ref Vector3<Key> Key)
-        { Key.X.BinOffset = IO.ReadInt32(); Key.Y.BinOffset = IO.ReadInt32(); Key.Z.BinOffset = IO.ReadInt32(); }
+        public static void ReadOffset(this Stream IO, out Vector3<Key> Key)
+        { Key = new Vector3<Key> { X = new Key { BinOffset = IO.ReadInt32() },
+                                   Y = new Key { BinOffset = IO.ReadInt32() },
+                                   Z = new Key { BinOffset = IO.ReadInt32() }, }; }
 
         public static void WriteOffset(this Stream IO, ref ModelTransform MT, bool ReturnToOffset)
         {
@@ -292,11 +300,11 @@ namespace KKdMainLib.A3DA
             new KeyUV { U = k.ReadKey("U"), V = k.ReadKey("V") };
 
         public static Key ReadKey(this MsgPack k, string name)
-        { if (k.Element(name, out MsgPack Name)) return Name.ReadKey(); return new Key(); }
+        { if (k.Element(name, out MsgPack Name)) return Name.ReadKey(); return null; }
 
         public static Key ReadKey(this MsgPack k)
         {
-            if (k == null) return new Key();
+            if (k == null) return null;
             
             Key Key = new Key { EPTypePost = k.ReadNDouble("Post"),
                 EPTypePre = k.ReadNDouble("Pre"), Max = k.ReadNDouble("M"),
@@ -386,5 +394,28 @@ namespace KKdMainLib.A3DA
             else if (Key.Value != 0) Keys.Add("V", Key.Value);
             return Keys;
         }
+
+        public static void Write(this Stream IO, string Data, ref bool? val)
+        { if (val != null) IO.Write(Data, (  bool)val   ); }
+        public static void Write(this Stream IO, string Data,     long? val)
+        { if (val != null) IO.Write(Data, (  long)val   ); }
+        public static void Write(this Stream IO, string Data,    ulong? val)
+        { if (val != null) IO.Write(Data, ( ulong)val   ); }
+        public static void Write(this Stream IO, string Data,   double? val)
+        { if (val != null) IO.Write(Data, (double)val   ); }
+        public static void Write(this Stream IO, string Data,   double? val, byte r)
+        { if (val != null) IO.Write(Data, (double)val, r); }
+        public static void Write(this Stream IO, string Data, ref bool  val)         =>
+            IO.Write(Data, Main.ToString(val));
+        public static void Write(this Stream IO, string Data,     long  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,    ulong  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,   double  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,   double  val, byte r) =>
+            IO.Write(Data,  val.ToString(r  ));
+        public static void Write(this Stream IO, string Data,   string  val)
+        { if (val != null) IO.Write((Data + val + "\n").ToUTF8()); }
     }
 }

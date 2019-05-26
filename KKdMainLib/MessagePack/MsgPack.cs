@@ -13,7 +13,8 @@ namespace KKdMainLib.MessagePack
         public MsgPack(string Name, Types Type = Types.Map32) => NewMsgPack(Name, Type);
         public MsgPack(             long Count) => NewMsgPack(null, Count);
         public MsgPack(string Name, long Count) => NewMsgPack(Name, Count);
-        public MsgPack(string Name, Types Type, object Object) { this.Name = Name; this.Type = Type; this.Object = Object; }
+        public MsgPack(string Name, Types Type, object Object)
+        { this.Name = Name; this.Type = Type; this.Object = Object; }
 
         public static MsgPack Null => null;
 
@@ -60,16 +61,26 @@ namespace KKdMainLib.MessagePack
         public MsgPack Add( float  val) => Add(null, val);
         public MsgPack Add(double  val) => Add(null, val);
 
-        public MsgPack Add(string Val,  sbyte? val) { if (val == null) Add(Null); else Add(Val, ( sbyte)val); return this; }
-        public MsgPack Add(string Val,   byte? val) { if (val == null) Add(Null); else Add(Val, (  byte)val); return this; }
-        public MsgPack Add(string Val,  short? val) { if (val == null) Add(Null); else Add(Val, ( short)val); return this; }
-        public MsgPack Add(string Val, ushort? val) { if (val == null) Add(Null); else Add(Val, (ushort)val); return this; }
-        public MsgPack Add(string Val,    int? val) { if (val == null) Add(Null); else Add(Val, (   int)val); return this; }
-        public MsgPack Add(string Val,   uint? val) { if (val == null) Add(Null); else Add(Val, (  uint)val); return this; }
-        public MsgPack Add(string Val,   long? val) { if (val == null) Add(Null); else Add(Val, (  long)val); return this; }
-        public MsgPack Add(string Val,  ulong? val) { if (val == null) Add(Null); else Add(Val, ( ulong)val); return this; }
-        public MsgPack Add(string Val,  float? val) { if (val == null) Add(Null); else Add(Val, ( float)val); return this; }
-        public MsgPack Add(string Val, double? val) { if (val == null) Add(Null); else Add(Val, (double)val); return this; }
+        public MsgPack Add(string Val,  sbyte? val)
+        { if (val == null) Add(Null); else Add(Val, ( sbyte)val); return this; }
+        public MsgPack Add(string Val,   byte? val)
+        { if (val == null) Add(Null); else Add(Val, (  byte)val); return this; }
+        public MsgPack Add(string Val,  short? val)
+        { if (val == null) Add(Null); else Add(Val, ( short)val); return this; }
+        public MsgPack Add(string Val, ushort? val)
+        { if (val == null) Add(Null); else Add(Val, (ushort)val); return this; }
+        public MsgPack Add(string Val,    int? val)
+        { if (val == null) Add(Null); else Add(Val, (   int)val); return this; }
+        public MsgPack Add(string Val,   uint? val)
+        { if (val == null) Add(Null); else Add(Val, (  uint)val); return this; }
+        public MsgPack Add(string Val,   long? val)
+        { if (val == null) Add(Null); else Add(Val, (  long)val); return this; }
+        public MsgPack Add(string Val,  ulong? val)
+        { if (val == null) Add(Null); else Add(Val, ( ulong)val); return this; }
+        public MsgPack Add(string Val,  float? val)
+        { if (val == null) Add(Null); else Add(Val, ( float)val); return this; }
+        public MsgPack Add(string Val, double? val)
+        { if (val == null) Add(Null); else Add(Val, (double)val); return this; }
 
         public MsgPack Add(string Val, byte[] val)
         { if (val == null) Add(Null); else
