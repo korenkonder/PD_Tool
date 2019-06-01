@@ -8,9 +8,12 @@ A simple tool for working with Project Diva DT/FT/F/F2/X files
 - `FARC Extract/Create`
 - `DIVAFILE Encrypt/Decrypt`
 - `DB_Tools`
+  - `Aet DB Converter`
   - `Auth DB Converter`
+  - `Spr DB Converter`
 - `Converting Tools`
   - `A3DA Converter`
+  - `DataBank Converter`
   - `DEX Converter`
   - `DIVA Converter`
   - `STR Converter`
