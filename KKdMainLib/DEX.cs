@@ -12,8 +12,7 @@ namespace KKdMainLib
 
         private int Offset = 0;
         private PDHead Header;
-
-        private MsgPack MsgPack;
+        
         public Stream IO;
         public EXP[] Dex;
 
@@ -190,17 +189,14 @@ namespace KKdMainLib
             IO.Close();
         }
 
-        public void MsgPackReader(string filepath)
+        public void MsgPackReader(string file, bool JSON)
         {
             int i0 = 0;
             int i1 = 0;
             this.Dex = new EXP[0];
             Header = new PDHead();
-            
-            MPIO IO = new MPIO(File.OpenReader(filepath + ".mp"));
-            MsgPack = IO.Read();
-            IO.Close();
-            IO = null;
+
+            MsgPack MsgPack = file.ReadMP(JSON);
 
             if (MsgPack.Element("Dex", out MsgPack Dex, typeof(object[])))
             {
@@ -240,7 +236,7 @@ namespace KKdMainLib
                                ID    = mp.ReadUInt16("I"), Value = mp.ReadSingle("V"),
                                Trans = mp.ReadSingle("T") };
 
-        public void MsgPackWriter(string filepath)
+        public void MsgPackWriter(string file, bool JSON)
         {
             int i0 = 0;
             int i1 = 0;
@@ -260,11 +256,7 @@ namespace KKdMainLib
                 Dex[i0] = EXP;
             }
 
-            MsgPack = new MsgPack(MsgPack.Types.FixMap).Add(Dex);
-
-            MPIO IO = new MPIO(File.OpenWriter(filepath + ".mp", true));
-            IO.Write(MsgPack, true);
-            IO = null;
+            Dex.Write(true, file, JSON);
         }
 
         private MsgPack WriteEXP(EXPElement element) =>

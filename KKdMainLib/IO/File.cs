@@ -44,7 +44,10 @@ namespace KKdMainLib.IO
         { Stream IO = OpenWriter(file); IO.Write(data); IO.Close(); }
 
         public static void WriteAllLines(string file, string[] data)
-        { Stream IO = OpenWriter(file); for (int i = 0; i < data.Length; i++) IO.Write(data[i] + "\r\n"); IO.Close(); }
+        { Stream IO = OpenWriter(file); for (int i = 0; i < data.Length; i++)
+                IO.Write(data[i] + "\r\n"); IO.Close(); }
 
+        public static bool Exists(string file) => MSIO.File.Exists(file);
+        public static void Delete(string file) => MSIO.File.Delete(file);
     }
 }

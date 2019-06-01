@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace KKdMainLib.MessagePack
 {
-    public class MsgPack
+    public class MsgPack : IDisposable
     {
         public Types Type;
         public string Name;
@@ -15,6 +16,30 @@ namespace KKdMainLib.MessagePack
         public MsgPack(string Name, long Count) => NewMsgPack(Name, Count);
         public MsgPack(string Name, Types Type, object Object)
         { this.Name = Name; this.Type = Type; this.Object = Object; }
+        public MsgPack(string Name, object Object)
+        {
+            switch (Object)
+            {
+                case List<object> val: Type = Types.  Map32; break;
+                case    object[]  val: Type = Types.  Arr32; break;
+                case     MsgPack  val: Type = Types.  Map32; break;
+                case      byte[]  val: Type = Types.  Bin32; break;
+                case        bool  val: Type = val ? Types.True : Types.False; break;
+                case       sbyte  val: Type = Types.  Int8 ; break;
+                case        byte  val: Type = Types. UInt8 ; break;
+                case       short  val: Type = Types.  Int16; break;
+                case      ushort  val: Type = Types. UInt16; break;
+                case         int  val: Type = Types.  Int32; break;
+                case        uint  val: Type = Types. UInt32; break;
+                case        long  val: Type = Types.  Int64; break;
+                case       ulong  val: Type = Types. UInt64; break;
+                case       float  val: Type = Types.Float32; break;
+                case      double  val: Type = Types.Float64; break;
+                case      string  val: Type = Types.  Str32; break;
+                case         Ext  val: Type = Types.  Ext32; break;
+            }
+            this.Name = Name; this.Object = Object;
+        }
 
         public static MsgPack Null => null;
 
@@ -30,11 +55,21 @@ namespace KKdMainLib.MessagePack
 
         private void NewMsgPack(string Name, long Count)
         { if (Count > 0) Object = new object[Count]; else Object = null; this.Name = Name; Type = Types.Arr32; }
-
-
+        
         public MsgPack Add(object obj)
         { if (obj != null) if (typeof(List<object>) == Object.GetType())
                 { List<object> Obj = (List<object>)Object; Obj.Add(obj); Object = Obj; } return this; }
+
+        public MsgPack ToArray()
+        { if (typeof(List<object> ) == Object.GetType())
+        { Object = ((List<object> )    Object)                 .ToArray(); Type = Types.Arr32; } return this; }
+
+        public MsgPack ToList()
+        { if (typeof(     object[]) == Object.GetType())
+        { Object = ((     object[])    Object).OfType<object>().ToList (); Type = Types.Map32; } return this; }
+
+        public void Dispose()
+        { Type = 0; Name = null; Object = null; }
 
         public MsgPack Add( sbyte? val) => Add(null, val);
         public MsgPack Add(  byte? val) => Add(null, val);
@@ -242,6 +277,23 @@ namespace KKdMainLib.MessagePack
                     if (obj == null) continue; type = obj.GetType();
                     if (type == typeof(MsgPack)) if (((MsgPack)obj).Name == Name)
                         { MsgPack = (MsgPack)obj; return true; }
+                }
+            }
+            return false;
+        }
+
+        public bool ContainsKey(string Name)
+        {
+            if (Object == null) return false;
+
+            Type type = Object.GetType();
+            if (type == typeof(List<object>))
+            {
+                List<object> Obj = (List<object>)Object;
+                foreach (object obj in Obj)
+                {
+                    if (obj == null) continue; type = obj.GetType();
+                    if (type == typeof(MsgPack)) if (((MsgPack)obj).Name == Name) return true;
                 }
             }
             return false;

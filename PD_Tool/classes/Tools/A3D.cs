@@ -1,14 +1,13 @@
 ﻿using System;
 using KKdMainLib;
 using KKdMainLib.IO;
-using MSIO = System.IO;
 using KKdA3DA = KKdMainLib.A3DA.A3DA;
 
 namespace PD_Tool.Tools
 {
     class A3D
     {
-        public static void Processor()
+        public static void Processor(bool JSON)
         {
             Console.Title = "A3DA Converter";
             Main.Choose(1, "a3da", out string[] FileNames);
@@ -50,20 +49,19 @@ namespace PD_Tool.Tools
             foreach (string file in FileNames)
                 try
                 {
-                    ext      = MSIO.Path.GetExtension(file);
+                    ext      = Path.GetExtension(file);
                     filepath = file.Replace(ext, "");
                     ext      = ext.ToLower();
-                    Console.Title = "A3DA Converter: " +
-                        MSIO.Path.GetFileNameWithoutExtension(file);
+                    Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
                     A = new KKdA3DA();
                          if (ext == ".a3da")
                     {
                         A.A3DAReader   (filepath);
-                        A.MsgPackWriter(filepath);
+                        A.MsgPackWriter(filepath, JSON);
                     }
                     else if (ext == ".mp"  )
                     {
-                        A.MsgPackReader(filepath);
+                        A.MsgPackReader(filepath, JSON);
                         A.IO = File.OpenWriter(filepath + ".a3da", true);
                         if (A.Data.Header.Format < Main.Format.F2LE)
                             A.Data._.CompressF16 = Format == Main.Format.MGF ? 2 : 1;

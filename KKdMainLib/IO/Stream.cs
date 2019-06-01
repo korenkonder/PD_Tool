@@ -28,12 +28,16 @@ namespace KKdMainLib.IO
         public uint UIntOffset { get => (uint)LongOffset; set => LongOffset = value; }
         public long LongOffset;
 
-        public  int       Length { get => ( int)stream.  Length; set => stream.SetLength (value); }
-        public uint   UIntLength { get => (uint)stream.  Length; set => stream.SetLength (value); }
-        public long   LongLength { get =>       stream.  Length; set => stream.SetLength (value); }
-        public  int     Position { get => ( int)stream.Position; set => stream.Position = value ; }
-        public uint UIntPosition { get => (uint)stream.Position; set => stream.Position = value ; }
-        public long LongPosition { get =>       stream.Position; set => stream.Position = value ; }
+        public  int       Length { get => ( int)stream.Length; set => stream.SetLength(value); }
+        public uint   UIntLength { get => (uint)stream.Length; set => stream.SetLength(value); }
+        public long   LongLength { get =>       stream.Length; set => stream.SetLength(value); }
+
+        public  int     Position
+        { get => ( int)stream.Position -     Offset; set => stream.Position = value +     Offset; }
+        public uint UIntPosition
+        { get => (uint)stream.Position - UIntOffset; set => stream.Position = value + UIntOffset; }
+        public long LongPosition
+        { get =>       stream.Position - LongOffset; set => stream.Position = value + LongOffset; }
 
         public bool CanRead    => stream.CanRead;
         public bool CanSeek    => stream.CanSeek;
@@ -45,6 +49,7 @@ namespace KKdMainLib.IO
         public Stream(MSIO.Stream output = null, byte[] Data = null, bool isBE = false)
         {
             if (output == null) output = MSIO.Stream.Null;
+            LongOffset = 0;
             BitRead = 8;
             ValRead = ValRead = BitWrite = 0;
             stream = output;
@@ -255,10 +260,34 @@ namespace KKdMainLib.IO
                          for (i = L; i > 0; i--) { val <<= 8; val |= buf[i - 1]; } return val; }
 
         private void Read(byte Length) => stream.Read(buf, 0, Length);
+        public char ReadChar(bool UTF8 = true)
+        { if (UTF8) return ReadCharUTF8();
+          else      return (char)stream.ReadByte(); }
+
+        public char ReadCharUTF8()
+        {
+            byte t;
+            int T;
+            int val = 0;
+            for (i = 0, i0 = 4; i < i0; i++)
+            {
+                T = stream.ReadByte();
+                if (T == -1) return '\uFFFF';
+                t = (byte)T;
+
+                     if ((t & 0xC0) == 0x80 && i >  0)   val = (val << 6) | (t & 0x3F);
+                else if ((t & 0x80) == 0x00 && i == 0)   return (char)t;
+                else if ((t & 0xE0) == 0xC0 && i == 0) { val = t & 0x1F; i0 = 2; }
+                else if ((t & 0xF0) == 0xE0 && i == 0) { val = t & 0x0F; i0 = 3; }
+                else if ((t & 0xF8) == 0xF0 && i == 0) { val = t & 0x07; i0 = 4; }
+                else return '\uFFFF';
+            }
+            return (char)val;
+        }
         
         public string ReadString(long Length, bool UTF8 = true)
         { if (UTF8) return ReadStringUTF8 (Length);
-            else    return ReadStringASCII(Length); }
+          else      return ReadStringASCII(Length); }
 
         public string ReadStringUTF8 (long Length) => ReadBytes(Length).ToUTF8 ();
         public string ReadStringASCII(long Length) => ReadBytes(Length).ToASCII();
@@ -266,7 +295,7 @@ namespace KKdMainLib.IO
         
         public string ReadString(long? Length, bool UTF8 = true)
         { if (UTF8) return ReadStringUTF8 (Length);
-            else    return ReadStringASCII(Length); }
+          else      return ReadStringASCII(Length); }
 
         public string ReadStringUTF8 (long? Length) => ReadBytes(Length).ToUTF8 ();
         public string ReadStringASCII(long? Length) => ReadBytes(Length).ToASCII();
@@ -327,6 +356,21 @@ namespace KKdMainLib.IO
             byte[] Data = ReadBytes(stream.Length);
             LongPosition = Offset;
             return Data;
+        }
+
+        public long ReadIntX(         ) => IsX ? ReadInt64() : ReadUInt32Endian(    );
+        public long ReadIntX(bool IsBE) => IsX ? ReadInt64() : ReadUInt32Endian(IsBE);
+
+        public string ReadStringAtOffset(long Offset = 0, long Length = 0)
+        {
+            string s = null;
+            long Position = LongPosition;
+            if (Offset == 0) { Position += IsX ? 8 : 4; Offset = ReadIntX(); }
+            LongPosition = Offset;
+            if (Length == 0) s = this.NullTerminatedUTF8();
+            else             s = ReadStringUTF8(Length);
+            LongPosition = Position;
+            return s;
         }
     }
 

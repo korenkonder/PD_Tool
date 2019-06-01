@@ -70,7 +70,9 @@ namespace KKdSoundLib
             else                         IO.Write(Header.Size + 0x3C);
             IO.Write("WAVE");
             IO.Write("fmt ");
-            IO.Write(0x10);
+            if (Header.Format != 0xFFFE) IO.Write(0x10);
+            else                         IO.Write(0x28);
+            
             IO.Write(Header.Format);
             IO.Write((short)Header.Channels);
             IO.Write(Header.SampleRate);

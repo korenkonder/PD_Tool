@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using KKdMainLib.IO;
-using MSIO = System.IO;
 using KKdMain = KKdMainLib.Main;
 using KKdFARC = KKdMainLib.FARC;
 
@@ -16,7 +15,7 @@ namespace PD_Tool
         public static void Main(string[] args)
         {
             Console.Title = "PD_Tool";
-            
+
             if (args.Length == 0)
             {
                 while (function != "Q") MainMenu();
@@ -30,9 +29,9 @@ namespace PD_Tool
             foreach (string arg in args)
             {
                 Farc = new KKdFARC();
-                     if (MSIO.Directory.Exists(arg)) Farc.Pack(arg);
-                else if (MSIO.File.Exists(arg) && MSIO.Path.GetExtension(arg) == ".farc") Farc.UnPack(arg, true);
-                else if (MSIO.File.Exists(arg))
+                     if (Directory.Exists(arg)) Farc.Pack(arg);
+                else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc") Farc.UnPack(arg, true);
+                else if (File.Exists(arg))
                 {
                     reader = File.OpenReader(arg);
                     header = reader.ReadString(8);
@@ -43,6 +42,8 @@ namespace PD_Tool
             Exit();
         }
 
+        private static bool JSON = false;
+        
         private static void MainMenu()
         {
             Console.Title = "PD_Tool";
@@ -58,6 +59,7 @@ namespace PD_Tool
             KKdMain.ConsoleDesign("5. DB_Tools");
             KKdMain.ConsoleDesign("6. Converting Tools");
             KKdMain.ConsoleDesign(false);
+            KKdMain.ConsoleDesign(JSON ? "M. MessagePack" : "J. JSON");
             KKdMain.ConsoleDesign("Q. Quit");
             KKdMain.ConsoleDesign(false);
             KKdMain.ConsoleDesign(true);
@@ -66,19 +68,20 @@ namespace PD_Tool
             function = Console.ReadLine().ToUpper();
             bool isNumber = int.TryParse(function, out int result);
             if (isNumber) Functions();
+                 if (function == "M") JSON = false;
+            else if (function == "J") JSON = true ;
         }
 
         private static void Functions()
         {
             Console.Clear();
-            if (function == "1" || function == "2")
-                FARC.Processor(function == "1");
+            if (function == "1" || function == "2") FARC.Processor(function == "1");
             else if (function == "3" || function == "4")
             {
                 KKdMain.Choose(1, "", out string[] FileNames);
                 foreach (string FileName in FileNames) DIVAFILE.Decrypt(FileName);
             }
-            else if (function == "5") DataBase.Processor();
+            else if (function == "5") DataBase.Processor(JSON);
             else if (function == "6")
             {
                 Console.Clear();
@@ -86,24 +89,25 @@ namespace PD_Tool
                 KKdMain.ConsoleDesign(true);
                 KKdMain.ConsoleDesign("                 Choose tool:");
                 KKdMain.ConsoleDesign(false);
-                KKdMain.ConsoleDesign("1. A3DA Converter");
-                KKdMain.ConsoleDesign("2. DEX  Converter");
-                KKdMain.ConsoleDesign("3. DIVA Converter");
-                KKdMain.ConsoleDesign("4. STR  Converter");
-                KKdMain.ConsoleDesign("5. VAG  Converter");
+                KKdMain.ConsoleDesign("1. A3DA     Converter");
+                KKdMain.ConsoleDesign("2. DEX      Converter");
+                KKdMain.ConsoleDesign("3. DIVA     Converter");
+                KKdMain.ConsoleDesign("4. STR      Converter");
+                KKdMain.ConsoleDesign("5. VAG      Converter");
+                KKdMain.ConsoleDesign("6. DataBank Converter");
                 KKdMain.ConsoleDesign(false);
                 KKdMain.ConsoleDesign("R. Return to Main Menu");
-                KKdMain.ConsoleDesign("Q. Quit");
                 KKdMain.ConsoleDesign(false);
                 KKdMain.ConsoleDesign(true);
                 Console.WriteLine();
                 string Function = Console.ReadLine();
                 Console.Clear();
-                     if (Function == "1") Tools.A3D.Processor();
-                else if (Function == "2") Tools.DEX.Processor();
+                     if (Function == "1") Tools.A3D.Processor(JSON);
+                else if (Function == "2") Tools.DEX.Processor(JSON);
                 else if (Function == "3") Tools.DIV.Processor();
-                else if (Function == "4") Tools.STR.Processor();
+                else if (Function == "4") Tools.STR.Processor(JSON);
                 else if (Function == "5") Tools.VAG.Processor();
+                else if (Function == "6") Tools.DB .Processor();
                 else     function = Function;
             }
         }

@@ -22,7 +22,6 @@ namespace KKdMainLib.A3DA
         private string nameView;
         private string value;
         private string[] dataArray;
-        private MsgPack MsgPack;
         private Values UsedValues;
         private Dictionary<string, object> Dict;
 
@@ -1313,16 +1312,13 @@ namespace KKdMainLib.A3DA
             }
         }
 
-        public void MsgPackReader(string file)
+        public void MsgPackReader(string file, bool JSON)
         {
             int i  = 0;
             int i0 = 0;
             int i1 = 0;
 
-            MPIO IO = new MPIO(File.OpenReader(file + ".mp"));
-            MsgPack = IO.Read();
-            IO.Close();
-            IO = null;
+            MsgPack MsgPack = file.ReadMP(JSON);
 
             if (MsgPack.Element("A3D", out MsgPack A3D))
             {
@@ -1751,7 +1747,7 @@ namespace KKdMainLib.A3DA
             MsgPack = null;
         }
 
-        public void MsgPackWriter(string file)
+        public void MsgPackWriter(string file, bool JSON)
         {
             int i  = 0;
             int i0 = 0;
@@ -2036,13 +2032,8 @@ namespace KKdMainLib.A3DA
                                                   .Add(Data.PostProcess.LensGhost.WriteMP("LensGhost"))
                                                   .Add(Data.PostProcess.LensShaft.WriteMP("LensShaft"))
                                                   .Add(Data.PostProcess.Specular .WriteMP("Specular" )));
-
-            MsgPack = new MsgPack(MsgPack.Types.FixMap).Add(A3D);
-
-            MPIO IO = new MPIO(File.OpenWriter(file + ".mp", true));
-            IO.Write(MsgPack, true);
-            IO = null;
-            MsgPack = null;
+            
+            A3D.Write(true, file, JSON);
         }
     }
 

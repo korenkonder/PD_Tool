@@ -17,9 +17,8 @@ namespace KKdMainLib
         }
 
         public STR()
-        { Count = 0; Offset = 0; OffsetX = 0; STRs = null; POF = null; Header = new PDHead(); }
-
-        public long Count;
+        { Offset = 0; OffsetX = 0; STRs = null; POF = null; Header = new PDHead(); }
+        
         private long Offset;
         private long OffsetX;
         public String[] STRs;
@@ -39,7 +38,7 @@ namespace KKdMainLib
                 POF = Header.AddPOF();
                 reader.Position = Header.Lenght;
                 
-                Count = reader.ReadInt32Endian();
+                long Count = reader.ReadInt32Endian();
                 Offset = reader.ReadInt32Endian();
                 
                 if (Offset == 0)
@@ -72,7 +71,7 @@ namespace KKdMainLib
             else
             {
                 reader.Position -= 4;
-                Count = 0;
+                int Count = 0;
                 for (int a = 0, i = 0; reader.Position > 0 && reader.Position < reader.Length; i++, Count++)
                 {
                     a = reader.ReadInt32();
@@ -102,6 +101,7 @@ namespace KKdMainLib
             POF = new POF();
             writer.IsBE = writer.Format == Main.Format.F2BE;
 
+            long Count = STRs.LongLength;
             if (writer.Format > Main.Format.FT)
             {
                 writer.Position = 0x40;
@@ -172,56 +172,41 @@ namespace KKdMainLib
             writer.Close();
         }
 
-        public void MsgPackReader(string filepath)
+        public void MsgPackReader(string file, bool JSON)
         {
-            //STRs = new List<String>();
+            MsgPack MsgPack = file.ReadMP(JSON);
 
-            Xml Xml = new Xml();
-            Xml.OpenXml(filepath + ".xml", true);
-            Xml.Compact = true;
-            int i = 0;
-            foreach (XElement STR_ in Xml.doc.Elements("STR"))
+            if (MsgPack.Element("STR", out MsgPack STR))
             {
-                foreach (XAttribute Entry in STR_.Attributes())
-                    if (Entry.Name == "Format")
-                        Enum.TryParse(Entry.Value, out Header.Format);
-                foreach (XElement STREntry in STR_.Elements())
+                if (STR.Element("Strings", out MsgPack Strings, typeof(object[])))
                 {
-                    if (STREntry.Name == "STREntry")
-                    {
-                        String Str = new String();
-                        foreach (XAttribute Entry in STREntry.Attributes())
+                    STRs = new String[((object[])Strings.Object).Length];
+                    MsgPack String;
+                    for (int i = 0; i < STRs.Length; i++)
+                        if (Strings[i].GetType() == typeof(MsgPack))
                         {
-                            if (Entry.Name == "ID"    ) Str.ID  = int.Parse(Entry.Value);
-                            if (Entry.Name == "String") Str.Str =           Entry.Value ;
+                            String = (MsgPack)Strings[i];
+                            STRs[i].ID  = String.ReadInt32 ("ID" );
+                            STRs[i].Str = String.ReadString("Str");
                         }
-                        //STRs.Add(Str);
-                    }
-                    i++;
                 }
             }
-            Count = i;
+            MsgPack = null;
         }
 
-        public void MsgPackWriter(string filepath)
+        public void MsgPackWriter(string file, bool JSON)
         {
-            MsgPack STR_ = new MsgPack("STR").Add("Format", Header.Format.ToString()).Add("Count", Count);
-            MsgPack Strings = new MsgPack("Strings", Count);
-            for (int i = 0; i < Count; i++)
+            MsgPack STR_ = new MsgPack("STR").Add("Format", Header.Format.ToString());
+            MsgPack Strings = new MsgPack("Strings", STRs.Length);
+            for (int i = 0; i < STRs.Length; i++)
             {
                 Strings[i] = new MsgPack().Add("ID", STRs[i].ID);
-                if (STRs[i].Str != null)
-                    if (STRs[i].Str != "")
+                if (STRs[i].Str != null) if (STRs[i].Str != "")
                         ((MsgPack)Strings[i]).Add("S", STRs[i].Str); ;
             }
             STR_.Add(Strings);
 
-            MsgPack MsgPack = new MsgPack(MsgPack.Types.FixMap).Add(STR_);
-
-            MPIO IO = new MPIO(File.OpenWriter(filepath + ".mp", true));
-            IO.Write(MsgPack, true);
-            IO = null;
-            MsgPack = null;
+            STR_.Write(true, file, JSON);
         }
     }
 }

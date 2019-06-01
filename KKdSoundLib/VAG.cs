@@ -1,6 +1,5 @@
 ﻿using KKdMainLib;
 using KKdMainLib.IO;
-using MSIO = System.IO;
 
 namespace KKdSoundLib
 {
@@ -26,7 +25,7 @@ namespace KKdSoundLib
         
         public void VAGReader()
         {
-            if (!MSIO.File.Exists(file + ".vag")) return;
+            if (!File.Exists(file + ".vag")) return;
             
             VAGData = new VAGFile();
             Stream reader = File.OpenReader(file + ".vag", true);
@@ -337,12 +336,12 @@ namespace KKdSoundLib
                     new System.Collections.Generic.List<  bool>();
                 while (true)
                 {
-                         if (MSIO.File.Exists(file + "." + i2 +      ".wav"))
+                         if (File.Exists(file + "." + i2 +      ".wav"))
                     {
                         files.Add(file + "." + i2 +      ".wav");
                         loop.Add(false);
                     }
-                    else if (MSIO.File.Exists(file + "." + i2 + ".loop.wav"))
+                    else if (File.Exists(file + "." + i2 + ".loop.wav"))
                     {
                         files.Add(file + "." + i2 + ".loop.wav");
                         loop.Add(true);
@@ -436,7 +435,7 @@ namespace KKdSoundLib
 
         public void VAGWriter(bool HEVAG = true)
         {
-            VAGData.Name = MSIO.Path.GetFileName(file);
+            VAGData.Name = Path.GetFileName(file);
             Stream writer = File.OpenWriter(file + ".vag", true);
             Samp1 = new int[ch]; S1Ptr = Samp1.GetPtr();
             Samp2 = new int[ch]; S2Ptr = Samp2.GetPtr();

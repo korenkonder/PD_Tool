@@ -1,6 +1,5 @@
 ﻿using KKdMainLib;
 using KKdMainLib.IO;
-using MSIO = System.IO;
 
 namespace KKdSoundLib
 {
@@ -16,7 +15,7 @@ namespace KKdSoundLib
 
         public void DIVAReader(bool ToArray = false)
         {
-            if (MSIO.File.Exists(file + ".diva"))
+            if (File.Exists(file + ".diva"))
             {
                 Data = new DIVAFile();
                 Stream reader = File.OpenReader(file + ".diva");
@@ -77,7 +76,7 @@ namespace KKdSoundLib
 
         public void DIVAWriter()
         {
-            if (MSIO.File.Exists(file + ".wav"))
+            if (File.Exists(file + ".wav"))
             {
                 Stream reader = File.OpenReader(file + ".wav");
                 Stream writer = File.OpenWriter(file + ".diva", true);
@@ -106,7 +105,8 @@ namespace KKdSoundLib
                         for (c = 0; c < Header.Channels; c++)
                         {
                             samplePtr[c] = (reader.ReadWAVSample(Header.Bytes, Header.Format) * 0x8000).CFTI();
-                            value = IMAEncoder(samplePtr[c], ref currentPtr[c], ref currentclampPtr[c], ref stepindexPtr[c]);
+                            value = IMAEncoder(samplePtr[c], ref currentPtr[c],
+                                ref currentclampPtr[c], ref stepindexPtr[c]);
                             writer.Write(value, 4);
                         }
                     writer.CheckWrited();

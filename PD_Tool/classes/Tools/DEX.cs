@@ -1,13 +1,13 @@
 ﻿using System;
 using KKdMainLib;
-using MSIO = System.IO;
+using KKdMainLib.IO;
 using KKdDEX = KKdMainLib.DEX;
 
 namespace PD_Tool.Tools
 {
     public class DEX
     {
-        public static void Processor()
+        public static void Processor(bool JSON)
         {
             Console.Title = "DEX Converter";
             KKdDEX DEX;
@@ -45,16 +45,16 @@ namespace PD_Tool.Tools
             foreach (string file in FileNames)
             {
                 DEX = new KKdDEX();
-                ext      = MSIO.Path.GetExtension(file).ToLower();
-                filepath = file.Replace(MSIO.Path.GetExtension(file), "");
+                ext      = Path.GetExtension(file).ToLower();
+                filepath = file.Replace(Path.GetExtension(file), "");
 
                 if (ext == ".bin" || ext == ".dex")
                      DEX.DEXReader(filepath, ext);
-                else DEX.MsgPackReader(filepath);
+                else DEX.MsgPackReader(filepath, JSON);
 
                 if (Format > Main.Format.NULL)
                      DEX.DEXWriter(filepath, Format);
-                else DEX.MsgPackWriter(filepath);
+                else DEX.MsgPackWriter(filepath, JSON);
             }
         }
     }

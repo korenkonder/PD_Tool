@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="classes\DataBase.cs" />
     <Compile Include="classes\Tools\A3D.cs" />
+    <Compile Include="classes\Tools\DB.cs" />
     <Compile Include="classes\Tools\DEX.cs" />
     <Compile Include="classes\Tools\DIV.cs" />
     <Compile Include="classes\Tools\STR.cs" />

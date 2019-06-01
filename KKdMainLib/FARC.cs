@@ -35,16 +35,16 @@ namespace KKdMainLib
             Files = null;
             Signature = Farc.FArC;
             FT = false;
-            Console.Title = "FARC Extractor - Archive: " + MSIO.Path.GetFileName(file);
-            if (!MSIO.File.Exists(file))
+            Console.Title = "FARC Extractor - Archive: " + Path.GetFileName(file);
+            if (!File.Exists(file))
             {
-                Console.WriteLine("File {0} doesn't exist.", MSIO.Path.GetFileName(file));
+                Console.WriteLine("File {0} doesn't exist.", Path.GetFileName(file));
                 Console.Clear();
                 return;
             }
 
             Stream reader = File.OpenReader(file);
-            string directory = MSIO.Path.GetFullPath(file).Replace(MSIO.Path.GetExtension(file), "");
+            string directory = Path.GetFullPath(file).Replace(Path.GetExtension(file), "");
             Signature = (Farc)reader.ReadInt32Endian(true);
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
             {
@@ -76,7 +76,7 @@ namespace KKdMainLib
 
                     if (SaveToDisk)
                     {
-                        File.WriteAllBytes(MSIO.Path.Combine(directory, Files[i].Name), Files[i].Data);
+                        File.WriteAllBytes(Path.Combine(directory, Files[i].Name), Files[i].Data);
                         Files[i].Data = null;
                     }
                 }
@@ -157,8 +157,8 @@ namespace KKdMainLib
                     GZipStream gZipStream;
                     if (Encrypted)
                     {
-                        gZipStream = new GZipStream(new MSIO.
-                            MemoryStream(Files[i].Data), CompressionMode.Decompress);
+                        gZipStream = new GZipStream(new MSIO.MemoryStream(
+                            Files[i].Data), CompressionMode.Decompress);
                         stream.Close();
                     }
                     else gZipStream = new GZipStream(stream, CompressionMode.Decompress);
@@ -177,7 +177,7 @@ namespace KKdMainLib
                 
                 if (SaveToDisk)
                 {
-                    File.WriteAllBytes(MSIO.Path.Combine(directory, Files[i].Name), Files[i].Data);
+                    File.WriteAllBytes(Path.Combine(directory, Files[i].Name), Files[i].Data);
                     Files[i].Data = null;
                 }
 
@@ -231,14 +231,14 @@ namespace KKdMainLib
         {
             Files = null;
             FT = false;
-            string[] files = MSIO.Directory.GetFiles(file);
+            string[] files = Directory.GetFiles(file);
             Files = new FARCFile[files.Length];
 
             for (int i = 0; i < files.Length; i++)
             {
                 Files[i] = new FARCFile { Name = files[i] };
-                string ext = MSIO.Path.GetExtension(files[i]).ToLower();
-                if (ext == ".a3da" || ext == ".mot" || ext == ".vag")
+                string ext = Path.GetExtension(files[i]).ToLower();
+                if (ext == ".a3da" || ext == ".diva" || ext == ".vag")
                     Signature = Farc.FArc;
             }
             files = null;
@@ -259,7 +259,7 @@ namespace KKdMainLib
             }
             int HeaderPartLength = Signature == Farc.FArc ? 0x09 : 0x0D;
             for (int i = 0; i < Files.Length; i++)
-                HeaderWriter.Length += MSIO.Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
+                HeaderWriter.Length += Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
             writer.WriteEndian(HeaderWriter.Length, true);
             writer.Write(HeaderWriter.ToArray(true));
             HeaderWriter = null;
@@ -276,7 +276,7 @@ namespace KKdMainLib
             else                        writer.Seek(0x0C, 0);
             for (int i = 0; i < Files.Length; i++)
             {
-                writer.Write(MSIO.Path.GetFileName(Files[i].Name) + "\0");
+                writer.Write(Path.GetFileName(Files[i].Name) + "\0");
                 writer.WriteEndian(Files[i].Offset, true);
                 if (Signature != Farc.FArc)
                     writer.WriteEndian(Files[i].SizeComp, true);

@@ -29,7 +29,7 @@ namespace PD_Tool.Tools
                 Main.ConsoleDesign(true);
                 Console.WriteLine();
                 string format = Console.ReadLine();
-                HE_VAG = format == "2";
+                HE_VAG = format != "2";
             }
 
             KKdVAG VAG;

@@ -28,7 +28,11 @@ namespace KKdMainLib
             return POF;
         }
         public static Stream GetOffset(this Stream stream, ref POF POF)
-        {if (stream.Format > Main.Format.F) POF.POFOffsets.Add(stream.Position - (stream.IsX ? stream.Offset : 0x00)); return stream; }
+        {
+            if (POF != null) if (stream.Format > Main.Format.F)
+                    POF.POFOffsets.Add(stream.Position - (stream.IsX ? stream.Offset : 0x00));
+            return stream;
+        }
 
         public static void ReadPOF(this Stream stream, ref POF POF)
         {
@@ -108,6 +112,20 @@ namespace KKdMainLib
             stream.Align(16, true);
             stream.WriteEOFC(ID);
         }
-        
+
+        public static long ReadUInt32Endian(this Stream IO, ref POF POF) =>
+            IO.GetOffset(ref POF).ReadUInt32Endian();
+        public static long ReadUInt32Endian(this Stream IO, ref POF POF, bool IsBE) =>
+            IO.GetOffset(ref POF).ReadUInt32Endian(IsBE);
+        public static long ReadInt64(this Stream IO, ref POF POF) =>
+            IO.GetOffset(ref POF).ReadInt64();
+
+        public static long ReadIntX(this Stream IO, ref POF POF           ) =>
+            IO.IsX ? IO.ReadInt64() : IO.ReadUInt32Endian(    );
+        public static long ReadIntX(this Stream IO, ref POF POF, bool IsBE) =>
+            IO.IsX ? IO.ReadInt64() : IO.ReadUInt32Endian(IsBE);
+
+        public static string ReadStringAtOffset(this Stream IO, ref POF POF, long Offset = 0, long Length = 0) =>
+            IO.GetOffset(ref POF).ReadStringAtOffset(Offset, Length);
     }
 }

@@ -55,20 +55,19 @@ namespace KKdMainLib.MessagePack
                 { MsgPack.Object = ( long)(sbyte)Unk;        MsgPack.Type = MsgPack.Types.NegInt; }
                 return MsgPack;
             }
-
-            bool Boolean = false;
-            while (!Boolean)
+            
+            while (true)
             {
-                Boolean = ReadNil    (ref MsgPack);
-                Boolean = ReadArr    (ref MsgPack);
-                Boolean = ReadMap    (ref MsgPack);
-                Boolean = ReadExt    (ref MsgPack);
-                Boolean = ReadString (ref MsgPack);
-                Boolean = ReadBoolean(ref MsgPack);
-                Boolean = ReadBytes  (ref MsgPack);
-                Boolean = ReadInt    (ref MsgPack);
-                Boolean = ReadUInt   (ref MsgPack);
-                Boolean = ReadFloat  (ref MsgPack);
+                if (ReadNil    (ref MsgPack)) break;
+                if (ReadArr    (ref MsgPack)) break;
+                if (ReadMap    (ref MsgPack)) break;
+                if (ReadExt    (ref MsgPack)) break;
+                if (ReadString (ref MsgPack)) break;
+                if (ReadBoolean(ref MsgPack)) break;
+                if (ReadBytes  (ref MsgPack)) break;
+                if (ReadInt    (ref MsgPack)) break;
+                if (ReadUInt   (ref MsgPack)) break;
+                if (ReadFloat  (ref MsgPack)) break;
                 break;
             }
             return MsgPack;
@@ -139,7 +138,7 @@ namespace KKdMainLib.MessagePack
                 int Length = 0;
                      if (Type == MsgPack.Types.Str8 ) Length = _IO.ReadByte();
                 else if (Type == MsgPack.Types.Str16) Length = _IO.ReadInt16Endian(true);
-                else                             Length = _IO.ReadInt32Endian(true);
+                else                                  Length = _IO.ReadInt32Endian(true);
                 return _IO.ReadString(Length);
             }
             return null;
@@ -191,52 +190,40 @@ namespace KKdMainLib.MessagePack
             return true;
         }
 
-        public IO Write(MsgPack MsgPack, bool Close = false)
+        public IO Write(MsgPack MsgPack, bool Close)
         { Write(MsgPack); if (Close) this.Close(); return this; }
-
+        
         public IO Write(MsgPack MsgPack)
         {
             if (MsgPack.Name   != null) Write(MsgPack.Name);
-            if (MsgPack.Object == null) { WriteNil(); return this; }
-
-            if (MsgPack.Object.GetType() == typeof(List<object>))
-            {
-                List<object> Obj = (List<object>)MsgPack.Object;
-                WriteMap(Obj.Count);
-                foreach (object obj in Obj) Write(obj);
-            }
-            else if (MsgPack.Object.GetType() == typeof(object[]))
-            {
-                object[] Obj = (object[])MsgPack.Object;
-                WriteArr(Obj.Length);
-                foreach (object obj in Obj) Write(obj);
-            }
-            else Write(MsgPack.Object);
-
+            Write(MsgPack.Object);
             return this;
         }
 
         private void Write(object obj)
         {
-                 if (obj           == null      ) WriteNil    ();
-            else if (obj.GetType() == typeof(MsgPack)) Write((MsgPack)obj);
-            else
+            if (obj == null) { WriteNil(); return; }
+            switch (obj)
             {
-                Type type = obj.GetType();
-                     if (type == typeof(byte[])) Write((byte[])obj);
-                else if (type == typeof(  bool)) Write((  bool)obj);
-                else if (type == typeof( sbyte)) Write(( sbyte)obj);
-                else if (type == typeof(  byte)) Write((  byte)obj);
-                else if (type == typeof( short)) Write(( short)obj);
-                else if (type == typeof(ushort)) Write((ushort)obj);
-                else if (type == typeof(   int)) Write((   int)obj);
-                else if (type == typeof(  uint)) Write((  uint)obj);
-                else if (type == typeof(  long)) Write((  long)obj);
-                else if (type == typeof( ulong)) Write(( ulong)obj);
-                else if (type == typeof( float)) Write(( float)obj);
-                else if (type == typeof(double)) Write((double)obj);
-                else if (type == typeof(string)) Write((string)obj);
-                else if (type == typeof(MsgPack.Ext)) Write((MsgPack.Ext)obj);
+                case List<object>  val: WriteMap(val.Count );
+                    foreach (object Val in val) Write(Val); break;
+                case      object[] val: WriteArr(val.Length);
+                    foreach (object Val in val) Write(Val); break;
+                case     MsgPack val: Write(val); break;
+                case      byte[] val: Write(val); break;
+                case        bool val: Write(val); break;
+                case       sbyte val: Write(val); break;
+                case        byte val: Write(val); break;
+                case       short val: Write(val); break;
+                case      ushort val: Write(val); break;
+                case         int val: Write(val); break;
+                case        uint val: Write(val); break;
+                case        long val: Write(val); break;
+                case       ulong val: Write(val); break;
+                case       float val: Write(val); break;
+                case      double val: Write(val); break;
+                case      string val: Write(val); break;
+                case MsgPack.Ext val: Write(val); break;
             }
         }
 
@@ -313,7 +300,7 @@ namespace KKdMainLib.MessagePack
             else                    { _IO.Write((byte) 0xDF); _IO.WriteEndian(        val, true); }
         }
 
-        private void WriteExt(MsgPack.Ext val)
+        private void Write(MsgPack.Ext val)
         {
             if (val.Data == null) { WriteNil(); return; }
 
