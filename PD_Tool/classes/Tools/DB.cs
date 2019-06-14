@@ -6,45 +6,59 @@ namespace PD_Tool.Tools
 {
     public class DB
     {
-        public static void Processor()
+        public static void Processor(bool JSON)
         {
             Console.Title = "DataBank Converter";
             Main.Choose(1, "databank", out string[] FileNames);
+            if (FileNames.Length < 1) return;
+            string filepath = "";
+            string ext = "";
+
+            Console.Clear();
+            string format = "";
+            Main.ConsoleDesign(true);
+            Main.ConsoleDesign("        Choose type of exporting file:");
+            Main.ConsoleDesign(false);
+            Main.ConsoleDesign("1. Compact");
+            Main.ConsoleDesign("2. Normal");
+            Main.ConsoleDesign(false);
+            Main.ConsoleDesign(true);
+            Console.WriteLine();
+            format = Console.ReadLine();
 
             DataBank DB;
             string[] file_split;
             int File_Checksum = 0, Get_Checksum;
             foreach (string file in FileNames)
-                //try
-                {
-                    string filename = Path.GetFileNameWithoutExtension(file);
-                    file_split = filename.Split('_');
-                    DB = new DataBank();
-                    if (file_split.Length == 5 && file.EndsWith(".dat"))
-                    {
-                        if (int.TryParse(file_split[3], out File_Checksum))
-                        {
-                            Get_Checksum = DCC.CalculateChecksum(file);
-                            if (File_Checksum == Get_Checksum)
-                            {
-                                string filepath = file.Replace(filename + ".dat", "");
-                                Console.Title = "DataBank Converter: " + filename;
-                                DB.DBReader(file);
-                                DB.XMLWriter(filepath + file_split[0] + "_" +
-                                    file_split[1] + "_" + file_split[2] + ".xml");
-                            }
-                        }
-                    }
-                    else if (file.EndsWith(".xml"))
-                    {
-                        string filepath = file.Replace(Path.GetExtension(file), "");
-                        Console.Title = "DataBank Converter: " + Path.GetFileNameWithoutExtension(file);
-                        DB.XMLReader(file);
-                        DB.DBWriter(filepath);
-                    }
-                }
-                //catch (Exception e) { Console.WriteLine(e.Message); }
+            {
+                ext      = Path.GetExtension(file);
+                filepath = file.Replace(ext, "");
+                ext      = ext.ToLower();
 
+                string filename = Path.GetFileNameWithoutExtension(file);
+                file_split = filename.Split('_');
+                DB = new DataBank();
+                if (file_split.Length == 5 && ext == ".dat")
+                {
+                    if (!int.TryParse(file_split[3], out File_Checksum)) continue;
+
+                    Get_Checksum = DCC.CalculateChecksum(file);
+                    if (File_Checksum != Get_Checksum) continue;
+
+                    filepath = file.Replace(filename + ".dat", "");
+                    Console.Title = "DataBank Converter: " + filename;
+                    DB.     DBReader(file);
+                    DB.MsgPackWriter(filepath + file_split[0] + "_" + 
+                        file_split[1] + "_" + file_split[2], JSON, format != "2");
+                }
+                else if (ext == ".mp" || ext == ".json")
+                {
+                    Console.Title = "DataBank Converter: " + filename;
+                    DB.MsgPackReader(filepath, JSON);
+                    DB.     DBWriter(filepath);
+                }
+                DB = null;
+            }
         }
     }
 }

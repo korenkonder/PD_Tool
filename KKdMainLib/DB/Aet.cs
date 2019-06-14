@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using KKdMainLib.IO;
 using KKdMainLib.MessagePack;
-using MPIO = KKdMainLib.MessagePack.IO;
 
 namespace KKdMainLib.DB
 {
@@ -193,12 +192,11 @@ namespace KKdMainLib.DB
         {
             MsgPack MsgPack = file.ReadMP(JSON);
 
-            if (MsgPack.Element("AetDB", out MsgPack AetDB, typeof(object[])))
+            if (MsgPack.Element<MsgPack>("AetDB", out MsgPack AetDB))
             {
-                AetSets = new AetSet[((object[])AetDB.Object).Length];
+                AetSets = new AetSet[AetDB.Array.Length];
                 for (int i = 0; i < AetSets.Length; i++)
-                    if (AetDB[i].GetType() == typeof(MsgPack))
-                        AetSets[i].ReadMsgPack((MsgPack)AetDB[i]);
+                    AetSets[i].ReadMsgPack(AetDB[i] as MsgPack);
             }
             MsgPack = null;
         }
@@ -248,13 +246,11 @@ namespace KKdMainLib.DB
                 NewId       = msg.ReadBoolean("NewId"      );
                 SpriteSetId = msg.ReadNUInt16("SpriteSetId");
 
-                if (msg.Element("Aets", out MsgPack Aets, typeof(object[])))
+                if (msg.Element<MsgPack>("Aets", out MsgPack Aets))
                 {
-                    object Aet;
-                    this  .Aets = new AET[((object[])Aets.Object).Length];
+                    this.Aets = new AET[Aets.Array.Length];
                     for (int i0 = 0; i0 < this.Aets.Length; i0++)
-                    { Aet = Aets[i0]; if (Aet.GetType() == typeof(MsgPack))
-                           this.Aets[i0].ReadMsgPack((MsgPack)Aet); }
+                           this.Aets[i0].ReadMsgPack(Aets[i0] as MsgPack);
                 }
             }
 

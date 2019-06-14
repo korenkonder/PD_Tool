@@ -238,8 +238,7 @@ namespace KKdMainLib
             {
                 Files[i] = new FARCFile { Name = files[i] };
                 string ext = Path.GetExtension(files[i]).ToLower();
-                if (ext == ".a3da" || ext == ".diva" || ext == ".vag")
-                    Signature = Farc.FArc;
+                if (ext == ".a3da" || ext == ".diva" || ext == ".vag") Signature = Farc.FArc;
             }
             files = null;
 

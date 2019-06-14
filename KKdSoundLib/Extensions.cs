@@ -1,4 +1,6 @@
-﻿using KKdMainLib.IO;
+﻿using System;
+using KKdMainLib;
+using KKdMainLib.IO;
 
 namespace KKdSoundLib
 {
@@ -15,10 +17,10 @@ namespace KKdSoundLib
 
         public static void Write(this Stream IO, double Sample, ushort Bytes, ushort Format)
         {
-                 if (Bytes == 2)                   IO.Write  ((ushort)(Sample * 0x00008000));
-            else if (Bytes == 4 && Format == 0x01) IO.Write  ((   int)(Sample * 0x80000000));
-            else if (Bytes == 4 && Format == 0x03) IO.Write  ((float)  Sample);
-            else if (Bytes == 8 && Format == 0x03) IO.Write  (         Sample);
+                 if (Bytes == 2)                   IO.Write((Sample * 0x00008000).CFTS());
+            else if (Bytes == 4 && Format == 0x01) IO.Write((Sample * 0x80000000).CFTI());
+            else if (Bytes == 4 && Format == 0x03) IO.Write((float)Sample);
+            else if (Bytes == 8 && Format == 0x03) IO.Write(       Sample);
         }
 
         public static WAV.Header ReadWAVHeader(this Stream IO)
@@ -46,7 +48,7 @@ namespace KKdSoundLib
                     Header.Format = IO.ReadUInt16();
                 }
                 if (Header.Bytes < 1 || (Header.Bytes > 4 && Header.Bytes  != 8)) return Header;
-                if (Header.Bytes > 0 &&  Header.Bytes < 4 && Header.Format == 3) return Header;
+                if (Header.Bytes > 0 &&  Header.Bytes < 4 && Header.Format == 3 ) return Header;
                 if (Header.Bytes == 8 && Header.Format == 1) return Header;
                 IO.Seek(Offset + 0x14, 0);
                 if (IO.ReadString(4) != "data") return Header;

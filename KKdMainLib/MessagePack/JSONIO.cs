@@ -15,27 +15,36 @@ namespace KKdMainLib.MessagePack
 
         public void Close() => _IO.Close();
 
-        public MsgPack Read() => ReadValue(null);
+        public MsgPack Read() => ReadValue();
 
         private string ReadKey() => ReadString();
+        
+        private MsgPack ReadValue()
+        {
+            char c = _IO.SkipWhitespace().PeekCharUTF8();
+            object obj = null;
+            if (c == '{') obj = ReadObject();
+            return new MsgPack(null, true, obj);
+        }
 
         private MsgPack ReadValue(string Key)
         {
             char c = _IO.SkipWhitespace().PeekCharUTF8();
             object obj = null;
             if (char.IsDigit(c))
-                          obj = ReadNumber ();
-            switch (c)
-            {
-                case '"': obj = ReadString (); break;
-                case '{': obj = ReadObject (); break;
-                case '[': obj = ReadArray  (); break;
-                case '-': obj = ReadNumber (); break;
-                case 't':
-                case 'f': obj = ReadBoolean(); break;
-                case 'n': obj = ReadNull   (); break;
-            }
-            return new MsgPack(Key, obj);
+                              obj = ReadNumber ();
+            else
+                switch (c)
+                {
+                    case '"': obj = ReadString (); break;
+                    case '{': obj = ReadObject (); break;
+                    case '[': obj = ReadArray  (); break;
+                    case '-': obj = ReadNumber (); break;
+                    case 't':
+                    case 'f': obj = ReadBoolean(); break;
+                    case 'n': obj = ReadNull   (); break;
+                }
+            return new MsgPack(Key, true, obj);
         }
         
 		private string ReadString()
@@ -154,17 +163,17 @@ namespace KKdMainLib.MessagePack
             return false;
         }
 
-		private bool ReadNull() => _IO.Assert("null");
+		private object ReadNull() { _IO.Assert("null"); return null; }
 
         private string ReadDigits()
         { string s = ""; while (char.IsDigit(_IO.SkipWhitespace().
             PeekCharUTF8())) s += _IO.ReadCharUTF8(); return s; }
 
-        public JSONIO Write(MsgPack MsgPack, bool Close, string End = "\n", string TabChar = "\t")
+        public JSONIO Write(MsgPack MsgPack, bool Close, string End = "\n", string TabChar = "  ")
         { Write(MsgPack, End, TabChar, "", true); if (Close) this.Close(); return this; }
 
         public JSONIO Write(MsgPack MsgPack, bool Close, bool Style = false)
-        { Write(MsgPack, "\n", "\t", "", Style); if (Close) this.Close(); return this; }
+        { Write(MsgPack, "\n", "  ", "", Style); if (Close) this.Close(); return this; }
 
         private JSONIO Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style)
         {
@@ -172,46 +181,43 @@ namespace KKdMainLib.MessagePack
             Tab += TabChar;
             if (MsgPack.Name   != null) _IO.Write("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
             if (MsgPack.Object == null) { WriteNil(); return this; }
-
-            Type type = MsgPack.Object.GetType();
-            if (type == typeof(List<object>))
+            
+            if (MsgPack.List != null)
             {
-                List<object> Obj = (List<object>)MsgPack.Object;
                 WriteMap();
                 if (Style) _IO.Write(End);
-                for (int i = 0; i < Obj. Count; i++)
+                for (int i = 0; i < MsgPack.List.Count; i++)
                 {
                     if (Style) _IO.Write(Tab);
-                    Write(Obj[i], Obj[i].GetType(), End, TabChar, Tab, Style);
-                    if (i + 1 < Obj. Count) _IO.Write(',');
+                    Write(MsgPack.List[i], End, TabChar, Tab, Style);
+                    if (i + 1 < MsgPack.List. Count) _IO.Write(',');
                     if (Style) _IO.Write(End);
                 }
                 if (Style) _IO.Write(OldTab);
                 WriteMap(true);
             }
-            else if (type == typeof(object[]))
+            else if (MsgPack.Array != null)
             {
-                object[] Obj = (object[])MsgPack.Object;
                 WriteArr();
                 if (Style) _IO.Write(End);
-                for (int i = 0; i < Obj.Length; i++)
+                for (int i = 0; i < MsgPack.Array.Length; i++)
                 {
                     if (Style) _IO.Write(Tab);
-                    Write(Obj[i], Obj[i].GetType(), End, TabChar, Tab, Style);
-                    if (i + 1 < Obj.Length) _IO.Write(',');
+                    Write(MsgPack.Array[i], End, TabChar, Tab, Style);
+                    if (i + 1 < MsgPack.Array.Length) _IO.Write(',');
                     if (Style) _IO.Write(End);
                 }
                 if (Style) _IO.Write(OldTab);
                 WriteArr(true);
             }
-            else if (type == typeof(MsgPack))
-                Write((MsgPack)MsgPack.Object, End, TabChar, Tab, Style);
-            else Write(MsgPack.Object, type, End, TabChar, Tab, Style);
+            else if (MsgPack.Object is MsgPack msg)
+                Write(msg, End, TabChar, Tab, Style);
+            else Write(MsgPack.Object, End, TabChar, Tab, Style);
 
             return this;
         }
 
-        private void Write(object obj, Type type, string End, string TabChar, string Tab, bool Style)
+        private void Write(object obj, string End, string TabChar, string Tab, bool Style)
         {
             if (obj == null) { WriteNil(); return; }
             switch (obj)

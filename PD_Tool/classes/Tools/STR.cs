@@ -17,8 +17,9 @@ namespace PD_Tool.Tools
             string ext      = "";
             foreach (string file in FileNames)
             {
-                filepath = file.Replace(Path.GetExtension(file), "");
-                ext      = Path.GetExtension(file).ToLower();
+                ext      = Path.GetExtension(file);
+                filepath = file.Replace(ext, "");
+                ext      = ext.ToLower();
                 Data = new KKdSTR();
 
                 Console.Title = "PD_Tool: Converter Tools: STR Reader: " +
@@ -33,6 +34,7 @@ namespace PD_Tool.Tools
                     Data.MsgPackReader(filepath, JSON);
                     Data.STRWriter    (filepath);
                 }
+                Data = null;
             }
         }
     }

@@ -7,7 +7,7 @@ namespace KKdMainLib.IO
     public unsafe class Stream : IDisposable
     {
         private MSIO.Stream stream;
-        private   int i, i0, TempBitRead, TempBitWrite;
+        private   int I, i, i0, TempBitRead, TempBitWrite;
         private ushort ValRead;
         private  byte BitRead, BitWrite, ValWrite;
         private byte[] buf;
@@ -54,7 +54,7 @@ namespace KKdMainLib.IO
             ValRead = ValRead = BitWrite = 0;
             stream = output;
             Format = Main.Format.NULL;
-            buf = new byte[16];
+            buf = new byte[128];
             IsBE = isBE;
             data = Data;
         }
@@ -176,43 +176,51 @@ namespace KKdMainLib.IO
         public void Write( float? val) => Write(val.GetValueOrDefault());
         public void Write(double? val) => Write(val.GetValueOrDefault());
         
-        public void Write(  bool* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( sbyte* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  byte* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( short* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(ushort* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(   int* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  uint* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(  long* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( ulong* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write( float* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
-        public void Write(double* val, int Length) { for (i = 0; i < Length; i++) Write(val[i]); }
+        public void Write(  bool* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte((byte)(val[i] ? 1 : 0)); }
+        public void Write( sbyte* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte((byte) val[i]); }
+        public void Write(  byte* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte(       val[i]); }
+        public void Write( short* val, int Length) { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
+        public void Write(ushort* val, int Length) { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
+        public void Write(   int* val, int Length) { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
+        public void Write(  uint* val, int Length) { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
+        public void Write(  long* val, int Length) { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
+        public void Write( ulong* val, int Length) { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
+        public void Write( float* val, int Length) { for (i = 0; i < Length; i++) ToArray(4, *( uint*)&val[i]); }
+        public void Write(double* val, int Length) { for (i = 0; i < Length; i++) ToArray(4, *(ulong*)&val[i]); }
         
-        public void WriteEndian( short* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(ushort* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(   int* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(  uint* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(  long* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian( ulong* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian( float* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        public void WriteEndian(double* val, int Length) { for (i = 0; i < Length; i++) WriteEndian(val[i]); }
-        
+        public void WriteEndian( short* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(2, Endian(val[i], 2, IsBE)); }
+        public void WriteEndian(ushort* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(2, Endian(val[i], 2, IsBE)); }
+        public void WriteEndian(   int* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(val[i], 4, IsBE)); }
+        public void WriteEndian(  uint* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(val[i], 4, IsBE)); }
+        public void WriteEndian(  long* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(val[i], 8, IsBE)); }
+        public void WriteEndian( ulong* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(val[i], 8, IsBE)); }
+        public void WriteEndian( float* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(*( uint*)&val[i], 4, IsBE)); }
+        public void WriteEndian(double* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(*(ulong*)&val[i], 8, IsBE)); }
+
         public void WriteEndian( short* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(2, Endian(val[i], 2, IsBE)); }
         public void WriteEndian(ushort* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(2, Endian(val[i], 2, IsBE)); }
         public void WriteEndian(   int* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(val[i], 4, IsBE)); }
         public void WriteEndian(  uint* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(val[i], 4, IsBE)); }
         public void WriteEndian(  long* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(val[i], 8, IsBE)); }
         public void WriteEndian( ulong* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(val[i], 8, IsBE)); }
         public void WriteEndian( float* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(4, Endian(*( uint*)&val[i], 4, IsBE)); }
         public void WriteEndian(double* val, int Length, bool IsBE)
-        { for (i = 0; i < Length; i++) WriteEndian(val[i], IsBE); }
+        { for (i = 0; i < Length; i++) ToArray(8, Endian(*(ulong*)&val[i], 8, IsBE)); }
 
         public void Write(  char val, bool UTF8 = true)
         { if (UTF8) Write(val.ToString().ToUTF8()); else Write(val.ToString().ToASCII()); }
@@ -238,28 +246,33 @@ namespace KKdMainLib.IO
         public void WriteEndian(double val, bool IsBE) => ToArray(8, Endian(*(ulong*)&val, 8, IsBE));
 
         public   long Endian(  long BE, byte Length, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < Length; i++) { buf[i] = (byte)BE; BE >>= 8; } BE = 0;
-                for (byte i = 0; i < Length; i++) { BE |= buf[i]; if (i < Length - 1) BE <<= 8; } } return BE; }
+        { if (IsBE) { for (I = 0; I < Length; I++) { buf[I] = (byte)BE; BE >>= 8; } BE = 0;
+                      for (I = 0; I < Length; I++) { BE |= buf[I]; if (I < Length - 1) BE <<= 8; } } return BE; }
 
         public  ulong Endian( ulong BE, byte Length, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < Length; i++) { buf[i] = (byte)BE; BE >>= 8; } BE = 0;
-                for (byte i = 0; i < Length; i++) { BE |= buf[i]; if (i < Length - 1) BE <<= 8; } } return BE; }
+        { if (IsBE) { for (I = 0; I < Length; I++) { buf[I] = (byte)BE; BE >>= 8; } BE = 0;
+                      for (I = 0; I < Length; I++) { BE |= buf[I]; if (I < Length - 1) BE <<= 8; } } return BE; }
 
         private void ToArray(byte L,  long val)
-        { CheckWrited(); for (i = 0; i < L; i++) { buf[i] = (byte)val; val >>= 8; } Write(buf, L); }
+        { CheckWrited(); for (I = 0; I < L; I++) { buf[I] = (byte)val; val >>= 8; } stream.Write(buf, 0, L); }
 
         private void ToArray(byte L, ulong val)
-        { CheckWrited(); for (i = 0; i < L; i++) { buf[i] = (byte)val; val >>= 8; } Write(buf, L); }
+        { CheckWrited(); for (I = 0; I < L; I++) { buf[I] = (byte)val; val >>= 8; } stream.Write(buf, 0, L); }
 
-        private  long  IntFromArray(byte L, bool IsBE = false) { Read(L);  long val = 0; if (IsBE)
-                         for (i = 0; i < L; i++) { val <<= 8; val |= buf[i    ]; } else
-                         for (i = L; i > 0; i--) { val <<= 8; val |= buf[i - 1]; } return val; }
+        private  long  IntFromArray(byte L) { stream.Read(buf, 0, L);  long val = 0;
+                         for (I = L; I > 0; I--) { val <<= 8; val |= buf[I - 1]; } return val; }
 
-        private ulong UIntFromArray(byte L, bool IsBE = false) { Read(L); ulong val = 0; if (IsBE)
-                         for (i = 0; i < L; i++) { val <<= 8; val |= buf[i    ]; } else
-                         for (i = L; i > 0; i--) { val <<= 8; val |= buf[i - 1]; } return val; }
+        private ulong UIntFromArray(byte L) { stream.Read(buf, 0, L); ulong val = 0;
+                         for (I = L; I > 0; I--) { val <<= 8; val |= buf[I - 1]; } return val; }
 
-        private void Read(byte Length) => stream.Read(buf, 0, Length);
+        private  long  IntFromArray(byte L, bool IsBE) { stream.Read(buf, 0, L);  long val = 0; if (IsBE)
+                         for (I = 0; I < L; I++) { val <<= 8; val |= buf[I    ]; } else
+                         for (I = L; I > 0; I--) { val <<= 8; val |= buf[I - 1]; } return val; }
+
+        private ulong UIntFromArray(byte L, bool IsBE) { stream.Read(buf, 0, L); ulong val = 0; if (IsBE)
+                         for (I = 0; I < L; I++) { val <<= 8; val |= buf[I    ]; } else
+                         for (I = L; I > 0; I--) { val <<= 8; val |= buf[I - 1]; } return val; }
+        
         public char ReadChar(bool UTF8 = true)
         { if (UTF8) return ReadCharUTF8();
           else      return (char)stream.ReadByte(); }
@@ -269,17 +282,17 @@ namespace KKdMainLib.IO
             byte t;
             int T;
             int val = 0;
-            for (i = 0, i0 = 4; i < i0; i++)
+            for (I = 0, i0 = 4; I < i0; I++)
             {
                 T = stream.ReadByte();
                 if (T == -1) return '\uFFFF';
                 t = (byte)T;
 
-                     if ((t & 0xC0) == 0x80 && i >  0)   val = (val << 6) | (t & 0x3F);
-                else if ((t & 0x80) == 0x00 && i == 0)   return (char)t;
-                else if ((t & 0xE0) == 0xC0 && i == 0) { val = t & 0x1F; i0 = 2; }
-                else if ((t & 0xF0) == 0xE0 && i == 0) { val = t & 0x0F; i0 = 3; }
-                else if ((t & 0xF8) == 0xF0 && i == 0) { val = t & 0x07; i0 = 4; }
+                     if ((t & 0xC0) == 0x80 && I >  0)   val = (val << 6) | (t & 0x3F);
+                else if ((t & 0x80) == 0x00 && I == 0)   return (char)t;
+                else if ((t & 0xE0) == 0xC0 && I == 0) { val = t & 0x1F; i0 = 2; }
+                else if ((t & 0xF0) == 0xE0 && I == 0) { val = t & 0x0F; i0 = 3; }
+                else if ((t & 0xF8) == 0xF0 && I == 0) { val = t & 0x07; i0 = 4; }
                 else return '\uFFFF';
             }
             return (char)val;
@@ -356,21 +369,6 @@ namespace KKdMainLib.IO
             byte[] Data = ReadBytes(stream.Length);
             LongPosition = Offset;
             return Data;
-        }
-
-        public long ReadIntX(         ) => IsX ? ReadInt64() : ReadUInt32Endian(    );
-        public long ReadIntX(bool IsBE) => IsX ? ReadInt64() : ReadUInt32Endian(IsBE);
-
-        public string ReadStringAtOffset(long Offset = 0, long Length = 0)
-        {
-            string s = null;
-            long Position = LongPosition;
-            if (Offset == 0) { Position += IsX ? 8 : 4; Offset = ReadIntX(); }
-            LongPosition = Offset;
-            if (Length == 0) s = this.NullTerminatedUTF8();
-            else             s = ReadStringUTF8(Length);
-            LongPosition = Position;
-            return s;
         }
     }
 

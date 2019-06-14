@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Xml.Linq;
 using System.Collections.Generic;
 using KKdMainLib.IO;
 using KKdMainLib.MessagePack;
@@ -176,21 +175,19 @@ namespace KKdMainLib
         {
             MsgPack MsgPack = file.ReadMP(JSON);
 
-            if (MsgPack.Element("STR", out MsgPack STR))
-            {
-                if (STR.Element("Strings", out MsgPack Strings, typeof(object[])))
+            if (!MsgPack.Element("STR", out MsgPack STR)) return;
+
+            if (!STR.Element<MsgPack>("Strings", out MsgPack Strings)) return;
+
+            STRs = new String[Strings.Array.Length];
+            for (int i = 0; i < STRs.Length; i++)
+                if (Strings[i] is MsgPack String)
                 {
-                    STRs = new String[((object[])Strings.Object).Length];
-                    MsgPack String;
-                    for (int i = 0; i < STRs.Length; i++)
-                        if (Strings[i].GetType() == typeof(MsgPack))
-                        {
-                            String = (MsgPack)Strings[i];
-                            STRs[i].ID  = String.ReadInt32 ("ID" );
-                            STRs[i].Str = String.ReadString("Str");
-                        }
+                    String = (MsgPack)Strings[i];
+                    STRs[i].ID = String.ReadInt32("ID");
+                    STRs[i].Str = String.ReadString("Str");
                 }
-            }
+
             MsgPack = null;
         }
 

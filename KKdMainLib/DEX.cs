@@ -157,7 +157,7 @@ namespace KKdMainLib
             IO.Align(0x10, true);
 
             if (Header.IsX) IO.Seek(Header.Lenght + 0x28, 0);
-            else                                   IO.Seek(Header.Lenght + 0x20, 0);
+            else            IO.Seek(Header.Lenght + 0x20, 0);
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
                 IO.Write(Dex[i0].MainOffset);
@@ -173,7 +173,7 @@ namespace KKdMainLib
             }
 
             if (Header.IsX) IO.Seek(Position0 - 8, 0);
-            else                                   IO.Seek(Position0 - 4, 0);
+            else            IO.Seek(Position0 - 4, 0);
             IO.Write(Position1);
 
             if (IO.Format > Main.Format.F)
@@ -197,37 +197,29 @@ namespace KKdMainLib
             Header = new PDHead();
 
             MsgPack MsgPack = file.ReadMP(JSON);
+            if (!MsgPack.Element<MsgPack>("Dex", out MsgPack Dex)) return;
 
-            if (MsgPack.Element("Dex", out MsgPack Dex, typeof(object[])))
-            {
-                MsgPack Temp = new MsgPack();
+            this.Dex = new EXP[Dex.Array.Length];
+            for (i0 = 0; i0 < this.Dex.Length; i0++)
+                if (Dex[i0] is MsgPack EXP)
+                {
+                    this.Dex[i0] = new EXP { Name = EXP.ReadString("Name") };
 
-                this.Dex = new EXP[((object[])Dex.Object).Length];
-                MsgPack EXP = new MsgPack();
-                for (i0 = 0; i0 < this.Dex.Length; i0++)
-                    if (Dex[i0].GetType() == typeof(MsgPack))
+                    if (EXP.Element<MsgPack>("Main", out MsgPack Main))
                     {
-                        this.Dex[i0] = new EXP();
-                        EXP = (MsgPack)Dex[i0];
-                        this.Dex[i0].Name = EXP.ReadString("Name");
-                        if (EXP.Element("Main", out Temp, typeof(object[])))
-                        {
-                            this.Dex[i0].Main = new List<EXPElement>
-                            { Capacity = ((object[])Temp.Object).Length };
-                            for (i1 = 0; i1 < this.Dex[i0].Main.Capacity; i1++)
-                                if (Temp[i1].GetType() == typeof(MsgPack))
-                                    this.Dex[i0].Main.Add(ReadEXP((MsgPack)Temp[i1]));
-                        }
-                        if (EXP.Element("Eyes", out Temp, typeof(object[])))
-                        {
-                            this.Dex[i0].Eyes = new List<EXPElement>
-                            { Capacity = ((object[])Temp.Object).Length };
-                            for (i1 = 0; i1 < this.Dex[i0].Eyes.Capacity; i1++)
-                                if (Temp[i1].GetType() == typeof(MsgPack))
-                                    this.Dex[i0].Eyes.Add(ReadEXP((MsgPack)Temp[i1]));
-                        }
+                        this.Dex[i0].Main = new List<EXPElement>();
+                        for (i1 = 0; i1 < Main.Array.Length; i1++)
+                            if (Main[i1] is MsgPack Exp)
+                                this.Dex[i0].Main.Add(ReadEXP(Exp));
                     }
-            }
+                    if (EXP.Element<MsgPack>("Eyes", out MsgPack Eyes))
+                    {
+                        this.Dex[i0].Eyes = new List<EXPElement>();
+                        for (i1 = 0; i1 < Eyes.Array.Length; i1++)
+                            if (Eyes[i1] is MsgPack Exp)
+                                this.Dex[i0].Eyes.Add(ReadEXP(Exp));
+                    }
+                }
             MsgPack = null;
         }
 

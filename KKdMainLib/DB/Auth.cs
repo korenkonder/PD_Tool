@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using KKdMainLib.IO;
 using KKdMainLib.A3DA;
 using KKdMainLib.MessagePack;
-using MPIO = KKdMainLib.MessagePack.IO;
 
 namespace KKdMainLib.DB
 {
-    public struct Auth
+    public class Auth
     {
         public    int  Signature { get; private set; }
         public string[] Category { get; private set; }
@@ -104,28 +103,25 @@ namespace KKdMainLib.DB
 
             if (MsgPack.Element("AuthDB", out MsgPack AuthDB))
             {
-                if (AuthDB.Element("Category", out MsgPack Temp, typeof(object[])))
+                if (AuthDB.Element("Category", out MsgPack Temp))
                 {
-                    this.Category = new string[((object[])Temp.Object).Length];
-                    MsgPack Category;
+                    this.Category = new string[Temp.Array.Length];
                     for (int i = 0; i < this.Category.Length; i++)
-                        if (Temp[i].GetType() == typeof(MsgPack))
-                        { Category = (MsgPack)Temp[i]; this.Category[i] = Category.ReadString(); }
+                        this.Category[i] = (Temp[i] as MsgPack).ReadString();
                 }
 
-                if (AuthDB.Element("UID", out Temp, typeof(object[])))
+                if (AuthDB.Element("UID", out Temp))
                 {
-                    _UID = new UID[((object[])Temp.Object).Length];
+                    _UID = new UID[Temp.Array.Length];
                     MsgPack UID;
                     for (int i = 0; i < _UID.Length; i++)
-                        if (Temp[i].GetType() == typeof(MsgPack))
-                        {
-                            UID = (MsgPack)Temp[i];
-                            _UID[i].Category = UID.ReadString("C");
-                            _UID[i].OrgUid   = UID.ReadNInt32("O");
-                            _UID[i].Size     = UID.ReadNInt32("S");
-                            _UID[i].Value    = UID.ReadString("V");
-                        }
+                    {
+                        UID = Temp[i] as MsgPack;
+                        _UID[i].Category = UID.ReadString("C");
+                        _UID[i].OrgUid   = UID.ReadNInt32("O");
+                        _UID[i].Size     = UID.ReadNInt32("S");
+                        _UID[i].Value    = UID.ReadString("V");
+                    }
                 }
             }
             MsgPack = null;

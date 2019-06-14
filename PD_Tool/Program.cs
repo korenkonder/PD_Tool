@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using KKdMainLib.IO;
+using KKdMainLib.Types;
 using KKdMain = KKdMainLib.Main;
 using KKdFARC = KKdMainLib.FARC;
 
@@ -15,14 +16,13 @@ namespace PD_Tool
         public static void Main(string[] args)
         {
             Console.Title = "PD_Tool";
-
             if (args.Length == 0)
             {
                 while (function != "Q") MainMenu();
                 Exit();
             }
 
-            string header;
+            long header;
             Stream reader;
             KKdFARC Farc;
 
@@ -34,16 +34,16 @@ namespace PD_Tool
                 else if (File.Exists(arg))
                 {
                     reader = File.OpenReader(arg);
-                    header = reader.ReadString(8);
+                    header = reader.ReadInt64();
                     reader.Close();
-                    if (header.ToUpper() == "DIVAFILE") DIVAFILE.Decrypt(arg);
+                    if (header == 0x454C494641564944) KKdMainLib.DIVAFILE.Decrypt(arg);
                 }
             }
             Exit();
         }
 
         private static bool JSON = false;
-        
+
         private static void MainMenu()
         {
             Console.Title = "PD_Tool";
@@ -58,6 +58,7 @@ namespace PD_Tool
             KKdMain.ConsoleDesign("4. Encrypt to   DIVAFILE");
             KKdMain.ConsoleDesign("5. DB_Tools");
             KKdMain.ConsoleDesign("6. Converting Tools");
+            KKdMain.ConsoleDesign(JSON ? "7. MsgPack to JSON" : "7. JSON to MsgPack");
             KKdMain.ConsoleDesign(false);
             KKdMain.ConsoleDesign(JSON ? "M. MessagePack" : "J. JSON");
             KKdMain.ConsoleDesign("Q. Quit");
@@ -90,11 +91,12 @@ namespace PD_Tool
                 KKdMain.ConsoleDesign("                 Choose tool:");
                 KKdMain.ConsoleDesign(false);
                 KKdMain.ConsoleDesign("1. A3DA     Converter");
-                KKdMain.ConsoleDesign("2. DEX      Converter");
-                KKdMain.ConsoleDesign("3. DIVA     Converter");
-                KKdMain.ConsoleDesign("4. STR      Converter");
-                KKdMain.ConsoleDesign("5. VAG      Converter");
-                KKdMain.ConsoleDesign("6. DataBank Converter");
+                KKdMain.ConsoleDesign("2. AET      Converter");
+                KKdMain.ConsoleDesign("3. DataBank Converter");
+                KKdMain.ConsoleDesign("4. DEX      Converter");
+                KKdMain.ConsoleDesign("5. DIVA     Converter");
+                KKdMain.ConsoleDesign("6. STR      Converter");
+                KKdMain.ConsoleDesign("7. VAG      Converter");
                 KKdMain.ConsoleDesign(false);
                 KKdMain.ConsoleDesign("R. Return to Main Menu");
                 KKdMain.ConsoleDesign(false);
@@ -103,12 +105,21 @@ namespace PD_Tool
                 string Function = Console.ReadLine();
                 Console.Clear();
                      if (Function == "1") Tools.A3D.Processor(JSON);
-                else if (Function == "2") Tools.DEX.Processor(JSON);
-                else if (Function == "3") Tools.DIV.Processor();
-                else if (Function == "4") Tools.STR.Processor(JSON);
-                else if (Function == "5") Tools.VAG.Processor();
-                else if (Function == "6") Tools.DB .Processor();
+                else if (Function == "2") Tools.AET.Processor(JSON);
+                else if (Function == "3") Tools.DB .Processor(JSON);
+                else if (Function == "4") Tools.DEX.Processor(JSON);
+                else if (Function == "5") Tools.DIV.Processor();
+                else if (Function == "6") Tools.STR.Processor(JSON);
+                else if (Function == "7") Tools.VAG.Processor();
                 else     function = Function;
+            }
+            else if (function == "7")
+            {
+                KKdMain.Choose(1, JSON ? "mp" : "json", out string[] FileNames);
+                if (JSON) foreach (string file in FileNames)
+                        KKdMainLib.MessagePack.MPExt.ToJSON   (file.Replace(Path.GetExtension(file), ""));
+                else      foreach (string file in FileNames)
+                        KKdMainLib.MessagePack.MPExt.ToMsgPack(file.Replace(Path.GetExtension(file), ""));
             }
         }
 

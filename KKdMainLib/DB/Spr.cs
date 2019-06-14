@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using KKdMainLib.IO;
 using KKdMainLib.MessagePack;
-using MPIO = KKdMainLib.MessagePack.IO;
 
 namespace KKdMainLib.DB
 {
@@ -250,12 +249,11 @@ namespace KKdMainLib.DB
         {
             MsgPack MsgPack = file.ReadMP(JSON);
 
-            if (MsgPack.Element("SprDB", out MsgPack SprDB, typeof(object[])))
+            if (MsgPack.Element<MsgPack>("SprDB", out MsgPack SprDB))
             {
-                SpriteSets = new SpriteSet[((object[])SprDB.Object).Length];
+                SpriteSets = new SpriteSet[SprDB.Array.Length];
                 for (int i = 0; i < SpriteSets.Length; i++)
-                    if (SprDB[i].GetType() == typeof(MsgPack))
-                        SpriteSets[i].ReadMsgPack((MsgPack)SprDB[i]);
+                    SpriteSets[i].ReadMsgPack(SprDB[i] as MsgPack);
             }
             MsgPack = null;
         }
@@ -302,22 +300,18 @@ namespace KKdMainLib.DB
                 Name         = msg.ReadString ("Name"    );
                 NewId        = msg.ReadBoolean("NewId"   );
 
-                if (msg.Element( "Sprites", out MsgPack  Sprites, typeof(object[])))
+                if (msg.Element<MsgPack>( "Sprites", out MsgPack  Sprites))
                 {
-                    object Sprite;
-                    this  .Sprites = new SpriteTexture[((object[])Sprites.Object).Length];
+                    this  .Sprites = new SpriteTexture[Sprites.Array.Length];
                     for (int i0 = 0; i0 < this.Sprites.Length; i0++)
-                    { Sprite = Sprites[i0]; if (Sprites.GetType() == typeof(MsgPack))
-                          this.Sprites[i0].ReadMsgPack((MsgPack)Sprite); }
+                        this.Sprites[i0].ReadMsgPack(Sprites[i0] as MsgPack);
                 }
 
-                if (msg.Element("Textures", out MsgPack Textures, typeof(object[])))
+                if (msg.Element<MsgPack>("Textures", out MsgPack Textures))
                 {
-                    object Texture;
-                    this  .Textures = new SpriteTexture[((object[])Textures.Object).Length];
+                    this  .Textures = new SpriteTexture[Textures.Array.Length];
                     for (int i0 = 0; i0 < this.Textures.Length; i0++)
-                    { Texture = Textures[i0]; if (Texture.GetType() == typeof(MsgPack))
-                           this.Textures[i0].ReadMsgPack((MsgPack)Texture); }
+                        this.Textures[i0].ReadMsgPack(Textures[i0] as MsgPack);
                 }
             }
 

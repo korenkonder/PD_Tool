@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Forms;
 using System.Globalization;
 using System.Collections.Generic;
@@ -70,8 +71,8 @@ namespace KKdMainLib
             string MsgPack = GetArgs("MessagePack", true, "mp");
             string JSON = GetArgs("JSON", true, "json");
             string BIN = GetArgs("BIN", true, "bin");
-            string XML = GetArgs("XML", true, "xml");
-            
+            string WAV = GetArgs("WAV", true, "wav");
+
             FileNames = new string[0];
             if (code == 1)
             {
@@ -79,14 +80,14 @@ namespace KKdMainLib
                 OpenFileDialog ofd = new OpenFileDialog { InitialDirectory =
                     Application.StartupPath, Multiselect = true };
 
-                     if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "json", "mp") +
+                    if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") + JSON + MsgPack;
                 else if (filetype == "bin" ) ofd.Filter = GetArgs("BIN" , "bin", "json", "mp") +
                         BIN + JSON + MsgPack;
                 else if (filetype == "bon" ) ofd.Filter = GetArgs("BON" , "bon", "bin", "json", "mp") +
                         GetArgs("BON", true, "bon") + BIN + JSON + MsgPack;
-                else if (filetype == "databank") ofd.Filter = GetArgs("DAT" , "dat", "xml") +
-                        GetArgs("DAT", true, "dat") + XML;
+                else if (filetype == "databank") ofd.Filter = GetArgs("DAT", "dat", "json", "mp") +
+                        GetArgs("DAT", true, "dat") + JSON + MsgPack;
                 else if (filetype == "dex" ) ofd.Filter = GetArgs("DEX" , "dex", "bin", "json", "mp") +
                         GetArgs("DEX", true, "dex") + BIN + JSON + MsgPack;
                 else if (filetype == "diva") ofd.Filter = GetArgs("DIVA", "diva", "wav") +
@@ -96,17 +97,15 @@ namespace KKdMainLib
                 else if (filetype == "farc") ofd.Filter = "FARC Archives (*.farc)|*.farc";
                 else if (filetype == "image") ofd.Filter = GetArgs("Image", "dds", "png") +
                         GetArgs("DDS", true, "dds") + GetArgs("PNG", true, "png");
-                else if (filetype == "kki") ofd.Filter = GetArgs("KKI", "kki");
-                else if (filetype == "mot") ofd.Filter = GetArgs("MOT", "mot", "json", "mp") +
-                        GetArgs("MOT", true, "mot") + JSON + MsgPack;
-                else if (filetype == "ppd") ofd.Filter = GetArgs("PPD", "ppd", "pak", "mod") +
+                else if (filetype == "json") ofd.Filter = "JSON (*.json)|*.json";
+                else if (filetype == "kki" ) ofd.Filter = GetArgs("KKI", "kki");
+                else if (filetype == "ppd" ) ofd.Filter = GetArgs("PPD", "ppd", "pak", "mod") +
                         GetArgs("PPD", true, "ppd") + GetArgs("PAK", true, "pak") + GetArgs("MOD", true, "mod");
-                else if (filetype == "str") ofd.Filter = GetArgs("STR", "str", "bin", "json", "mp") +
+                else if (filetype == "str" ) ofd.Filter = GetArgs("STR", "str", "bin", "json", "mp") +
                         GetArgs("STR", true, "str") + BIN + JSON + MsgPack;
-                else if (filetype == "vag") ofd.Filter = GetArgs("VAG", "vag", "wav") +
+                else if (filetype == "vag" ) ofd.Filter = GetArgs("VAG", "vag", "wav") +
                         GetArgs("VAG", true, "vag") + GetArgs("WAV", true, "wav");
-                else if (filetype == "xml") ofd.Filter = GetArgs("XML", "xml");
-                else ofd.Filter = GetArgs("All;", false, "*");
+                else                        ofd.Filter = GetArgs("All;", false, "*");
 
                 if (ofd.ShowDialog() == DialogResult.OK)
                     FileNames = ofd.FileNames;
@@ -280,7 +279,10 @@ namespace KKdMainLib
             }
             else if (!Dict.ContainsKey(args[0])) Dict.Add(args[0], value);
         }
-        
+
+        public static TKey GetKey<TKey, TVal>(this Dictionary<TKey, TVal> Dict, TVal val) =>
+            Dict.First((KeyValuePair<TKey, TVal> x) => x.Value.Equals(val)).Key;
+
         public static string ToTitleCase(this string s)
         { return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s); }
 

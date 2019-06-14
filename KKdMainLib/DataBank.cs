@@ -1,174 +1,94 @@
 ﻿using System;
 using System.Net;
-using System.Xml.Linq;
 using KKdMainLib.IO;
+using KKdMainLib.MessagePack;
 
 namespace KKdMainLib
 {
     public class DataBank
     {
-        public DataBank()
-        { Success = false; Xml = null; IO = null; pvList = null; }
+        public DataBank() { Success = false; IO = null; pvList = null; }
 
-        public bool Success { get; private set; }
-
-        private Xml Xml;
         private Stream IO;
+        private int i;
 
         private PvList[] pvList;
+
+        private const string d = ".";
+        private const string c = ",";
+
+        public bool Success { get; private set; }
 
         public void DBReader(string file)
         {
             Success = false;
             if (!File.Exists(file)) return;
+            string text = File.ReadAllText(file);
+            while (text.Contains("%")) text = WebUtility.UrlDecode(text);
+            string[] array = text.Split(',');
 
-            string out_data = File.ReadAllText(file);
-            while (out_data.Contains("%")) out_data = WebUtility.UrlDecode(out_data);
-
-            string[] data_split = out_data.Split(',');
-            
-            if (file.Contains("PvList"))
+            if (file.Contains("PvList") && array.Length % 7 < 2)
             {
-                if (data_split.Length % 7 < 2)
-                {
-                    int Count = data_split.Length / 7;
-                    pvList = new PvList[Count];
-                    for (int i = 0; i < Count; i++)
-                        pvList[i].SetValue(data_split, i);
-                    Success = true;
-                    return;
-                }
+                pvList = new PvList[array.Length / 7];
+                for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i);
+                Success = true;
             }
         }
 
         public void DBWriter(string file)
         {
             if (!Success) return;
-            
+
             IO = File.OpenWriter();
             if (file.Contains("PvList"))
-                if (pvList.Length > 0)
-                    for (int i = 0; i < pvList.Length; i++)
+            {
+                if (pvList.Length != 0)
+                    for (i = 0; i < pvList.Length; i++)
                         IO.Write(UrlEncode(pvList[i].ToString() +
-                            (i + 1 != pvList.Length ? c : "")));
+                            ((i + 1 != pvList.Length) ? "," : "")));
                 else IO.Write("%2A%2A%2A");
+            }
 
-            byte[] data = IO.ToArray(true);
-
-            ushort checksum = DCC.CalculateChecksum(data);
-            uint time = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-
-            File.WriteAllBytes(file + "_" + checksum + "_" + time + ".dat", data);
+            byte[] data = IO.ToArray(Close: true);
+            ushort num = DCC.CalculateChecksum(data);
+            uint num2 = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
         }
 
-        public void XMLReader(string file)
+        public void MsgPackReader(string file, bool JSON)
         {
             Success = false;
+            MsgPack msgPack = file.ReadMP(JSON);
+            bool compact = msgPack.ReadBoolean("Compact");
 
-            if (!File.Exists(file)) return;
-
-            Xml = new Xml();
-            Xml.OpenXml(file, true);
-
-            if (file.Contains("PvList"))
-                foreach (XElement PvList in Xml.doc.Elements("PvList"))
-                {
-                    int Count = 0;
-                    foreach (XElement PV in PvList.Elements()) if (PV.Name == "PV") Count++;
-
-                    pvList = new PvList[Count];
-                    int i = 0;
-                    foreach (XElement PV in PvList.Elements())
-                    {
-                        pvList[i].SetValue(PV);
-                        i++;
-                    }
-                }
-
-            Success = true;
+            if (file.Contains("PvList") && msgPack.Element<MsgPack>("PvList", out MsgPack PvList))
+            {
+                pvList = new PvList[PvList.Array.Length];
+                for (i = 0; i < pvList.Length; i++)
+                    pvList[i].SetValue((MsgPack)PvList[i], compact);
+                Success = true;
+            }
+            msgPack = null;
         }
 
-        public void XMLWriter(string file)
+        public void MsgPackWriter(string file, bool JSON, bool Compact = true)
         {
             if (!Success) return;
-
-            Xml = new Xml { Compact = true };
+            MsgPack msgPack = new MsgPack();
 
             if (file.Contains("PvList"))
             {
-                XElement PvList = new XElement("PvList");
-                foreach (PvList pv in pvList)
-                    PvList.Add(pv.WriteXml(Xml, "PV"));
-                Xml.doc.Add(PvList);
-            }
+                if (Compact) msgPack.Add("Compact", Compact);
 
-            if (File.Exists(file)) File.Delete(file);
-            Xml.SaveXml(file);
+                MsgPack PvList = new MsgPack("PvList", pvList.Length);
+                for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
+                msgPack.Add(PvList);
+            }
+            msgPack.Write(file, JSON).Dispose();
         }
 
-        public struct Player
-        {
-            public int Score0;
-            public int Score1;
-            public string Name0;
-            public string Name1;
-            public int Diff;
-            public bool Has2P => Name1 != null;
-
-            public void SetValue(string[] data, int i = 0, int offset = 0)
-            {
-                string[] arr = data[i * 13 + 0 + offset * 4].Split('.');
-                Score0 = int.Parse(arr[0]);
-                if (arr.Length > 1) Score1 = int.Parse(arr[1]);
-
-                string temp = "";
-                for (int i1 = 0; i1 < data[i * 13 + 1 + offset * 4].Length; i1++)
-                {
-                    temp += data[i * 13 + 1 + offset * 4][i1];
-                    if (temp.EndsWith("xxx")) { Name0 = temp.Remove(temp.Length - 3); temp = ""; }
-                }
-                if (arr.Length == 1) Name0 = temp;
-                else                 Name1 = temp;
-                Diff = int.Parse(data[i * 13 + 2 + offset * 4]);
-            }
-
-            public void SetValue(XElement value)
-            {
-                Name1 = null;
-                foreach (XAttribute Entry in value.Attributes())
-                         if (Entry.Name == "Score" ) Score0 = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Name"  ) Name0  = Entry.Value;
-                    else if (Entry.Name == "Diff"  ) Diff   = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Score0") Score0 = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Score1") Score1 = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Name0" ) Name0  = Entry.Value;
-                    else if (Entry.Name == "Name1" ) Name1  = Entry.Value;
-            }
-
-            public XElement WriteXml(Xml Xml, string name)
-            {
-                XElement element = new XElement(name);
-                if (!Has2P)
-                {
-                    Xml.Writer(element, Score0, "Score");
-                    Xml.Writer(element, Name0 , "Name" );
-                }
-                else
-                {
-                    Xml.Writer(element, Score0, "Score0");
-                    Xml.Writer(element, Score1, "Score1");
-                    Xml.Writer(element, Name0 , "Name0" );
-                    Xml.Writer(element, Name1 , "Name1" );
-                }
-                Xml.Writer(element, Diff, "Diff");
-                return element;
-            }
-
-            public override string ToString() => (Score0 + (Has2P ? d + Score1 : "") + c + UrlEncode(Name0) +
-                (Has2P ? "xxx" + UrlEncode(Name1) : "") + c + Diff + c + (Has2P ? "0.1" : "0")).Replace("*", "%2A");
-        }
-
-        public static string UrlEncode(string value) => WebUtility.UrlEncode(value).Replace("+", "%20");
+        public static string UrlEncode(string value) =>
+            WebUtility.UrlEncode(value).Replace("+", "%20");
 
         public struct PvList
         {
@@ -182,120 +102,147 @@ namespace KKdMainLib
 
             public void SetValue(string[] data, int i = 0)
             {
-                ID     = int.Parse(data[i * 7 + 0]);
+                    ID = int.Parse(data[i * 7]);
                 Enable = int.Parse(data[i * 7 + 1]) == 1;
-                Extra  = int.Parse(data[i * 7 + 2]) == 1;
+                 Extra = int.Parse(data[i * 7 + 2]) == 1;
                 AdvDemoStart.SetValue(data[i * 7 + 3]);
                 AdvDemoEnd  .SetValue(data[i * 7 + 4]);
                 StartShow   .SetValue(data[i * 7 + 5]);
                   EndShow   .SetValue(data[i * 7 + 6]);
             }
 
-            public override string ToString() => UrlEncode(ID +
-                c + (Enable ? 1 : 0) + c + (Extra ? 1 : 0) +
-                c + AdvDemoStart.ToString() + c + AdvDemoEnd.ToString() +
-                c + StartShow   .ToString() + c + EndShow   .ToString());
-
-            public void SetValue(XElement Value)
+            public void SetValue(MsgPack msg, bool Compact)
             {
-                Enable = true;
-                foreach (XAttribute Entry in Value.Attributes())
-                         if (Entry.Name == "ID"       ) ID        =  int.Parse(Entry.Value);
-                    else if (Entry.Name == "Enable"   ) Enable    = bool.Parse(Entry.Value);
-                    else if (Entry.Name == "Extra"    ) Extra     = bool.Parse(Entry.Value);
+                MsgPack Temp = new MsgPack();
+                this.Enable =  true;
+                this.Extra  = false;
 
-                AdvDemoStart.SetDefaultUpper();
-                AdvDemoEnd  .SetDefaultLower();
-                StartShow   .SetDefaultLower();
-                  EndShow   .SetDefaultUpper();
-
-                foreach (XElement value in Value.Elements())
-                         if (value.Name == "AdvDemoStart") AdvDemoStart.SetValue(value);
-                    else if (value.Name == "AdvDemoEnd"  ) AdvDemoEnd  .SetValue(value);
-                    else if (value.Name == "StartShow"   ) StartShow   .SetValue(value);
-                    else if (value.Name ==   "EndShow"   )   EndShow   .SetValue(value);
+                ID = msg.ReadInt32("ID");
+                bool? Enable = msg.ReadNBoolean("Enable");
+                bool? Extra  = msg.ReadNBoolean("Extra");
+                if (Enable.HasValue) this.Enable = (bool)Enable;
+                if (Extra .HasValue) this.Extra  = (bool)Extra ;
+                if (Compact)
+                {
+                    AdvDemoStart.SetValue(msg.ReadNInt32("AdvDemoStart"),  true);
+                    AdvDemoEnd  .SetValue(msg.ReadNInt32("AdvDemoEnd"  ), false);
+                    StartShow   .SetValue(msg.ReadNInt32("StartShow"   ), false);
+                      EndShow   .SetValue(msg.ReadNInt32(  "EndShow"   ),  true);
+                    return;
+                }
+                if (msg.Element("AdvDemoStart", out Temp)) AdvDemoStart.SetValue(Temp,  true);
+                if (msg.Element("AdvDemoEnd"  , out Temp)) AdvDemoEnd  .SetValue(Temp, false);
+                if (msg.Element("StartShow"   , out Temp)) StartShow   .SetValue(Temp, false);
+                if (msg.Element(  "EndShow"   , out Temp))   EndShow   .SetValue(Temp,  true);
             }
 
-            public XElement WriteXml(Xml Xml, string name)
+            public MsgPack WriteMP(bool Compact)
             {
-                XElement element = new XElement(name);
-                Xml.Writer(element, ID    , "ID"    );
-                if (!Enable) Xml.Writer(element, Enable, "Enable");
-                if ( Extra ) Xml.Writer(element, Extra , "Extra" );
-                if (AdvDemoEnd.WriteLower)
-                    element.Add(AdvDemoStart.WriteXml(Xml, "AdvDemoStart"));
-                if (AdvDemoEnd.WriteLower)
-                    element.Add(AdvDemoEnd  .WriteXml(Xml, "AdvDemoEnd"  ));
-                if (StartShow     .WriteLower)
-                    element.Add(StartShow   .WriteXml(Xml, "StartShow"   ));
-                if (  EndShow     .WriteUpper)
-                    element.Add(EndShow     .WriteXml(Xml,   "EndShow"   ));
-                return element;
+                MsgPack msgPack = new MsgPack();
+                msgPack.Add("ID", ID);
+                if (!Enable) msgPack.Add("Enable", Enable);
+                if ( Extra ) msgPack.Add("Extra" , Extra );
+                if (Compact)
+                {
+                    if (AdvDemoStart.WriteLower) msgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
+                    if (AdvDemoEnd  .WriteLower) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WriteInt());
+                    if (StartShow   .WriteLower) msgPack.Add("StartShow"   , StartShow   .WriteInt());
+                    if (  EndShow   .WriteUpper) msgPack.Add(  "EndShow"   ,   EndShow   .WriteInt());
+                }
+                else
+                {
+                    if (AdvDemoStart.WriteLower) msgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
+                    if (AdvDemoEnd  .WriteLower) msgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
+                    if (StartShow   .WriteLower) msgPack.Add(StartShow   .WriteMP("StartShow"   ));
+                    if (  EndShow   .WriteUpper) msgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
+                }
+                return msgPack;
             }
+
+            public override string ToString() =>
+                UrlEncode(ID + "," + (Enable ? 1 : 0) + "," + (Extra ? 1 : 0) + "," +
+                    AdvDemoStart.ToString() + "," + AdvDemoEnd.ToString() + "," +
+                    StartShow.ToString() + "," + EndShow.ToString());
         }
-
-        private const string d = ".";
-        private const string c = ",";
 
         public struct Date
         {
-            private int year ;
+            private int  year;
             private int month;
-            private int day  ;
+            private int  day;
 
-            public int Year  { get => year ; set { year  = value; CheckDate(); } }
+            public int  Year { get =>  year; set {  year = value; CheckDate(); } }
+
             public int Month { get => month; set { month = value; CheckDate(); } }
-            public int Day   { get => day  ; set { day   = value; CheckDate(); } }
 
-            public bool WriteUpper => (Year == 2029 && Month == 1 && Day == 1) ^ true;
-            public bool WriteLower => (Year == 2000 && Month == 1 && Day == 1) ^ true;
+            public int   Day { get =>   day; set {   day = value; CheckDate(); } }
 
-            public void SetDefaultLower() => Year = 1999;
+            public bool WriteUpper => Year != 2029 || Month != 1 || Day != 1;
+            public bool WriteLower => Year != 2000 || Month != 1 || Day != 1;
+
+            public void SetDefaultLower() => Year = 2000;
             public void SetDefaultUpper() => Year = 2029;
 
             public void SetValue(string data)
             {
-                string[] arr = data.Split('-');
-                if (arr.Length != 3) return;
-                Year  = int.Parse(arr[0]);
-                Month = int.Parse(arr[1]);
-                Day   = int.Parse(arr[2]);
+                string[] array = data.Split('-');
+                if (array.Length == 3)
+                {
+                     Year = int.Parse(array[0]);
+                    Month = int.Parse(array[1]);
+                      Day = int.Parse(array[2]);
+                }
             }
+
+            public void SetValue(int? YMD, bool SetDefaultUpper)
+            {
+                if (!SetDefaultUpper) SetDefaultLower();
+                else             this.SetDefaultUpper();
+                if (YMD != null)
+                {
+                    year  = YMD.Value / 10000;
+                    month = YMD.Value / 100 % 100;
+                    day   = YMD.Value % 100;
+                    CheckDate();
+                }
+            }
+
+            public void SetValue(MsgPack msg, bool SetDefaultUpper)
+            {
+                if (!SetDefaultUpper) SetDefaultLower();
+                else             this.SetDefaultUpper();
+                int?  Year = msg.ReadNInt32( "Year");
+                int? Month = msg.ReadNInt32("Month");
+                int?   Day = msg.ReadNInt32(  "Day");
+                if ( Year != null)  year =  Year.Value;
+                if (Month != null) month = Month.Value;
+                if (  Day != null)   day =   Day.Value;
+                CheckDate();
+            }
+
+            public int WriteInt() =>
+                (Year * 100 + Month) * 100 + Day;
+
+            public MsgPack WriteMP(string name) =>
+                new MsgPack(name).Add("Year", Year).Add("Month", Month).Add("Day", Day);
 
             private void CheckDate()
             {
-                     if (year <  2000) { year = 2000; month = 1; day = 1; return; }
-                else if (year >= 2029) { year = 2029; month = 1; day = 1; return; }
-
-                     if (month <  1) month =  1;
+                if (year <  2000) { year = 2000; month = 1; day = 1; return; }
+                if (year >= 2029) { year = 2029; month = 1; day = 1; return; }
+                     if (month <  1) month = 1;
                 else if (month > 12) month = 12;
-                     if (day   <  1) day   =  1;
-                else if (day   > 31 && (month == 1 || month == 3 || month == 5 ||
-                    month == 7 || month == 8 || month == 10 || month == 12)) day = 31;
-                else if (day   > 30 && (month == 4 || month == 6 || month == 9 || month == 11)) day = 30;
-                else if (day   > 29 && month == 2 && year % 4 == 0) day = 29;
-                else if (day   > 28 && month == 2 && year % 4 != 0) day = 29;
+                     if (day <  1) day = 1;
+                else if (day > 31 && (month == 1 || month ==  3 || month ==  5 ||
+                        month == 7 || month == 8 || month == 10 || month == 12)) day = 31;
+                else if (day > 30 && (month == 4 || month ==  6 ||
+                                      month == 9 || month == 11)) day = 30;
+                else if (day > 29 && month == 2 && year % 4 == 0) day = 29;
+                else if (day > 28 && month == 2 && year % 4 != 0) day = 28;
             }
 
             public override string ToString() =>
                 Year.ToString("d4") + "-" + Month.ToString("d2") + "-" + Day.ToString("d2");
-
-            public void SetValue(XElement value)
-            {
-                foreach (XAttribute Entry in value.Attributes())
-                         if (Entry.Name == "Year" ) Year  = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Month") Month = int.Parse(Entry.Value);
-                    else if (Entry.Name == "Day"  ) Day   = int.Parse(Entry.Value);
-            }
-
-            public XElement WriteXml(Xml Xml, string name)
-            {
-                XElement element = new XElement(name);
-                Xml.Writer(element, Year , "Year" );
-                Xml.Writer(element, Month, "Month");
-                Xml.Writer(element, Day  , "Day"  );
-                return element;
-            }
         }
     }
 }

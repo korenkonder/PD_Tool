@@ -54,6 +54,7 @@ namespace PD_Tool
                     Auth.MsgPackReader(filepath, ext == ".json");
                     Auth.BINWriter    (filepath);
                 }
+                Auth = null;
             }
         }
 
@@ -83,6 +84,7 @@ namespace PD_Tool
                     Aet.MsgPackReader(filepath, ext == ".json");
                     Aet.BINWriter    (filepath);
                 }
+                Aet = null;
             }
         }
 
@@ -112,6 +114,7 @@ namespace PD_Tool
                     Spr.MsgPackReader(filepath, ext == ".json");
                     Spr.BINWriter    (filepath);
                 }
+                Spr = null;
             }
         }
     }

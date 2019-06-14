@@ -17,6 +17,24 @@ namespace KKdMainLib.MessagePack
             return MsgPack;
         }
 
+        public static void WriteAfterAll(this MsgPack mp, bool Temp, string file, bool JSON = false)
+        { if (Temp) new MsgPack().Add(mp).WriteAfterAll(file, JSON).Dispose();
+          else                        mp .WriteAfterAll(file, JSON); }
+
+        public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool JSON = false)
+        {
+            byte[] data = null;
+            if (JSON)
+            { JSONIO IO = new JSONIO(File.OpenWriter());
+                IO.Write(mp, false, true); data = IO._IO.ToArray(true); }
+            else
+            {   MPIO IO = new   MPIO(File.OpenWriter());
+                IO.Write(mp, false      ); data = IO._IO.ToArray(true); }
+            File.WriteAllBytes(file + (JSON ? ".json" : ".mp"), data);
+            return mp;
+        }
+
+
         public static void Write(this MsgPack mp, bool Temp, string file, bool JSON = false)
         { if (Temp) new MsgPack().Add(mp).Write(file, JSON).Dispose();
           else                        mp .Write(file, JSON); }
@@ -31,5 +49,11 @@ namespace KKdMainLib.MessagePack
                 IO.Write(mp, true      ); IO = null; }
             return mp;
         }
+
+        public static void ToJSON   (this string file) =>
+            file.ReadMP(    ).Write(file, true).Dispose();
+
+        public static void ToMsgPack(this string file) =>
+            file.ReadMP(true).Write(file      ).Dispose();
     }
 }

@@ -38,13 +38,13 @@ namespace KKdMainLib.IO
             return Data.Replace("\r", "").Split('\n'); }
 
         public static void WriteAllBytes(string file,   byte[] data)
-        { Stream IO = OpenWriter(file); IO.Write(data); IO.Close(); }
+        { Stream IO = OpenWriter(file, true); IO.Write(data); IO.Close(); }
 
         public static void WriteAllText (string file, string   data)
-        { Stream IO = OpenWriter(file); IO.Write(data); IO.Close(); }
+        { Stream IO = OpenWriter(file, true); IO.Write(data); IO.Close(); }
 
         public static void WriteAllLines(string file, string[] data)
-        { Stream IO = OpenWriter(file); for (int i = 0; i < data.Length; i++)
+        { Stream IO = OpenWriter(file, true); for (int i = 0; i < data.Length; i++)
                 IO.Write(data[i] + "\r\n"); IO.Close(); }
 
         public static bool Exists(string file) => MSIO.File.Exists(file);

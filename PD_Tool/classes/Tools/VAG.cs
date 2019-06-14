@@ -11,6 +11,10 @@ namespace PD_Tool.Tools
         {
             Console.Title = "VAG Converter";
             Main.Choose(1, "vag", out string[] FileNames);
+            if (FileNames.Length < 1) return;
+            string filepath = "";
+            string ext = "";
+
             bool InputWAV = false;
             foreach (string file in FileNames)
                 if (Path.GetExtension(file) == ".wav")
@@ -29,31 +33,22 @@ namespace PD_Tool.Tools
                 Main.ConsoleDesign(true);
                 Console.WriteLine();
                 string format = Console.ReadLine();
-                HE_VAG = format != "2";
+                HE_VAG = format == "2";
             }
 
             KKdVAG VAG;
             foreach (string file in FileNames)
-                try
-                {
-                    string ext = Path.GetExtension(file);
-                    string filepath = file.Remove(file.Length - ext.Length);
-                    Console.Title = "VAG Converter: " +
-                        Path.GetFileNameWithoutExtension(file);
-                    VAG = new KKdVAG() { file = filepath };
-                    switch (ext.ToLower())
-                    {
-                        case ".vag":
-                            VAG.VAGReader();
-                            VAG.WAVWriter();
-                            break;
-                        case ".wav":
-                            VAG.WAVReader();
-                            VAG.VAGWriter(HE_VAG);
-                            break;
-                    }
-                }
-                catch (Exception e) { Console.WriteLine(e.Message); }
+            {
+                VAG = new KKdVAG();
+                ext      = Path.GetExtension(file);
+                filepath = file.Replace(ext, "");
+                ext      = ext.ToLower();
+
+                Console.Title = "VAG Converter: " + Path.GetFileNameWithoutExtension(file);
+                     if (ext == ".vag") { VAG.VAGReader(filepath); VAG.WAVWriter(filepath        ); }
+                else if (ext == ".wav") { VAG.WAVReader(filepath); VAG.VAGWriter(filepath, HE_VAG); }
+                VAG = null;
+            }
         }
     }
 }

@@ -188,7 +188,7 @@ namespace KKdMainLib.A3DA
         {
             if (MT.BinOffset == null) return;
 
-            IO.Position = IO.Offset + (int)MT.BinOffset;
+            IO.Position = (int)MT.BinOffset;
 
             IO.ReadOffset(out MT.Scale);
             IO.ReadOffset(out MT.Rot  );
@@ -217,7 +217,7 @@ namespace KKdMainLib.A3DA
             if (Key == null) return;
             if (Key.BinOffset == null || Key.BinOffset < 0) return;
             
-            IO.Position = IO.Offset + (int)Key.BinOffset;
+            IO.Position = (int)Key.BinOffset;
             Key.Type = IO.ReadInt32();
 
             Key.Value = IO.ReadSingle();
@@ -314,27 +314,25 @@ namespace KKdMainLib.A3DA
 
             if (Key.Type < 2) return Key;
 
-            if (!k.Element("Trans", out MsgPack Trans, typeof(object[]))) return Key;
+            if (!k.Element<MsgPack>("Trans", out MsgPack Trans)) return Key;
 
-            Key.Length = ((object[])Trans.Object).Length;
+            Key.Length = Trans.Array.Length;
             Key.Trans = new Key.Transform[Key.Length.Value];
-            MsgPack _Trans = new MsgPack();
             byte i1 = 0;
             for (int i = 0; i < Key.Length; i++)
             {
                 Key.Trans[i] = new Key.Transform();
-                if (Trans[i].GetType() != typeof(MsgPack)) continue;
+                if (Trans[i] is MsgPack _Trans)
+                {
+                    if (_Trans.Array == null) continue;
+                    Key.Trans[i].Type = _Trans.Array.Length - 1;
+                    Key.Trans[i].Value = new double[Key.Trans[i].Type];
+                    
+                    Key.Trans[i].Frame = (_Trans[0] as MsgPack).ReadDouble();
 
-                _Trans = (MsgPack)Trans[i];
-                if (_Trans.Object.GetType() != typeof(object[])) continue;
-                Key.Trans[i].Type = ((object[])_Trans.Object).Length - 1;
-                Key.Trans[i].Value = new double[Key.Trans[i].Type];
-
-                if (_Trans[0].GetType() != typeof(MsgPack)) continue;
-                Key.Trans[i].Frame = ((MsgPack)_Trans[0]).ReadDouble();
-
-                for (i1 = 0; i1 < Key.Trans[i].Type; i1++)
-                    Key.Trans[i].Value[i1] = ((MsgPack)_Trans[i1 + 1]).ReadDouble();
+                    for (i1 = 0; i1 < Key.Trans[i].Type; i1++)
+                        Key.Trans[i].Value[i1] = ((MsgPack)_Trans[i1 + 1]).ReadDouble();
+                }
             }
             return Key;
         }

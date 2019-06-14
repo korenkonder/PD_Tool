@@ -12,19 +12,17 @@ namespace KKdSoundLib
         private const uint BS = 28; //VAGBlockSize
         private int[] Samp1, Samp2, Samp3, Samp4;
         private int* S1Ptr, S2Ptr, S3Ptr, S4Ptr;
+        private bool Success = false;
 
         public VAGFile VAGData = new VAGFile();
-        public string file = "";
 
-        public VAG() { VAGData = new VAGFile(); file = "";
+        public VAG() { VAGData = new VAGFile();
             HEVAG1Ptr = HEVAG1.GetPtr(); HEVAG2Ptr = HEVAG2.GetPtr();
-            HEVAG3Ptr = HEVAG3.GetPtr(); HEVAG4Ptr = HEVAG4.GetPtr();
-        }
-
-        public VAG(string filepath) { VAGData = new VAGFile(); file = filepath; }
+            HEVAG3Ptr = HEVAG3.GetPtr(); HEVAG4Ptr = HEVAG4.GetPtr(); }
         
-        public void VAGReader()
+        public void VAGReader(string file)
         {
+            Success = false;
             if (!File.Exists(file + ".vag")) return;
             
             VAGData = new VAGFile();
@@ -146,6 +144,7 @@ namespace KKdSoundLib
 
             VAGData.DataPtr = VAGData.OriginDataPtr;
             reader.Close();
+            Success = true;
         }
 
         private void DecodeHEVAG()
@@ -175,33 +174,44 @@ namespace KKdSoundLib
             }
         }
         
-        public void WAVWriterStraight()
+        public void WAVWriterStraight(string file, bool IgnoreEndFlags = false)
         {
+            if (!Success) return;
             byte Flag = VAGData.Flags[0];
             if (Flag == 7) return;
             WAV.Header Header = new WAV.Header();
             Stream writer = File.OpenWriter(file + ".wav", true);
             writer.LongPosition = 0x2C;
-
-            for (i = 0; i < BS; i++)
-                for (c = 0; c < ch; c++)
-                {
-                    f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
-                    writer.Write(f);
-                }
-
-            for (i1 = 0, i2 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
-            {
-                Flag = VAGData.Flags[i1];
-                if (Flag == 5 || Flag > 6) break;
+            
+            if (Flag < 8)
                 for (i = 0; i < BS; i++)
                     for (c = 0; c < ch; c++)
                     {
                         f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
                         writer.Write(f);
                     }
+            else
+                for (i = 0; i < BS; i++)
+                    for (c = 0; c < ch; c++)
+                        writer.Write(0f);
 
-                if (Flag == 1) break;
+            for (i1 = 0, i2 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
+            {
+                Flag = VAGData.Flags[i1];
+                if (!IgnoreEndFlags && Flag == 5 || Flag == 7) break;
+                if (Flag < 8)
+                    for (i = 0; i < BS; i++)
+                        for (c = 0; c < ch; c++)
+                        {
+                            f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
+                            writer.Write(f);
+                        }
+                else
+                    for (i = 0; i < BS; i++)
+                        for (c = 0; c < ch; c++)
+                            writer.Write(0f);
+
+                if (!IgnoreEndFlags && Flag == 1) break;
             }
             VAGData.DataPtr = VAGData.OriginDataPtr;
 
@@ -211,29 +221,36 @@ namespace KKdSoundLib
             writer.Close();
         }
 
-        public void WAVWriter()
+        public void WAVWriter(string file, bool IgnoreEndFlags = false)
         {
+            if (!Success) return;
             byte Flag = VAGData.Flags[0];
             if (Flag == 7) return;
             WAV.Header Header = new WAV.Header();
             Stream writer;
-            if (Flag == 6) writer = File.OpenWriter(file + ".loop.0.wav", true);
-            else           writer = File.OpenWriter(file +      ".0.wav", true);
+            if (!IgnoreEndFlags && Flag == 6) writer = File.OpenWriter(file + ".loop.0.wav", true);
+            else                              writer = File.OpenWriter(file +      ".0.wav", true);
             writer.LongPosition = 0x2C;
 
-            for (i = 0; i < BS; i++)
-                for (c = 0; c < ch; c++)
-                {
-                    f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
-                    writer.Write(f);
-                }
+            if (Flag < 8)
+                for (i = 0; i < BS; i++)
+                    for (c = 0; c < ch; c++)
+                    {
+                        f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
+                        writer.Write(f);
+                    }
+            else
+                for (i = 0; i < BS; i++)
+                    for (c = 0; c < ch; c++)
+                        writer.Write(0f);
+
             VAGData.DataPtr += VBS;
 
             for (i1 = 1, i2 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
             {
                 Flag = VAGData.Flags[i1];
-                if (Flag == 5 || Flag > 6) break;
-                else if (Flag == 6)
+                if (!IgnoreEndFlags && Flag == 5 || Flag == 7) break;
+                else if (!IgnoreEndFlags && Flag == 6)
                 {
                     Header = new WAV.Header { Bytes = 4, Channels = ch, Format = 3, SampleRate =
                         VAGData.SampleRate, Size = writer.UIntPosition - 0x2C };
@@ -245,15 +262,20 @@ namespace KKdSoundLib
                     writer.LongPosition = 0x2C;
                 }
 
-                for (i = 0; i < BS; i++)
-                    for (c = 0; c < ch; c++)
-                    {
-                        f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
-                        writer.Write(f);
-                    }
+                if (!IgnoreEndFlags && Flag < 8)
+                    for (i = 0; i < BS; i++)
+                        for (c = 0; c < ch; c++)
+                        {
+                            f = (float)(VAGData.DataPtr[i * ch + c] / 8388608.0);
+                            writer.Write(f);
+                        }
+                else
+                    for (i = 0; i < BS; i++)
+                        for (c = 0; c < ch; c++)
+                            writer.Write(0f);
 
-                if (Flag == 1) break;
-                else if (Flag == 3)
+                     if (!IgnoreEndFlags && Flag == 1) break;
+                else if (!IgnoreEndFlags && Flag == 3)
                 {
                     Header = new WAV.Header { Bytes = 4, Channels = ch, Format = 3, SampleRate =
                         VAGData.SampleRate, Size = writer.UIntPosition - 0x2C };
@@ -276,8 +298,9 @@ namespace KKdSoundLib
             writer.Close();
         }
 
-        public int WAVReaderStraight(bool ExtendedFlagging = false)
+        public int WAVReaderStraight(string file, bool ExtendedFlagging = false)
         {
+            Success = false;
             VAGData = new VAGFile();
             Stream reader = File.OpenReader(file + ".wav");
             WAV.Header Header = reader.ReadWAVHeader();
@@ -318,16 +341,18 @@ namespace KKdSoundLib
             VAGData.Flags[VAGData.Size - 1] = 0x1;
 
             reader.Close();
+            Success = true;
             return 0;
         }
 
-        public int WAVReader(bool ExtendedFlagging = false)
+        public int WAVReader(string file, bool ExtendedFlagging = false)
         {
+            Success = false;
             string[] Files;
             bool HasLoop = false;
             bool[] Loop;
             {
-                if (!file.EndsWith(".0")) return WAVReaderStraight();
+                if (!file.EndsWith(".0")) return WAVReaderStraight(file);
                 file = file.Remove(file.Length - 2);
                 i2 = 0;
                 System.Collections.Generic.List<string> files = 
@@ -430,11 +455,13 @@ namespace KKdSoundLib
             VAGData.Channels = ch;
             VAGData.SampleRate = SampleRate;
 
+            Success = true;
             return 0;
         }
 
-        public void VAGWriter(bool HEVAG = true)
+        public void VAGWriter(string file, bool HEVAG = true)
         {
+            if (!Success) return;
             VAGData.Name = Path.GetFileName(file);
             Stream writer = File.OpenWriter(file + ".vag", true);
             Samp1 = new int[ch]; S1Ptr = Samp1.GetPtr();
@@ -465,6 +492,7 @@ namespace KKdSoundLib
             if (HEVAG) writer.Write(VAGData.Channels);
             else       writer.Write((ushort)0x1);
             writer.Write(VAGData.Name);
+            writer.LongLength = 0x30;
             writer.LongPosition = 0x30;
 
             if (HEVAG)

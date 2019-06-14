@@ -9,6 +9,9 @@ namespace KKdMainLib.MessagePack
         public Types Type;
         public string Name;
         public object Object;
+
+        public      object[] Array => Object is      object[] List  ? List  : null;
+        public List<object>   List => Object is List<object>  Array ? Array : null;
         
         public MsgPack(             Types Type = Types.Map32) => NewMsgPack(null, Type);
         public MsgPack(string Name, Types Type = Types.Map32) => NewMsgPack(Name, Type);
@@ -16,7 +19,7 @@ namespace KKdMainLib.MessagePack
         public MsgPack(string Name, long Count) => NewMsgPack(Name, Count);
         public MsgPack(string Name, Types Type, object Object)
         { this.Name = Name; this.Type = Type; this.Object = Object; }
-        public MsgPack(string Name, object Object)
+        public MsgPack(string Name, bool TypeIsntKnown, object Object)
         {
             switch (Object)
             {
@@ -37,6 +40,7 @@ namespace KKdMainLib.MessagePack
                 case      double  val: Type = Types.Float64; break;
                 case      string  val: Type = Types.  Str32; break;
                 case         Ext  val: Type = Types.  Ext32; break;
+                case             null: Type = Types.    Nil; break;
             }
             this.Name = Name; this.Object = Object;
         }
@@ -44,8 +48,11 @@ namespace KKdMainLib.MessagePack
         public static MsgPack Null => null;
 
         public object this[int index]
-        {   get { return ((object[])Object)[index]; }
-            set { object[] Data = (object[])Object; Data[index] = value; Object = Data; } }
+        {   get { if (Array != null) return Array[index]; return null; }
+            set { if (Array != null)        Array[index] = value; } }
+        
+        public MsgPack Add(object obj)
+        { if (obj != null && List != null) List.Add(obj); return this; }
 
         public MsgPack(List<object> Object, string Name, Types Type)
         { this.Object = Object; this.Name = Name; this.Type = Type; }
@@ -54,19 +61,8 @@ namespace KKdMainLib.MessagePack
         { Object = new List<object>(); this.Name = Name; this.Type = Type; }
 
         private void NewMsgPack(string Name, long Count)
-        { if (Count > 0) Object = new object[Count]; else Object = null; this.Name = Name; Type = Types.Arr32; }
-        
-        public MsgPack Add(object obj)
-        { if (obj != null) if (typeof(List<object>) == Object.GetType())
-                { List<object> Obj = (List<object>)Object; Obj.Add(obj); Object = Obj; } return this; }
-
-        public MsgPack ToArray()
-        { if (typeof(List<object> ) == Object.GetType())
-        { Object = ((List<object> )    Object)                 .ToArray(); Type = Types.Arr32; } return this; }
-
-        public MsgPack ToList()
-        { if (typeof(     object[]) == Object.GetType())
-        { Object = ((     object[])    Object).OfType<object>().ToList (); Type = Types.Map32; } return this; }
+        { if (Count > 0) { Object = new object[Count]; }
+          else             Object = null; this.Name = Name; Type = Types.Arr32; }
 
         public void Dispose()
         { Type = 0; Name = null; Object = null; }
@@ -197,105 +193,72 @@ namespace KKdMainLib.MessagePack
         public double  ReadDouble() =>  ReadNDouble().GetValueOrDefault();
         
         public   bool? ReadNBoolean()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  bool)) return (  bool)       Object; return null; ; }
+        {        if (Object is   bool Boolean) return         Boolean; return null; }
         public  sbyte?    ReadNInt8()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return ( sbyte)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return ( sbyte)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return ( sbyte)  Int64;
+            else if (Object is  ulong  UInt64) return ( sbyte) UInt64; return null; }
         public   byte?   ReadNUInt8()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return (  byte)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return (  byte)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (  byte)  Int64;
+            else if (Object is  ulong  UInt64) return (  byte) UInt64; return null; }
         public  short?   ReadNInt16()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return ( short)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return ( short)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return ( short)  Int64;
+            else if (Object is  ulong  UInt64) return ( short) UInt64; return null; }
         public ushort?  ReadNUInt16()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return (ushort)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return (ushort)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (ushort)  Int64;
+            else if (Object is  ulong  UInt64) return (ushort) UInt64; return null; }
         public    int?   ReadNInt32()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return (   int)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return (   int)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (   int)  Int64;
+            else if (Object is  ulong  UInt64) return (   int) UInt64; return null; }
         public   uint?  ReadNUInt32()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return (  uint)( long)Object;
-            else if (Object.GetType() == typeof( ulong)) return (  uint)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (  uint)  Int64;
+            else if (Object is  ulong  UInt64) return (  uint) UInt64; return null; }
         public   long?   ReadNInt64()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(  long)) return (  long)       Object;
-            else if (Object.GetType() == typeof( ulong)) return (  long)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (  long)  Int64;
+            else if (Object is  ulong  UInt64) return (  long) UInt64; return null; }
         public  ulong?  ReadNUInt64()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof( ulong)) return ( ulong)       Object;
-            else if (Object.GetType() == typeof(  long)) return ( ulong)( long)Object; return null; }
+        {        if (Object is   long   Int64) return ( ulong)  Int64;
+            else if (Object is  ulong  UInt64) return ( ulong) UInt64; return null; }
         public  float?  ReadNSingle()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(double)) return (float)(double)Object;
-            else if (Object.GetType() == typeof( float)) return (float)        Object;
-            else if (Object.GetType() == typeof(  long)) return (float)(  long)Object; 
-            else if (Object.GetType() == typeof( ulong)) return (float)( ulong)Object; return null; }
+        {        if (Object is   long   Int64) return ( float)  Int64;
+            else if (Object is  ulong  UInt64) return ( float) UInt64;
+            else if (Object is  float Float32) return ( float)Float32;
+            else if (Object is double Float64) return ( float)Float64; return null; }
         public double?  ReadNDouble()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(double)) return (double)       Object;
-            else if (Object.GetType() == typeof( float)) return (double)(float)Object;
-            else if (Object.GetType() == typeof(  long)) return (double)( long)Object; 
-            else if (Object.GetType() == typeof( ulong)) return (double)(ulong)Object; return null; }
+        {        if (Object is   long   Int64) return (double)  Int64;
+            else if (Object is  ulong  UInt64) return (double) UInt64;
+            else if (Object is  float Float32) return (double)Float32;
+            else if (Object is double Float64) return (double)Float64; return null; }
         public string    ReadString()
-        { if (Object == null) return null;
-                 if (Object.GetType() == typeof(string)) return (string)       Object; return null; }
-        
-        public bool Element(string Name, out MsgPack MsgPack, Type Type)
-        { if (Element(out MsgPack, Name)) return MsgPack.Object.GetType() == Type; return false; }
+        {        if (Object is string String) return           String; return null; }
+
+        public bool Element<T>(string Name, out MsgPack MsgPack)
+        {
+            if (Element(Name, out MsgPack))
+            {
+                if (MsgPack.Array == null) return false;
+
+                for (int i = 0; i < MsgPack.Array.Length; i++)
+                    if (!(MsgPack[i] is T)) return false;
+                return true;
+            }
+            return false;
+        }
 
         public bool Element(string Name, out MsgPack MsgPack)
-        { if (Element(out MsgPack, Name)) return MsgPack                  != null; return false; }
-
-        public bool Element(out MsgPack MsgPack, string Name)
         {
             MsgPack = null;
-            if (Object == null) return false;
-
-            Type type = Object.GetType();
-            if (type == typeof(List<object>))
-            {
-                List<object> Obj = (List<object>)Object;
-                foreach (object obj in Obj)
-                {
-                    if (obj == null) continue; type = obj.GetType();
-                    if (type == typeof(MsgPack)) if (((MsgPack)obj).Name == Name)
-                        { MsgPack = (MsgPack)obj; return true; }
-                }
-            }
-            else if (type == typeof(object[]))
-            {
-                object[] Obj = (object[])Object;
-                foreach (object obj in Obj)
-                {
-                    if (obj == null) continue; type = obj.GetType();
-                    if (type == typeof(MsgPack)) if (((MsgPack)obj).Name == Name)
-                        { MsgPack = (MsgPack)obj; return true; }
-                }
-            }
+            if (List != null)
+                foreach (object obj in List)
+                    if (obj is MsgPack msg) if (msg.Name == Name) { MsgPack = msg; return true; }
             return false;
         }
 
         public bool ContainsKey(string Name)
         {
-            if (Object == null) return false;
-
-            Type type = Object.GetType();
-            if (type == typeof(List<object>))
-            {
-                List<object> Obj = (List<object>)Object;
-                foreach (object obj in Obj)
-                {
-                    if (obj == null) continue; type = obj.GetType();
-                    if (type == typeof(MsgPack)) if (((MsgPack)obj).Name == Name) return true;
-                }
-            }
+            if (List == null) return false;
+            
+            foreach (object obj in List)
+                if (obj is MsgPack msg) if (msg.Name == Name) return true;
             return false;
         }
 
