@@ -10,7 +10,6 @@ namespace PD_Tool
     public static class Program
     {
         public static string function = "";
-        public static List<string> ProcessedFiles = new List<string>();
 
         [STAThread]
         public static void Main(string[] args)
@@ -18,19 +17,17 @@ namespace PD_Tool
             Console.Title = "PD_Tool";
             if (args.Length == 0)
             {
+                GC.Collect();
                 while (function != "Q") MainMenu();
                 Exit();
             }
 
             long header;
             Stream reader;
-            KKdFARC Farc;
-
             foreach (string arg in args)
             {
-                Farc = new KKdFARC();
-                     if (Directory.Exists(arg)) Farc.Pack(arg);
-                else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc") Farc.UnPack(arg, true);
+                     if (Directory.Exists(arg)) new KKdFARC(arg, true).Pack();
+                else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc") new KKdFARC(arg).UnPack(true);
                 else if (File.Exists(arg))
                 {
                     reader = File.OpenReader(arg);
@@ -42,7 +39,7 @@ namespace PD_Tool
             Exit();
         }
 
-        private static bool JSON = false;
+        private static bool JSON = true;
 
         private static void MainMenu()
         {
@@ -76,7 +73,7 @@ namespace PD_Tool
         private static void Functions()
         {
             Console.Clear();
-            if (function == "1" || function == "2") FARC.Processor(function == "1");
+                 if (function == "1" || function == "2") FARC.Processor(function == "1");
             else if (function == "3" || function == "4")
             {
                 KKdMain.Choose(1, "", out string[] FileNames);

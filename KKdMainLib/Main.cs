@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Globalization;
 using System.Collections.Generic;
+using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
@@ -76,9 +77,8 @@ namespace KKdMainLib
             FileNames = new string[0];
             if (code == 1)
             {
-                Console.WriteLine("Choose file(s) to open:");
-                OpenFileDialog ofd = new OpenFileDialog { InitialDirectory =
-                    Application.StartupPath, Multiselect = true };
+                OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
+                    Multiselect = true, Title = "Choose file(s) to open:" };
 
                     if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") + JSON + MsgPack;
@@ -99,6 +99,7 @@ namespace KKdMainLib
                         GetArgs("DDS", true, "dds") + GetArgs("PNG", true, "png");
                 else if (filetype == "json") ofd.Filter = "JSON (*.json)|*.json";
                 else if (filetype == "kki" ) ofd.Filter = GetArgs("KKI", "kki");
+                else if (filetype == "mp"  ) ofd.Filter = GetArgs("MessagePack", "mp");
                 else if (filetype == "ppd" ) ofd.Filter = GetArgs("PPD", "ppd", "pak", "mod") +
                         GetArgs("PPD", true, "ppd") + GetArgs("PAK", true, "pak") + GetArgs("MOD", true, "mod");
                 else if (filetype == "str" ) ofd.Filter = GetArgs("STR", "str", "bin", "json", "mp") +
@@ -112,11 +113,11 @@ namespace KKdMainLib
             }
             else if (code == 2)
             {
-                FolderBrowserDialog fbd = new FolderBrowserDialog();
-                Console.WriteLine("Choose folder:");
-                fbd.SelectedPath = Application.StartupPath;
-                if (fbd.ShowDialog() == DialogResult.OK)
-                    return fbd.SelectedPath.ToString();
+                OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
+                    ValidateNames = false, CheckFileExists = false, Filter = " | ", CheckPathExists = true,
+                    Title = "Choose any file in folder:", FileName = "Folder Selection." };
+                if (ofd.ShowDialog() == DialogResult.OK)
+                    return Path.GetDirectoryName(ofd.FileName);
             }
             return "";
         }
@@ -299,7 +300,14 @@ namespace KKdMainLib
 
         private static readonly string NumberDecimalSeparator =
             NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
-
+        
+        public static string ToString(this  object d)
+        {
+            if (d == null) return "Null";
+            else if (d is  float F32) return ToString(F32);
+            else if (d is double F64) return ToString(F64);
+            return d.ToString();
+        }
         public static string ToString(this   bool? d) => d.GetValueOrDefault().ToString();
         public static string ToString(this   bool  d) => d.ToString().ToLower();
         public static string ToString(this  sbyte? d) => d.GetValueOrDefault().ToString();

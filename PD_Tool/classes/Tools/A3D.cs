@@ -17,7 +17,8 @@ namespace PD_Tool.Tools
 
             bool MP = true;
             foreach (string file in FileNames)
-                if (file.EndsWith(".mp"  )) { MP = false; break; }
+                     if (file.EndsWith(".mp"  )) { MP = false; break; }
+                else if (file.EndsWith(".json")) { MP = false; break; }
 
             Main.Format Format = Main.Format.NULL;
             if (!MP)
@@ -63,7 +64,7 @@ namespace PD_Tool.Tools
                 {
                     A.MsgPackReader(filepath, ext == ".json");
                     A.IO = File.OpenWriter(filepath + ".a3da", true);
-                        if (A.Data.Header.Format < Main.Format.F2LE)
+                    if (A.Data.Header.Format >= Main.Format.F2LE)
                         A.Data._.CompressF16 = Format == Main.Format.MGF ? 2 : 1;
                     A.Data.Header.Format = Format;
 

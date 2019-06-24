@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using KKdMainLib.IO;
+using KKdMainLib.Types;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.A3DA
@@ -51,7 +52,6 @@ namespace KKdMainLib.A3DA
             if (Key.Type == 0x0001) { Dict.FindValue(out Key.Value, Temp + "value"); return Key; }
 
             int i = 0, i0 = 0;
-            byte i1 = 0;
             Dict.FindValue(out Key.EPTypePost, Temp + "ep_type_post");
             Dict.FindValue(out Key.EPTypePre , Temp + "ep_type_pre" );
             Dict.FindValue(out Key.Length    , Temp + "key.length"  );
@@ -61,17 +61,25 @@ namespace KKdMainLib.A3DA
 
             if (Key.Length != null)
             {
-                Key.Trans = new Key.Transform[(int)Key.Length];
+                int Type;
+                Key.Trans = new KeyFrame<double, double>[(int)Key.Length];
                 for (i0 = 0; i0 < Key.Length; i0++)
                     if (Dict.FindValue(out value, Temp + "key" + d + i0 + d + "data"))
                     {
-                        Key.Trans[i0] = new Key.Transform();
                         dataArray = value.Replace("(", "").Replace(")", "").Split(',');
-                        Key.Trans[i0].Type = dataArray.Length - 1;
-                        Key.Trans[i0].Frame = dataArray[0].ToDouble();
-                        Key.Trans[i0].Value = new double[Key.Trans[i0].Type];
-                        for (i1 = 1; i1 < dataArray.Length; i1++)
-                            Key.Trans[i0].Value[i1 - 1] = dataArray[i1].ToDouble();
+                        Type = dataArray.Length - 1;
+                             if (Type == 0) Key.Trans[i0] = new KeyFrameT0<double, double>
+                        { Frame = dataArray[0].ToDouble() };
+                        else if (Type == 1) Key.Trans[i0] = new KeyFrameT1<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble() };
+                        else if (Type == 2) Key.Trans[i0] = new KeyFrameT2<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
+                            Interpolation = dataArray[2].ToDouble() };
+                        else if (Type == 3) Key.Trans[i0] = new KeyFrameT3<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
+                            Interpolation1 = dataArray[2].ToDouble(),
+                            Interpolation2 = dataArray[3].ToDouble() };
+                        Key.Trans[i0] = Key.Trans[i0].Check();
                     }
             }
             else if (Key.RawData.KeyType != null)
@@ -83,17 +91,33 @@ namespace KKdMainLib.A3DA
                 Dict.FindValue(out Key.RawData.ValueListSize, Temp + "raw_data.value_list_size");
                 value = "";
 
-                int DataSize = (int)Key.RawData.KeyType + 1;
-                Key.Length = Key.RawData.ValueListSize / DataSize;
-                Key.Trans = new Key.Transform[(int)Key.Length];
-                for (i = 0; i < Key.Length; i++)
-                {
-                    Key.Trans[i].Type = (int)Key.RawData.KeyType;
-                    Key.Trans[i].Frame = Key.RawData.ValueList[i * DataSize + 0].ToDouble();
-                    Key.Trans[i].Value = new double[Key.Trans[i0].Type];
-                    for (i1 = 1; i1 < Key.Trans[i].Type; i1++)
-                        Key.Trans[i].Value[i1 - 1] = Key.RawData.ValueList[i * DataSize + i1].ToDouble();
-                }
+                int DS = (int)Key.RawData.KeyType + 1;
+                Key.Length = Key.RawData.ValueListSize / DS;
+                Key.Trans = new KeyFrame<double, double>[(int)Key.Length];
+                     if (Key.RawData.KeyType == 0)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT0<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble() };
+                else if (Key.RawData.KeyType == 1)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT1<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = dataArray[i * DS + 1].ToDouble() };
+                else if (Key.RawData.KeyType == 2)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT2<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = dataArray[i * DS + 1].ToDouble(),
+                            Interpolation = dataArray[i * DS + 2].ToDouble() };
+                else if (Key.RawData.KeyType == 3)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT3<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = dataArray[i * DS + 1].ToDouble(),
+                            Interpolation1 = dataArray[i * DS + 2].ToDouble(),
+                            Interpolation2 = dataArray[i * DS + 3].ToDouble() };
+
+                for (i = 0; i < Key.Length; i++) Key.Trans[i].Check();
                 Key.RawData.ValueList = null;
             }
             return Key;
@@ -117,8 +141,10 @@ namespace KKdMainLib.A3DA
         {
             if (RGBA.R == null && RGBA.B == null && RGBA.G == null && RGBA.A == null) return;
             IO.Write(Temp + Data + "=", "true");
-            IO.Write(RGBA.A, Temp + Data + d + "a" + d, A3DC); IO.Write(RGBA.B, Temp + Data + d + "b" + d, A3DC);
-            IO.Write(RGBA.G, Temp + Data + d + "g" + d, A3DC); IO.Write(RGBA.R, Temp + Data + d + "r" + d, A3DC);
+            IO.Write(RGBA.A, Temp + Data + d + "a" + d, A3DC);
+            IO.Write(RGBA.B, Temp + Data + d + "b" + d, A3DC);
+            IO.Write(RGBA.G, Temp + Data + d + "g" + d, A3DC);
+            IO.Write(RGBA.R, Temp + Data + d + "r" + d, A3DC);
         }
 
         public static void Write(this Stream IO, Vector3<Key> Key, string Temp, bool A3DC = false)
@@ -155,24 +181,36 @@ namespace KKdMainLib.A3DA
                 {
                     SOi = SO[i];
                     IO.Write(Temp + "key" + d + SOi + d + "data=", Key.Trans[SOi].ToString());
-                    IO.Write(Temp + "key" + d + SOi + d + "type=", Key.Trans[SOi].Type      );
+                         if (Key.Trans[SOi] is KeyFrameT0<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 0);
+                    else if (Key.Trans[SOi] is KeyFrameT1<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 1);
+                    else if (Key.Trans[SOi] is KeyFrameT2<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 2);
+                    else if (Key.Trans[SOi] is KeyFrameT3<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 3);
                 }
                 IO.Write(Temp + "key.length=", Key.Length);
                 if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
             }
             else if (Key.Trans != null)
             {
+                Key.RawData.KeyType = 0;
                 if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
                 for (i = 0; i < Key.Trans.Length; i++)
                 {
-                    if (Key.RawData.KeyType < Key.Trans[i].Type || Key.RawData.KeyType == null)
-                        Key.RawData.KeyType = Key.Trans[i].Type;
-                    if (Key.RawData.KeyType == 3) break;
+                         if (Key.Trans[SOi] is KeyFrameT0<double, double> &&
+                        Key.RawData.KeyType < 0) Key.RawData.KeyType = 0;
+                    else if (Key.Trans[SOi] is KeyFrameT1<double, double> &&
+                        Key.RawData.KeyType < 1) Key.RawData.KeyType = 1;
+                    else if (Key.Trans[SOi] is KeyFrameT2<double, double> &&
+                        Key.RawData.KeyType < 2) Key.RawData.KeyType = 2;
+                    else if (Key.Trans[SOi] is KeyFrameT3<double, double> &&
+                        Key.RawData.KeyType < 3) break;
                 }
                 Key.RawData.ValueListSize = Key.Trans.Length * (Key.RawData.KeyType + 1);
                 IO.Write(Temp + "raw_data.value_list=");
-                for (i = 0; i < Key.Trans.Length; i++)
-                    IO.Write(Key.Trans[i].ToString(false));
+                for (i = 0; i < Key.Trans.Length; i++) IO.Write(Key.Trans[i].ToString(false));
                 IO.Position = IO.Position - 1;
                 IO.Write('\n');
                 IO.Write(Temp + "raw_data.value_list_size=", Key.RawData.ValueListSize);
@@ -225,22 +263,24 @@ namespace KKdMainLib.A3DA
 
             Key.Max    = IO.ReadSingle();
             Key.Length = IO.ReadInt32 ();
-            Key.Trans = new Key.Transform[(int)Key.Length];
-            int Ke = (int)Key.Length;
+            Key.Trans = new KeyFrame<double, double>[(int)Key.Length];
+            KeyFrameT3<double, double> Temp;
             for (int i = 0; i < Key.Length; i++)
             {
-                Key.Trans[i] = new Key.Transform { Type = 3, Value = new double[3] };
+                Temp = new KeyFrameT3<double, double>();
                 if (F16 && C_F16 > 0)
-                { Key.Trans[i].Frame = IO.ReadUInt16(); Key.Trans[i].Value[0] = (double)IO.ReadHalf  (); }
+                { Temp.Frame = IO.ReadUInt16(); Temp.Value = (double)IO.ReadHalf  (); }
                 else
-                { Key.Trans[i].Frame = IO.ReadSingle(); Key.Trans[i].Value[0] =         IO.ReadSingle(); }
+                { Temp.Frame = IO.ReadSingle(); Temp.Value =         IO.ReadSingle(); }
 
                 if (F16 && C_F16 == 2)
-                { Key.Trans[i].Value[1] = (double)IO.ReadHalf  ();
-                  Key.Trans[i].Value[2] = (double)IO.ReadHalf  (); }
+                { Temp.Interpolation1 = (double)IO.ReadHalf  ();
+                  Temp.Interpolation2 = (double)IO.ReadHalf  (); }
                 else
-                { Key.Trans[i].Value[1] =         IO.ReadSingle();
-                  Key.Trans[i].Value[2] =         IO.ReadSingle(); }
+                { Temp.Interpolation1 =         IO.ReadSingle();
+                  Temp.Interpolation2 =         IO.ReadSingle(); }
+
+                Key.Trans[i] = Temp.Check();
             }
         }
 
@@ -263,7 +303,7 @@ namespace KKdMainLib.A3DA
             {
                 MT.BinOffset = IO.Position;
                 IO.Position += 0x30;
-                IO.Length += 0x30;
+                IO.Length   += 0x30;
             }
         }
 
@@ -304,7 +344,7 @@ namespace KKdMainLib.A3DA
 
         public static Key ReadKey(this MsgPack k)
         {
-            if (k == null) return null;
+            if (k.Object == null) return null;
             
             Key Key = new Key { EPTypePost = k.ReadNDouble("Post"),
                 EPTypePre = k.ReadNDouble("Pre"), Max = k.ReadNDouble("M"),
@@ -317,58 +357,80 @@ namespace KKdMainLib.A3DA
             if (!k.Element<MsgPack>("Trans", out MsgPack Trans)) return Key;
 
             Key.Length = Trans.Array.Length;
-            Key.Trans = new Key.Transform[Key.Length.Value];
-            byte i1 = 0;
+            Key.Trans = new KeyFrame<double, double>[Key.Length.Value];
             for (int i = 0; i < Key.Length; i++)
-            {
-                Key.Trans[i] = new Key.Transform();
                 if (Trans[i] is MsgPack _Trans)
                 {
                     if (_Trans.Array == null) continue;
-                    Key.Trans[i].Type = _Trans.Array.Length - 1;
-                    Key.Trans[i].Value = new double[Key.Trans[i].Type];
-                    
-                    Key.Trans[i].Frame = (_Trans[0] as MsgPack).ReadDouble();
-
-                    for (i1 = 0; i1 < Key.Trans[i].Type; i1++)
-                        Key.Trans[i].Value[i1] = ((MsgPack)_Trans[i1 + 1]).ReadDouble();
+                    else if (_Trans.Array.Length == 0) continue;
+                    else if (_Trans.Array.Length == 1)
+                    {
+                        if (_Trans[0] is MsgPack Frame)
+                            Key.Trans[i] = new KeyFrameT0<double, double> { Frame = Frame.ReadDouble() };
+                    }
+                    else if (_Trans.Array.Length == 2)
+                    {
+                        KeyFrameT1<double, double> KeyFrameT1 = new KeyFrameT1<double, double>();
+                        if (_Trans[0] is MsgPack Frame) KeyFrameT1.Frame = Frame.ReadDouble();
+                        if (_Trans[1] is MsgPack Value) KeyFrameT1.Value = Value.ReadDouble();
+                        Key.Trans[i] = KeyFrameT1;
+                    }
+                    else if (_Trans.Array.Length == 3)
+                    {
+                        KeyFrameT2<double, double> KeyFrameT2 = new KeyFrameT2<double, double>();
+                        if (_Trans[0] is MsgPack Frame        )
+                            KeyFrameT2.Frame         = Frame        .ReadDouble();
+                        if (_Trans[1] is MsgPack Value        )
+                            KeyFrameT2.Value         = Value        .ReadDouble();
+                        if (_Trans[2] is MsgPack Interpolation)
+                            KeyFrameT2.Interpolation = Interpolation.ReadDouble();
+                        Key.Trans[i] = KeyFrameT2;
+                    }
+                    else if (_Trans.Array.Length == 4)
+                    {
+                        KeyFrameT3<double, double> KeyFrameT3 = new KeyFrameT3<double, double>();
+                        if (_Trans[0] is MsgPack Frame         )
+                            KeyFrameT3.Frame          = Frame         .ReadDouble();
+                        if (_Trans[1] is MsgPack Value         )
+                            KeyFrameT3.Value          = Value         .ReadDouble();
+                        if (_Trans[2] is MsgPack Interpolation1)
+                            KeyFrameT3.Interpolation1 = Interpolation1.ReadDouble();
+                        if (_Trans[3] is MsgPack Interpolation2)
+                            KeyFrameT3.Interpolation2 = Interpolation2.ReadDouble();
+                        Key.Trans[i] = KeyFrameT3;
+                    }
+                    Key.Trans[i] = Key.Trans[i].Check();
                 }
-            }
             return Key;
         }
 
-        public static MsgPack WriteMP(this ModelTransform MT, string name) =>
-            MT.WriteMP(new MsgPack(name));
+        public static MsgPack Add(this MsgPack MsgPack, string name, ModelTransform MT) =>
+            name == null ? 
+            MsgPack.Add("Rot"       , MT.Rot       )
+                   .Add("Scale"     , MT.Scale     )
+                   .Add("Trans"     , MT.Trans     )
+                   .Add("Visibility", MT.Visibility):
+            MsgPack.Add(new MsgPack(name).Add("Rot"       , MT.Rot       )
+                                         .Add("Scale"     , MT.Scale     )
+                                         .Add("Trans"     , MT.Trans     )
+                                         .Add("Visibility", MT.Visibility));
 
-        public static MsgPack WriteMP(this ModelTransform MT)              =>
-            MT.WriteMP(new MsgPack(    ));
+        public static MsgPack Add(this MsgPack MsgPack, string name, RGBAKey RGBA) =>
+            (RGBA.R == null && RGBA.G == null && RGBA.B == null && RGBA.A == null) ? MsgPack :
+           MsgPack.Add(new MsgPack(name).Add("R", RGBA.R).Add("G", RGBA.G)
+                                        .Add("B", RGBA.B).Add("A", RGBA.A));
 
-        public static MsgPack WriteMP(this ModelTransform MT, MsgPack MTs) =>
-            MTs.Add(MT.Rot       .WriteMP("Rot"       ))
-               .Add(MT.Scale     .WriteMP("Scale"     ))
-               .Add(MT.Trans     .WriteMP("Trans"     ))
-               .Add(MT.Visibility.WriteMP("Visibility"));
+        public static MsgPack Add(this MsgPack MsgPack, string name, Vector3<Key> Key) =>
+            MsgPack.Add(new MsgPack(name).Add("X", Key.X).Add("Y", Key.Y).Add("Z", Key.Z));
 
-        public static MsgPack WriteMP(this RGBAKey RGBA, string name)
+        public static MsgPack Add(this MsgPack MsgPack, string name, KeyUV UV) =>
+            (UV.U == null && UV.V == null) ? MsgPack :
+            MsgPack.Add(new MsgPack(name).Add("U", UV.U).Add("V", UV.V));
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, Key Key)
         {
-            if (RGBA.R == null && RGBA.G == null && RGBA.B == null && RGBA.A == null) return MsgPack.Null;
-            return new MsgPack(name).Add(RGBA.R.WriteMP("R")).Add(RGBA.G.WriteMP("G"))
-                                    .Add(RGBA.B.WriteMP("B")).Add(RGBA.A.WriteMP("A"));
-        }
-
-        public static MsgPack WriteMP(this Vector3<Key> Key, string name) =>
-            new MsgPack(name).Add(Key.X.WriteMP("X")).Add(Key.Y.WriteMP("Y")).Add(Key.Z.WriteMP("Z"));
-
-        public static MsgPack WriteMP(this KeyUV UV, string name)
-        {
-            if (UV.U == null && UV.V == null) return MsgPack.Null;
-            return new MsgPack(name).Add(UV.U.WriteMP("U")).Add(UV.V.WriteMP("V"));
-        }
-
-        public static MsgPack WriteMP(this Key Key, string name)
-        {
-            if (Key == null) return MsgPack.Null;
-            if (Key.Type == null) return MsgPack.Null;
+            if (Key == null) return MsgPack;
+            if (Key.Type == null) return MsgPack;
 
             MsgPack Keys = new MsgPack(name).Add("T", Key.Type);
             if (Key.Trans != null)
@@ -376,21 +438,44 @@ namespace KKdMainLib.A3DA
                 Keys.Add("Post", Key.EPTypePost).Add("Pre", Key.EPTypePre).Add("M", Key.Max);
 
                 if (Key.RawData != null) Keys.Add("RD", true);
-
-                byte i0 = 0;
-                MsgPack Trans = new MsgPack("Trans", Key.Trans.Length);
+                
+                MsgPack Trans = new MsgPack(Key.Trans.Length, "Trans");
+                MsgPack K;
                 for (int i = 0; i < Key.Trans.Length; i++)
-                {
-                    MsgPack K = new MsgPack(Key.Trans[i].Type + 1);
-                    K[0] = Key.Trans[i].Frame;
-                    for (i0 = 1; i0 < Key.Trans[i].Type + 1; i0++)
-                        K[i0] = Key.Trans[i].Value[i0 - 1];
-                    Trans[i] = K;
-                }
+                         if (Key.Trans[i] is KeyFrameT0<double, double> KeyFrameT0)
+                    {
+                        K = new MsgPack(1);
+                        K[0] = KeyFrameT0.Frame;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT1<double, double> KeyFrameT1)
+                    {
+                        K = new MsgPack(2);
+                        K[0] = KeyFrameT1.Frame;
+                        K[1] = KeyFrameT1.Value;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT2<double, double> KeyFrameT2)
+                    {
+                        K = new MsgPack(3);
+                        K[0] = KeyFrameT2.Frame;
+                        K[1] = KeyFrameT2.Value;
+                        K[2] = KeyFrameT2.Interpolation;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT3<double, double> KeyFrameT3)
+                    {
+                        K = new MsgPack(4);
+                        K[0] = KeyFrameT3.Frame;
+                        K[1] = KeyFrameT3.Value;
+                        K[2] = KeyFrameT3.Interpolation1;
+                        K[3] = KeyFrameT3.Interpolation2;
+                        Trans[i] = K;
+                    }
                 Keys.Add(Trans);
             }
             else if (Key.Value != 0) Keys.Add("V", Key.Value);
-            return Keys;
+            return MsgPack.Add(Keys);
         }
 
         public static void Write(this Stream IO, string Data, ref bool? val)

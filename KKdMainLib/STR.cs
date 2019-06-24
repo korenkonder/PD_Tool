@@ -173,7 +173,7 @@ namespace KKdMainLib
 
         public void MsgPackReader(string file, bool JSON)
         {
-            MsgPack MsgPack = file.ReadMP(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
             if (!MsgPack.Element("STR", out MsgPack STR)) return;
 
@@ -188,16 +188,16 @@ namespace KKdMainLib
                     STRs[i].Str = String.ReadString("Str");
                 }
 
-            MsgPack = null;
+            MsgPack = MsgPack.New;
         }
 
         public void MsgPackWriter(string file, bool JSON)
         {
             MsgPack STR_ = new MsgPack("STR").Add("Format", Header.Format.ToString());
-            MsgPack Strings = new MsgPack("Strings", STRs.Length);
+            MsgPack Strings = new MsgPack(STRs.Length, "Strings");
             for (int i = 0; i < STRs.Length; i++)
             {
-                Strings[i] = new MsgPack().Add("ID", STRs[i].ID);
+                Strings[i] = MsgPack.New.Add("ID", STRs[i].ID);
                 if (STRs[i].Str != null) if (STRs[i].Str != "")
                         ((MsgPack)Strings[i]).Add("S", STRs[i].Str); ;
             }

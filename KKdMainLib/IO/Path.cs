@@ -1,5 +1,4 @@
-﻿using System;
-using MSIO = System.IO;
+﻿using MSIO = System.IO;
 
 namespace KKdMainLib.IO
 {
@@ -21,5 +20,7 @@ namespace KKdMainLib.IO
             MSIO.Path.Combine(path1, path2, path3, path4);
         public static string Combine(params string[] paths) =>
             MSIO.Path.Combine(paths);
+        public static string GetDirectoryName(string path) =>
+            MSIO.Path.GetDirectoryName(path);
     }
 }

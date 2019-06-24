@@ -95,7 +95,7 @@ namespace KKdMainLib
         public void DEXWriter(string filepath, Main.Format Format)
         {
             Header = new PDHead() { Format = Format };
-            IO = File.OpenWriter(filepath + (Header.Format > Main.Format.F ? ".Dex" : ".bin"), true);
+            IO = File.OpenWriter(filepath + (Header.Format > Main.Format.F ? ".dex" : ".bin"), true);
             IO.Format = Header.Format;
 
             if (IO.Format > Main.Format.F)
@@ -196,7 +196,7 @@ namespace KKdMainLib
             this.Dex = new EXP[0];
             Header = new PDHead();
 
-            MsgPack MsgPack = file.ReadMP(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
             if (!MsgPack.Element<MsgPack>("Dex", out MsgPack Dex)) return;
 
             this.Dex = new EXP[Dex.Array.Length];
@@ -220,7 +220,7 @@ namespace KKdMainLib
                                 this.Dex[i0].Eyes.Add(ReadEXP(Exp));
                     }
                 }
-            MsgPack = null;
+            MsgPack = MsgPack.New;
         }
 
         private EXPElement ReadEXP(MsgPack mp) =>
@@ -232,16 +232,16 @@ namespace KKdMainLib
         {
             int i0 = 0;
             int i1 = 0;
-            MsgPack Dex = new MsgPack("Dex", this.Dex.Length);
+            MsgPack Dex = new MsgPack(this.Dex.Length, "Dex");
             for (i0 = 0; i0 < this.Dex.Length; i0++)
             {
-                MsgPack EXP = new MsgPack().Add("Name", this.Dex[i0].Name);
-                MsgPack Main = new MsgPack("Main", this.Dex[i0].Main.Count);
+                MsgPack EXP = MsgPack.New.Add("Name", this.Dex[i0].Name);
+                MsgPack Main = new MsgPack(this.Dex[i0].Main.Count, "Main");
                 for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
                     Main[i1] = WriteEXP(this.Dex[i0].Main[i1]);
                 EXP.Add(Main);
 
-                MsgPack Eyes = new MsgPack("Eyes", this.Dex[i0].Eyes.Count);
+                MsgPack Eyes = new MsgPack(this.Dex[i0].Eyes.Count, "Eyes");
                 for (i1 = 0; i1 < this.Dex[i0].Eyes.Count; i1++)
                     Eyes[i1] = WriteEXP(this.Dex[i0].Eyes[i1]);
                 EXP.Add(Eyes);
@@ -252,7 +252,7 @@ namespace KKdMainLib
         }
 
         private MsgPack WriteEXP(EXPElement element) =>
-            new MsgPack().Add("F", element.Frame).Add("B", element.Both ).Add("I", element.ID   )
+            MsgPack.New.Add("F", element.Frame).Add("B", element.Both ).Add("I", element.ID   )
                          .Add("V", element.Value).Add("T", element.Trans);
 
         public struct EXP

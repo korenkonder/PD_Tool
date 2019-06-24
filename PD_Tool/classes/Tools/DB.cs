@@ -14,17 +14,25 @@ namespace PD_Tool.Tools
             string filepath = "";
             string ext = "";
 
-            Console.Clear();
-            string format = "";
-            Main.ConsoleDesign(true);
-            Main.ConsoleDesign("        Choose type of exporting file:");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign("1. Compact");
-            Main.ConsoleDesign("2. Normal");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign(true);
-            Console.WriteLine();
-            format = Console.ReadLine();
+            bool MP = true;
+            foreach (string file in FileNames)
+                     if (file.EndsWith(".mp"  )) { MP = false; break; }
+                else if (file.EndsWith(".json")) { MP = false; break; }
+
+            string format = "1";
+            if (MP)
+            {
+                Console.Clear();
+                Main.ConsoleDesign(true);
+                Main.ConsoleDesign("        Choose type of exporting file:");
+                Main.ConsoleDesign(false);
+                Main.ConsoleDesign("1. Compact");
+                Main.ConsoleDesign("2. Normal");
+                Main.ConsoleDesign(false);
+                Main.ConsoleDesign(true);
+                Console.WriteLine();
+                format = Console.ReadLine();
+            }
 
             DataBank DB;
             string[] file_split;
@@ -38,7 +46,7 @@ namespace PD_Tool.Tools
                 string filename = Path.GetFileNameWithoutExtension(file);
                 file_split = filename.Split('_');
                 DB = new DataBank();
-                if (file_split.Length == 5 && ext == ".dat")
+                if (file_split.Length == 5 && ext == ".dat" && MP)
                 {
                     if (!int.TryParse(file_split[3], out File_Checksum)) continue;
 
@@ -51,7 +59,7 @@ namespace PD_Tool.Tools
                     DB.MsgPackWriter(filepath + file_split[0] + "_" + 
                         file_split[1] + "_" + file_split[2], JSON, format != "2");
                 }
-                else if (ext == ".mp" || ext == ".json")
+                else if (ext == ".mp" || ext == ".json" && !MP)
                 {
                     Console.Title = "DataBank Converter: " + filename;
                     DB.MsgPackReader(filepath, JSON);

@@ -196,9 +196,10 @@ namespace KKdMainLib.DB
             {
                 AetSets = new AetSet[AetDB.Array.Length];
                 for (int i = 0; i < AetSets.Length; i++)
-                    AetSets[i].ReadMsgPack(AetDB[i] as MsgPack);
+                    if (AetDB[i] is MsgPack Aet)
+                        AetSets[i].ReadMsgPack(Aet);
             }
-            MsgPack = null;
+            MsgPack = MsgPack.New;
         }
 
 
@@ -207,7 +208,7 @@ namespace KKdMainLib.DB
             if (AetSets        == null) return;
             if (AetSets.Length ==    0) return;
 
-            MsgPack AetDB = new MsgPack("AetDB", AetSets.Length);
+            MsgPack AetDB = new MsgPack(AetSets.Length, "AetDB");
             for (i = 0; i < AetSets.Length; i++)
                 AetDB[i] = AetSets[i].WriteMsgPack();
 
@@ -224,7 +225,7 @@ namespace KKdMainLib.DB
             { Id = msg.ReadNUInt16("Id"); Name  = msg.ReadString("Name"); }
             
             public MsgPack WriteMsgPack() =>
-                new MsgPack().Add("Id", Id).Add("Name", Name);
+                MsgPack.New.Add("Id", Id).Add("Name", Name);
         }
 
         public struct AetSet
@@ -250,17 +251,18 @@ namespace KKdMainLib.DB
                 {
                     this.Aets = new AET[Aets.Array.Length];
                     for (int i0 = 0; i0 < this.Aets.Length; i0++)
-                           this.Aets[i0].ReadMsgPack(Aets[i0] as MsgPack);
+                        if (Aets[i0] is MsgPack Aet)
+                           this.Aets[i0].ReadMsgPack(Aet);
                 }
             }
 
             public MsgPack WriteMsgPack()
             {
-                MsgPack Aets = new MsgPack("Aets", this.Aets.Length);
+                MsgPack Aets = new MsgPack(this.Aets.Length, "Aets");
                 for (int i0 = 0; i0 < this.Aets.Length; i0++)
                     Aets[i0] = this.Aets[i0].WriteMsgPack();
 
-                return new MsgPack().Add("FileName", FileName).Add("Id", Id)
+                return MsgPack.New.Add("FileName", FileName).Add("Id", Id)
                     .Add("Name", Name).Add("SpriteSetId", SpriteSetId).Add(Aets);
             }
         }

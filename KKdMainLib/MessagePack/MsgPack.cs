@@ -1,71 +1,44 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Generic;
+using KKdMainLib.Types;
 
 namespace KKdMainLib.MessagePack
 {
-    public class MsgPack : IDisposable
+    public struct MsgPack : IDisposable
     {
-        public Types Type;
         public string Name;
         public object Object;
-
-        public      object[] Array => Object is      object[] List  ? List  : null;
-        public List<object>   List => Object is List<object>  Array ? Array : null;
         
-        public MsgPack(             Types Type = Types.Map32) => NewMsgPack(null, Type);
-        public MsgPack(string Name, Types Type = Types.Map32) => NewMsgPack(Name, Type);
-        public MsgPack(             long Count) => NewMsgPack(null, Count);
-        public MsgPack(string Name, long Count) => NewMsgPack(Name, Count);
-        public MsgPack(string Name, Types Type, object Object)
-        { this.Name = Name; this.Type = Type; this.Object = Object; }
-        public MsgPack(string Name, bool TypeIsntKnown, object Object)
-        {
-            switch (Object)
-            {
-                case List<object> val: Type = Types.  Map32; break;
-                case    object[]  val: Type = Types.  Arr32; break;
-                case     MsgPack  val: Type = Types.  Map32; break;
-                case      byte[]  val: Type = Types.  Bin32; break;
-                case        bool  val: Type = val ? Types.True : Types.False; break;
-                case       sbyte  val: Type = Types.  Int8 ; break;
-                case        byte  val: Type = Types. UInt8 ; break;
-                case       short  val: Type = Types.  Int16; break;
-                case      ushort  val: Type = Types. UInt16; break;
-                case         int  val: Type = Types.  Int32; break;
-                case        uint  val: Type = Types. UInt32; break;
-                case        long  val: Type = Types.  Int64; break;
-                case       ulong  val: Type = Types. UInt64; break;
-                case       float  val: Type = Types.Float32; break;
-                case      double  val: Type = Types.Float64; break;
-                case      string  val: Type = Types.  Str32; break;
-                case         Ext  val: Type = Types.  Ext32; break;
-                case             null: Type = Types.    Nil; break;
-            }
-            this.Name = Name; this.Object = Object;
-        }
+        public         object[] Array => Object is         object[] List ?
+                List : null;
+        public KKdList<object>   List => Object is KKdList<object>  List ?
+                List : default(KKdList<object>);
 
-        public static MsgPack Null => null;
+        public static MsgPack New => new MsgPack { Object = KKdList<object>.New };
+        public static MsgPack NewReserve(int Capacity) =>
+            new MsgPack { Object = KKdList<object>.NewReserve(Capacity) };
+
+        public MsgPack(            string Name = null)
+        { Object = KKdList<object>.New; this.Name = Name; }
+
+        public MsgPack(long Count, string Name = null)
+        { if (Count > 0) { Object = new object[Count]; }
+          else             Object = null; this.Name = Name; }
+
+        public MsgPack(string Name, object Object)
+        { this.Name = Name; this.Object = Object; }
+
+        public static MsgPack Null => new MsgPack();
 
         public object this[int index]
-        {   get { if (Array != null) return Array[index]; return null; }
-            set { if (Array != null)        Array[index] = value; } }
+        {   get { if (Object is object[] Array) return Array[index]; return null; }
+            set { if (Object is object[] Array) {      Array[index] = value; Object = Array; }} }
         
         public MsgPack Add(object obj)
-        { if (obj != null && List != null) List.Add(obj); return this; }
-
-        public MsgPack(List<object> Object, string Name, Types Type)
-        { this.Object = Object; this.Name = Name; this.Type = Type; }
-
-        private void NewMsgPack(string Name, Types Type)
-        { Object = new List<object>(); this.Name = Name; this.Type = Type; }
-
-        private void NewMsgPack(string Name, long Count)
-        { if (Count > 0) { Object = new object[Count]; }
-          else             Object = null; this.Name = Name; Type = Types.Arr32; }
+        { if (obj != null && Object is KKdList<object> List)
+            { List.Add(obj); Object = List; } return this; }
 
         public void Dispose()
-        { Type = 0; Name = null; Object = null; }
+        { Name = null; Object = null; }
 
         public MsgPack Add( sbyte? val) => Add(null, val);
         public MsgPack Add(  byte? val) => Add(null, val);
@@ -93,55 +66,39 @@ namespace KKdMainLib.MessagePack
         public MsgPack Add(double  val) => Add(null, val);
 
         public MsgPack Add(string Val,  sbyte? val)
-        { if (val == null) Add(Null); else Add(Val, ( sbyte)val); return this; }
+        { if (val != null) Add(Val, ( sbyte)val); return this; }
         public MsgPack Add(string Val,   byte? val)
-        { if (val == null) Add(Null); else Add(Val, (  byte)val); return this; }
+        { if (val != null) Add(Val, (  byte)val); return this; }
         public MsgPack Add(string Val,  short? val)
-        { if (val == null) Add(Null); else Add(Val, ( short)val); return this; }
+        { if (val != null) Add(Val, ( short)val); return this; }
         public MsgPack Add(string Val, ushort? val)
-        { if (val == null) Add(Null); else Add(Val, (ushort)val); return this; }
+        { if (val != null) Add(Val, (ushort)val); return this; }
         public MsgPack Add(string Val,    int? val)
-        { if (val == null) Add(Null); else Add(Val, (   int)val); return this; }
+        { if (val != null) Add(Val, (   int)val); return this; }
         public MsgPack Add(string Val,   uint? val)
-        { if (val == null) Add(Null); else Add(Val, (  uint)val); return this; }
+        { if (val != null) Add(Val, (  uint)val); return this; }
         public MsgPack Add(string Val,   long? val)
-        { if (val == null) Add(Null); else Add(Val, (  long)val); return this; }
+        { if (val != null) Add(Val, (  long)val); return this; }
         public MsgPack Add(string Val,  ulong? val)
-        { if (val == null) Add(Null); else Add(Val, ( ulong)val); return this; }
+        { if (val != null) Add(Val, ( ulong)val); return this; }
         public MsgPack Add(string Val,  float? val)
-        { if (val == null) Add(Null); else Add(Val, ( float)val); return this; }
+        { if (val != null) Add(Val, ( float)val); return this; }
         public MsgPack Add(string Val, double? val)
-        { if (val == null) Add(Null); else Add(Val, (double)val); return this; }
+        { if (val != null) Add(Val, (double)val); return this; }
 
-        public MsgPack Add(string Val, byte[] val)
-        { if (val == null) Add(Null); else
-            Add(new MsgPack(Val, Types.  Bin32, val)); return this; }
-        public MsgPack Add(string Val, string val)
-        { if (val == null) Add(Null); else
-            Add(new MsgPack(Val, Types.  Str32, val)); return this; }
-        public MsgPack Add(string Val,   bool val)
-        {   Add(new MsgPack(Val, val ? 
-                    Types.True : Types.  False, val)); return this; }
-        public MsgPack Add(string Val,  sbyte val)
-        {   Add(new MsgPack(Val, Types.   Int8, val)); return this; }
-        public MsgPack Add(string Val,   byte val)
-        {   Add(new MsgPack(Val, Types.  UInt8, val)); return this; }
-        public MsgPack Add(string Val,  short val)
-        {   Add(new MsgPack(Val, Types.  Int16, val)); return this; }
-        public MsgPack Add(string Val, ushort val)
-        {   Add(new MsgPack(Val, Types. UInt16, val)); return this; }
-        public MsgPack Add(string Val,    int val)
-        {   Add(new MsgPack(Val, Types.  Int32, val)); return this; }
-        public MsgPack Add(string Val,   uint val)
-        {   Add(new MsgPack(Val, Types. UInt32, val)); return this; }
-        public MsgPack Add(string Val,   long val)
-        {   Add(new MsgPack(Val, Types.  Int64, val)); return this; }
-        public MsgPack Add(string Val,  ulong val)
-        {   Add(new MsgPack(Val, Types. UInt64, val)); return this; }
-        public MsgPack Add(string Val,  float val)
-        {   Add(new MsgPack(Val, Types.Float32, val)); return this; }
-        public MsgPack Add(string Val, double val)
-        {   Add(new MsgPack(Val, Types.Float64, val)); return this; }
+        public MsgPack Add(string Val, byte[] val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val, string val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,   bool val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,  sbyte val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,   byte val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,  short val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val, ushort val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,    int val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,   uint val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,   long val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,  ulong val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val,  float val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val, double val) => Add(new MsgPack(Val, val));
         
         public   bool ReadBoolean(string Name) => ReadNBoolean(Name).GetValueOrDefault();
         public  sbyte    ReadInt8(string Name) =>    ReadNInt8(Name).GetValueOrDefault();
@@ -193,43 +150,77 @@ namespace KKdMainLib.MessagePack
         public double  ReadDouble() =>  ReadNDouble().GetValueOrDefault();
         
         public   bool? ReadNBoolean()
-        {        if (Object is   bool Boolean) return         Boolean; return null; }
+        {        if (Object is   bool Boolean) return Boolean; return null; }
         public  sbyte?    ReadNInt8()
-        {        if (Object is   long   Int64) return ( sbyte)  Int64;
-            else if (Object is  ulong  UInt64) return ( sbyte) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return         Int8;
+            else if (Object is   byte  UInt8 ) return (sbyte)UInt8; return null; }
         public   byte?   ReadNUInt8()
-        {        if (Object is   long   Int64) return (  byte)  Int64;
-            else if (Object is  ulong  UInt64) return (  byte) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return (byte) Int8;
+            else if (Object is   byte  UInt8 ) return       UInt8; return null; }
         public  short?   ReadNInt16()
-        {        if (Object is   long   Int64) return ( short)  Int64;
-            else if (Object is  ulong  UInt64) return ( short) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return         Int8 ;
+            else if (Object is   byte  UInt8 ) return        UInt8 ;
+            else if (Object is  short   Int16) return         Int16;
+            else if (Object is ushort  UInt16) return (short)UInt16; return null; }
         public ushort?  ReadNUInt16()
-        {        if (Object is   long   Int64) return (ushort)  Int64;
-            else if (Object is  ulong  UInt64) return (ushort) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return (ushort) Int8 ;
+            else if (Object is   byte  UInt8 ) return         UInt8 ;
+            else if (Object is  short   Int16) return (ushort) Int16;
+            else if (Object is ushort  UInt16) return         UInt16; return null; }
         public    int?   ReadNInt32()
-        {        if (Object is   long   Int64) return (   int)  Int64;
-            else if (Object is  ulong  UInt64) return (   int) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return       Int8 ;
+            else if (Object is   byte  UInt8 ) return      UInt8 ;
+            else if (Object is  short   Int16) return       Int16;
+            else if (Object is ushort  UInt16) return      UInt16;
+            else if (Object is    int   Int32) return       Int32;
+            else if (Object is   uint  UInt32) return (int)UInt32; return null; }
         public   uint?  ReadNUInt32()
-        {        if (Object is   long   Int64) return (  uint)  Int64;
-            else if (Object is  ulong  UInt64) return (  uint) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return (uint) Int8 ;
+            else if (Object is   byte  UInt8 ) return       UInt8 ;
+            else if (Object is  short   Int16) return (uint) Int16;
+            else if (Object is ushort  UInt16) return       UInt16;
+            else if (Object is    int   Int32) return (uint) Int32;
+            else if (Object is   uint  UInt32) return       UInt32; return null; }
         public   long?   ReadNInt64()
-        {        if (Object is   long   Int64) return (  long)  Int64;
-            else if (Object is  ulong  UInt64) return (  long) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return        Int8 ;
+            else if (Object is   byte  UInt8 ) return       UInt8 ;
+            else if (Object is  short   Int16) return        Int16;
+            else if (Object is ushort  UInt16) return       UInt16;
+            else if (Object is    int   Int32) return        Int32;
+            else if (Object is   uint  UInt32) return       UInt32;
+            else if (Object is   long   Int64) return        Int64;
+            else if (Object is  ulong  UInt64) return (long)UInt64; return null; }
         public  ulong?  ReadNUInt64()
-        {        if (Object is   long   Int64) return ( ulong)  Int64;
-            else if (Object is  ulong  UInt64) return ( ulong) UInt64; return null; }
+        {        if (Object is  sbyte   Int8 ) return (ulong) Int8 ;
+            else if (Object is   byte  UInt8 ) return        UInt8 ;
+            else if (Object is  short   Int16) return (ulong) Int16;
+            else if (Object is ushort  UInt16) return        UInt16;
+            else if (Object is    int   Int32) return (ulong) Int32;
+            else if (Object is   uint  UInt32) return        UInt32;
+            else if (Object is   long   Int64) return (ulong) Int64;
+            else if (Object is  ulong  UInt64) return        UInt64; return null; }
         public  float?  ReadNSingle()
-        {        if (Object is   long   Int64) return ( float)  Int64;
-            else if (Object is  ulong  UInt64) return ( float) UInt64;
-            else if (Object is  float Float32) return ( float)Float32;
+        {        if (Object is  sbyte   Int8 ) return           Int8 ;
+            else if (Object is   byte  UInt8 ) return          UInt8 ;
+            else if (Object is  short   Int16) return           Int16;
+            else if (Object is ushort  UInt16) return          UInt16;
+            else if (Object is    int   Int32) return           Int32;
+            else if (Object is   uint  UInt32) return          UInt32;
+            else if (Object is   long   Int64) return           Int64;
+            else if (Object is  float Float32) return         Float32;
             else if (Object is double Float64) return ( float)Float64; return null; }
         public double?  ReadNDouble()
-        {        if (Object is   long   Int64) return (double)  Int64;
-            else if (Object is  ulong  UInt64) return (double) UInt64;
-            else if (Object is  float Float32) return (double)Float32;
-            else if (Object is double Float64) return (double)Float64; return null; }
+        {        if (Object is  sbyte   Int8 ) return   Int8 ;
+            else if (Object is   byte  UInt8 ) return  UInt8 ;
+            else if (Object is  short   Int16) return   Int16;
+            else if (Object is ushort  UInt16) return  UInt16;
+            else if (Object is    int   Int32) return   Int32;
+            else if (Object is   uint  UInt32) return  UInt32;
+            else if (Object is   long   Int64) return   Int64;
+            else if (Object is  float Float32) return Float32;
+            else if (Object is double Float64) return Float64; return null; }
         public string    ReadString()
-        {        if (Object is string String) return           String; return null; }
+        {        if (Object is string  String) return  String; return null; }
 
         public bool Element<T>(string Name, out MsgPack MsgPack)
         {
@@ -246,67 +237,26 @@ namespace KKdMainLib.MessagePack
 
         public bool Element(string Name, out MsgPack MsgPack)
         {
-            MsgPack = null;
-            if (List != null)
-                foreach (object obj in List)
-                    if (obj is MsgPack msg) if (msg.Name == Name) { MsgPack = msg; return true; }
+            MsgPack = New;
+            if (List.IsNull) return false;
+
+            for (int i = 0; i < List.Count; i++)
+                if (List[i] is MsgPack msg) if (msg.Name == Name) { MsgPack = msg; return true; }
             return false;
         }
 
         public bool ContainsKey(string Name)
         {
-            if (List == null) return false;
+            if (List.IsNull) return false;
             
-            foreach (object obj in List)
-                if (obj is MsgPack msg) if (msg.Name == Name) return true;
+            for (int i = 0; i < List.Count ; i++) 
+                if (List[i] is MsgPack msg) if (msg.Name == Name) return true;
             return false;
         }
 
-        public enum Types : byte
-        {
-            PosInt    = 0b00000000,
-            FixMap    = 0b10000000,
-            FixArr    = 0b10010000,
-            FixStr    = 0b10100000,
-            Nil       = 0b11000000,
-            NeverUsed = 0b11000001,
-            False     = 0b11000010,
-            True      = 0b11000011,
-            Bin8      = 0b11000100,
-            Bin16     = 0b11000101,
-            Bin32     = 0b11000110,
-            Ext8      = 0b11000111,
-            Ext16     = 0b11001000,
-            Ext32     = 0b11001001,
-            Float32   = 0b11001010,
-            Float64   = 0b11001011,
-            UInt8     = 0b11001100,
-            UInt16    = 0b11001101,
-            UInt32    = 0b11001110,
-            UInt64    = 0b11001111,
-            Int8      = 0b11010000,
-            Int16     = 0b11010001,
-            Int32     = 0b11010010,
-            Int64     = 0b11010011,
-            FixExt1   = 0b11010100,
-            FixExt2   = 0b11010101,
-            FixExt4   = 0b11010110,
-            FixExt8   = 0b11010111,
-            FixExt16  = 0b11011000,
-            Str8      = 0b11011001,
-            Str16     = 0b11011010,
-            Str32     = 0b11011011,
-            Arr16     = 0b11011100,
-            Arr32     = 0b11011101,
-            Map16     = 0b11011110,
-            Map32     = 0b11011111,
-            NegInt    = 0b11100000,
-            PosIntMax = 0b01111111,
-            FixMapMax = 0b10001111,
-            FixArrMax = 0b10011111,
-            FixStrMax = 0b10111111,
-            NegIntMax = 0b11111111,
-        }
+        public override string ToString() => Name ?? "" +
+            ( List.NotNull ? ((Name != null ? " " : "") + "Elements Count: " + List .Count ) :
+            (Array != null ? ((Name != null ? " " : "") + "Elements Count: " + Array.Length) : Object.ToString()));
 
         public struct Ext
         {

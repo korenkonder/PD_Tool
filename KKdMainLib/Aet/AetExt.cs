@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using KKdMainLib.IO;
+using KKdMainLib.Types;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.Aet
@@ -67,16 +68,16 @@ namespace KKdMainLib.Aet
             }
         }
 
-        public static MsgPack WriteMP(this CountPointer<float> val, string Name)
+        public static MsgPack Add(this MsgPack MsgPack, string Name, CountPointer<float> val)
         {
-            if (val.Count == 1) return new MsgPack(Name, MsgPack.Types.Float32, val.Entries[0]);
+            if (val.Count == 1) return MsgPack.Add(new MsgPack(Name, val.Entries[0]));
             else if (val.Count > 1)
             {
-                MsgPack Val = new MsgPack(Name, val.Count);
+                MsgPack Val = new MsgPack(val.Count, Name);
                 for (int i = 0; i < val.Count; i++) Val[i] = val.Entries[i];
-                return Val;
+                return MsgPack.Add(Val);
             }
-            return MsgPack.Null;
+            return MsgPack;
         }
 
         public static int ReadAetObject(this Stream IO, ref Dictionary<int, AetObject> ObjectsDict)
@@ -123,7 +124,6 @@ namespace KKdMainLib.Aet
                 }
                 IO.Write(ref Anim.Eff.Value.Data, ref NullValPointers);
             }
-
         }
 
         public static void Write(this Stream IO, ref AetObject Anim, ref int Offset)
@@ -138,7 +138,19 @@ namespace KKdMainLib.Aet
             IO.Write(Anim.Unk1);
             IO.Write(Anim.Unk2);
             IO.Write((byte)Anim.Type);
-                 if (Anim.Type == ObjType.Pic) IO.Write(ref Anim.Pic);
+                 if (Anim.Type == ObjType.Pic)
+            {
+                Anim.Pic.Offset = IO.Position;
+                IO.Write(0L);
+                if (Anim.Pic.Value.Marker.Count > 0)
+                {
+                    IO.Write(Anim.Pic.Value.Marker.Count );
+                    IO.Write(Anim.Pic.Value.Marker.Offset);
+                }
+                else IO.Write(0L);
+                IO.Write(Anim.Pic.Value.Data  .Offset);
+                IO.Write(0);
+            }
             else if (Anim.Type == ObjType.Aif)
             {
                 Anim.Aif.Offset = IO.Position;
@@ -147,7 +159,19 @@ namespace KKdMainLib.Aet
                 IO.Write(0L);
                 IO.Write(Anim.Aif.Value.Pointer);
             }
-            else if (Anim.Type == ObjType.Eff) IO.Write(ref Anim.Eff);
+            else if (Anim.Type == ObjType.Eff)
+            {
+                Anim.Eff.Offset = IO.Position;
+                IO.Write(0L);
+                if (Anim.Eff.Value.Marker.Count > 0)
+                {
+                    IO.Write(Anim.Eff.Value.Marker.Count );
+                    IO.Write(Anim.Eff.Value.Marker.Offset);
+                }
+                else IO.Write(0L);
+                IO.Write(Anim.Eff.Value.Data.Offset);
+                IO.Write(0);
+            }
             else { IO.Write(0L); IO.Write(0L); IO.Write(0L); }
         }
 
@@ -172,20 +196,6 @@ namespace KKdMainLib.Aet
             }
 
             return Pic;
-        }
-
-        public static void Write(this Stream IO, ref Pointer<Pic> Pic)
-        {
-            Pic.Offset = IO.Position;
-            IO.Write(0L);
-            if (Pic.Value.Marker.Count > 0)
-            {
-                IO.Write(Pic.Value.Marker.Count );
-                IO.Write(Pic.Value.Marker.Offset);
-            }
-            else IO.Write(0L);
-            IO.Write(Pic.Value.Data  .Offset);
-            IO.Write(0);
         }
 
         public static Pointer<Aif> ReadAif(this Stream IO)
@@ -276,20 +286,6 @@ namespace KKdMainLib.Aet
             return Eff;
         }
 
-        public static void Write(this Stream IO, ref Pointer<Eff> Eff)
-        {
-            Eff.Offset = IO.Position;
-            IO.Write(0L);
-            if (Eff.Value.Marker.Count > 0)
-            {
-                IO.Write(Eff.Value.Marker.Count );
-                IO.Write(Eff.Value.Marker.Offset);
-            }
-            else IO.Write(0L);
-            IO.Write(Eff.Value.Data.Offset);
-            IO.Write(0);
-        }
-
         public static void ReadAnimData(this Stream IO, ref Pointer<AnimationData> Anim)
         {
             ref AnimationData Data = ref Anim.Value;
@@ -298,22 +294,6 @@ namespace KKdMainLib.Aet
             Data.Unk0           = IO.ReadByte();
             Data.UseTextureMask = IO.ReadBoolean();
             Data.Unk1           = IO.ReadByte();
-            Data.Anim = IO.ReadSubAnimData();
-            Data.SubAnim = IO.ReadPointer<SubAnimationData>();
-
-            IO.ReadSubAnimData(ref Data.Anim);
-
-            if (Data.SubAnim.Offset > 0)
-            {
-                IO.Position = Data.SubAnim.Offset;
-                Data.SubAnim.Value = IO.ReadSubAnimData();
-                IO.ReadSubAnimData(ref Data.SubAnim.Value);
-            }
-        }
-
-        public static SubAnimationData ReadSubAnimData(this Stream IO)
-        {
-            SubAnimationData Data = new SubAnimationData() { };
             Data.  OriginX = IO.ReadKeyFrameEntry();
             Data.  OriginY = IO.ReadKeyFrameEntry();
             Data.PositionX = IO.ReadKeyFrameEntry();
@@ -322,11 +302,8 @@ namespace KKdMainLib.Aet
             Data.   ScaleX = IO.ReadKeyFrameEntry();
             Data.   ScaleY = IO.ReadKeyFrameEntry();
             Data.Opacity   = IO.ReadKeyFrameEntry();
-            return Data;
-        }
+            Data._3D = IO.ReadPointer<AnimationData3D>();
 
-        public static void ReadSubAnimData(this Stream IO, ref SubAnimationData Data)
-        {
             IO.ReadKeyFrameEntry(ref Data.  OriginX);
             IO.ReadKeyFrameEntry(ref Data.  OriginY);
             IO.ReadKeyFrameEntry(ref Data.PositionX);
@@ -335,38 +312,47 @@ namespace KKdMainLib.Aet
             IO.ReadKeyFrameEntry(ref Data.   ScaleX);
             IO.ReadKeyFrameEntry(ref Data.   ScaleY);
             IO.ReadKeyFrameEntry(ref Data.Opacity  );
+
+            if (Data._3D.Offset > 0)
+            {
+                IO.Position = Data._3D.Offset;
+                Data._3D.Value.Unk1       = IO.ReadKeyFrameEntry();
+                Data._3D.Value.Unk2       = IO.ReadKeyFrameEntry();
+                Data._3D.Value.RotReturnX = IO.ReadKeyFrameEntry();
+                Data._3D.Value.RotReturnY = IO.ReadKeyFrameEntry();
+                Data._3D.Value.RotReturnZ = IO.ReadKeyFrameEntry();
+                Data._3D.Value. RotationX = IO.ReadKeyFrameEntry();
+                Data._3D.Value. RotationY = IO.ReadKeyFrameEntry();
+                Data._3D.Value.    ScaleZ = IO.ReadKeyFrameEntry();
+
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.Unk1      );
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.Unk2      );
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnX);
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnY);
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnZ);
+                IO.ReadKeyFrameEntry(ref Data._3D.Value. RotationX);
+                IO.ReadKeyFrameEntry(ref Data._3D.Value. RotationY);
+                IO.ReadKeyFrameEntry(ref Data._3D.Value.    ScaleZ);
+            }
         }
 
         public static void Write(this Stream IO, ref Pointer<AnimationData> Anim, ref List<int> NullValPointers)
         {
             ref AnimationData Data = ref Anim.Value;
 
-            byte SubFlags = 0;
-            if (Data.SubAnim.Offset > -1)
-                SubFlags = IO.Write(ref Data.SubAnim.Value);
-
-            byte Flags = IO.Write(ref Data.Anim);
-
-            if (Data.SubAnim.Offset > -1)
+            int SubFlags = 0;
+            if (Data._3D.Offset > -1)
             {
-                IO.Align(0x20);
-                Data.SubAnim.Offset = IO.Position;
-                IO.Write(ref Data.SubAnim.Value, ref NullValPointers, Flags);
+                SubFlags |= IO.Write(ref Data._3D.Value.Unk1      ) ? 0b10000000 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value.Unk2      ) ? 0b01000000 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnX) ? 0b00100000 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnY) ? 0b00010000 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnZ) ? 0b00001000 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value. RotationX) ? 0b00000100 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value. RotationY) ? 0b00000010 : 0;
+                SubFlags |= IO.Write(ref Data._3D.Value.    ScaleZ) ? 0b00000001 : 0;
             }
 
-            IO.Align(0x20);
-            Anim.Offset = IO.Position;
-            IO.WriteByte((byte) Data.BlendMode);
-            IO.WriteByte(       Data.Unk0);
-            IO.WriteByte((byte)(Data.UseTextureMask ? 1 : 0));
-            IO.WriteByte(       Data.Unk1);
-
-            IO.Write(ref Data.Anim, ref NullValPointers, Flags);
-            IO.Write(Data.SubAnim.Offset > -1 ? Data.SubAnim.Offset : 0);
-        }
-
-        public static byte Write(this Stream IO, ref SubAnimationData Data)
-        {
             int Flags = 0;
             Flags |= IO.Write(ref Data.  OriginX) ? 0b10000000 : 0;
             Flags |= IO.Write(ref Data.  OriginY) ? 0b01000000 : 0;
@@ -376,10 +362,26 @@ namespace KKdMainLib.Aet
             Flags |= IO.Write(ref Data.   ScaleX) ? 0b00000100 : 0;
             Flags |= IO.Write(ref Data.   ScaleY) ? 0b00000010 : 0;
             Flags |= IO.Write(ref Data.Opacity  ) ? 0b00000001 : 0;
-            return (byte)Flags;
+
+            if (Data._3D.Offset > -1)
+            {
+                IO.Align(0x20);
+                Data._3D.Offset = IO.Position;
+                IO.Write(ref Data._3D.Value, ref NullValPointers, SubFlags);
+            }
+
+            IO.Align(0x20);
+            Anim.Offset = IO.Position;
+            IO.WriteByte((byte) Data.BlendMode);
+            IO.WriteByte(       Data.Unk0);
+            IO.WriteByte((byte)(Data.UseTextureMask ? 1 : 0));
+            IO.WriteByte(       Data.Unk1);
+
+            IO.Write(ref Data, ref NullValPointers, Flags);
+            IO.Write(Data._3D.Offset > -1 ? Data._3D.Offset : 0);
         }
 
-        public static void Write(this Stream IO, ref SubAnimationData Data, ref List<int> NullValPointers, byte Flags)
+        public static void Write(this Stream IO, ref AnimationData Data, ref List<int> NullValPointers, int Flags)
         {
             IO.Write(Data.  OriginX.Count );
             if ((Flags & 0b10000000) == 0b10000000) NullValPointers.Add(IO.Position);
@@ -407,6 +409,34 @@ namespace KKdMainLib.Aet
             IO.Write(Data.Opacity  .Offset);
         }
 
+        public static void Write(this Stream IO, ref AnimationData3D Data, ref List<int> NullValPointers, int Flags)
+        {
+            IO.Write(Data.Unk1      .Count );
+            if ((Flags & 0b10000000) == 0b10000000) NullValPointers.Add(IO.Position);
+            IO.Write(Data.Unk1      .Offset);
+            IO.Write(Data.Unk2      .Count );
+            if ((Flags & 0b01000000) == 0b01000000) NullValPointers.Add(IO.Position);
+            IO.Write(Data.Unk2      .Offset);
+            IO.Write(Data.RotReturnX.Count );
+            if ((Flags & 0b00100000) == 0b00100000) NullValPointers.Add(IO.Position);
+            IO.Write(Data.RotReturnX.Offset);
+            IO.Write(Data.RotReturnY.Count );
+            if ((Flags & 0b00010000) == 0b00010000) NullValPointers.Add(IO.Position);
+            IO.Write(Data.RotReturnY.Offset);
+            IO.Write(Data.RotReturnZ.Count );
+            if ((Flags & 0b00001000) == 0b00001000) NullValPointers.Add(IO.Position);
+            IO.Write(Data.RotReturnZ.Offset);
+            IO.Write(Data. RotationX.Count );
+            if ((Flags & 0b00000100) == 0b00000100) NullValPointers.Add(IO.Position);
+            IO.Write(Data. RotationX.Offset);
+            IO.Write(Data. RotationY.Count );
+            if ((Flags & 0b00000010) == 0b00000010) NullValPointers.Add(IO.Position);
+            IO.Write(Data. RotationY.Offset);
+            IO.Write(Data.    ScaleZ.Count );
+            if ((Flags & 0b00000001) == 0b00000001) NullValPointers.Add(IO.Position);
+            IO.Write(Data.    ScaleZ.Offset);
+        }
+
         public static KeyFrameEntry ReadKeyFrameEntry(this Stream IO) =>
             new KeyFrameEntry { Count = IO.ReadInt32(), Offset = IO.ReadInt32() };
 
@@ -430,8 +460,8 @@ namespace KKdMainLib.Aet
 
             if (entry.Count > 2) IO.Align(0x20);
             entry.Offset = IO.Position;
-            if (entry.Count == 1) if (entry.Value == 0) return true;
-                else { IO.Write(entry.Value); return false; }  
+            if (entry.Count == 1) if (entry.Value == 0) return  true;
+                      else { IO.Write(entry.Value);     return false; }  
 
             for (int i = 0; i < entry.Count; i++) IO.Write(entry.KeyFrame     [i]);
             for (int i = 0; i < entry.Count; i++)
@@ -450,7 +480,8 @@ namespace KKdMainLib.Aet
             {
                 mark.Count = Markers.Array.Length;
                 for (int i = 0; i < mark.Count; i++)
-                    mark.Entries[i].ReadMP(Markers[i] as MsgPack);
+                    if (Markers[i] is MsgPack marker)
+                        mark.Entries[i].ReadMP(marker);
             }
         }
 

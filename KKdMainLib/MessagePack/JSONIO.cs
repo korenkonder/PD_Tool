@@ -1,8 +1,8 @@
 ﻿//Original or reader part: https://github.com/MarcosLopezC/LightJson/
 
 using System;
-using System.Collections.Generic;
 using KKdMainLib.IO;
+using KKdMainLib.Types;
 
 namespace KKdMainLib.MessagePack
 {
@@ -18,16 +18,8 @@ namespace KKdMainLib.MessagePack
         public MsgPack Read() => ReadValue();
 
         private string ReadKey() => ReadString();
-        
-        private MsgPack ReadValue()
-        {
-            char c = _IO.SkipWhitespace().PeekCharUTF8();
-            object obj = null;
-            if (c == '{') obj = ReadObject();
-            return new MsgPack(null, true, obj);
-        }
 
-        private MsgPack ReadValue(string Key)
+        private MsgPack ReadValue(string Key = null)
         {
             char c = _IO.SkipWhitespace().PeekCharUTF8();
             object obj = null;
@@ -44,7 +36,7 @@ namespace KKdMainLib.MessagePack
                     case 'f': obj = ReadBoolean(); break;
                     case 'n': obj = ReadNull   (); break;
                 }
-            return new MsgPack(Key, true, obj);
+            return new MsgPack(Key, obj);
         }
         
 		private string ReadString()
@@ -88,28 +80,28 @@ namespace KKdMainLib.MessagePack
 		private int ReadHexDigit() => byte.Parse(_IO.ReadCharUTF8().ToString(),
             System.Globalization.NumberStyles.HexNumber);
 
-        private List<object> ReadObject()
+        private KKdList<object> ReadObject()
         {
-            List<object> Obj = new List<object>();
-            if (!_IO.Assert('{')) return null;
-			if (_IO.SkipWhitespace().PeekCharUTF8() == '}') { _IO.ReadCharUTF8(); return null; }
+            KKdList<object> Obj = KKdList<object>.New;
+            if (!_IO.Assert('{')) return KKdList<object>.Null;
+			if (_IO.SkipWhitespace().PeekCharUTF8() == '}') { _IO.ReadCharUTF8(); return KKdList<object>.Null; }
 
             string key;
+            char c;
             while (true)
             {
                 _IO.SkipWhitespace();
 
                 key = ReadString();
-                if (!_IO.SkipWhitespace().Assert(':')) return null;
+                if (!_IO.SkipWhitespace().Assert(':'))
+                    return KKdList<object>.Null;
+
                 Obj.Add(ReadValue(key));
-
-                _IO.SkipWhitespace();
-
-                var next = _IO.ReadCharUTF8();
-
-                     if (next == '}')    break;
-                else if (next == ',') continue;
-                else return null;
+                c = _IO.SkipWhitespace().PeekCharUTF8();
+                
+                     if (c == '}') { _IO.ReadCharUTF8();    break; }
+                else if (c == ',') { _IO.ReadCharUTF8(); continue; }
+                else return KKdList<object>.Null;
             }
 
             return Obj;
@@ -117,7 +109,7 @@ namespace KKdMainLib.MessagePack
         
         private object[] ReadArray()
         {
-            List<object> Obj = new List<object>();
+            KKdList<object> Obj = KKdList<object>.New;
             if (!_IO.Assert('[')) return null;
             if (_IO.SkipWhitespace().PeekCharUTF8() == ']') { _IO.ReadCharUTF8(); return null; }
 
@@ -125,10 +117,10 @@ namespace KKdMainLib.MessagePack
             while (true)
             {
                 Obj.Add(ReadValue(null));
-                c = _IO.SkipWhitespace().ReadCharUTF8();
+                c = _IO.SkipWhitespace().PeekCharUTF8();
 
-                     if (c == ']')    break;
-                else if (c == ',') continue;
+                     if (c == ']') { _IO.ReadCharUTF8();    break; }
+                else if (c == ',') { _IO.ReadCharUTF8(); continue; }
                 else return null;
             }
             return Obj.ToArray();
@@ -141,8 +133,18 @@ namespace KKdMainLib.MessagePack
             if (_IO.PeekCharUTF8() == '-') s += _IO.ReadCharUTF8();
 			if (_IO.PeekCharUTF8() == '0') s += _IO.ReadCharUTF8();
             else                           s +=     ReadDigits  ();
-			if (_IO.PeekCharUTF8() == '.') s += _IO.ReadCharUTF8() + ReadDigits();
-            else return long.Parse(s);
+            if (_IO.PeekCharUTF8() == '.') s += _IO.ReadCharUTF8() + ReadDigits();
+            else
+            {
+                long val = long.Parse(s);
+                     if (val >=  0x000000 && val < 0x0000100) return (  byte)val;
+                else if (val >= -0x000080 && val < 0x0000080) return ( sbyte)val;
+                else if (val >= -0x008000 && val < 0x0008000) return ( short)val;
+                else if (val >=  0x000000 && val < 0x0010000) return (ushort)val;
+                else if (val >= -0x800000 && val < 0x0800000) return (   int)val;
+                else if (val >=  0x000000 && val < 0x1000000) return (  uint)val;
+                else                                          return         val;
+            }
 
             char c = _IO.PeekCharUTF8();
             if (c == 'e' || c == 'E')
@@ -152,7 +154,8 @@ namespace KKdMainLib.MessagePack
                 if (c == '+' || c == '-') s += _IO.ReadCharUTF8();
                 s += ReadDigits();
 			}
-			return s.ToDouble();
+            double d = s.ToDouble();
+            return (float)d == d ? (float)d : d;
         }
 
 		private bool ReadBoolean()
@@ -182,7 +185,7 @@ namespace KKdMainLib.MessagePack
             if (MsgPack.Name   != null) _IO.Write("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
             if (MsgPack.Object == null) { WriteNil(); return this; }
             
-            if (MsgPack.List != null)
+            if (MsgPack.List.NotNull)
             {
                 WriteMap();
                 if (Style) _IO.Write(End);

@@ -52,8 +52,10 @@
     <Compile Include="MessagePack\MsgPack.cs" />
     <Compile Include="MessagePack\IO.cs" />
     <Compile Include="Types\Half.cs" />
-    <Compile Include="Types\Vector2.cs" />
-    <Compile Include="Types\Vector3.cs" />
+    <Compile Include="Types\KeyFrame.cs" />
+    <Compile Include="Types\KKdList.cs" />
+    <Compile Include="Types\Pointer.cs" />
+    <Compile Include="Types\Vector.cs" />
     <Compile Include="DataBank.cs" />
     <Compile Include="DCC.cs" />
     <Compile Include="DEX.cs" />

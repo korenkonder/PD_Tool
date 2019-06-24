@@ -253,9 +253,10 @@ namespace KKdMainLib.DB
             {
                 SpriteSets = new SpriteSet[SprDB.Array.Length];
                 for (int i = 0; i < SpriteSets.Length; i++)
-                    SpriteSets[i].ReadMsgPack(SprDB[i] as MsgPack);
+                    if (SprDB[i] is MsgPack Spr)
+                        SpriteSets[i].ReadMsgPack(Spr);
             }
-            MsgPack = null;
+            MsgPack = MsgPack.New;
         }
 
         public void MsgPackWriter(string file, bool JSON)
@@ -263,7 +264,7 @@ namespace KKdMainLib.DB
             if (SpriteSets        == null) return;
             if (SpriteSets.Length ==    0) return;
 
-            MsgPack SprDB = new MsgPack("SprDB", SpriteSets.Length);
+            MsgPack SprDB = new MsgPack(SpriteSets.Length, "SprDB");
             for (i = 0; i < SpriteSets.Length; i++) SprDB[i] = SpriteSets[i].WriteMsgPack();
 
             SprDB.Write(true, file, JSON);
@@ -279,7 +280,7 @@ namespace KKdMainLib.DB
             { Id = msg.ReadNInt32("Id"); Name = msg.ReadString("Name"); }
 
             public MsgPack WriteMsgPack() =>
-                new MsgPack().Add("Id", Id).Add("Name", Name);
+                MsgPack.New.Add("Id", Id).Add("Name", Name);
         }
 
         public struct SpriteSet
@@ -304,28 +305,30 @@ namespace KKdMainLib.DB
                 {
                     this  .Sprites = new SpriteTexture[Sprites.Array.Length];
                     for (int i0 = 0; i0 < this.Sprites.Length; i0++)
-                        this.Sprites[i0].ReadMsgPack(Sprites[i0] as MsgPack);
+                        if (Sprites[i0] is MsgPack Sprite)
+                            this.Sprites[i0].ReadMsgPack(Sprite);
                 }
 
                 if (msg.Element<MsgPack>("Textures", out MsgPack Textures))
                 {
                     this  .Textures = new SpriteTexture[Textures.Array.Length];
                     for (int i0 = 0; i0 < this.Textures.Length; i0++)
-                        this.Textures[i0].ReadMsgPack(Textures[i0] as MsgPack);
+                        if (Textures[i0] is MsgPack Texture)
+                            this.Textures[i0].ReadMsgPack(Texture);
                 }
             }
 
             public MsgPack WriteMsgPack()
             {
-                MsgPack  Sprites = new MsgPack( "Sprites",  this.Sprites.Length);
+                MsgPack  Sprites = new MsgPack(this. Sprites.Length,  "Sprites");
                 for (int i0 = 0; i0 < this.Sprites.Length; i0++)
                      Sprites[i0] = this.Sprites[i0].WriteMsgPack();
 
-                MsgPack Textures = new MsgPack("Textures", this.Textures.Length);
+                MsgPack Textures = new MsgPack(this.Textures.Length, "Textures");
                 for (int i0 = 0; i0 <  this.Textures.Length; i0++)
                     Textures[i0] = this.Textures[i0].WriteMsgPack();
 
-                return new MsgPack().Add("FileName", FileName).Add("Id", Id).Add("Name", Name).Add(Sprites).Add(Textures);
+                return MsgPack.New.Add("FileName", FileName).Add("Id", Id).Add("Name", Name).Add(Sprites).Add(Textures);
             }
         }
     }

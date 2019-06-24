@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using KKdMainLib.IO;
+using KKdMainLib.Types;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.Aet
@@ -20,38 +21,35 @@ namespace KKdMainLib.Aet
 
         public void AETReader(string file)
         {
+            AET = new AetHeader();
             IO = File.OpenReader(file + ".bin", true);
 
-            AET.MAIN  = IO.ReadPointer<AetData>();
-            AET.TOUCH = IO.ReadPointer<AetData>();
-            if (AET.MAIN.Offset > 0)
-            {
-                AETReader(ref AET.MAIN);
-                if (AET.TOUCH.Offset > 0)
-                    AETReader(ref AET.TOUCH);
-            }
+            i = 0;
+            int Pos = -1;
+            while (true) { Pos = IO.ReadInt32(); if (Pos != 0 && Pos < IO.Length) i++; else break; }
+
+            IO.Position = 0;
+            AET.Data = new Pointer<AetData>[i];
+            for (int i = 0; i < AET.Data.Length; i++) AET.Data[i] = IO.ReadPointer<AetData>();
+            for (int i = 0; i < AET.Data.Length; i++) AETReader(ref AET.Data[i]);
 
             IO.Close();
         }
 
         public void AETWriter(string file)
         {
-            if (AET.MAIN.Offset < 0) return;
+            if (AET.Data == null) return;
+            if (AET.Data.Length == 0) return;
             IO = File.OpenWriter(file + ".bin", true);
 
-            IO.Position = 0x20;
-            AETWriter(ref AET.MAIN );
-
-            if (AET.TOUCH.Offset >= 0)
+            for (int i = 0; i < AET.Data.Length; i++)
             {
                 IO.Position = IO.Length + 0x20;
-                AETWriter(ref AET.TOUCH);
+                AETWriter(ref AET.Data[i]);
             }
 
             IO.Position = 0;
-            IO.Write(AET.MAIN.Offset);
-            if (AET.TOUCH.Offset > 0) IO.Write(AET.TOUCH.Offset);
-
+            for (int i = 0; i < AET.Data.Length; i++) IO.Write(AET.Data[i].Offset);
             IO.Close();
         }
 
@@ -225,7 +223,6 @@ namespace KKdMainLib.Aet
                 }
 
                 //IO.Align(0x4);
-
                 Aet.Name.Offset = IO.Position;
                 IO.Write(Aet.Name.Value + x00);
             }
@@ -320,40 +317,34 @@ namespace KKdMainLib.Aet
         public void MsgPackReader(string file, bool JSON)
         {
             AET = new AetHeader();
-            AET.MAIN .Offset = -1;
-            AET.TOUCH.Offset = -1;
 
-            MsgPack MsgPack = file.ReadMP(JSON);
-            if (!MsgPack.Element<MsgPack>("Aet", out MsgPack Aet)) { MsgPack = null; return; }
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
+            if (!MsgPack.Element<MsgPack>("Aet", out MsgPack Aet)) { MsgPack = MsgPack.New; return; }
 
             if (Aet.Array != null)
-                if (Aet.Array.Length == 1)
+                if (Aet.Array.Length > 0)
                 {
-                    if (Aet.Array[0] is MsgPack MAIN ) MsgPackReader(MAIN , ref AET.MAIN );
-                }
-                else if (Aet.Array.Length == 2)
-                {
-                    if (Aet.Array[0] is MsgPack MAIN ) MsgPackReader(MAIN , ref AET.MAIN );
-                    if (Aet.Array[1] is MsgPack TOUCH) MsgPackReader(TOUCH, ref AET.TOUCH);
+                    AET.Data = new Pointer<AetData>[Aet.Array.Length];
+                    for (int i = 0; i < AET.Data.Length; i++)
+                        if (Aet.Array[i] is MsgPack SubAet ) MsgPackReader(SubAet, ref AET.Data[i] );
                 }
 
-            MsgPack = null;
+            MsgPack = MsgPack.New;
         }
 
         public void MsgPackWriter(string file, bool JSON)
         {
-            if (this.AET.MAIN .Offset <= 0) return;
-            MsgPack AET = new MsgPack("Aet", this.AET.TOUCH.Offset > 0 ? 2 : 1);
+            if (this.AET.Data == null) return;
+            if (this.AET.Data.Length == 0) return;
 
-            AET[0] = MsgPackWriter(ref this.AET.MAIN);
-            if (this.AET.TOUCH.Offset > 0) AET[1] = MsgPackWriter(ref this.AET.TOUCH);
-
+            MsgPack AET = new MsgPack(this.AET.Data.Length, "Aet");
+            for (int i = 0; i < this.AET.Data.Length; i++) AET[i] = MsgPackWriter(ref this.AET.Data[i]);
             AET.WriteAfterAll(true, file, JSON);
         }
 
         public void MsgPackReader(MsgPack AET, ref Pointer<AetData> AetData)
         {
-            MsgPack Temp = new MsgPack();
+            MsgPack Temp = MsgPack.New;
 
             AetData.Offset = -1;
             ref AetData Aet = ref AetData.Value;
@@ -446,7 +437,7 @@ namespace KKdMainLib.Aet
 
         public MsgPack MsgPackWriter(ref Pointer<AetData> AetData)
         {
-            if (AetData.Offset <= 0) return null;
+            if (AetData.Offset <= 0) return MsgPack.New;
             ref AetData Aet = ref AetData.Value;
 
             Aet.ObjectsIndDict = Aet.ObjectsDict.GetIndDict();
@@ -459,13 +450,13 @@ namespace KKdMainLib.Aet
             Aet.SpritesDict = null;
             Aet.SprEntsDict = null;
 
-            MsgPack AET = new MsgPack().Add("Name", Aet.Name.Value).Add("Duration",
+            MsgPack AET = MsgPack.New.Add("Name", Aet.Name.Value).Add("Duration",
                 Aet.Duration).Add("FrameRate", Aet.FrameRate).Add("Width",
                 Aet.Width).Add("Height", Aet.Height).Add("Unk", Aet.Unk);
 
             if (Aet.LayObjPointers.Count > 0)
             {
-                MsgPack Layers = new MsgPack("Layers", Aet.LayObjPointers.Count);
+                MsgPack Layers = new MsgPack(Aet.LayObjPointers.Count, "Layers");
                 for (i = 0; i < Aet.LayObjPointers.Count; i++)
                     if (Aet.LayObjPointers.Entries[i].Count > 0)
                     {
@@ -481,7 +472,7 @@ namespace KKdMainLib.Aet
                 AET.Add(Aet.SprEntsArr[0].Value.WriteMP(0, ref Aet.SpritesIndDict, "SpriteEntry"));
             else if (Aet.SprEntsArr.Length > 0)
             {
-                MsgPack SpriteEntries = new MsgPack("SpriteEntries", Aet.SprEntsArr.Length);
+                MsgPack SpriteEntries = new MsgPack(Aet.SprEntsArr.Length, "SpriteEntries");
                 for (i = 0; i < Aet.SprEntsArr.Length; i++)
                     SpriteEntries[i] = Aet.SprEntsArr[i].Value.WriteMP(i, ref Aet.SpritesIndDict);
                 AET.Add(SpriteEntries);
@@ -491,7 +482,7 @@ namespace KKdMainLib.Aet
                 AET.Add(Aet.ObjectsArr[0].Value.WriteMP(0, ref Aet, "Object"));
             else if (Aet.ObjectsArr.Length > 1)
             {
-                MsgPack Objects = new MsgPack("Objects", Aet.ObjectsArr.Length);
+                MsgPack Objects = new MsgPack(Aet.ObjectsArr.Length, "Objects");
                 for (i = 0; i < Aet.ObjectsArr.Length; i++)
                     Objects[i] = Aet.ObjectsArr[i].Value.WriteMP(i, ref Aet);
                 AET.Add(Objects);
@@ -501,7 +492,7 @@ namespace KKdMainLib.Aet
                 AET.Add(Aet.SpritesArr[0].Value.WriteMP(0, "Sprite"));
             else if (Aet.SpritesArr.Length > 1)
             {
-                MsgPack Sprites = new MsgPack("Sprites", Aet.SpritesArr.Length);
+                MsgPack Sprites = new MsgPack(Aet.SpritesArr.Length, "Sprites");
                 for (i = 0; i < Aet.SpritesArr.Length; i++)
                     Sprites[i] = Aet.SpritesArr[i].Value.WriteMP(i);
                 AET.Add(Sprites);
@@ -516,8 +507,8 @@ namespace KKdMainLib.Aet
 
     public struct AetHeader
     {
-        public Pointer<AetData> MAIN ;
-        public Pointer<AetData> TOUCH;
+        public Pointer<AetData>[] Data;
+        public POF POF;
     }
 
     public struct AetData
@@ -645,7 +636,7 @@ namespace KKdMainLib.Aet
                 Pic.Add(Marker.Entries[0].WriteMP("Marker"));
             else if (Marker.Count > 1)
             {
-                MsgPack Markers = new MsgPack("Markers", Marker.Count);
+                MsgPack Markers = new MsgPack(Marker.Count, "Markers");
                 for (int i = 0; i < Marker.Count; i++)
                     Markers[i] = Marker.Entries[i].WriteMP();
                 Pic.Add(Markers);
@@ -682,8 +673,8 @@ namespace KKdMainLib.Aet
         }
 
         public MsgPack WriteMP() =>
-            new MsgPack("Aif").Add("Value", Value.Value).Add(Unk0.WriteMP("Unk0")).Add(Unk1
-                .WriteMP("Unk1")).Add(Unk2.WriteMP("Unk2")).Add(Unk3.WriteMP("Unk3"));
+            new MsgPack("Aif").Add("Value", Value.Value).Add("Unk0", Unk0)
+            .Add("Unk1", Unk0).Add("Unk2", Unk2).Add("Unk3", Unk3);
     }
 
     public struct Eff
@@ -734,7 +725,7 @@ namespace KKdMainLib.Aet
                 Eff.Add(Marker.Entries[0].WriteMP("Marker"));
             else if (Marker.Count > 1)
             {
-                MsgPack Markers = new MsgPack("Markers", Marker.Count);
+                MsgPack Markers = new MsgPack(Marker.Count, "Markers");
                 for (int i = 0; i < Marker.Count; i++)
                     Markers[i] = Marker.Entries[i].WriteMP();
                 Eff.Add(Markers);
@@ -758,46 +749,41 @@ namespace KKdMainLib.Aet
             new MsgPack(name).Add("Frame", Frame).Add("Name", Name.Value);
     }
 
-    public struct SubAnimationData
+    public struct AnimationData3D
     {
-        public KeyFrameEntry   OriginX;
-        public KeyFrameEntry   OriginY;
-        public KeyFrameEntry PositionX;
-        public KeyFrameEntry PositionY;
-        public KeyFrameEntry Rotation;
-        public KeyFrameEntry    ScaleX;
-        public KeyFrameEntry    ScaleY;
-        public KeyFrameEntry Opacity;
+        public KeyFrameEntry Unk1      ;
+        public KeyFrameEntry Unk2      ;
+        public KeyFrameEntry RotReturnX;
+        public KeyFrameEntry RotReturnY;
+        public KeyFrameEntry RotReturnZ;
+        public KeyFrameEntry  RotationX;
+        public KeyFrameEntry  RotationY;
+        public KeyFrameEntry     ScaleZ;
 
         public void ReadMP(MsgPack msg)
         {
-              OriginX.ReadMP(msg,   "OriginX");
-              OriginY.ReadMP(msg,   "OriginY");
-            PositionX.ReadMP(msg, "PositionX");
-            PositionY.ReadMP(msg, "PositionY");
-            Rotation .ReadMP(msg, "Rotation" );
-               ScaleX.ReadMP(msg,    "ScaleX");
-               ScaleY.ReadMP(msg,    "ScaleY");
-            Opacity  .ReadMP(msg, "Opacity"  );
+            Unk1      .ReadMP(msg, "Unk1"      );
+            Unk2      .ReadMP(msg, "Unk2"      );
+            RotReturnX.ReadMP(msg, "RotReturnX");
+            RotReturnY.ReadMP(msg, "RotReturnY");
+            RotReturnZ.ReadMP(msg, "RotReturnZ");
+             RotationX.ReadMP(msg,  "RotationX");
+             RotationY.ReadMP(msg,  "RotationY");
+                ScaleZ.ReadMP(msg,     "ScaleZ");
         }
 
         public MsgPack WriteMP()
         {
-            MsgPack AnimationData = new MsgPack("SubAnimationData");
-            WriteMP(ref AnimationData);
-            return AnimationData;
-        }
-
-        public void WriteMP(ref MsgPack msg)
-        {
-            msg.Add(  OriginX.WriteMP(  "OriginX"));
-            msg.Add(  OriginY.WriteMP(  "OriginY"));
-            msg.Add(PositionX.WriteMP("PositionX"));
-            msg.Add(PositionY.WriteMP("PositionY"));
-            msg.Add(Rotation .WriteMP("Rotation" ));
-            msg.Add(   ScaleX.WriteMP(   "ScaleX"));
-            msg.Add(   ScaleY.WriteMP(   "ScaleY"));
-            msg.Add(Opacity  .WriteMP("Opacity"  ));
+            MsgPack _3D = new MsgPack("3D");
+            _3D.Add(Unk1      .WriteMP("Unk1"      ));
+            _3D.Add(Unk2      .WriteMP("Unk2"      ));
+            _3D.Add(RotReturnX.WriteMP("RotReturnX"));
+            _3D.Add(RotReturnY.WriteMP("RotReturnY"));
+            _3D.Add(RotReturnZ.WriteMP("RotReturnZ"));
+            _3D.Add( RotationX.WriteMP( "RotationX"));
+            _3D.Add( RotationY.WriteMP( "RotationY"));
+            _3D.Add(    ScaleZ.WriteMP(    "ScaleZ"));
+            return _3D;
         }
     }
 
@@ -807,8 +793,15 @@ namespace KKdMainLib.Aet
         public byte Unk0;
         public bool UseTextureMask;
         public byte Unk1;
-        public SubAnimationData Anim;
-        public Pointer<SubAnimationData> SubAnim;
+        public KeyFrameEntry   OriginX;
+        public KeyFrameEntry   OriginY;
+        public KeyFrameEntry PositionX;
+        public KeyFrameEntry PositionY;
+        public KeyFrameEntry Rotation;
+        public KeyFrameEntry    ScaleX;
+        public KeyFrameEntry    ScaleY;
+        public KeyFrameEntry Opacity;
+        public Pointer<AnimationData3D> _3D;
 
         public void ReadMP(MsgPack msg)
         {
@@ -818,12 +811,19 @@ namespace KKdMainLib.Aet
             Unk0           = Data.ReadUInt8  ("Unk0");
             UseTextureMask = Data.ReadBoolean("UseTextureMask");
             Unk1           = Data.ReadUInt8  ("Unk1");
+            
+              OriginX.ReadMP(Data,   "OriginX");
+              OriginY.ReadMP(Data,   "OriginY");
+            PositionX.ReadMP(Data, "PositionX");
+            PositionY.ReadMP(Data, "PositionY");
+            Rotation .ReadMP(Data, "Rotation" );
+               ScaleX.ReadMP(Data,    "ScaleX");
+               ScaleY.ReadMP(Data,    "ScaleY");
+            Opacity  .ReadMP(Data, "Opacity"  );
 
-            Anim.ReadMP(Data);
-
-            SubAnim.Offset = -1;
-            if (Data.Element("SubAnimationData", out MsgPack SubAnimationData))
-            { SubAnim.Offset = 0; SubAnim.Value.ReadMP(SubAnimationData); }
+            this._3D.Offset = -1;
+            if (Data.Element("3D", out MsgPack _3D))
+            { this._3D.Offset = 0; this._3D.Value.ReadMP(_3D); }
         }
 
         public MsgPack WriteMP()
@@ -832,9 +832,16 @@ namespace KKdMainLib.Aet
                 .Add("BlendMode", BlendMode.ToString()).Add("Unk0", Unk0)
                 .Add("UseTextureMask", UseTextureMask) .Add("Unk1", Unk1);
 
-            Anim.WriteMP(ref AnimationData);
-            if (SubAnim.Offset > 0)
-                AnimationData.Add(SubAnim.Value.WriteMP());
+            AnimationData.Add(  OriginX.WriteMP(  "OriginX"));
+            AnimationData.Add(  OriginY.WriteMP(  "OriginY"));
+            AnimationData.Add(PositionX.WriteMP("PositionX"));
+            AnimationData.Add(PositionY.WriteMP("PositionY"));
+            AnimationData.Add(Rotation .WriteMP("Rotation" ));
+            AnimationData.Add(   ScaleX.WriteMP(   "ScaleX"));
+            AnimationData.Add(   ScaleY.WriteMP(   "ScaleY"));
+            AnimationData.Add(Opacity  .WriteMP("Opacity"  ));
+            if (_3D.Offset > 0)
+                AnimationData.Add(_3D.Value.WriteMP());
             return AnimationData;
         }
     }
@@ -853,28 +860,27 @@ namespace KKdMainLib.Aet
             float? Value = msg.ReadNSingle(name);
             if (Value != null) { Count = 1; this.Value = Value.Value; return; }
             if (!msg.Element<MsgPack>(name, out MsgPack Temp)) return;
-
-            MsgPack temp;
+            
             Count = Temp.Array.Length;
             if (Count == 0) return;
             ArrValue      = new float[Count];
             KeyFrame      = new float[Count];
             Interpolation = new float[Count];
             for (int i = 0; i < Count; i++)
-            {
-                temp = Temp[i] as MsgPack;
-                KeyFrame     [i] = temp.ReadSingle("KeyFrame"     );
-                ArrValue     [i] = temp.ReadSingle("Value"        );
-                Interpolation[i] = temp.ReadSingle("Interpolation");
-            }
+                if (Temp[i] is MsgPack KeyFrame)
+                {
+                    this.KeyFrame[i] = KeyFrame.ReadSingle("KeyFrame"     );
+                    ArrValue     [i] = KeyFrame.ReadSingle("Value"        );
+                    Interpolation[i] = KeyFrame.ReadSingle("Interpolation");
+                }
         }
 
         public MsgPack WriteMP(string name)
         {
             if (Count  < 1) return MsgPack.Null;
-            if (Count == 1) return new MsgPack(name, MsgPack.Types.Float32, Value);
-            MsgPack KFE = new MsgPack(name, Count);
-            for (int i = 0; i < Count; i++) KFE[i] = new MsgPack().Add("KeyFrame", KeyFrame[i])
+            if (Count == 1) return new MsgPack(name, Value);
+            MsgPack KFE = new MsgPack(Count, name);
+            for (int i = 0; i < Count; i++) KFE[i] = MsgPack.New.Add("KeyFrame", KeyFrame[i])
                     .Add("Value", ArrValue[i]).Add("Interpolation", Interpolation[i]);
             return KFE;
         }
@@ -904,7 +910,8 @@ namespace KKdMainLib.Aet
             {
                 Sprites = new CountPointer<int> { Count = SpriteIDs.Array.Length };
                 for (int i0 = 0; i0 < Sprites.Count; i0++)
-                    Sprites.Entries[i0] = (SpriteIDs[i0] as MsgPack).ReadInt32();
+                    if (SpriteIDs[i0] is MsgPack ID)
+                        Sprites.Entries[i0] = ID.ReadInt32();
             }
 
             return msg.ReadNInt32("ID");
@@ -921,7 +928,7 @@ namespace KKdMainLib.Aet
                 SpriteEntry.Add("SpriteID", SpritesIndDict[Sprites.Entries[0]]);
             else if (Sprites.Count > 1)
             {
-                MsgPack SpriteIDs = new MsgPack("SpriteIDs", Sprites.Count);
+                MsgPack SpriteIDs = new MsgPack(Sprites.Count, "SpriteIDs");
                 for (int i0 = 0; i0 < Sprites.Count; i0++)
                     SpriteIDs[i0] = SpritesIndDict[Sprites.Entries[i0]];
                 SpriteEntry.Add(SpriteIDs);
@@ -941,24 +948,6 @@ namespace KKdMainLib.Aet
 
         public int? ReadMP(MsgPack mp)
         { ID = mp.ReadInt32("SprDB_ID"); Name.Value = mp.ReadString("Name"); return mp.ReadNInt32("ID"); }
-    }
-
-    public struct CountPointer<T>
-    {
-        public int Count { get => Entries == null ? 0 : Entries.Length; set => Entries = new T[value]; }
-        public int Offset;
-
-        public T[] Entries;
-
-        public override string ToString() => Entries.ToString();
-    }
-
-    public struct Pointer<T>
-    {
-        public int Offset;
-        public T Value;
-
-        public override string ToString() => Value.ToString();
     }
 
     public enum ObjType : byte

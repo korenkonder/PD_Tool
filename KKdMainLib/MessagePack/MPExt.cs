@@ -5,6 +5,17 @@ namespace KKdMainLib.MessagePack
 {
     public static class MPExt
     {
+        public static MsgPack ReadMPAllAtOnce(this string file, bool JSON = false)
+        {
+            MsgPack MsgPack;
+            if (JSON)
+            { JSONIO IO = new JSONIO(File.OpenReader(file + ".json", true));
+                MsgPack = IO.Read(); IO.Close(); IO = null; }
+            else
+            {   MPIO IO = new   MPIO(File.OpenReader(file + ".mp"  , true));
+                MsgPack = IO.Read(); IO.Close(); IO = null; }
+            return MsgPack;
+        }
         public static MsgPack ReadMP(this string file, bool JSON = false)
         {
             MsgPack MsgPack;
@@ -16,9 +27,24 @@ namespace KKdMainLib.MessagePack
                 MsgPack = IO.Read(); IO.Close(); IO = null; }
             return MsgPack;
         }
+        
+        public static void Write(this MsgPack mp, bool Temp, string file, bool JSON = false)
+        { if (Temp) MsgPack.New.Add(mp).Write(file, JSON).Dispose();
+          else                      mp .Write(file, JSON); }
+
+        public static MsgPack Write(this MsgPack mp, string file, bool JSON = false)
+        {
+            if (JSON)
+            { JSONIO IO = new JSONIO(File.OpenWriter(file + ".json", true));
+                IO.Write(mp, true, "\n", "  "); IO = null; }
+            else
+            {   MPIO IO = new   MPIO(File.OpenWriter(file + ".mp"  , true));
+                IO.Write(mp, true      ); IO = null; }
+            return mp;
+        }
 
         public static void WriteAfterAll(this MsgPack mp, bool Temp, string file, bool JSON = false)
-        { if (Temp) new MsgPack().Add(mp).WriteAfterAll(file, JSON).Dispose();
+        { if (Temp) MsgPack.New.Add(mp).WriteAfterAll(file, JSON).Dispose();
           else                        mp .WriteAfterAll(file, JSON); }
 
         public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool JSON = false)
@@ -31,22 +57,6 @@ namespace KKdMainLib.MessagePack
             {   MPIO IO = new   MPIO(File.OpenWriter());
                 IO.Write(mp, false      ); data = IO._IO.ToArray(true); }
             File.WriteAllBytes(file + (JSON ? ".json" : ".mp"), data);
-            return mp;
-        }
-
-
-        public static void Write(this MsgPack mp, bool Temp, string file, bool JSON = false)
-        { if (Temp) new MsgPack().Add(mp).Write(file, JSON).Dispose();
-          else                        mp .Write(file, JSON); }
-
-        public static MsgPack Write(this MsgPack mp, string file, bool JSON = false)
-        {
-            if (JSON)
-            { JSONIO IO = new JSONIO(File.OpenWriter(file + ".json", true));
-                IO.Write(mp, true, true); IO = null; }
-            else
-            {   MPIO IO = new   MPIO(File.OpenWriter(file + ".mp"  , true));
-                IO.Write(mp, true      ); IO = null; }
             return mp;
         }
 

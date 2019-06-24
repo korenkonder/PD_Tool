@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("KKdSoundLib")]
-[assembly: AssemblyCopyright("Copyright korenkonder © 2019")]
+[assembly: AssemblyCopyright("korenkonder © 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]

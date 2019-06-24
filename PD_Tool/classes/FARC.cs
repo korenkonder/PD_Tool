@@ -17,7 +17,7 @@ namespace PD_Tool
                 Main.Choose(1, "farc", out string[] FileNames);
                 foreach (string FileName in FileNames)
                     if (FileName != "" && File.Exists(FileName))
-                        FARC.UnPack(FileName);
+                        new KKdFARC(FileName).UnPack();
             }
             else
             {
@@ -26,27 +26,46 @@ namespace PD_Tool
                 Console.Title = "FARC Creator";
                 if (file != "")
                 {
+                    FARC = new KKdFARC();
                     Main.ConsoleDesign(true);
                     Main.ConsoleDesign("         Choose type of created FARC:");
                     Main.ConsoleDesign(false);
                     Main.ConsoleDesign("1. FArc [DT/DT2nd/DTex/F/F2nd/X]");
                     Main.ConsoleDesign("2. FArC [DT/DT2nd/DTex/F/F2nd/X] (Compressed)");
-                    Main.ConsoleDesign("3. FARC [F/F2nd/X] (Compressed)");
-                    Main.ConsoleDesign("4. FARC [FT] (Compressed)");
+                    Main.ConsoleDesign("3. FARC [F/F2nd/X]");
                     Main.ConsoleDesign(false);
-                    Main.ConsoleDesign("Note: Creating FT FARCs currently not supported.");
+                    Main.ConsoleDesign("R. Return to Main Menu");
                     Main.ConsoleDesign(false);
                     Main.ConsoleDesign(true);
                     Console.WriteLine();
                     Console.WriteLine("Choosed folder: {0}", file);
                     Console.WriteLine();
-                    int.TryParse(Console.ReadLine(), out int type);
-                         if (type == 1) FARC.Signature = KKdFARC.Farc.FArc;
-                    else if (type == 3) FARC.Signature = KKdFARC.Farc.FARC;
-                    else                FARC.Signature = KKdFARC.Farc.FArC;
-                    Console.Clear();
+                    string type = Console.ReadLine().ToUpper();
+                         if (type == "1") FARC.Signature = KKdFARC.Farc.FArc;
+                    else if (type == "3" || type == "4")
+                    {
+                        FARC.Signature = KKdFARC.Farc.FARC;
+
+                        Console.WriteLine();
+                        Main.ConsoleDesign(true);
+                        Main.ConsoleDesign("             Choose type of FARC:");
+                        Main.ConsoleDesign(false);
+                        Main.ConsoleDesign("1. FARC");
+                        Main.ConsoleDesign("2. FARC (Compressed)");
+                        Main.ConsoleDesign("3. FARC (Encrypted)");
+                        Main.ConsoleDesign("4. FARC (Compressed & Encrypted)");
+                        Main.ConsoleDesign(false);
+                        Main.ConsoleDesign(true);
+                        Console.WriteLine();
+                        type = Console.ReadLine();
+                        if (type == "2" || type == "4") FARC.FARCType |= KKdFARC.Type.GZip;
+                        if (type == "3" || type == "4") FARC.FARCType |= KKdFARC.Type.ECB ;
+                    }
+                    else if (type == "R") return;
+                    else FARC.Signature = KKdFARC.Farc.FArC;
                     Console.Title = "FARC Creator - Directory: " + Path.GetDirectoryName(file);
-                    FARC.Pack(file);
+                    FARC.DirectoryPath = file;
+                    FARC.Pack();
                 }
             }
         }

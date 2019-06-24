@@ -24,10 +24,9 @@ namespace KKdMainLib.IO
           stream.LongPosition =        LongPosition; return val; }
         public static Stream SkipWhitespace(this Stream stream)
         {
-            long LongPosition = stream.LongPosition;
             while (true)
-                if (char.IsWhiteSpace(stream.ReadCharUTF8())) LongPosition = stream.LongPosition;
-                else                { stream.LongPosition   = LongPosition; break; }
+                if (char.IsWhiteSpace(stream.PeekCharUTF8())) stream.ReadCharUTF8();
+                else break;
             return stream;
         }
 		public static bool Assert(this Stream stream, char next)
