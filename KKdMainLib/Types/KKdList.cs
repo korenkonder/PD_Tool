@@ -8,67 +8,64 @@ namespace KKdMainLib.Types
         public static KKdList<T> New => new KKdList<T>() { Capacity = 0 };
         public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { Capacity = Capacity };
 
-        private int Index;
-        private int ArrayLength;
-        private T[] Array;
-
-        public bool  IsNull => Array == null;
-        public bool NotNull => Array != null;
+        private int index;
+        private T[] array;
 
         public int Count { get; private set; }
 
-        public int Capacity { get => ArrayLength;
+        public bool  IsNull => array == null;
+        public bool NotNull => array != null;
+
+        public int Capacity { get => array != null ? array.Length : -1;
             set
             {
-                ArrayLength = value;
-                if (Array != null) System.Array.Resize(ref Array, ArrayLength);
-                else Array = new T[ArrayLength];
+                if (array != null) System.Array.Resize(ref array, value);
+                else array = new T[value];
             }
         }
 
 
         public KKdList(T[] Array)
         {
-            Index = 0;
+            index = 0;
             Count = Array.Length;
-            ArrayLength = Array.Length;
-            this.Array = Array;
+            this.array = Array;
         }
 
-        public T Current => Index < Count ? Array[Index] : default(T);
+        public T Current => index < Count ? array[index] : default(T);
 
         object IEnumerator.Current => Current;
 
         public T this[int index]
-        {   get { if (Array != null) return Array[index]; return default(T); }
-            set { if (Array != null)        Array[index] = value; } }
+        {   get { if (array != null) return array[index]; return default(T); }
+            set { if (array != null)        array[index] = value; } }
 
         public bool MoveNext()
-        { if (Index == (Count - 1)) { Index = 0; return false; }
-          else                           { Index++  ; return  true; } }
+        { if (index == (Count - 1)) { index = 0; return false; }
+          else                      { index++  ; return  true; } }
 
         public IEnumerator GetEnumerator() => this;
 
-        public void Dispose() { Array = null; ArrayLength = 0; Count = 0; Index = 0; }
+        public void Dispose() { array = null; Count = 0; index = 0; }
 
-        public void Reset() => Index = 0;
+        public void Reset() => index = 0;
 
         public void Add(T item)
         {
             if (IsNull) return;
 
             Count++;
-            if (ArrayLength < Count)
-                System.Array.Resize(ref Array, ArrayLength = Count);
-            Array[Count - 1] = item;
+            if (array.Length < Count)
+                System.Array.Resize(ref array, Count);
+            array[Count - 1] = item;
         }
 
-        public void RemoveAt(int Index)
+        public void RemoveAt(int index)
         {
             if (IsNull) return;
 
-            for (int i = Index; i < Count; i++)
-                Array[i] = Array[i + 1];
+            for (int i = index; i < Count; i++)
+                array[i] = array[i + 1];
         }
 
         public void RemoveRange(int IndexStart, int IndexEnd)
@@ -77,16 +74,16 @@ namespace KKdMainLib.Types
             if (IsNull) return;
 
             for (int i = IndexStart; i < Count; i++)
-                Array[i] = Array[i + IndexEnd - IndexStart];
+                array[i] = array[i + IndexEnd - IndexStart];
         }
 
-        public T[] ToArray() => Array;
+        public T[] ToArray() => array;
 
         public bool Contains(T val)
         {
             if (IsNull) return false;
             for (int i = 0; i < Count; i++)
-                if (Array[i].Equals(val)) return true;
+                if (array[i].Equals(val)) return true;
             return false;
         }
 
@@ -94,7 +91,7 @@ namespace KKdMainLib.Types
         {
             if (IsNull) return -1;
             for (int i = 0; i < Count; i++)
-                if (Array[i].Equals(val)) return i;
+                if (array[i].Equals(val)) return i;
             return -1;
         }
     }

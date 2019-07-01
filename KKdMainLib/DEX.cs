@@ -197,29 +197,26 @@ namespace KKdMainLib
             Header = new PDHead();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.Element<MsgPack>("Dex", out MsgPack Dex)) return;
+            if (!MsgPack.ElementArray("Dex", out MsgPack Dex)) return;
 
             this.Dex = new EXP[Dex.Array.Length];
             for (i0 = 0; i0 < this.Dex.Length; i0++)
-                if (Dex[i0] is MsgPack EXP)
-                {
-                    this.Dex[i0] = new EXP { Name = EXP.ReadString("Name") };
+            {
+                this.Dex[i0] = new EXP { Name = Dex[i0].ReadString("Name") };
 
-                    if (EXP.Element<MsgPack>("Main", out MsgPack Main))
-                    {
-                        this.Dex[i0].Main = new List<EXPElement>();
-                        for (i1 = 0; i1 < Main.Array.Length; i1++)
-                            if (Main[i1] is MsgPack Exp)
-                                this.Dex[i0].Main.Add(ReadEXP(Exp));
-                    }
-                    if (EXP.Element<MsgPack>("Eyes", out MsgPack Eyes))
-                    {
-                        this.Dex[i0].Eyes = new List<EXPElement>();
-                        for (i1 = 0; i1 < Eyes.Array.Length; i1++)
-                            if (Eyes[i1] is MsgPack Exp)
-                                this.Dex[i0].Eyes.Add(ReadEXP(Exp));
-                    }
+                if (Dex[i0].ElementArray("Main", out MsgPack Main))
+                {
+                    this.Dex[i0].Main = new List<EXPElement>();
+                    for (i1 = 0; i1 < Main.Array.Length; i1++)
+                        this.Dex[i0].Main.Add(ReadEXP(Main[i1]));
                 }
+                if (Dex[i0].ElementArray("Eyes", out MsgPack Eyes))
+                {
+                    this.Dex[i0].Eyes = new List<EXPElement>();
+                    for (i1 = 0; i1 < Eyes.Array.Length; i1++)
+                        this.Dex[i0].Eyes.Add(ReadEXP(Eyes[i1]));
+                }
+            }
             MsgPack = MsgPack.New;
         }
 

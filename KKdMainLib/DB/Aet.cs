@@ -192,12 +192,11 @@ namespace KKdMainLib.DB
         {
             MsgPack MsgPack = file.ReadMP(JSON);
 
-            if (MsgPack.Element<MsgPack>("AetDB", out MsgPack AetDB))
+            if (MsgPack.ElementArray("AetDB", out MsgPack AetDB))
             {
                 AetSets = new AetSet[AetDB.Array.Length];
                 for (int i = 0; i < AetSets.Length; i++)
-                    if (AetDB[i] is MsgPack Aet)
-                        AetSets[i].ReadMsgPack(Aet);
+                    AetSets[i].ReadMsgPack(AetDB[i]);
             }
             MsgPack = MsgPack.New;
         }
@@ -247,12 +246,11 @@ namespace KKdMainLib.DB
                 NewId       = msg.ReadBoolean("NewId"      );
                 SpriteSetId = msg.ReadNUInt16("SpriteSetId");
 
-                if (msg.Element<MsgPack>("Aets", out MsgPack Aets))
+                if (msg.ElementArray("Aets", out MsgPack Aets))
                 {
                     this.Aets = new AET[Aets.Array.Length];
                     for (int i0 = 0; i0 < this.Aets.Length; i0++)
-                        if (Aets[i0] is MsgPack Aet)
-                           this.Aets[i0].ReadMsgPack(Aet);
+                        this.Aets[i0].ReadMsgPack(Aets[i0]);
                 }
             }
 

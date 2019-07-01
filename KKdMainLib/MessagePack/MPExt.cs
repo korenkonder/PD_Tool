@@ -36,10 +36,10 @@ namespace KKdMainLib.MessagePack
         {
             if (JSON)
             { JSONIO IO = new JSONIO(File.OpenWriter(file + ".json", true));
-                IO.Write(mp, true, "\n", "  "); IO = null; }
+                IO.Write(mp, "\n", "  ").Close(); IO = null; }
             else
             {   MPIO IO = new   MPIO(File.OpenWriter(file + ".mp"  , true));
-                IO.Write(mp, true      ); IO = null; }
+                IO.Write(mp            ).Close(); IO = null; }
             return mp;
         }
 
@@ -52,10 +52,10 @@ namespace KKdMainLib.MessagePack
             byte[] data = null;
             if (JSON)
             { JSONIO IO = new JSONIO(File.OpenWriter());
-                IO.Write(mp, false, true); data = IO._IO.ToArray(true); }
+                IO.Write(mp, true); data = IO.ToArray(true); }
             else
             {   MPIO IO = new   MPIO(File.OpenWriter());
-                IO.Write(mp, false      ); data = IO._IO.ToArray(true); }
+                IO.Write(mp      ); data = IO.ToArray(true); }
             File.WriteAllBytes(file + (JSON ? ".json" : ".mp"), data);
             return mp;
         }

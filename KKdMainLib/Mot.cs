@@ -14,7 +14,7 @@ namespace KKdMainLib
         public Mot()
         { i = i0 = i1 = 0; IO = null; }
 
-        public void MOTReader(string file, bool JSON)
+        public unsafe void MOTReader(string file, bool JSON)
         {
             IO = File.OpenReader(file + ".bin");
 
@@ -72,13 +72,13 @@ namespace KKdMainLib
 
                 
                 m[i] = MsgPackWriter(ref MMOT[i]);
-                ((MsgPack)m[i]).Write(true, file + "." + i.ToString("d2"), JSON);
+                m[i].Write(true, file + "." + i.ToString("d2"), JSON);
             }
             IO.Close();
             //for (i = 0; i < MOTCount; i++)
             //    m[i] = MsgPackWriter(ref MMOT[i]);
 
-            //m.Write(true, file, JSON);
+            m.Write(true, file, JSON);
             MMOT = null;
             m = new MsgPack();
             System.GC.Collect();
@@ -129,7 +129,7 @@ namespace KKdMainLib
 
             MsgPack BoneInfo = new MsgPack(Mot.BoneInfo.Value.Length, "BoneInfo");
             for (i0 = 0; i0 < Mot.BoneInfo.Value.Length; i0++)
-                BoneInfo[i0] = Mot.BoneInfo.Value[i0].Id;
+                BoneInfo[i0] = (MsgPack)Mot.BoneInfo.Value[i0].Id;
             MOT.Add(BoneInfo);
 
             return MOT;
@@ -148,29 +148,27 @@ namespace KKdMainLib
 
         public struct KeySet
         {
-            public KeyFrame<ushort, float>[] Keys;
+            public IKeyFrame<ushort, float>[] Keys;
             public KeySetType Type;
 
             public void Read(Stream IO)
             {
                      if (Type == KeySetType.None  ) return;
-                else if (Type == KeySetType.Static) { Keys = new KeyFrame<ushort, float>[]
-                { new KeyFrameT1<ushort, float>  { Value = IO.ReadSingle() } }; return; }
+                else if (Type == KeySetType.Static) { Keys = new IKeyFrame<ushort, float>[]
+                { new KeyFrameT1<ushort, float> { Value = IO.ReadSingle() } }; return; }
                      
-                Keys = new KeyFrame<ushort, float>[IO.ReadUInt16()];
+                Keys = new IKeyFrame<ushort, float>[IO.ReadUInt16()];
                 if (Type == KeySetType.Interpolated)
                 {
                     for (int i = 0; i < Keys.Length; i++)
-                        Keys[i] = new KeyFrameT2<ushort, float> { Frame = IO.ReadUInt16() };
+                        Keys[i] = new KeyFrameT2<ushort, float>{ Frame = IO.ReadUInt16() };
                     IO.Align(0x4);
                     for (int i = 0; i < Keys.Length; i++)
                         if (Keys[i] is KeyFrameT2<ushort, float> Key)
                         {
                             Key.Value         = IO.ReadSingle();
                             Key.Interpolation = IO.ReadSingle();
-
-                            if (Key.Interpolation == 0) Keys[i] = Key.ToKeyFrameT1();
-                            else                        Keys[i] = Key;
+                            Keys[i] = Key.Check();
                         }
                 }
                 else

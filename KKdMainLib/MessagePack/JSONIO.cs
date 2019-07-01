@@ -1,6 +1,5 @@
 ﻿//Original or reader part: https://github.com/MarcosLopezC/LightJson/
 
-using System;
 using KKdMainLib.IO;
 using KKdMainLib.Types;
 
@@ -14,6 +13,8 @@ namespace KKdMainLib.MessagePack
         public JSONIO(Stream IO) => _IO = IO;
 
         public void Close() => _IO.Close();
+
+        public byte[] ToArray(bool Close = false) => _IO.ToArray(Close);
 
         public MsgPack Read() => ReadValue();
 
@@ -80,11 +81,11 @@ namespace KKdMainLib.MessagePack
 		private int ReadHexDigit() => byte.Parse(_IO.ReadCharUTF8().ToString(),
             System.Globalization.NumberStyles.HexNumber);
 
-        private KKdList<object> ReadObject()
+        private KKdList<MsgPack> ReadObject()
         {
-            KKdList<object> Obj = KKdList<object>.New;
-            if (!_IO.Assert('{')) return KKdList<object>.Null;
-			if (_IO.SkipWhitespace().PeekCharUTF8() == '}') { _IO.ReadCharUTF8(); return KKdList<object>.Null; }
+            KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
+            if (!_IO.Assert('{')) return KKdList<MsgPack>.Null;
+			if (_IO.SkipWhitespace().PeekCharUTF8() == '}') { _IO.ReadCharUTF8(); return KKdList<MsgPack>.Null; }
 
             string key;
             char c;
@@ -94,22 +95,22 @@ namespace KKdMainLib.MessagePack
 
                 key = ReadString();
                 if (!_IO.SkipWhitespace().Assert(':'))
-                    return KKdList<object>.Null;
+                    return KKdList<MsgPack>.Null;
 
                 Obj.Add(ReadValue(key));
                 c = _IO.SkipWhitespace().PeekCharUTF8();
                 
                      if (c == '}') { _IO.ReadCharUTF8();    break; }
                 else if (c == ',') { _IO.ReadCharUTF8(); continue; }
-                else return KKdList<object>.Null;
+                else return KKdList<MsgPack>.Null;
             }
 
             return Obj;
 		}
         
-        private object[] ReadArray()
+        private MsgPack[] ReadArray()
         {
-            KKdList<object> Obj = KKdList<object>.New;
+            KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
             if (!_IO.Assert('[')) return null;
             if (_IO.SkipWhitespace().PeekCharUTF8() == ']') { _IO.ReadCharUTF8(); return null; }
 
@@ -172,28 +173,35 @@ namespace KKdMainLib.MessagePack
         { string s = ""; while (char.IsDigit(_IO.SkipWhitespace().
             PeekCharUTF8())) s += _IO.ReadCharUTF8(); return s; }
 
-        public JSONIO Write(MsgPack MsgPack, bool Close, string End = "\n", string TabChar = "  ")
-        { Write(MsgPack, End, TabChar, "", true); if (Close) this.Close(); return this; }
+        public JSONIO Write(MsgPack MsgPack, string End = "\n", string TabChar = "  ")
+        { Write(MsgPack, End, TabChar, "", true); return this; }
 
-        public JSONIO Write(MsgPack MsgPack, bool Close, bool Style = false)
-        { Write(MsgPack, "\n", "  ", "", Style); if (Close) this.Close(); return this; }
+        public JSONIO Write(MsgPack MsgPack, bool Style = false)
+        { Write(MsgPack, "\n", "  ", "", Style); return this; }
 
-        private JSONIO Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style)
+        private JSONIO Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style, bool IsArray = false)
         {
             string OldTab = Tab;
             Tab += TabChar;
-            if (MsgPack.Name   != null) _IO.Write("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
+            if (MsgPack.Name   != null && !IsArray) _IO.Write("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
             if (MsgPack.Object == null) { WriteNil(); return this; }
             
             if (MsgPack.List.NotNull)
             {
                 WriteMap();
                 if (Style) _IO.Write(End);
-                for (int i = 0; i < MsgPack.List.Count; i++)
+                if (MsgPack.List.Count > 1)
+                    for (int i = 0; i < MsgPack.List.Count; i++)
+                    {
+                        if (Style) _IO.Write(Tab);
+                        Write(MsgPack.List[i], End, TabChar, Tab, Style);
+                        if (i + 1 < MsgPack.List.Count) _IO.Write(',');
+                        if (Style) _IO.Write(End);
+                    }
+                else if (MsgPack.List.Count == 1)
                 {
                     if (Style) _IO.Write(Tab);
-                    Write(MsgPack.List[i], End, TabChar, Tab, Style);
-                    if (i + 1 < MsgPack.List. Count) _IO.Write(',');
+                    Write(MsgPack.List[0], End, TabChar, Tab, Style);
                     if (Style) _IO.Write(End);
                 }
                 if (Style) _IO.Write(OldTab);
@@ -203,11 +211,18 @@ namespace KKdMainLib.MessagePack
             {
                 WriteArr();
                 if (Style) _IO.Write(End);
-                for (int i = 0; i < MsgPack.Array.Length; i++)
+                if (MsgPack.Array.Length > 1)
+                    for (int i = 0; i < MsgPack.Array.Length; i++)
+                    {
+                        if (Style) _IO.Write(Tab);
+                        Write(MsgPack.Array[i], End, TabChar, Tab, Style, true);
+                        if (i + 1 < MsgPack.Array.Length) _IO.Write(',');
+                        if (Style) _IO.Write(End);
+                    }
+                else if (MsgPack.Array.Length == 1)
                 {
                     if (Style) _IO.Write(Tab);
-                    Write(MsgPack.Array[i], End, TabChar, Tab, Style);
-                    if (i + 1 < MsgPack.Array.Length) _IO.Write(',');
+                    Write(MsgPack.Array[0], End, TabChar, Tab, Style, true);
                     if (Style) _IO.Write(End);
                 }
                 if (Style) _IO.Write(OldTab);

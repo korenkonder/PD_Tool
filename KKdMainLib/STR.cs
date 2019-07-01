@@ -177,16 +177,14 @@ namespace KKdMainLib
 
             if (!MsgPack.Element("STR", out MsgPack STR)) return;
 
-            if (!STR.Element<MsgPack>("Strings", out MsgPack Strings)) return;
+            if (!STR.ElementArray("Strings", out MsgPack Strings)) return;
 
             STRs = new String[Strings.Array.Length];
             for (int i = 0; i < STRs.Length; i++)
-                if (Strings[i] is MsgPack String)
-                {
-                    String = (MsgPack)Strings[i];
-                    STRs[i].ID = String.ReadInt32("ID");
-                    STRs[i].Str = String.ReadString("Str");
-                }
+            {
+                STRs[i].ID  = Strings[i].ReadInt32 ("ID" );
+                STRs[i].Str = Strings[i].ReadString("Str");
+            }
 
             MsgPack = MsgPack.New;
         }
@@ -199,7 +197,7 @@ namespace KKdMainLib
             {
                 Strings[i] = MsgPack.New.Add("ID", STRs[i].ID);
                 if (STRs[i].Str != null) if (STRs[i].Str != "")
-                        ((MsgPack)Strings[i]).Add("S", STRs[i].Str); ;
+                        Strings[i].Add("S", STRs[i].Str); ;
             }
             STR_.Add(Strings);
 

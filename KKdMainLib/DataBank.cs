@@ -70,18 +70,18 @@ namespace KKdMainLib
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
             bool compact = MsgPack.ReadBoolean("Compact");
 
-            if (file.Contains("psrData") && MsgPack.Element<MsgPack>("psrData", out MsgPack psrData))
+            if (file.Contains("psrData") && MsgPack.ElementArray("psrData", out MsgPack psrData))
             {
                 psrDat = new psrData[psrData.Array.Length];
                 for (i = 0; i < psrDat.Length; i++)
-                    psrDat[i].SetValue((MsgPack)psrData[i]);
+                    psrDat[i].SetValue(psrData[i]);
                 Success = true;
             }
-            else if (file.Contains("PvList") && MsgPack.Element<MsgPack>("PvList", out MsgPack PvList))
+            else if (file.Contains("PvList") && MsgPack.ElementArray("PvList", out MsgPack PvList))
             {
                 pvList = new PvList[PvList.Array.Length];
                 for (i = 0; i < pvList.Length; i++)
-                    pvList[i].SetValue((MsgPack)PvList[i], compact);
+                    pvList[i].SetValue(PvList[i], compact);
                 Success = true;
             }
             MsgPack = MsgPack.New;

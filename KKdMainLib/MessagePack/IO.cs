@@ -13,6 +13,8 @@ namespace KKdMainLib.MessagePack
 
         public void Close() => _IO.Close();
 
+        public byte[] ToArray(bool Close = false) => _IO.ToArray(Close);
+
         public MsgPack Read(bool Array = false)
         {
             MsgPack MsgPack = MsgPack.New;
@@ -33,12 +35,12 @@ namespace KKdMainLib.MessagePack
             {
                 if (FixMap)
                 {
-                    MsgPack.Object = KKdList<object>.New;
+                    MsgPack.Object = KKdList<MsgPack>.New;
                     for (int i = 0; i < Unk - (byte)Types.FixMap; i++) MsgPack.Add( Read(false));
                 }
                 else if (FixArr)
                 {
-                    MsgPack.Object = new object[Unk - (byte)Types.FixArr];
+                    MsgPack.Object = new MsgPack[Unk - (byte)Types.FixArr];
                     for (int i = 0; i < Unk - (byte)Types.FixArr; i++) MsgPack[i] = Read( true);
                 }
                 else if (FixStr) MsgPack.Object = ReadString( Type);
@@ -148,7 +150,7 @@ namespace KKdMainLib.MessagePack
                  if (Type == Types.Arr16) Length = _IO.ReadInt16Endian(true);
             else if (Type == Types.Arr32) Length = _IO.ReadInt32Endian(true);
             else return false;
-            MsgPack.Object = new object[Length];
+            MsgPack.Object = new MsgPack[Length];
             for (int i = 0; i < Length; i++) MsgPack[i] = Read(true);
             return true;
         }
@@ -159,7 +161,7 @@ namespace KKdMainLib.MessagePack
                  if (Type == Types.Map16) Length = _IO.ReadInt16Endian(true);
             else if (Type == Types.Map32) Length = _IO.ReadInt32Endian(true);
             else return false;
-            MsgPack.Object = KKdList<object>.New;
+            MsgPack.Object = KKdList<MsgPack>.New;
             for (int i = 0; i < Length; i++) MsgPack.Add(Read());
             return true;
         }
@@ -179,13 +181,10 @@ namespace KKdMainLib.MessagePack
             MsgPack.Object = new MsgPack.Ext { Type = _IO.ReadSByte(), Data = _IO.ReadBytes(Length) };
             return true;
         }
-
-        public IO Write(MsgPack MsgPack, bool Close)
-        { Write(MsgPack); if (Close) this.Close(); return this; }
         
-        public IO Write(MsgPack MsgPack)
+        public IO Write(MsgPack MsgPack, bool IsArray = false)
         {
-            if (MsgPack.Name != null) Write(MsgPack.Name);
+            if   (MsgPack.Name != null && !IsArray) Write(MsgPack.Name);
             Write(MsgPack.Object);
             return this;
         }
@@ -195,9 +194,9 @@ namespace KKdMainLib.MessagePack
             if (obj == null) { WriteNil(); return; }
             switch (obj)
             {
-                case KKdList<object>  val: WriteMap(val.Count );
+                case KKdList<MsgPack>  val: WriteMap(val.Count );
                     for (int i = 0; i < val.Count ; i++) Write(val[i]); break;
-                case object[] val: WriteArr(val.Length);
+                case         MsgPack[] val: WriteArr(val.Length);
                     for (int i = 0; i < val.Length; i++) Write(val[i]); break;
                 case     MsgPack val: Write(val); break;
                 case      byte[] val: Write(val); break;

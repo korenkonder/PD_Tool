@@ -103,25 +103,23 @@ namespace KKdMainLib.DB
 
             if (MsgPack.Element("AuthDB", out MsgPack AuthDB))
             {
-                if (AuthDB.Element<MsgPack>("Category", out MsgPack Temp))
+                if (AuthDB.ElementArray("Category", out MsgPack Temp))
                 {
                     Category = new string[Temp.Array.Length];
                     for (int i = 0; i < Category.Length; i++)
-                        if (Temp is MsgPack Category)
-                            this.Category[i] = Category.ReadString();
+                        Category[i] = Temp[i].ReadString();
                 }
 
-                if (AuthDB.Element<MsgPack>("UID", out Temp))
+                if (AuthDB.ElementArray("UID", out Temp))
                 {
                     _UID = new UID[Temp.Array.Length];
                     for (int i = 0; i < _UID.Length; i++)
-                        if (Temp[i] is MsgPack UID)
-                        {
-                            _UID[i].Category = UID.ReadString("C");
-                            _UID[i].OrgUid   = UID.ReadNInt32("O");
-                            _UID[i].Size     = UID.ReadNInt32("S");
-                            _UID[i].Value    = UID.ReadString("V");
-                        }
+                    {
+                        _UID[i].Category = Temp[i].ReadString("C");
+                        _UID[i].OrgUid   = Temp[i].ReadNInt32("O");
+                        _UID[i].Size     = Temp[i].ReadNInt32("S");
+                        _UID[i].Value    = Temp[i].ReadString("V");
+                    }
                 }
             }
             MsgPack = MsgPack.New;
@@ -134,7 +132,7 @@ namespace KKdMainLib.DB
             {
                 MsgPack Category = new MsgPack(this.Category.Length, "Category");
                 for (int i = 0; i < this.Category.Length; i++)
-                    Category[i] = this.Category[i];
+                    Category[i] = (MsgPack)this.Category[i];
                 AuthDB.Add(Category);
             }
 

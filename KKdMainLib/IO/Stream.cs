@@ -176,17 +176,28 @@ namespace KKdMainLib.IO
         public void Write( float? val) => Write(val.GetValueOrDefault());
         public void Write(double? val) => Write(val.GetValueOrDefault());
         
-        public void Write(  bool* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte((byte)(val[i] ? 1 : 0)); }
-        public void Write( sbyte* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte((byte) val[i]); }
-        public void Write(  byte* val, int Length) { for (i = 0; i < Length; i++) stream.WriteByte(       val[i]); }
-        public void Write( short* val, int Length) { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
-        public void Write(ushort* val, int Length) { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
-        public void Write(   int* val, int Length) { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
-        public void Write(  uint* val, int Length) { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
-        public void Write(  long* val, int Length) { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
-        public void Write( ulong* val, int Length) { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
-        public void Write( float* val, int Length) { for (i = 0; i < Length; i++) ToArray(4, *( uint*)&val[i]); }
-        public void Write(double* val, int Length) { for (i = 0; i < Length; i++) ToArray(4, *(ulong*)&val[i]); }
+        public void Write(  bool* val, int Length)
+        { for (i = 0; i < Length; i++) stream.WriteByte((byte)(val[i] ? 1 : 0)); }
+        public void Write( sbyte* val, int Length)
+        { for (i = 0; i < Length; i++) stream.WriteByte((byte) val[i]); }
+        public void Write(  byte* val, int Length)
+        { for (i = 0; i < Length; i++) stream.WriteByte(       val[i]); }
+        public void Write( short* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
+        public void Write(ushort* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(2,           val[i]); }
+        public void Write(   int* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
+        public void Write(  uint* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4,           val[i]); }
+        public void Write(  long* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
+        public void Write( ulong* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(8,           val[i]); }
+        public void Write( float* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4, *( uint*)&val[i]); }
+        public void Write(double* val, int Length)
+        { for (i = 0; i < Length; i++) ToArray(4, *(ulong*)&val[i]); }
         
         public void WriteEndian( short* val, int Length)
         { for (i = 0; i < Length; i++) ToArray(2, Endian(val[i], 2, IsBE)); }

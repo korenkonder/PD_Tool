@@ -160,8 +160,8 @@ namespace KKdMainLib
             else if (c < 0x00000000) c = 0x00000000;
             return (uint)c;
         }
-
-        public static double Round(this double c) => Math.Round(c);
+        
+        public static double Round(this double c, int d = 0) => Math.Round(c, d);
 
         public static unsafe  sbyte* GetPtr(this sbyte[] array)
         {  sbyte* Ptr; fixed ( sbyte* tempPtr = array) Ptr = tempPtr; return Ptr; }
