@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("KKdSoundLib")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A simple library for working with Project Diva F/AFT/F2/X/FT audio files")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("KKdSoundLib")]

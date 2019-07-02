@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
@@ -69,7 +68,7 @@ namespace KKdMainLib
 
                 for (int i = 0; i < POF.Offsets.Count && i < POF.POFOffsets.Count; i++)
                     if (POF.Offsets[i] != POF.POFOffsets[i])
-                        Console.WriteLine("Not right POF{0} offset table.\n" +
+                        System.Console.WriteLine("Not right POF{0} offset table.\n" +
                             "  Expected: {1}\n  Got: {2}", POF.Type,
                             POF.Offsets[i].ToString("X8"), POF.POFOffsets[i].ToString("X8"));
             }
@@ -113,17 +112,12 @@ namespace KKdMainLib
             stream.WriteEOFC(ID);
         }
 
-        public static long ReadUInt32Endian(this Stream IO, ref POF POF) =>
-            IO.GetOffset(ref POF).ReadUInt32Endian();
+        public static long ReadUInt32Endian(this Stream IO, ref POF POF           ) =>
+            IO.GetOffset(ref POF).ReadUInt32Endian(    );
         public static long ReadUInt32Endian(this Stream IO, ref POF POF, bool IsBE) =>
             IO.GetOffset(ref POF).ReadUInt32Endian(IsBE);
-        public static long ReadInt64(this Stream IO, ref POF POF) =>
+        public static long ReadInt64       (this Stream IO, ref POF POF) =>
             IO.GetOffset(ref POF).ReadInt64();
-
-        public static long ReadIntX(this Stream IO, ref POF POF           ) =>
-            IO.IsX ? IO.ReadInt64() : IO.ReadUInt32Endian(    );
-        public static long ReadIntX(this Stream IO, ref POF POF, bool IsBE) =>
-            IO.IsX ? IO.ReadInt64() : IO.ReadUInt32Endian(IsBE);
 
         public static string ReadStringAtOffset(this Stream IO, ref POF POF, long Offset = 0, long Length = 0) =>
             IO.GetOffset(ref POF).ReadStringAtOffset(Offset, Length);

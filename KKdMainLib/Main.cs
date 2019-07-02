@@ -80,6 +80,7 @@ namespace KKdMainLib
                 OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
                     Multiselect = true, Title = "Choose file(s) to open:" };
 
+                ofd.Filter = GetArgs("All;", false, "*");
                     if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") + JSON + MsgPack;
                 else if (filetype == "bin" ) ofd.Filter = GetArgs("BIN" , "bin", "json", "mp") +
@@ -106,7 +107,6 @@ namespace KKdMainLib
                         GetArgs("STR", true, "str") + BIN + JSON + MsgPack;
                 else if (filetype == "vag" ) ofd.Filter = GetArgs("VAG", "vag", "wav") +
                         GetArgs("VAG", true, "vag") + GetArgs("WAV", true, "wav");
-                else                        ofd.Filter = GetArgs("All;", false, "*");
 
                 if (ofd.ShowDialog() == DialogResult.OK)
                     FileNames = ofd.FileNames;
@@ -122,7 +122,7 @@ namespace KKdMainLib
             return "";
         }
 
-        public static void ChooseSave(int code, string filetype,
+        public static void ChooseSave(string filetype,
             out string InitialDirectory, out string[] FileNames)
         {
             InitialDirectory = "";
@@ -179,24 +179,21 @@ namespace KKdMainLib
         }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
-            ref   bool value, char Split, string args)
-        { if (Dict.FindValue(out string val, args.Split(Split)))
-                return bool.TryParse(val, out value); return false; }
+            ref   bool value, char Split, string args) =>
+            Dict.FindValue(out string val, args.Split(Split)) ? bool.TryParse(val, out value) : false;
 
         public static bool FindValue(this Dictionary<string, object> Dict,
-            ref    int value, char Split, string args)
-        { if (Dict.FindValue(out string val, args.Split(Split)))
-                return  int.TryParse(val, out value); return false; }
+            ref    int value, char Split, string args) =>
+            Dict.FindValue(out string val, args.Split(Split)) ?  int.TryParse(val, out value) : false;
 
         public static bool FindValue(this Dictionary<string, object> Dict,
-            ref double value, char Split, string args)
-        { if (Dict.FindValue(out string val, args.Split(Split)))
-                return       val.ToDouble(out value); return false; }
+            ref double value, char Split, string args) =>
+            Dict.FindValue(out string val, args.Split(Split)) ?  val.ToDouble(     out value) : false;
 
         public static bool FindValue(this Dictionary<string, object> Dict,
             ref string value, char Split, string args)
         { if (Dict.FindValue(out string val, args.Split(Split)))
-                   { value = val;      return true; } return false; }
+                           { value = val;             return true; } return false; }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
             out   bool  value, string   args)
@@ -217,7 +214,7 @@ namespace KKdMainLib
             out    int? value, string   args)
         { if (Dict.FindValue(out string val, args.Split('.'  )))
             { bool Val =  int.TryParse(val, out int _value);
-                value = _value; return Val; }         value =  null;  return false; }
+                value = _value; return Val; }         value =  null; return false; }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
             out double? value, string   args)

@@ -15,11 +15,10 @@
         public int Offset;
         public T[] Entries;
         
+
         public T this[int index]
-        {
-            get { if (Count > 0) return Entries[index]; return default(T); }
-            set { if (Count > 0) { Entries[index] = value; } }
-        }
+        {   get =>    Count > 0 ? Entries[index] : default;
+            set { if (Count > 0)  Entries[index] =   value; } }
 
         public override string ToString() => Count < 1 ? "No Entries" :
             Count == 1 ? Entries[0].ToString() : "Count: " + Count;

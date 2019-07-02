@@ -109,19 +109,15 @@ namespace KKdMainLib
 
             IO.Write(0x64);
             IO.Write(Dex.Length);
-            
-            if (Header.IsX) IO.Write((long)0x28);
-            else            IO.Write(      0x20);
-            if (Header.IsX) IO.Write((long)0x00);
-            else            IO.Write(      0x00);
+
+            IO.WriteX(Header.IsX ? 0x28 : 0x20);
+            IO.WriteX(0x00);
 
             int Position0 = IO.Position;
             IO.Write((long)0x00);
             IO.Write((long)0x00);
 
-            for (int i = 0; i < Dex.Length * 3; i++)
-                if (Header.IsX) IO.Write((long)0x00);
-                else            IO.Write(      0x00);
+            for (int i = 0; i < Dex.Length * 3; i++) IO.WriteX(0x00);
 
             IO.Align(0x20, true);
 
@@ -156,8 +152,7 @@ namespace KKdMainLib
             }
             IO.Align(0x10, true);
 
-            if (Header.IsX) IO.Seek(Header.Lenght + 0x28, 0);
-            else            IO.Seek(Header.Lenght + 0x20, 0);
+            IO.Position = Header.Lenght + (Header.IsX ? 0x28 : 0x20);
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
                 IO.Write(Dex[i0].MainOffset);
@@ -172,8 +167,7 @@ namespace KKdMainLib
                 if (Header.IsX) IO.Write(0x00);
             }
 
-            if (Header.IsX) IO.Seek(Position0 - 8, 0);
-            else            IO.Seek(Position0 - 4, 0);
+            IO.Position = Position0 - (Header.IsX ? 8 : 4);
             IO.Write(Position1);
 
             if (IO.Format > Main.Format.F)

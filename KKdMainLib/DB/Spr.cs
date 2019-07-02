@@ -15,26 +15,6 @@ namespace KKdMainLib.DB
 
         public void BINReader(string file)
         {
-            /*Stream IO0 = File.OpenReader(file + "0.bin");
-            Stream IO1 = File.OpenReader(file + "1.bin");
-
-            List<int> _0 = new List<int>();
-            List<int> _1 = new List<int>();
-            IO0.Position = 0x20;
-            for (i = 0; i < 124; i++)
-            { _0.Add(IO0.ReadInt32()); IO0.LongPosition += 8; }
-            IO1.Position = 0x20;
-            for (i = 0; i < 124; i++)
-            { _1.Add(IO1.ReadInt32()); IO1.LongPosition += 8; }
-            IO0.Close();
-            IO1.Close();
-
-            IO = File.OpenWriter(@"F:\Source\MikuMikuModel\DatabaseConverter\msgpack-json-tools\aet_gam_pv643.bin");
-            IO.Position = 0x10;
-            for (i = 0; i < 108; i++)
-            { IO.ReadInt32(); i1 = _1[_0.IndexOf(IO.ReadInt32())]; IO.Position -= 4; IO.Write(i1); }
-            IO.Close();*/
-
             IO = File.OpenReader(file + ".bin");
 
             int spriteSetsLength = IO.ReadInt32();
@@ -247,7 +227,7 @@ namespace KKdMainLib.DB
 
         public void MsgPackReader(string file, bool JSON = false)
         {
-            MsgPack MsgPack = file.ReadMP(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
             if (MsgPack.ElementArray("SprDB", out MsgPack SprDB))
             {

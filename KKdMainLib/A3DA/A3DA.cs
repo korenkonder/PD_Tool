@@ -11,8 +11,6 @@ namespace KKdMainLib.A3DA
     {
         private const bool A3DCOpt = true;
         private const string d = ".";
-        private const string BO = "bin_offset";
-        private const string MTBO = "model_transform.bin_offset";
         
         private int SOi0;
         private int SOi1;
@@ -77,7 +75,7 @@ namespace KKdMainLib.A3DA
             }
             else { IO.Close(); return 0; }
 
-            if (Data.Header.Format < Main.Format.F || Data.Header.Format == Main.Format.FT)
+            if (Data.Header.Format == Main.Format.DT)
                 Data.Head.StringLength = IO.Length - 0x10;
 
             string[] STRData = IO.ReadString(Data.Head.StringLength).Replace("\r", "").Split('\n');
@@ -91,7 +89,7 @@ namespace KKdMainLib.A3DA
 
             A3DAReader();
 
-            if (Data.Header.Format == Main.Format.F || Data.Header.Format > Main.Format.FT)
+            if (Data.Header.Format >= Main.Format.F && Data.Header.Format != Main.Format.FT)
             {
                 IO.Position = IO.Offset + Data.Head.BinaryOffset;
                 IO.Offset = IO.Position;
@@ -1251,10 +1249,10 @@ namespace KKdMainLib.A3DA
             IO.WriteEndian(Data.Head.BinaryOffset, true);
             IO.WriteEndian(Data.Head.BinaryLength, true);
             IO.WriteEndian(0x20, true);
-            if (Data.Header.Format != Main.Format.F)
+            if (Data.Header.Format > Main.Format.FT)
             {
                 IO.Position = A3DCEnd;
-                IO.WriteEOFC(0);
+                IO.WriteEOFC();
             }
 
             IO.Close();
@@ -1280,7 +1278,10 @@ namespace KKdMainLib.A3DA
             if (Key.Trans != null)
             {
                 Key.BinOffset = IO.Position;
-                IO.Write(Key.Type);
+                int Type = Key.Type.Value;
+                if (Key.EPTypePost.HasValue) Type |= (Key.EPTypePost.Value & 0xF) << 12;
+                if (Key.EPTypePre .HasValue) Type |= (Key.EPTypePre .Value & 0xF) << 12;
+                IO.Write(Type);
                 IO.Write(0x00);
                 IO.Write((float)Key.Max);
                 IO.Write(Key.Trans.Length);
@@ -1513,11 +1514,11 @@ namespace KKdMainLib.A3DA
                 {
                     Data.MObjectHRC[i0] = new MObjectHRC
                     {
-                        MT   = Temp[i].ReadMT(),
-                        Name = Temp[i].ReadString("Name"),
+                        MT   = Temp[i0].ReadMT(),
+                        Name = Temp[i0].ReadString("Name"),
                     };
 
-                    if (Temp[i].Element("JointOrient", out MsgPack JointOrient))
+                    if (Temp[i0].Element("JointOrient", out MsgPack JointOrient))
                         Data.MObjectHRC[i0].JointOrient = new Vector3<double?>
                         {
                             X = JointOrient.ReadDouble("X"),
@@ -1525,7 +1526,7 @@ namespace KKdMainLib.A3DA
                             Z = JointOrient.ReadDouble("Z"),
                         };
 
-                    if (Temp[i].ElementArray("Instance", out MsgPack Instance))
+                    if (Temp[i0].ElementArray("Instance", out MsgPack Instance))
                     {
                         Data.MObjectHRC[i0].Instance = new Instance[Instance.Array.Length];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
@@ -1538,7 +1539,7 @@ namespace KKdMainLib.A3DA
                             };
                     }
 
-                    if (Temp[i].ElementArray("Node", out MsgPack Node))
+                    if (Temp[i0].ElementArray("Node", out MsgPack Node))
                     {
                         Data.MObjectHRC[i0].Node = new Node[Temp.Array.Length];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
@@ -1573,15 +1574,15 @@ namespace KKdMainLib.A3DA
                 {
                     Data.Object[i0] = new Object
                     {
-                                 MT = Temp[i].ReadMT(),
-                        Morph       = Temp[i].ReadString("Morph"      ),
-                        MorphOffset = Temp[i].ReadNInt32("MorphOffset"),
-                               Name = Temp[i].ReadString(       "Name"),
-                         ParentName = Temp[i].ReadString( "ParentName"),
-                            UIDName = Temp[i].ReadString(    "UIDName"),
+                                 MT = Temp[i0].ReadMT(),
+                        Morph       = Temp[i0].ReadString("Morph"      ),
+                        MorphOffset = Temp[i0].ReadNInt32("MorphOffset"),
+                               Name = Temp[i0].ReadString(       "Name"),
+                         ParentName = Temp[i0].ReadString( "ParentName"),
+                            UIDName = Temp[i0].ReadString(    "UIDName"),
                     };
 
-                    if (Temp[i].ElementArray("TP", out MsgPack TP))
+                    if (Temp[i0].ElementArray("TP", out MsgPack TP))
                     {
                         Data.Object[i0].TP = new Object.TexturePattern[TP.Array.Length];
                         for (i1 = 0; i1 < Data.Object[i0].TP.Length; i1++)
@@ -1593,7 +1594,7 @@ namespace KKdMainLib.A3DA
                             };
                     }
 
-                    if (Temp[i].ElementArray("TT", out MsgPack TT))
+                    if (Temp[i0].ElementArray("TT", out MsgPack TT))
                     {
                         Data.Object[i0].TT = new Object.TextureTransform[TT.Array.Length];
                         for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
@@ -1618,12 +1619,12 @@ namespace KKdMainLib.A3DA
                 {
                     Data.ObjectHRC[i0] = new ObjectHRC
                     {
-                           Name = Temp[i].ReadString (   "Name"),
-                         Shadow = Temp[i].ReadNDouble( "Shadow"),
-                        UIDName = Temp[i].ReadString ("UIDName"),
+                           Name = Temp[i0].ReadString (   "Name"),
+                         Shadow = Temp[i0].ReadNDouble( "Shadow"),
+                        UIDName = Temp[i0].ReadString ("UIDName"),
                     };
 
-                    if (Temp[i].Element("JointOrient", out MsgPack JointOrient))
+                    if (Temp[i0].Element("JointOrient", out MsgPack JointOrient))
                         Data.ObjectHRC[i0].JointOrient = new Vector3<double?>
                         {
                             X = JointOrient.ReadDouble("X"),
@@ -1631,7 +1632,7 @@ namespace KKdMainLib.A3DA
                             Z = JointOrient.ReadDouble("Z"),
                         };
 
-                    if (Temp[i].ElementArray("Node", out MsgPack Node))
+                    if (Temp[i0].ElementArray("Node", out MsgPack Node))
                     {
                         Data.ObjectHRC[i0].Node = new Node[Node.Array.Length];
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
@@ -1742,7 +1743,7 @@ namespace KKdMainLib.A3DA
             if (Data.Chara != null)
             {
                 MsgPack Chara = new MsgPack(Data.Chara.Length, "Chara");
-                for (i = 0; i < Data.Curve.Length; i++) Chara[i] = MsgPack.New.Add(null, Data.Chara[i]);
+                for (i = 0; i < Data.Chara.Length; i++) Chara[i] = MsgPack.New.Add(null, Data.Chara[i]);
                 A3D.Add(Chara);
             }
 
@@ -2084,10 +2085,10 @@ namespace KKdMainLib.A3DA
         public int? Type;
         public int? Length;
         public int? BinOffset;
+        public int? EPTypePre;
+        public int? EPTypePost;
         public double? Max;
         public double? Value;
-        public double? EPTypePost;
-        public double? EPTypePre;
         public RawD RawData;
         public IKeyFrame<double, double>[] Trans;
 

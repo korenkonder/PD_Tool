@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("PD_Tool")]
-[assembly: AssemblyDescription("A simple tool for working with Project Diva A/DT/F/AFT/F2/X/FT files")]
+[assembly: AssemblyDescription("A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT files")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("PD_Tool")]
@@ -11,5 +11,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("7B5D5A3A-A6F8-4813-C97D-ACFC98F7397E")]
-[assembly: AssemblyVersion("0.4.6.1")]
-[assembly: AssemblyFileVersion("0.4.6.1")]
+[assembly: AssemblyVersion("0.4.6.2")]
+[assembly: AssemblyFileVersion("0.4.6.2")]

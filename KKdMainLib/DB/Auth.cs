@@ -70,8 +70,7 @@ namespace KKdMainLib.DB
             {
                 int[] SO = Category.Length.SortWriter();
                 for (int i = 0; i < Category.Length; i++)
-                    if (Category[SO[i]] != null)
-                        IO.Write("category." + SO[i] + ".value=", Category[SO[i]]);
+                    IO.Write("category." + SO[i] + ".value=", Category[SO[i]]);
                 IO.Write("category.length=", Category.Length);
             }
 
@@ -80,16 +79,12 @@ namespace KKdMainLib.DB
                 int[] SO = _UID.Length.SortWriter();
                 for (int i = 0; i < _UID.Length; i++)
                 {
-                    if (_UID[SO[i]].Category != null)
-                        if (_UID[SO[i]].Category != "")
-                            IO.Write("uid." + SO[i] + ".category=", _UID[SO[i]].Category);
-                    if (_UID[SO[i]].OrgUid   != null)
-                            IO.Write("uid." + SO[i] + ".org_uid=" , _UID[SO[i]].OrgUid  );
-                    if (_UID[SO[i]].Size     != null)
-                            IO.Write("uid." + SO[i] + ".size="    , _UID[SO[i]].Size    );
-                    if (_UID[SO[i]].Value    != null)
-                        if (_UID[SO[i]].Value    != "")
-                            IO.Write("uid." + SO[i] + ".value="   , _UID[SO[i]].Value   );
+                    if (_UID[SO[i]].Category != "")
+                        IO.Write("uid." + SO[i] + ".category=", _UID[SO[i]].Category);
+                        IO.Write("uid." + SO[i] + ".org_uid=" , _UID[SO[i]].OrgUid  );
+                        IO.Write("uid." + SO[i] + ".size="    , _UID[SO[i]].Size    );
+                    if (_UID[SO[i]].Value    != "")
+                        IO.Write("uid." + SO[i] + ".value="   , _UID[SO[i]].Value   );
                 }
                 IO.Write("uid.length=", _UID.Length);
             }
@@ -99,7 +94,7 @@ namespace KKdMainLib.DB
 
         public void MsgPackReader(string file, bool JSON)
         {
-            MsgPack MsgPack = file.ReadMP(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
             if (MsgPack.Element("AuthDB", out MsgPack AuthDB))
             {
@@ -115,10 +110,10 @@ namespace KKdMainLib.DB
                     _UID = new UID[Temp.Array.Length];
                     for (int i = 0; i < _UID.Length; i++)
                     {
-                        _UID[i].Category = Temp[i].ReadString("C");
-                        _UID[i].OrgUid   = Temp[i].ReadNInt32("O");
-                        _UID[i].Size     = Temp[i].ReadNInt32("S");
-                        _UID[i].Value    = Temp[i].ReadString("V");
+                        _UID[i].Category = Temp[i].ReadString("Category");
+                        _UID[i].OrgUid   = Temp[i].ReadNInt32("OrgUid"  );
+                        _UID[i].Size     = Temp[i].ReadNInt32("Size"    );
+                        _UID[i].Value    = Temp[i].ReadString("Value"   );
                     }
                 }
             }
@@ -140,11 +135,10 @@ namespace KKdMainLib.DB
             {
                 MsgPack UID = new MsgPack(_UID.Length, "UID");
                 for (int i = 0; i < _UID.Length; i++)
-                    UID[i] = MsgPack.New
-                        .Add("C", _UID[i].Category)
-                        .Add("O", _UID[i].OrgUid  )
-                        .Add("S", _UID[i].Size    )
-                        .Add("V", _UID[i].Value   );
+                    UID[i] = MsgPack.New.Add("Category", _UID[i].Category)
+                                        .Add("OrgUid"  , _UID[i].OrgUid  )
+                                        .Add("Size"    , _UID[i].Size    )
+                                        .Add("Value"   , _UID[i].Value   );
                 AuthDB.Add(UID);
             }
 

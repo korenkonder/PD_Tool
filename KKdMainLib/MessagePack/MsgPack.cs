@@ -8,10 +8,8 @@ namespace KKdMainLib.MessagePack
         public string Name;
         public object Object;
         
-        public         MsgPack[] Array => Object is         MsgPack[] List ?
-                List : null;
-        public KKdList<MsgPack>   List => Object is KKdList<MsgPack>  List ?
-                List : default(KKdList<MsgPack>);
+        public         MsgPack[] Array => Object is         MsgPack[] List ? List :    null;
+        public KKdList<MsgPack>   List => Object is KKdList<MsgPack>  List ? List : default;
 
         public static MsgPack New => new MsgPack { Object = KKdList<MsgPack>.New };
         public static MsgPack NewReserve(int Capacity) =>
@@ -21,8 +19,7 @@ namespace KKdMainLib.MessagePack
         { Object = KKdList<MsgPack>.New; this.Name = Name; }
 
         public MsgPack(long Count, string Name = null)
-        { if (Count > 0) { Object = new MsgPack[Count]; }
-          else             Object = null; this.Name = Name; }
+        { Object = Count > 0 ? new MsgPack[Count] : null; this.Name = Name; }
 
         public MsgPack(string Name, object Object)
         { this.Name = Name; this.Object = Object; }
@@ -30,8 +27,8 @@ namespace KKdMainLib.MessagePack
         public static MsgPack Null => new MsgPack();
 
         public MsgPack this[int index]
-        {   get { if (Object is MsgPack[] Array) return Array[index]; return default(MsgPack); }
-            set { if (Object is MsgPack[] Array) {      Array[index] = value;  Object = Array; } } }
+        {   get =>    Object is MsgPack[] Array  ? Array[index] : default;
+            set { if (Object is MsgPack[] Array) { Array[index] =   value; Object = Array; } } }
         
         public MsgPack Add(MsgPack obj)
         { if (Object is KKdList<MsgPack> List) { List.Add(obj); Object = List; } return this; }
@@ -44,7 +41,8 @@ namespace KKdMainLib.MessagePack
 
         public override string ToString() => Name ?? "" +
             (List. NotNull ? ((Name != null ? " " : "") + "Elements Count: " + List .Count ) :
-            (Array != null ? ((Name != null ? " " : "") + "Elements Count: " + Array.Length) : Object.ToString()));
+            (Array != null ? ((Name != null ? " " : "") + "Elements Count: " + Array.Length) :
+            Object.ToString()));
 
         public static explicit operator MsgPack(byte[] val) => new MsgPack(null, val);
         public static explicit operator MsgPack(string val) => new MsgPack(null, val);
@@ -232,15 +230,8 @@ namespace KKdMainLib.MessagePack
         public string    ReadString()
         {        if (Object is string  String) return          String; return null; }
 
-        public bool ElementArray(string Name, out MsgPack MsgPack)
-        {
-            if (Element(Name, out MsgPack))
-            {
-                if (MsgPack.Array == null) return false;
-                return true;
-            }
-            return false;
-        }
+        public bool ElementArray(string Name, out MsgPack MsgPack) =>
+            Element(Name, out MsgPack) ? MsgPack.Array != null : false;
 
         public bool Element(string Name, out MsgPack MsgPack)
         {

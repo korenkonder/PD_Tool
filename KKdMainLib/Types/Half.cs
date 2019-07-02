@@ -12,18 +12,12 @@ namespace KKdMainLib.Types
 
         public static explicit operator double(Half h)
         {
-            if (h._value == 0x0000)
-                return +0;
-            else if (h._value == 0x8000)
-                return (-0);
-            else if (h._value == 0x7C00)
-                return double.PositiveInfinity;
-            else if (h._value == 0xFC00)
-                return double.NegativeInfinity;
-            else if (h._value >> 10 == 0x1F)
-                return double.NaN;
-            else if (h._value >> 10 == 0x3F)
-                return -double.NaN;
+                 if (h._value       == 0x0000) return +0;
+            else if (h._value       == 0x8000) return -0;
+            else if (h._value       == 0x7C00) return  double.PositiveInfinity;
+            else if (h._value       == 0xFC00) return  double.NegativeInfinity;
+            else if (h._value >> 10 == 0x001F) return  double.NaN;
+            else if (h._value >> 10 == 0x003F) return -double.NaN;
 
             long exponent = ((h._value >> 10) & 0x1F);
             long mantissa = (h._value & 0x3FF);
@@ -38,20 +32,13 @@ namespace KKdMainLib.Types
         public static explicit operator Half(double val)
         {
             Half h = new Half();
-            if (val == +0)
-                h._value = 0x0000;
-            else if (val == -0)
-                h._value = 0x8000;
-            else if (val == double.NaN)
-                h._value = 0x7FFF;
-            else if (val == -double.NaN)
-                h._value = 0xFFFF;
-            else if (val == double.PositiveInfinity)
-                h._value = 0x7C00;
-            else if (val == double.NegativeInfinity)
-                h._value = 0xFC00;
-            else
-                h._value = ToDouble(val);
+                 if (val == +0                      ) h._value = 0x0000;
+            else if (val == -0                      ) h._value = 0x8000;
+            else if (val ==  double.NaN             ) h._value = 0x7FFF;
+            else if (val == -double.NaN             ) h._value = 0xFFFF;
+            else if (val ==  double.PositiveInfinity) h._value = 0x7C00;
+            else if (val ==  double.NegativeInfinity) h._value = 0xFC00;
+            else                                      h._value = ToDouble(val);
             return h;
         }
 
@@ -76,10 +63,8 @@ namespace KKdMainLib.Types
                 {
                     ushort exponent_max = (ushort)Math.Ceiling(x * Pow2);
                     ushort exponent_min = (ushort)Math.Floor  (x * Pow2);
-                    ushort exponent = 0;
-                    if (Math.Abs(x - exponent_max / Pow2) > Math.Abs(x - exponent_min / Pow2))
-                         exponent = exponent_max;
-                    else exponent = exponent_min;
+                    ushort exponent = Math.Abs(x - exponent_max / Pow2) >
+                        Math.Abs(x - exponent_min / Pow2) ? exponent_max : exponent_min;
                     ushort mantissa = (ushort)(i + MaxPow - 1);
                     ushort d = (ushort)(Sign | ((mantissa & 0x001F) << 10) | (exponent & 0x03FF));
                     return d;
@@ -88,10 +73,7 @@ namespace KKdMainLib.Types
                 else              i++;
             }
 
-            if (i >= +0)
-                return 0x7C00;
-            else
-                return 0xFC00;
+            return i >= +0 ? (ushort)0x7C00 : (ushort)0xFC00;
         }
 
         public override string ToString() => ((double)this).ToString();

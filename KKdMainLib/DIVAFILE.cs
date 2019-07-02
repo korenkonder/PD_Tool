@@ -7,7 +7,9 @@ namespace KKdMainLib
 {
     public static class DIVAFILE
     {
-        private static readonly byte[] Key = "file access deny".ToASCII();
+        private static readonly byte[] Key = new byte[]
+        { 0x66, 0x69, 0x6C, 0x65, 0x20, 0x61, 0x63, 0x63,
+          0x65, 0x73, 0x73, 0x20, 0x64, 0x65, 0x6E, 0x79 };
 
         public static void Decrypt(this string file)
         {

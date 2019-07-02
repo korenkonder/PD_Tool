@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using KKdMainLib.IO;
+﻿using KKdMainLib.IO;
+using KKdMainLib.Types;
 using KKdMainLib.MessagePack;
-using MPIO = KKdMainLib.MessagePack.IO;
 
 namespace KKdMainLib
 {
@@ -112,17 +110,16 @@ namespace KKdMainLib
                     writer.GetOffset(ref POF).Write(0x00);
                     writer.WriteEndian(STRs[i].ID);
                 }
-                writer.Align(16);
+                writer.Align(0x10);
             }
             else
             {
-                for (int i = 0; i < Count; i++)
-                    writer.Write(0x00);
-                writer.Align(32);
+                for (int i = 0; i < Count; i++) writer.Write(0x00);
+                writer.Align(0x20);
             }
 
-            List<string> UsedSTR = new List<string>();
-            List<int> UsedSTRPos = new List<int>();
+            KKdList<string> UsedSTR = KKdList<string>.New;
+            KKdList<int> UsedSTRPos = KKdList<int>.New;
             int[] STRPos = new int[Count];
             for (int i1 = 0; i1 < Count; i1++)
             {
@@ -143,7 +140,7 @@ namespace KKdMainLib
             }
             if (writer.Format > Main.Format.FT)
             {
-                writer.Align(16);
+                writer.Align(0x10);
                 Offset = writer.UIntPosition;
                 writer.Position = 0x80;
             }

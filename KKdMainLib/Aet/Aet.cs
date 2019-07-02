@@ -1,6 +1,5 @@
 ﻿//Original: AetSet.bt Version: 2.0 by samyuu
 
-//using System.Collections.Generic;
 using KKdMainLib.IO;
 using KKdMainLib.Types;
 using KKdMainLib.MessagePack;
@@ -82,7 +81,7 @@ namespace KKdMainLib.Aet
                 for (i0 = 0; i0 < Aet.Layers[i].Count; i0++, i1++)
                 {
                     Aet.Layers[i].Objects[i0] = IO.ReadAetObject();
-                    Aet.Layers[i].ObjectIDs[i0] = i1;
+                    Aet.Layers[i].Objects[i0].ID = i1;
                 }
             }
 
@@ -230,7 +229,7 @@ namespace KKdMainLib.Aet
                             bool Found = false;
                             for (int I = 0; I < Aet.Layers.Count; I++)
                                 for (int I0 = 0; I0 < Aet.Layers.Entries[I].Count; I0++)
-                                    if (Aet.Layers.Entries[I].ObjectIDs[I0] == Obj.Pic.Value.ParentObjectID)
+                                    if (Aet.Layers[I][I0].ID == Obj.Pic.Value.ParentObjectID)
                                     {
                                         Found = true;
                                         IO.Write(Aet.Layers.Entries[I].Objects[I0].Offset);
@@ -258,7 +257,7 @@ namespace KKdMainLib.Aet
                             bool Found = false;
                             for (int I = 0; I < Aet.Layers.Count; I++)
                                 for (int I0 = 0; I0 < Aet.Layers.Entries[I].Count; I0++)
-                                    if (Aet.Layers.Entries[I].ObjectIDs[I0] == Obj.Eff.Value.ParentObjectID)
+                                    if (Aet.Layers[I][I0].ID == Obj.Eff.Value.ParentObjectID)
                                     {
                                         Found = true;
                                         IO.Write(Aet.Layers.Entries[I].Objects[I0].Offset);
@@ -323,7 +322,7 @@ namespace KKdMainLib.Aet
             AET = new AetHeader();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.ElementArray("Aet", out MsgPack Aet)) { MsgPack = MsgPack.New; return; }
+            if (!MsgPack.ElementArray("Aet", out MsgPack Aet)) { MsgPack.Dispose(); return; }
 
             if (Aet.Array != null)
                 if (Aet.Array.Length > 0)
@@ -333,7 +332,7 @@ namespace KKdMainLib.Aet
                         MsgPackReader(Aet.Array[i], ref AET.Data[i] );
                 }
 
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON)
@@ -385,12 +384,15 @@ namespace KKdMainLib.Aet
             i = Aet.Layers.Count - 1;
             if (AET.ElementArray("RootLayer", out Temp))
             {
-                Aet.Layers.Entries[i].Objects = new AetObject[Temp.Array.Length];
+                Aet.Layers.Entries[i].Count = Temp.Array.Length;
                 for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
                     Aet.Layers.Entries[i].Objects[i0].ReadMP(Temp[i0]);
             }
             else if (AET.Element("RootLayer", out Temp))
+            {
+                Aet.Layers.Entries[i].Count = 1;
                 Aet.Layers.Entries[i].Objects[0].ReadMP(Temp);
+            }
             else return;
 
             AetData.Offset = 0;
@@ -409,12 +411,12 @@ namespace KKdMainLib.Aet
 
             i = Aet.Layers.Count - 1;
             if (Aet.Layers[i].Count == 1)
-                AET.Add(Aet.Layers[i][0].WriteMP(ref Aet, Aet.Layers[i].ObjectIDs[0], "RootLayer"));
+                AET.Add(Aet.Layers[i][0].WriteMP(ref Aet, "RootLayer"));
             if (Aet.Layers[i].Count > 1)
             {
                 MsgPack RootLayer = new MsgPack(Aet.Layers[i].Count, "RootLayer");
                 for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
-                    RootLayer[i0] = Aet.Layers[i][i0].WriteMP(ref Aet, Aet.Layers[i].ObjectIDs[i0]);
+                    RootLayer[i0] = Aet.Layers[i][i0].WriteMP(ref Aet);
                 AET.Add(RootLayer);
             }
 
@@ -458,10 +460,9 @@ namespace KKdMainLib.Aet
         public int Count
         {
             get => Objects != null ? Objects.Length : 0;
-            set { ObjectIDs = new int[value]; Objects = new AetObject[value]; }
+            set => Objects = new AetObject[value];
         }
         public int Offset;
-        public int[] ObjectIDs;
         public AetObject[] Objects;
 
         public void ReadMP(MsgPack msg)
@@ -484,17 +485,17 @@ namespace KKdMainLib.Aet
             if (Count < 1)
                 return MsgPack.New.Add("ID", Id);
             else if (Count == 1)
-                return MsgPack.New.Add("ID", Id).Add(this.Objects[0].WriteMP(ref Aet, ObjectIDs[0], "Object"));
+                return MsgPack.New.Add("ID", Id).Add(this.Objects[0].WriteMP(ref Aet, "Object"));
             MsgPack Objects = new MsgPack(Count, "Objects");
             for (int i = 0; i < Count; i++)
-                Objects[i] = this.Objects[i].WriteMP(ref Aet, ObjectIDs[i]);
+                Objects[i] = this.Objects[i].WriteMP(ref Aet);
             return MsgPack.New.Add("ID", Id).Add(Objects);
         }
 
         public AetObject this[int index]
         {
-            get { if (Count > 0) return Objects[index]; return default(AetObject); }
-            set { if (Count > 0) { Objects[index] = value; } }
+            get =>    Count > 0  ? Objects[index] : default;
+            set { if (Count > 0) { Objects[index] =   value; } }
         }
         
         public override string ToString() => "Count: " + Count;
@@ -502,6 +503,7 @@ namespace KKdMainLib.Aet
 
     public struct AetObject
     {
+        public int ID;
         public int Offset;
         public Pointer<string> Name;
         public float StartTime0;
@@ -516,8 +518,9 @@ namespace KKdMainLib.Aet
         public Pointer<Audio  > Aif;
         public Pointer<Effect > Eff;
 
-        public int ReadMP(MsgPack msg)
+        public void ReadMP(MsgPack msg)
         {
+            ID            = msg.ReadInt32 ("ID"           );
             Name.Value    = msg.ReadString("Name"         );
             StartTime0    = msg.ReadSingle("StartTime0"   );
             LoopDuration  = msg.ReadSingle("LoopDuration" );
@@ -533,10 +536,9 @@ namespace KKdMainLib.Aet
             else if (msg.Element("Eff", out MsgPack Eff))
             { Type = ObjType.Eff; this.Eff.Value.ReadMP(Eff); }
             else Type = ObjType.Nop;
-            return msg.ReadInt32("ID");
         }
 
-        public MsgPack WriteMP(ref AetData Aet, int ID, string name = null)
+        public MsgPack WriteMP(ref AetData Aet, string name = null)
         {
             MsgPack AetObject = new MsgPack(name).Add("ID", ID).Add("Name", Name.Value)
                 .Add("StartTime0", StartTime0).Add("LoopDuration", LoopDuration)
@@ -602,7 +604,7 @@ namespace KKdMainLib.Aet
                     for (int i = 0; i < Aet.Layers.Count; i++)
                         for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
                             if (Aet.Layers[i][i1].Offset == ParentObjectID)
-                            { Pic.Add("ParentObjectID", Aet.Layers[i].ObjectIDs[i1]); break; }
+                            { Pic.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
 
                 if (Marker.Count == 1)
                     Pic.Add(Marker.Entries[0].WriteMP("Marker"));
@@ -683,7 +685,7 @@ namespace KKdMainLib.Aet
                     for (int i = 0; i < Aet.Layers.Count; i++)
                         for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
                             if (Aet.Layers[i][i1].Offset == ParentObjectID)
-                            { Eff.Add("ParentObjectID", Aet.Layers[i].ObjectIDs[i1]); break; }
+                            { Eff.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
 
                 if (Marker.Count == 1)
                     Eff.Add(Marker[0].WriteMP("Marker"));

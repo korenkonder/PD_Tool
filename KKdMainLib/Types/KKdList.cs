@@ -29,16 +29,16 @@ namespace KKdMainLib.Types
         {
             index = 0;
             Count = Array.Length;
-            this.array = Array;
+            array = Array;
         }
 
-        public T Current => index < Count ? array[index] : default(T);
+        public T Current => index < Count ? array[index] : default;
 
         object IEnumerator.Current => Current;
 
         public T this[int index]
-        {   get { if (array != null) return array[index]; return default(T); }
-            set { if (array != null)        array[index] = value; } }
+        {   get =>    array != null ? array[index] : default;
+            set { if (array != null)  array[index] =   value; } }
 
         public bool MoveNext()
         { if (index == (Count - 1)) { index = 0; return false; }

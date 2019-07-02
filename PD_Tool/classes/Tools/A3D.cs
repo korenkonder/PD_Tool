@@ -15,34 +15,37 @@ namespace PD_Tool.Tools
             string filepath = "";
             string ext      = "";
 
-            bool MP = true;
+            bool MP = false;
             foreach (string file in FileNames)
-                     if (file.EndsWith(".mp"  )) { MP = false; break; }
-                else if (file.EndsWith(".json")) { MP = false; break; }
+                     if (file.EndsWith(".mp"  )) { MP = true; break; }
+                else if (file.EndsWith(".json")) { MP = true; break; }
 
             Main.Format Format = Main.Format.NULL;
-            if (!MP)
+            string format = "";
+            if (MP)
             {
                 Console.Clear();
                 Main.ConsoleDesign(true);
                 Main.ConsoleDesign("          Choose type of format to export:");
                 Main.ConsoleDesign(false);
-                Main.ConsoleDesign("1. DT   PS3");
-                Main.ConsoleDesign("2. F    PS3/PSV");
-                Main.ConsoleDesign("3. FT   PS4");
-                Main.ConsoleDesign("4. F2nd PS3/PSV");
-                Main.ConsoleDesign("5. MGF      PSV");
-                Main.ConsoleDesign("6. X    PS4/PSV");
+                Main.ConsoleDesign("1. A3DA [DT/AC/F]");
+                Main.ConsoleDesign("2. A3DC [DT/AC/F]");
+                Main.ConsoleDesign("3. A3DA [AFT/FT] ");
+                Main.ConsoleDesign("4. A3DC [AFT/FT] ");
+                Main.ConsoleDesign("5. A3DC [F2]     ");
+                Main.ConsoleDesign("6. A3DC [MGF]    ");
+                Main.ConsoleDesign("7. A3DC [X]      ");
                 Main.ConsoleDesign(false);
                 Main.ConsoleDesign(true);
                 Console.WriteLine();
-                string format = Console.ReadLine();
+                format = Console.ReadLine();
                      if (format == "1") Format = Main.Format.DT  ;
                 else if (format == "2") Format = Main.Format.F   ;
                 else if (format == "3") Format = Main.Format.FT  ;
-                else if (format == "4") Format = Main.Format.F2LE;
-                else if (format == "5") Format = Main.Format.MGF ;
-                else if (format == "6") Format = Main.Format.X   ;
+                else if (format == "4") Format = Main.Format.FT  ;
+                else if (format == "5") Format = Main.Format.F2LE;
+                else if (format == "6") Format = Main.Format.MGF ;
+                else if (format == "7") Format = Main.Format.X   ;
                 else return;
             }
 
@@ -64,14 +67,11 @@ namespace PD_Tool.Tools
                 {
                     A.MsgPackReader(filepath, ext == ".json");
                     A.IO = File.OpenWriter(filepath + ".a3da", true);
-                    if (A.Data.Header.Format >= Main.Format.F2LE)
-                        A.Data._.CompressF16 = Format == Main.Format.MGF ? 2 : 1;
+                    A.Data._.CompressF16 = A.Data.Header.Format > Main.Format.FT ? Format == Main.Format.MGF ? 2 : 1 : 0;
                     A.Data.Header.Format = Format;
 
-                    if (A.Data.Header.Format > Main.Format.DT && A.Data.Header.Format != Main.Format.FT)
-                        A.A3DCWriter(filepath);
-                    else
-                        A.A3DAWriter();
+                    if (format != "1" && format != "3") A.A3DCWriter(filepath);
+                    else                                A.A3DAWriter();
                 }
                 A = null;
             }

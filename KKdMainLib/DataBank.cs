@@ -49,12 +49,12 @@ namespace KKdMainLib
             IO = File.OpenWriter();
             if (file.Contains("psrData"))
                 for (i = 0; i < psrDat.Length; i++)
-                    IO.Write(psrDat[i].ToString() + ",");
+                    IO.Write(psrDat[i].ToString() + c);
             else if (file.Contains("PvList"))
                 if (pvList.Length != 0)
                     for (i = 0; i < pvList.Length; i++)
                         IO.Write(UrlEncode(pvList[i].ToString() +
-                            ((i + 1 != pvList.Length) ? "," : "")));
+                            ((i + 1 != pvList.Length) ? c : "")));
                 else IO.Write("%2A%2A%2A");
              
 
@@ -143,7 +143,7 @@ namespace KKdMainLib
                      .Add(p2.WriteMP("P2")).Add(p3.WriteMP("P3"));
 
             public override string ToString() =>
-                UrlEncode(p1.ToString() + "," + p2.ToString() + "," + p3.ToString() + "," + PV_ID);
+                UrlEncode(p1.ToString() + c + p2.ToString() + c + p3.ToString() + c + PV_ID);
         }
 
         public struct Player
@@ -200,9 +200,9 @@ namespace KKdMainLib
                 .Add("Score" , Score0).Add("Name" , Name0);
 
             public override string ToString() =>
-                (Score0 + (Has2P ? ("." + Score1) : "") + "," + UrlEncode(Name0) +
-                (Has2P ? ("xxx" + UrlEncode(Name1)) : "") + "," +
-                Diff + "," + (Has2P ? "0.1" : "0")).Replace("*", "%2A");
+                (Score0 + (Has2P ? (d + Score1) : "") + c + UrlEncode(Name0) +
+                (Has2P ? ("xxx" + UrlEncode(Name1)) : "") + c +
+                Diff + c + (Has2P ? "0.1" : "0")).Replace("*", "%2A");
         }
 
         public struct PvList
@@ -277,9 +277,9 @@ namespace KKdMainLib
             }
 
             public override string ToString() =>
-                UrlEncode(PV_ID + "," + (Enable ? 1 : 0) + "," + (Extra ? 1 : 0) + "," +
-                    AdvDemoStart.ToString() + "," + AdvDemoEnd.ToString() + "," +
-                    StartShow.ToString() + "," + EndShow.ToString());
+                UrlEncode(PV_ID + c + (Enable ? 1 : 0) + c + (Extra ? 1 : 0) + c +
+                    AdvDemoStart.ToString() + c + AdvDemoEnd.ToString() + c +
+                    StartShow.ToString() + c + EndShow.ToString());
         }
 
         public struct Date

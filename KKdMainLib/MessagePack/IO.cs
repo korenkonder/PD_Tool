@@ -131,7 +131,7 @@ namespace KKdMainLib.MessagePack
                 int Length = 0;
                      if (Type == Types.Str8 ) Length = _IO.ReadByte();
                 else if (Type == Types.Str16) Length = _IO.ReadInt16Endian(true);
-                else                                  Length = _IO.ReadInt32Endian(true);
+                else                          Length = _IO.ReadInt32Endian(true);
                 return _IO.ReadString(Length);
             }
             return null;

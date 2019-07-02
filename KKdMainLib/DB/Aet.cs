@@ -190,7 +190,7 @@ namespace KKdMainLib.DB
 
         public void MsgPackReader(string file, bool JSON)
         {
-            MsgPack MsgPack = file.ReadMP(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
             if (MsgPack.ElementArray("AetDB", out MsgPack AetDB))
             {

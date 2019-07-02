@@ -46,11 +46,8 @@
         public IKeyFrame<TKey, TVal> ToKeyFrameT3() =>
             new KeyFrameT3<TKey, TVal> { Frame = Frame, Value = Value };
 
-        public IKeyFrame<TKey, TVal> Check()
-        {
-            if (Value.Equals(default(TVal))) return ToKeyFrameT0();
-            return this;
-        }
+        public IKeyFrame<TKey, TVal> Check() =>
+            Value.Equals(default(TVal)) ? ToKeyFrameT0() : (this);
 
         public override string ToString() => ToString(true);
         public string ToString(bool Brackets) =>
@@ -130,25 +127,12 @@
             Main.ToString(Interpolation1) + "," + Main.ToString(Interpolation2) + (Brackets ? ")" : "");
 
         public IKeyFrame<TKey, TVal> ToKeyFrameT2(IKeyFrame<TKey, TVal>
-            Previous, out KeyFrameT2<TKey, TVal> Current)
-        {
-            if (Previous is KeyFrameT2<TKey, TVal> PreviousT2)
-                Current = new KeyFrameT2<TKey, TVal> { Frame = PreviousT2.Frame,
-                    Value = PreviousT2.Value, Interpolation = Interpolation1 };
-            else
-                Current = new KeyFrameT2<TKey, TVal> { Frame = Frame,
-                    Value = Value, Interpolation = Interpolation1 };
-            return new KeyFrameT2<TKey, TVal> { Frame = Frame,
-                Value = Value, Interpolation = Interpolation2 };
-        }
-        public IKeyFrame<TKey, TVal> ToKeyFrameT2(IKeyFrame<TKey, TVal>
             Previous, out IKeyFrame<TKey, TVal> Current)
         {
-            if (Previous is KeyFrameT2<TKey, TVal> PreviousT2)
-                Current = new KeyFrameT2<TKey, TVal> { Frame = PreviousT2.Frame,
-                    Value = PreviousT2.Value, Interpolation = Interpolation1 };
-            else
-                Current = new KeyFrameT2<TKey, TVal> { Frame = Frame,
+            Current = Previous is KeyFrameT2<TKey, TVal> PreviousT2
+                ? new KeyFrameT2<TKey, TVal> { Frame = PreviousT2.Frame,
+                    Value = PreviousT2.Value, Interpolation = Interpolation1 }
+                : new KeyFrameT2<TKey, TVal> { Frame = Frame,
                     Value = Value, Interpolation = Interpolation1 };
             return new KeyFrameT2<TKey, TVal> { Frame = Frame,
                 Value = Value, Interpolation = Interpolation2 };

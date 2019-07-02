@@ -270,9 +270,14 @@ namespace KKdMainLib.A3DA
 
             Key.Value = IO.ReadSingle();
             if (Key.Type == 0x0000 || Key.Type == 0x0001) return;
-
             Key.Max    = IO.ReadSingle();
             Key.Length = IO.ReadInt32 ();
+            if (Key.Type >> 8 != 0)
+            {
+                Key.EPTypePost = (Key.Type >> 12) & 0xF;
+                Key.EPTypePre  = (Key.Type >>  8) & 0xF;
+            }
+            Key.Type = Key.Type & 0xFF;
             Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
             KeyFrameT3<double, double> Temp;
             for (int i = 0; i < Key.Length; i++)
@@ -356,8 +361,8 @@ namespace KKdMainLib.A3DA
         {
             if (k.Object == null) return null;
             
-            Key Key = new Key { EPTypePost = k.ReadNDouble("Post"),
-                EPTypePre = k.ReadNDouble("Pre"), Max = k.ReadNDouble("M"),
+            Key Key = new Key { EPTypePost = k.ReadNInt32("Post"),
+                EPTypePre = k.ReadNInt32("Pre"), Max = k.ReadNDouble("M"),
                 Type = k.ReadNInt32("T"), Value = k.ReadNDouble("V") };
             if (k.ReadBoolean("RD")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
             if (Key.Type == 0) Key.Value = 0.0;

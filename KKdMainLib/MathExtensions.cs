@@ -4,13 +4,11 @@ namespace KKdMainLib
 {
     public static class MathExtensions
     {
-        public static void FloorCeiling(ref double Value)
-        {   if (Value % 1 >= 0.5) Value = (long)(Value + 0.5);
-            else                  Value = (long) Value; }
+        public static void FloorCeiling( ref double Value) => 
+            Value = Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long) Value;
 
-        public static long FloorCeiling(this double Value)
-        {   if (Value % 1 >= 0.5) return (long)(Value + 0.5);
-            else                  return (long) Value; }
+        public static long FloorCeiling(this double Value) =>
+                    Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long) Value;
 
         public static   int Align(this   int value,   int alignement,   int divide = 1) =>
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;

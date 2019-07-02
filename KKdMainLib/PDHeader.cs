@@ -20,8 +20,8 @@ namespace KKdMainLib
         public static PDHead ReadHeader(this Stream stream, bool Seek)
         {
             if (Seek)
-                if (stream.Position >= 4) stream.Seek(-4, SeekOrigin.Current);
-                else                      stream.Seek( 0, 0);
+                if (stream.Position >= 4) stream.LongPosition -= 4;
+                else                      stream.LongPosition  = 0;
             return stream.ReadHeader();
         }
 
@@ -55,9 +55,9 @@ namespace KKdMainLib
             stream.Write(0x00);
         }
 
-        public static void WriteEOFC(this Stream stream, int ID)
-        { PDHead Header = new PDHead { Format = Main.Format.F2LE, ID = ID,
-            Lenght = 0x20, Signature = 0x43464F45, }; stream.Write(Header); }
+        public static void WriteEOFC(this Stream stream, int ID = 0) =>
+            stream.Write(new PDHead { Format = Main.Format.F2LE, ID = ID,
+                Lenght = 0x20, Signature = 0x43464F45, });
 
     }
 }

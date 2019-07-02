@@ -43,6 +43,13 @@ namespace KKdMainLib.IO
         public static long ReadIntX(this Stream stream, bool IsBE) => stream.IsX ?
             stream.ReadInt64() : stream.ReadUInt32Endian(IsBE);
 
+        public static void WriteX(this Stream stream, long val)
+        {   if (stream.IsX) stream.Write      (     val);
+            else            stream.WriteEndian((int)val);       }
+        public static void WriteX(this Stream stream, long val, bool IsBE)
+        {   if (stream.IsX) stream.Write      (     val      );
+            else            stream.WriteEndian((int)val, IsBE); }
+
         public static byte[] ReadAtOffset(this Stream stream, long Offset = 0, long Length = 0)
         {
             byte[] arr = null;

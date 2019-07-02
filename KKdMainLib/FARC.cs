@@ -1,6 +1,5 @@
 ﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
-using System;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using KKdMainLib.IO;
@@ -45,15 +44,13 @@ namespace KKdMainLib
         private FARC HeaderReader()
         {
             NewFARC();
-            Console.Title = "FARC Extractor - Archive: " + Path.GetFileName(FilePath);
-            if (!File.Exists(FilePath))
-            { Console.WriteLine("File {0} doesn't exist.", Path.GetFileName(FilePath)); return this; }
+            if (!File.Exists(FilePath)) return this;
 
             Stream reader = File.OpenReader(FilePath);
             DirectoryPath = Path.GetFullPath(FilePath).Replace(Path.GetExtension(FilePath), "");
             Signature = (Farc)reader.ReadInt32Endian(true);
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
-            { Console.WriteLine("Unknown signature"); reader.Close(); return this; }
+            { reader.Close(); return this; }
 
             int HeaderLength = reader.ReadInt32Endian(true);
             if (Signature == Farc.FARC)
@@ -157,11 +154,10 @@ namespace KKdMainLib
                             cryptoStream.Read(Files[i].Data, 0, FileSize);
                         Files[i].Data = SkipData(Files[i].Data, 0x10);
                     }
-                    else if (Files[i].Type.HasFlag(Type.ECB))
+                    else
                         using (CryptoStream cryptoStream = new CryptoStream(stream,
                             GetAes(false, null).CreateDecryptor(), CryptoStreamMode.Read))
                             cryptoStream.Read(Files[i].Data, 0, FileSize);
-                    else stream.Read(Files[i].Data, 0, FileSize);
                     Encrypted = true;
                 }
 
@@ -209,19 +205,24 @@ namespace KKdMainLib
             return SkipData;
         }
 
-        public void Pack()
+        public FARC Pack()
         {
             NewFARC();
             string[] files = Directory.GetFiles(DirectoryPath);
             Files = new FARCFile[files.Length];
-
             for (int i = 0; i < files.Length; i++)
+                Files[i] = new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) };
+            files = null;
+            return this;
+        }
+
+        public void CompressStuff()
+        {
+            for (int i = 0; i < Files.Length; i++)
             {
-                Files[i] = new FARCFile { Name = files[i] };
-                string ext = Path.GetExtension(files[i]).ToLower();
+                string ext = Path.GetExtension(Files[i].Name).ToLower();
                 if (ext == ".a3da" || ext == ".diva" || ext == ".vag") Signature = Farc.FArc;
             }
-            files = null;
 
             Stream writer = File.OpenWriter(DirectoryPath + ".farc", true);
             writer.WriteEndian((int)Signature, true);
@@ -233,7 +234,7 @@ namespace KKdMainLib
             {
                 HeaderWriter.WriteEndian((int)FARCType, true);
                 HeaderWriter.Write      (0x00);
-                HeaderWriter.WriteEndian(0x40         , true);
+                HeaderWriter.WriteEndian(0x40, true);
                 HeaderWriter.Write      (0x00);
             }
             int HeaderPartLength = Signature == Farc.FArc ? 0x09 : 0x0D;
@@ -245,14 +246,12 @@ namespace KKdMainLib
 
             int Align = writer.Position.Align(0x10) - writer.Position;
             for (int i1 = 0; i1 < Align; i1++)
-                if (Signature == Farc.FArc) writer.WriteByte(0x00);
-                else                        writer.WriteByte(0x78);
+                writer.WriteByte((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
 
             for (int i = 0; i < Files.Length; i++)
                 CompressStuff(i, ref Files, ref writer);
 
-            if (Signature == Farc.FARC) writer.Position = 0x1C;
-            else                        writer.Position = 0x0C;
+            writer.Position = Signature == Farc.FARC ? 0x1C : 0x0C;
             for (int i = 0; i < Files.Length; i++)
             {
                 writer.Write(Path.GetFileName(Files[i].Name) + "\0");
@@ -267,7 +266,6 @@ namespace KKdMainLib
         private void CompressStuff(int i, ref FARCFile[] Files, ref Stream writer)
         {
             Files[i].Offset = writer.Position;
-            Files[i].Data = File.ReadAllBytes(Files[i].Name);
             Files[i].SizeUnc = Files[i].Data.Length;
             Files[i].Type = Type.None;
 
@@ -299,8 +297,7 @@ namespace KKdMainLib
             {
                 int Align = writer.Position.Align(0x20) - writer.Position;
                 for (int i1 = 0; i1 < Align; i1++)
-                    if (Signature == Farc.FArc) writer.WriteByte(0x00);
-                    else                        writer.WriteByte(0x78);
+                    writer.WriteByte((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
             }
         }
 

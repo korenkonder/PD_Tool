@@ -18,8 +18,6 @@ namespace KKdMainLib.MessagePack
 
         public MsgPack Read() => ReadValue();
 
-        private string ReadKey() => ReadString();
-
         private MsgPack ReadValue(string Key = null)
         {
             char c = _IO.SkipWhitespace().PeekCharUTF8();

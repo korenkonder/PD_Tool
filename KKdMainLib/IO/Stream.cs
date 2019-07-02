@@ -28,9 +28,9 @@ namespace KKdMainLib.IO
         public uint UIntOffset { get => (uint)LongOffset; set => LongOffset = value; }
         public long LongOffset;
 
-        public  int       Length { get => ( int)stream.Length; set => stream.SetLength(value); }
-        public uint   UIntLength { get => (uint)stream.Length; set => stream.SetLength(value); }
-        public long   LongLength { get =>       stream.Length; set => stream.SetLength(value); }
+        public  int       Length { get => ( int)stream.Length -     Offset; set => stream.SetLength(value +     Offset); }
+        public uint   UIntLength { get => (uint)stream.Length - UIntOffset; set => stream.SetLength(value + UIntOffset); }
+        public long   LongLength { get =>       stream.Length - LongOffset; set => stream.SetLength(value + LongOffset); }
 
         public  int     Position
         { get => ( int)stream.Position -     Offset; set => stream.Position = value +     Offset; }
