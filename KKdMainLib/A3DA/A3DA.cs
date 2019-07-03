@@ -374,30 +374,36 @@ namespace KKdMainLib.A3DA
 
                     if (Dict.FindValue(out value, name + "tex_pat.length"))
                     {
-                        Data.Object[i0].TP = new Object.TexturePattern[int.Parse(value)];
-                        for (i1 = 0; i1 < Data.Object[i0].TP.Length; i1++)
+                        Data.Object[i0].TexPat = new Object.TexturePattern[int.Parse(value)];
+                        for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
                         {
                             nameView = name + "tex_pat" + d + i1 + d;
-                            Dict.FindValue(out Data.Object[i0].TP[i1].Name     , nameView + "name"      );
-                            Dict.FindValue(out Data.Object[i0].TP[i1].Pat      , nameView + "pat"       );
-                            Dict.FindValue(out Data.Object[i0].TP[i1].PatOffset, nameView + "pat_offset");
+                            Dict.FindValue(out Data.Object[i0].TexPat[i1].Name     , nameView + "name"      );
+                            Dict.FindValue(out Data.Object[i0].TexPat[i1].Pat      , nameView + "pat"       );
+                            Dict.FindValue(out Data.Object[i0].TexPat[i1].PatOffset, nameView + "pat_offset");
                         }
                     }
 
                     if (Dict.FindValue(out value, name + "tex_transform.length"))
                     {
-                        Data.Object[i0].TT = new Object.TextureTransform[int.Parse(value)];
-                        for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
+                        Data.Object[i0].TexTrans = new Object.TextureTransform[int.Parse(value)];
+                        for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                         {
                             nameView = name + "tex_transform" + d + i1 + d;
 
-                            Dict.FindValue(out Data.Object[i0].TT[i1].Name, nameView + "name");
-                            Data.Object[i0].TT[i1].C  = Dict.ReadKeyUV(nameView + "coverage"      );
-                            Data.Object[i0].TT[i1].O  = Dict.ReadKeyUV(nameView + "offset"        );
-                            Data.Object[i0].TT[i1].R  = Dict.ReadKeyUV(nameView + "repeat"        );
-                            Data.Object[i0].TT[i1].Ro = Dict.ReadKey  (nameView + "rotate"     + d);
-                            Data.Object[i0].TT[i1].RF = Dict.ReadKey  (nameView + "rotateFrame"+ d);
-                            Data.Object[i0].TT[i1].TF = Dict.ReadKeyUV(nameView + "translateFrame");
+                            Dict.FindValue(out Data.Object[i0].TexTrans[i1].Name, nameView + "name");
+                            Data.Object[i0].TexTrans[i1].Coverage       =
+                                Dict.ReadKeyUV(nameView + "coverage"      );
+                            Data.Object[i0].TexTrans[i1].Offset         =
+                                Dict.ReadKeyUV(nameView + "offset"        );
+                            Data.Object[i0].TexTrans[i1].Repeat         =
+                                Dict.ReadKeyUV(nameView + "repeat"        );
+                            Data.Object[i0].TexTrans[i1].   Rotate      =
+                                Dict.ReadKey  (nameView + "rotate"     + d);
+                            Data.Object[i0].TexTrans[i1].   RotateFrame =
+                                Dict.ReadKey  (nameView + "rotateFrame"+ d);
+                            Data.Object[i0].TexTrans[i1].TranslateFrame =
+                                Dict.ReadKeyUV(nameView + "translateFrame");
                         }
                     }
                     
@@ -746,36 +752,42 @@ namespace KKdMainLib.A3DA
                     IO.Write(name + "parent_name=", Data.Object[SOi0].ParentName);
                     IO.Write(Data.Object[SOi0].MT, name, A3DC, IsX, 0b01100);
 
-                    if (Data.Object[SOi0].TP != null)
+                    if (Data.Object[SOi0].TexPat != null)
                     {
                         nameView = name + "tex_pat" + d;
-                        SO1 = Data.Object[SOi0].TP.Length.SortWriter();
-                        for (i1 = 0; i1 < Data.Object[SOi0].TP.Length; i1++)
+                        SO1 = Data.Object[SOi0].TexPat.Length.SortWriter();
+                        for (i1 = 0; i1 < Data.Object[SOi0].TexPat.Length; i1++)
                         {
                             SOi1 = SO1[i1];
-                            IO.Write(nameView + SOi1 + d + "name="      , Data.Object[SOi0].TP[SOi1].Name     );
-                            IO.Write(nameView + SOi1 + d + "pat="       , Data.Object[SOi0].TP[SOi1].Pat      );
-                            IO.Write(nameView + SOi1 + d + "pat_offset=", Data.Object[SOi0].TP[SOi1].PatOffset);
+                            IO.Write(nameView + SOi1 + d + "name="      , Data.Object[SOi0].TexPat[SOi1].Name     );
+                            IO.Write(nameView + SOi1 + d + "pat="       , Data.Object[SOi0].TexPat[SOi1].Pat      );
+                            IO.Write(nameView + SOi1 + d + "pat_offset=", Data.Object[SOi0].TexPat[SOi1].PatOffset);
                         }
-                        IO.Write(nameView + "length=", Data.Object[SOi0].TP.Length);
+                        IO.Write(nameView + "length=", Data.Object[SOi0].TexPat.Length);
                     }
 
-                    if (Data.Object[SOi0].TT != null)
+                    if (Data.Object[SOi0].TexTrans != null)
                     {
-                        SO1 = Data.Object[SOi0].TT.Length.SortWriter();
+                        SO1 = Data.Object[SOi0].TexTrans.Length.SortWriter();
                         nameView = name + "tex_transform" + d;
-                        for (i1 = 0; i1 < Data.Object[SOi0].TT.Length; i1++)
+                        for (i1 = 0; i1 < Data.Object[SOi0].TexTrans.Length; i1++)
                         {
                             SOi1 = SO1[i1];
-                            IO.Write(nameView + SOi1 + d + "name=", Data.Object[SOi0].TT[SOi1].Name);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].C , nameView + SOi1 + d, "coverage"      , A3DC);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].O , nameView + SOi1 + d, "offset"        , A3DC);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].R , nameView + SOi1 + d, "repeat"        , A3DC);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].Ro, nameView + SOi1 + d, "rotate"        , A3DC);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].RF, nameView + SOi1 + d, "rotateFrame"   , A3DC);
-                            IO.Write(Data.Object[SOi0].TT[SOi1].TF, nameView + SOi1 + d, "translateFrame", A3DC);
+                            IO.Write(nameView + SOi1 + d + "name=", Data.Object[SOi0].TexTrans[SOi1].Name);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].Coverage      ,
+                                nameView + SOi1 + d, "coverage"      , A3DC);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].Offset        ,
+                                nameView + SOi1 + d, "offset"        , A3DC);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].Repeat        ,
+                                nameView + SOi1 + d, "repeat"        , A3DC);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].   Rotate     ,
+                                nameView + SOi1 + d, "rotate"        , A3DC);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].   RotateFrame,
+                                nameView + SOi1 + d, "rotateFrame"   , A3DC);
+                            IO.Write(Data.Object[SOi0].TexTrans[SOi1].TranslateFrame,
+                                nameView + SOi1 + d, "translateFrame", A3DC);
                         }
-                        IO.Write(nameView + "length=", + Data.Object[SOi0].TT.Length);
+                        IO.Write(nameView + "length=", + Data.Object[SOi0].TexTrans.Length);
                     }
 
                     IO.Write(Data.Object[SOi0].MT, name, A3DC, IsX, 0b00010);
@@ -968,15 +980,15 @@ namespace KKdMainLib.A3DA
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
                 {
                     IO.ReadMT(ref Data.Object[i0].MT, CompressF16);
-                    if (Data.Object[i0].TT != null)
-                        for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
+                    if (Data.Object[i0].TexTrans != null)
+                        for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                         {
-                            IO.ReadKeyUV(ref Data.Object[i0].TT[i1].C , CompressF16);
-                            IO.ReadKeyUV(ref Data.Object[i0].TT[i1].O , CompressF16);
-                            IO.ReadKeyUV(ref Data.Object[i0].TT[i1].R , CompressF16);
-                            IO.ReadKey  (ref Data.Object[i0].TT[i1].Ro, CompressF16);
-                            IO.ReadKey  (ref Data.Object[i0].TT[i1].RF, CompressF16);
-                            IO.ReadKeyUV(ref Data.Object[i0].TT[i1].TF, CompressF16);
+                            IO.ReadKeyUV(ref Data.Object[i0].TexTrans[i1].Coverage      , CompressF16);
+                            IO.ReadKeyUV(ref Data.Object[i0].TexTrans[i1].Offset        , CompressF16);
+                            IO.ReadKeyUV(ref Data.Object[i0].TexTrans[i1].Repeat        , CompressF16);
+                            IO.ReadKey  (ref Data.Object[i0].TexTrans[i1].   Rotate     , CompressF16);
+                            IO.ReadKey  (ref Data.Object[i0].TexTrans[i1].   RotateFrame, CompressF16);
+                            IO.ReadKeyUV(ref Data.Object[i0].TexTrans[i1].TranslateFrame, CompressF16);
                         }
                 }
 
@@ -1167,15 +1179,15 @@ namespace KKdMainLib.A3DA
                     for (i0 = 0; i0 < Data.Object.Length; i0++)
                     {
                         Write(ref Data.Object[i0].MT);
-                        if (Data.Object[i0].TT != null)
-                            for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
+                        if (Data.Object[i0].TexTrans != null)
+                            for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                             {
-                                Write(ref Data.Object[i0].TT[i1].C );
-                                Write(ref Data.Object[i0].TT[i1].O );
-                                Write(ref Data.Object[i0].TT[i1].R );
-                                Write(ref Data.Object[i0].TT[i1].Ro);
-                                Write(ref Data.Object[i0].TT[i1].RF);
-                                Write(ref Data.Object[i0].TT[i1].TF);
+                                Write(ref Data.Object[i0].TexTrans[i1].Coverage      );
+                                Write(ref Data.Object[i0].TexTrans[i1].Offset        );
+                                Write(ref Data.Object[i0].TexTrans[i1].Repeat        );
+                                Write(ref Data.Object[i0].TexTrans[i1].   Rotate     );
+                                Write(ref Data.Object[i0].TexTrans[i1].   RotateFrame);
+                                Write(ref Data.Object[i0].TexTrans[i1].TranslateFrame);
                             }
                     }
 
@@ -1582,31 +1594,31 @@ namespace KKdMainLib.A3DA
                             UIDName = Temp[i0].ReadString(    "UIDName"),
                     };
 
-                    if (Temp[i0].ElementArray("TP", out MsgPack TP))
+                    if (Temp[i0].ElementArray("TexturePattern", out MsgPack TexPat))
                     {
-                        Data.Object[i0].TP = new Object.TexturePattern[TP.Array.Length];
-                        for (i1 = 0; i1 < Data.Object[i0].TP.Length; i1++)
-                            Data.Object[i0].TP[i1] = new Object.TexturePattern
+                        Data.Object[i0].TexPat = new Object.TexturePattern[TexPat.Array.Length];
+                        for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
+                            Data.Object[i0].TexPat[i1] = new Object.TexturePattern
                             {
-                                Name      = TP[i1].ReadString("Name"     ),
-                                Pat       = TP[i1].ReadString("Pat"      ),
-                                PatOffset = TP[i1].ReadNInt32("PatOffset"),
+                                Name      = TexPat[i1].ReadString("Name"     ),
+                                Pat       = TexPat[i1].ReadString("Pat"      ),
+                                PatOffset = TexPat[i1].ReadNInt32("PatOffset"),
                             };
                     }
 
-                    if (Temp[i0].ElementArray("TT", out MsgPack TT))
+                    if (Temp[i0].ElementArray("TextureTransform", out MsgPack TexTrans))
                     {
-                        Data.Object[i0].TT = new Object.TextureTransform[TT.Array.Length];
-                        for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
-                            Data.Object[i0].TT[i1] = new Object.TextureTransform
+                        Data.Object[i0].TexTrans = new Object.TextureTransform[TexTrans.Array.Length];
+                        for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
+                            Data.Object[i0].TexTrans[i1] = new Object.TextureTransform
                             {
-                                Name = TT[i1].ReadString("Name"),
-                                C    = TT[i1].ReadKeyUV ("C"   ),
-                                O    = TT[i1].ReadKeyUV ("O"   ),
-                                R    = TT[i1].ReadKeyUV ("R"   ),
-                                Ro   = TT[i1].ReadKey   ("Ro"  ),
-                                RF   = TT[i1].ReadKey   ("RF"  ),
-                                TF   = TT[i1].ReadKeyUV ("TF"  ),
+                                Name = TexTrans[i1].ReadString("Name"),
+                                Coverage       = TexTrans[i1].ReadKeyUV("Coverage"      ),
+                                Offset         = TexTrans[i1].ReadKeyUV("Offset"        ),
+                                Repeat         = TexTrans[i1].ReadKeyUV("Repeat"        ),
+                                   Rotate      = TexTrans[i1].ReadKey  (   "Rotate"     ),
+                                   RotateFrame = TexTrans[i1].ReadKey  (   "RotateFrame"),
+                                TranslateFrame = TexTrans[i1].ReadKeyUV("TranslateFrame"),
                             };
                     }
                 }
@@ -1723,27 +1735,24 @@ namespace KKdMainLib.A3DA
             {
                 MsgPack CameraRoot = new MsgPack(Data.CameraRoot.Length, "CameraRoot");
                 for (i = 0; i < Data.CameraRoot.Length; i++)
-                {
                     CameraRoot[i] = MsgPack.New
-                        .Add(null, Data.CameraRoot[i].MT)
-                        .Add("Interest"       , Data.CameraRoot[i].Interest    )
-                        .Add(new MsgPack("ViewPoint")
-                            .Add(null, Data.CameraRoot[i].ViewPoint.MT)
-                            .Add("Aspect"         , Data.CameraRoot[i].ViewPoint.Aspect         )
-                            .Add("CameraApertureH", Data.CameraRoot[i].ViewPoint.CameraApertureH)
-                            .Add("CameraApertureW", Data.CameraRoot[i].ViewPoint.CameraApertureW)
-                            .Add("FOVHorizontal"  , Data.CameraRoot[i].ViewPoint.FOVHorizontal  )
-                            .Add("FocalLength"    , Data.CameraRoot[i].ViewPoint.FocalLength    )
-                            .Add("FOV"            , Data.CameraRoot[i].ViewPoint.FOV            )
-                            .Add("Roll"           , Data.CameraRoot[i].ViewPoint.Roll           ));
-                }
+                        .Add(Data.CameraRoot[i].MT)
+                        .Add("Interest", Data.CameraRoot[i].Interest)
+                        .Add(new MsgPack("ViewPoint").Add(Data.CameraRoot[i].ViewPoint.MT)
+                        .Add("Aspect"         , Data.CameraRoot[i].ViewPoint.Aspect         )
+                        .Add("CameraApertureH", Data.CameraRoot[i].ViewPoint.CameraApertureH)
+                        .Add("CameraApertureW", Data.CameraRoot[i].ViewPoint.CameraApertureW)
+                        .Add("FOVHorizontal"  , Data.CameraRoot[i].ViewPoint.FOVHorizontal  )
+                        .Add("FocalLength"    , Data.CameraRoot[i].ViewPoint.FocalLength    )
+                        .Add("FOV"            , Data.CameraRoot[i].ViewPoint.FOV            )
+                        .Add("Roll"           , Data.CameraRoot[i].ViewPoint.Roll           ));
                 A3D.Add(CameraRoot);
             }
 
             if (Data.Chara != null)
             {
                 MsgPack Chara = new MsgPack(Data.Chara.Length, "Chara");
-                for (i = 0; i < Data.Chara.Length; i++) Chara[i] = MsgPack.New.Add(null, Data.Chara[i]);
+                for (i = 0; i < Data.Chara.Length; i++) Chara[i] = MsgPack.New.Add(Data.Chara[i]);
                 A3D.Add(Chara);
             }
 
@@ -1819,7 +1828,7 @@ namespace KKdMainLib.A3DA
                     {
                         MsgPack Instance = new MsgPack(Data.MObjectHRC[i0].Instance.Length, "Instance");
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                            Instance[i1] = MsgPack.New.Add(null, Data.MObjectHRC[i0].Instance[i1].MT)
+                            Instance[i1] = MsgPack.New.Add(Data.MObjectHRC[i0].Instance[i1].MT)
                                 .Add(   "Name", Data.MObjectHRC[i0].Instance[i1].   Name)
                                 .Add("Shadow" , Data.MObjectHRC[i0].Instance[i1].Shadow )
                                 .Add("UIDName", Data.MObjectHRC[i0].Instance[i1].UIDName);
@@ -1830,13 +1839,13 @@ namespace KKdMainLib.A3DA
                     {
                         MsgPack Node = new MsgPack(Data.MObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
-                            Node[i1] = MsgPack.New.Add(null, Data.MObjectHRC[i0].Node[i1].MT)
+                            Node[i1] = MsgPack.New.Add(Data.MObjectHRC[i0].Node[i1].MT)
                                 .Add("Name"  , Data.MObjectHRC[i0].Node[i1].Name  )
                                 .Add("Parent", Data.MObjectHRC[i0].Node[i1].Parent);
                         _MObjectHRC.Add(Node);
                     }
 
-                    MObjectHRC[i0] = _MObjectHRC.Add(null, Data.MObjectHRC[i0].MT);
+                    MObjectHRC[i0] = _MObjectHRC.Add(Data.MObjectHRC[i0].MT);
                 }
                 A3D.Add(MObjectHRC);
             }
@@ -1874,33 +1883,34 @@ namespace KKdMainLib.A3DA
                 MsgPack Object = new MsgPack(Data.Object.Length, "Object");
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
                 {
-                    MsgPack _Object = MsgPack.New.Add(null, Data.Object[i0].MT)
+                    MsgPack _Object = MsgPack.New.Add(Data.Object[i0].MT)
                         .Add("Morph"      , Data.Object[i0].Morph      )
                         .Add("MorphOffset", Data.Object[i0].MorphOffset)
                         .Add(      "Name" , Data.Object[i0].      Name )
                         .Add("ParentName" , Data.Object[i0].ParentName )
                         .Add(   "UIDName" , Data.Object[i0].   UIDName );
-                    if (Data.Object[i0].TP != null)
+                    if (Data.Object[i0].TexPat != null)
                     {
-                        MsgPack TP = new MsgPack(Data.Object[i0].TP.Length, "TP");
-                        for (i1 = 0; i1 < Data.Object[i0].TP.Length; i1++)
-                            TP[i1] = MsgPack.New.Add("Name"     , Data.Object[i0].TP[i1].Name     )
-                                                .Add("Pat"      , Data.Object[i0].TP[i1].Pat      )
-                                                .Add("PatOffset", Data.Object[i0].TP[i1].PatOffset);
-                        _Object.Add(TP);
+                        MsgPack TexPat = new MsgPack(Data.Object[i0].TexPat.Length, "TexturePattern");
+                        for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
+                            TexPat[i1] = MsgPack.New.Add("Name"     , Data.Object[i0].TexPat[i1].Name     )
+                                                .Add("Pat"      , Data.Object[i0].TexPat[i1].Pat      )
+                                                .Add("PatOffset", Data.Object[i0].TexPat[i1].PatOffset);
+                        _Object.Add(TexPat);
                     }
-                    if (Data.Object[i0].TT != null)
+                    if (Data.Object[i0].TexTrans != null)
                     {
-                        MsgPack TT = new MsgPack(Data.Object[i0].TT.Length, "TT");
-                        for (i1 = 0; i1 < Data.Object[i0].TT.Length; i1++)
-                            TT[i1] = MsgPack.New.Add("Name", Data.Object[i0].TT[i1].Name)
-                                                .Add("C"   , Data.Object[i0].TT[i1].C   )
-                                                .Add("O"   , Data.Object[i0].TT[i1].O   )
-                                                .Add("R"   , Data.Object[i0].TT[i1].R   )
-                                                .Add("Ro"  , Data.Object[i0].TT[i1].Ro  )
-                                                .Add("RF"  , Data.Object[i0].TT[i1].RF  )
-                                                .Add("TF"  , Data.Object[i0].TT[i1].TF  );
-                        _Object.Add(TT);
+                        MsgPack TexTrans = new MsgPack(Data.Object[i0].TexTrans.Length, "TextureTransform");
+                        for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
+                            TexTrans[i1] = MsgPack.New
+                                .Add("Name"          , Data.Object[i0].TexTrans[i1].Name          )
+                                .Add("Coverage"      , Data.Object[i0].TexTrans[i1].Coverage      )
+                                .Add("Offset"        , Data.Object[i0].TexTrans[i1].Offset        )
+                                .Add("Repeat"        , Data.Object[i0].TexTrans[i1].Repeat        )
+                                .Add(   "Rotate"     , Data.Object[i0].TexTrans[i1].Rotate        )
+                                .Add(   "RotateFrame", Data.Object[i0].TexTrans[i1].   RotateFrame)
+                                .Add("TranslateFrame", Data.Object[i0].TexTrans[i1].TranslateFrame);
+                        _Object.Add(TexTrans);
                     }
                     Object[i0] = _Object;
                 }
@@ -1926,7 +1936,7 @@ namespace KKdMainLib.A3DA
                     {
                         MsgPack Node = new MsgPack(Data.ObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
-                            Node[i1] = MsgPack.New.Add(null, Data.ObjectHRC[i0].Node[i1].MT)
+                            Node[i1] = MsgPack.New.Add(Data.ObjectHRC[i0].Node[i1].MT)
                                 .Add("Name"  , Data.ObjectHRC[i0].Node[i1].Name  )
                                 .Add("Parent", Data.ObjectHRC[i0].Node[i1].Parent);
                         _ObjectHRC.Add(Node);
@@ -1962,7 +1972,7 @@ namespace KKdMainLib.A3DA
             {
                 MsgPack Point = new MsgPack(Data.Point.Length, "Point");
                 for (i = 0; i < Data.Point.Length; i++)
-                    Point[i] = MsgPack.New.Add(null, Data.Point[i]);
+                    Point[i] = MsgPack.New.Add(Data.Point[i]);
                 A3D.Add(Point);
             }
 
@@ -2171,8 +2181,8 @@ namespace KKdMainLib.A3DA
         public string UIDName;
         public string ParentName;
         public ModelTransform MT;
-        public TexturePattern[] TP; //TexPat
-        public TextureTransform[] TT; //TexTrans
+        public TexturePattern[] TexPat;
+        public TextureTransform[] TexTrans;
 
         public struct TexturePattern
         {
@@ -2184,12 +2194,12 @@ namespace KKdMainLib.A3DA
         public struct TextureTransform
         {
             public string Name;
-            public KeyUV C;  //Coverage
-            public KeyUV O;  //Offset
-            public KeyUV R;  //Repeat
-            public Key Ro; //Rotate
-            public Key RF; //RotateFrame
-            public KeyUV TF; //TranslateFrameU
+            public KeyUV Coverage;
+            public KeyUV Offset;
+            public KeyUV Repeat;
+            public Key   Rotate;
+            public Key   RotateFrame;
+            public KeyUV TranslateFrame;
         }
     }
 

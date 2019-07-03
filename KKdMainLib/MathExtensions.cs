@@ -4,6 +4,40 @@ namespace KKdMainLib
 {
     public static class MathExtensions
     {
+        private const double RadPi = 180 / Math.PI;
+        public static double ToDegrees(this double val) => val * RadPi;
+        public static double ToRadians(this double val) => val / RadPi;
+
+        public static double Acos   (this double d  ) =>     Math.Acos   (d  );
+        public static double Asin   (this double d  ) =>     Math.Asin   (d  );
+        public static double Atan   (this double d  ) =>     Math.Atan   (d  );
+        public static double Aсtg   (this double d  ) => 1 / Math.Atan   (d  );
+        public static double  Cos   (this double d  ) =>     Math.Cos    (d  );
+        public static double  Cosh  (this double val) =>     Math.Cosh   (val);
+        public static double  Sin   (this double a  ) =>     Math.Sin    (a  );
+        public static double  Sinh  (this double val) =>     Math.Sinh   (val);
+        public static double  Tan   (this double a  ) =>     Math.Tan    (a  );
+        public static double  Tanh  (this double val) =>     Math.Tanh   (val);
+        public static double  Ctg   (this double a  ) => 1 / Math.Tan    (a  );
+        public static double  Ctgh  (this double val) => 1 / Math.Tanh   (val);
+
+        public static double Abs    (this double val) =>     Math.Abs    (val);
+        public static double Ceiling(this double a  ) =>     Math.Ceiling(a  );
+        public static double Exp    (this double d  ) =>     Math.Exp    (d  );
+        public static double Log    (this double d  ) =>     Math.Log    (d  );
+        public static double Log10  (this double d  ) =>     Math.Log10  (d  );
+        public static double Round  (this double d  ) =>     Math.Round  (d  );
+        public static    int Sign   (this double val) =>     Math.Sign   (val);
+        public static double Sqrt   (this double d  ) =>     Math.Sqrt   (d  );
+
+
+        public static double Atan2(this double y   , double x      ) => Math.Atan2(y   , x      );
+        public static double Log  (this double val , double newBase) => Math.Log  (val , newBase);
+        public static double Max  (this double val1, double val2   ) => Math.Max  (val1, val2   );
+        public static double Min  (this double val1, double val2   ) => Math.Min  (val1, val2   );
+        public static double Pow  (this double x   , double y      ) => Math.Pow  (x   , y      );
+        public static double Round(this double val ,    int d      ) => Math.Round(val , d      );
+
         public static void FloorCeiling( ref double Value) => 
             Value = Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long) Value;
 
@@ -158,8 +192,6 @@ namespace KKdMainLib
             else if (c < 0x00000000) c = 0x00000000;
             return (uint)c;
         }
-        
-        public static double Round(this double c, int d = 0) => Math.Round(c, d);
 
         public static unsafe  sbyte* GetPtr(this sbyte[] array)
         {  sbyte* Ptr; fixed ( sbyte* tempPtr = array) Ptr = tempPtr; return Ptr; }

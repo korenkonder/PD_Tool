@@ -128,7 +128,7 @@ namespace KKdMainLib.A3DA
             if (A3DC && !MT.Writed && (Flags & 0b10000) == 0b10000)
             { IO.Write(Temp + MTBO + "=", MT.BinOffset); MT.Writed = true; }
 
-            if (A3DC) return;
+            if (A3DC && !IsX) return;
 
             if ((Flags & 0b01000) == 0b01000) IO.Write(MT.Rot       , Temp + "rot"        + d, A3DC);
             if ((Flags & 0b00100) == 0b00100) IO.Write(MT.Scale     , Temp + "scale"      + d, A3DC);
@@ -361,10 +361,10 @@ namespace KKdMainLib.A3DA
         {
             if (k.Object == null) return null;
             
-            Key Key = new Key { EPTypePost = k.ReadNInt32("Post"),
-                EPTypePre = k.ReadNInt32("Pre"), Max = k.ReadNDouble("M"),
-                Type = k.ReadNInt32("T"), Value = k.ReadNDouble("V") };
-            if (k.ReadBoolean("RD")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
+            Key Key = new Key { EPTypePost = k.ReadNInt32("EPTypePost"),
+                EPTypePre = k.ReadNInt32("EPTypePre"), Max = k.ReadNDouble("Max"),
+                Type = k.ReadNInt32("Type"), Value = k.ReadNDouble("Value") };
+            if (k.ReadBoolean("RawData")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
             if (Key.Type == 0) Key.Value = 0.0;
 
             if (Key.Type < 2) return Key;
@@ -406,12 +406,13 @@ namespace KKdMainLib.A3DA
             return Key;
         }
 
-        public static MsgPack Add(this MsgPack MsgPack, string name, ModelTransform MT) =>
-            name == null ? 
+        public static MsgPack Add(this MsgPack MsgPack, ModelTransform MT) =>
             MsgPack.Add("Rot"       , MT.Rot       )
                    .Add("Scale"     , MT.Scale     )
                    .Add("Trans"     , MT.Trans     )
-                   .Add("Visibility", MT.Visibility):
+                   .Add("Visibility", MT.Visibility);
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, ModelTransform MT) =>
             MsgPack.Add(new MsgPack(name).Add("Rot"       , MT.Rot       )
                                          .Add("Scale"     , MT.Scale     )
                                          .Add("Trans"     , MT.Trans     )
@@ -434,12 +435,12 @@ namespace KKdMainLib.A3DA
             if (Key == null) return MsgPack;
             if (Key.Type == null) return MsgPack;
 
-            MsgPack Keys = new MsgPack(name).Add("T", Key.Type);
+            MsgPack Keys = new MsgPack(name).Add("Type", Key.Type);
             if (Key.Trans != null)
             {
-                Keys.Add("M", Key.Max).Add("Post", Key.EPTypePost).Add("Pre", Key.EPTypePre);
+                Keys = Keys.Add("Max", Key.Max).Add("EPTypePost", Key.EPTypePost).Add("EPTypePre", Key.EPTypePre);
 
-                if (Key.RawData.KeyType != null) Keys.Add("RD", true);
+                if (Key.RawData.KeyType != null) Keys.Add("RawData", true);
                 
                 MsgPack Trans = new MsgPack(Key.Trans.Length, "Trans");
                 MsgPack K;
@@ -476,7 +477,7 @@ namespace KKdMainLib.A3DA
                     }
                 Keys.Add(Trans);
             }
-            else if (Key.Value != 0) Keys.Add("V", Key.Value);
+            else if (Key.Value != 0) Keys.Add("Value", Key.Value);
             return MsgPack.Add(Keys);
         }
 
