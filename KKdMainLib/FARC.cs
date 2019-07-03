@@ -19,6 +19,7 @@ namespace KKdMainLib
         public Type FARCType;
         public Farc Signature = Farc.FArC;
         public string FilePath, DirectoryPath;
+        public bool HasFiles => Files == null ? false : Files.Length > 0;
 
         private bool CBC, FT;
 
@@ -36,21 +37,18 @@ namespace KKdMainLib
         }
         
         public void UnPack(bool SaveToDisk = true)
-        {
-            HeaderReader().FileReader();
-            if (SaveToDisk) this.SaveToDisk();
-        }
+        { if (HeaderReader()) { FileReader(); if (SaveToDisk) this.SaveToDisk(); } }
 
-        private FARC HeaderReader()
+        public bool HeaderReader()
         {
             NewFARC();
-            if (!File.Exists(FilePath)) return this;
+            if (!File.Exists(FilePath)) return false;
 
             Stream reader = File.OpenReader(FilePath);
             DirectoryPath = Path.GetFullPath(FilePath).Replace(Path.GetExtension(FilePath), "");
             Signature = (Farc)reader.ReadInt32Endian(true);
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
-            { reader.Close(); return this; }
+            { reader.Close(); return false; }
 
             int HeaderLength = reader.ReadInt32Endian(true);
             if (Signature == Farc.FARC)
@@ -113,77 +111,76 @@ namespace KKdMainLib
             }
 
             reader.Close();
-            return this;
+            return true;
         }
 
-        private FARC FileReader()
+        private void FileReader()
+        { for (int i = 0; i < Files.Length; i++) FileReader(i); }
+
+        public byte[] FileReader(int i)
         {
-            if (Files == null) return this;
-            if (Files.Length < 1) return this;
+            if (!HasFiles) return null;
+            if (i >= Files.Length) return null;
             if (Signature != Farc.FARC)
             {
-                for (int i = 0; i < Files.Length; i++)
-                    if (Signature == Farc.FArC)
-                        using (MSIO.MemoryStream memorystream = new MSIO.MemoryStream(
-                            File.ReadAllBytes(FilePath, Files[i].SizeComp, Files[i].Offset)))
-                        {
-                            GZipStream gZipStream = new GZipStream(memorystream, CompressionMode.Decompress);
-                            Files[i].Data = new byte[Files[i].SizeUnc];
-                            gZipStream.Read(Files[i].Data, 0, Files[i].SizeUnc);
-                        }
-                    else Files[i].Data = File.ReadAllBytes(FilePath, Files[i].SizeUnc, Files[i].Offset);
-                return this;
-            }
-
-            for (int i = 0; i < Files.Length; i++)
-            {
-                int FileSize = FARCType.HasFlag(Type.ECB) || Files[i].Type.HasFlag(Type.ECB) ?
-                    Files[i].SizeComp.Align(0x10) : Files[i].SizeComp;
-                MSIO.FileStream stream = new MSIO.FileStream(FilePath, MSIO.FileMode.Open,
-                    MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite);
-                stream.Seek(Files[i].Offset, 0);
-                Files[i].Data = new byte[FileSize];
-
-                bool Encrypted = false;
-                if (FARCType.HasFlag(Type.ECB))
-                {
-                    if ((FT && Files[i].Type.HasFlag(Type.ECB)) || CBC)
+                if (Signature == Farc.FArC)
+                    using (MSIO.MemoryStream memorystream = new MSIO.MemoryStream(
+                        File.ReadAllBytes(FilePath, Files[i].SizeComp, Files[i].Offset)))
                     {
-                        using (CryptoStream cryptoStream = new CryptoStream(stream,
-                            GetAes(true, null).CreateDecryptor(), CryptoStreamMode.Read))
-                            cryptoStream.Read(Files[i].Data, 0, FileSize);
-                        Files[i].Data = SkipData(Files[i].Data, 0x10);
+                        GZipStream gZipStream = new GZipStream(memorystream, CompressionMode.Decompress);
+                        Files[i].Data = new byte[Files[i].SizeUnc];
+                        gZipStream.Read(Files[i].Data, 0, Files[i].SizeUnc);
                     }
-                    else
-                        using (CryptoStream cryptoStream = new CryptoStream(stream,
-                            GetAes(false, null).CreateDecryptor(), CryptoStreamMode.Read))
-                            cryptoStream.Read(Files[i].Data, 0, FileSize);
-                    Encrypted = true;
-                }
-
-                bool Compressed = false;
-                if (((FT && Files[i].Type.HasFlag(Type.GZip)) ||
-                    FARCType.HasFlag(Type.GZip)) && Files[i].SizeUnc > 0)
-                {
-                    GZipStream gZipStream;
-                    if (Encrypted) { gZipStream = new GZipStream(new MSIO.MemoryStream(Files[i].Data),
-                        CompressionMode.Decompress); stream.Close(); }
-                    else gZipStream = new GZipStream(stream, CompressionMode.Decompress);
-                    byte[] Temp = new byte[Files[i].SizeUnc];
-                    gZipStream.Read(Temp, 0, Files[i].SizeUnc);
-                    Files[i].Data = Temp;
-
-                    Compressed = true;
-                }
-
-                if (!Encrypted && !Compressed)
-                {
-                    Files[i].Data = new byte[Files[i].SizeUnc];
-                    stream.Read(Files[i].Data, 0, Files[i].SizeUnc);
-                    stream.Close();
-                }
+                else Files[i].Data = File.ReadAllBytes(FilePath, Files[i].SizeUnc, Files[i].Offset);
+                return Files[i].Data;
             }
-            return this;
+
+            int FileSize = FARCType.HasFlag(Type.ECB) || Files[i].Type.HasFlag(Type.ECB) ?
+                Files[i].SizeComp.Align(0x10) : Files[i].SizeComp;
+            MSIO.FileStream stream = new MSIO.FileStream(FilePath, MSIO.FileMode.Open,
+                MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite);
+            stream.Seek(Files[i].Offset, 0);
+            Files[i].Data = new byte[FileSize];
+
+            bool Encrypted = false;
+            if (FARCType.HasFlag(Type.ECB))
+            {
+                if ((FT && Files[i].Type.HasFlag(Type.ECB)) || CBC)
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream(stream,
+                        GetAes(true, null).CreateDecryptor(), CryptoStreamMode.Read))
+                        cryptoStream.Read(Files[i].Data, 0, FileSize);
+                    Files[i].Data = SkipData(Files[i].Data, 0x10);
+                }
+                else
+                    using (CryptoStream cryptoStream = new CryptoStream(stream,
+                        GetAes(false, null).CreateDecryptor(), CryptoStreamMode.Read))
+                        cryptoStream.Read(Files[i].Data, 0, FileSize);
+                Encrypted = true;
+            }
+
+            bool Compressed = false;
+            if (((FT && Files[i].Type.HasFlag(Type.GZip)) ||
+                FARCType.HasFlag(Type.GZip)) && Files[i].SizeUnc > 0)
+            {
+                GZipStream gZipStream;
+                if (Encrypted) { gZipStream = new GZipStream(new MSIO.MemoryStream(Files[i].Data),
+                    CompressionMode.Decompress); stream.Close(); }
+                else gZipStream = new GZipStream(stream, CompressionMode.Decompress);
+                byte[] Temp = new byte[Files[i].SizeUnc];
+                gZipStream.Read(Temp, 0, Files[i].SizeUnc);
+                Files[i].Data = Temp;
+
+                Compressed = true;
+            }
+
+            if (!Encrypted && !Compressed)
+            {
+                Files[i].Data = new byte[Files[i].SizeUnc];
+                stream.Read(Files[i].Data, 0, Files[i].SizeUnc);
+                stream.Close();
+            }
+            return Files[i].Data;
         }
 
         private void SaveToDisk()
@@ -193,7 +190,8 @@ namespace KKdMainLib
             MSIO.Directory.CreateDirectory(DirectoryPath);
             for (int i = 0; i < Files.Length; i++)
             {
-                File.WriteAllBytes(Path.Combine(DirectoryPath, Files[i].Name), Files[i].Data);
+                if (Files[i].Data != null)
+                    File.WriteAllBytes(Path.Combine(DirectoryPath, Files[i].Name), Files[i].Data);
                 Files[i].Data = null;
             }
         }
@@ -205,7 +203,7 @@ namespace KKdMainLib
             return SkipData;
         }
 
-        public FARC Pack()
+        public void Pack()
         {
             NewFARC();
             string[] files = Directory.GetFiles(DirectoryPath);
@@ -213,7 +211,7 @@ namespace KKdMainLib
             for (int i = 0; i < files.Length; i++)
                 Files[i] = new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) };
             files = null;
-            return this;
+            CompressStuff();
         }
 
         public void CompressStuff()

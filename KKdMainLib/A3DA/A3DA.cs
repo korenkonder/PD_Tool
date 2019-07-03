@@ -33,6 +33,12 @@ namespace KKdMainLib.A3DA
             IO = File.OpenWriter(); UsedValues = new Dictionary<int?, double?>(); }
 
         public int A3DAReader(string file)
+        { IO = File.OpenReader(file + ".a3da"); return A3DAReader(ref IO); }
+
+        public int A3DAReader(byte[] data)
+        { IO = File.OpenReader(data          ); return A3DAReader(ref IO); }
+
+        private int A3DAReader(ref Stream IO)
         {
             name = "";
             nameView = "";
@@ -40,7 +46,6 @@ namespace KKdMainLib.A3DA
             Dict = new Dictionary<string, object>();
             Data = new A3DAData { Header = new PDHead() };
 
-            IO = File.OpenReader(file + ".a3da");
             Data.Header.Format = IO.Format = Main.Format.F;
             Data.Header.Signature = IO.ReadInt32();
             if (Data.Header.Signature == 0x41443341) Data.Header = IO.ReadHeader(true);
@@ -642,18 +647,18 @@ namespace KKdMainLib.A3DA
                     SOi0 = SO0[i0];
                     name = "m_objhrc" + d + SOi0 + d;
 
-                    if (IsX && Data.MObjectHRC[i0].JointOrient != null)
+                    if (IsX && Data.MObjectHRC[SOi0].JointOrient != null)
                     {
                         IO.Write(name + "joint_orient.x=", Data.MObjectHRC[SOi0].JointOrient.X);
                         IO.Write(name + "joint_orient.y=", Data.MObjectHRC[SOi0].JointOrient.Y);
                         IO.Write(name + "joint_orient.z=", Data.MObjectHRC[SOi0].JointOrient.Z);
                     }
 
-                    if (Data.MObjectHRC[i0].Instance != null)
+                    if (Data.MObjectHRC[SOi0].Instance != null)
                     {
                         nameView = name + "instance" + d;
-                        SO1 = Data.MObjectHRC[i0].Instance.Length.SortWriter();
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
+                        SO1 = Data.MObjectHRC[SOi0].Instance.Length.SortWriter();
+                        for (i1 = 0; i1 < Data.MObjectHRC[SOi0].Instance.Length; i1++)
                         {
                             SOi1 = SO1[i1];
                             IO.Write(Data.MObjectHRC[SOi0].Instance[SOi1].MT,
@@ -677,11 +682,11 @@ namespace KKdMainLib.A3DA
                     IO.Write(Data.MObjectHRC[SOi0].MT, name, A3DC, IsX, 0b10000);
                     IO.Write(name + "name=", Data.MObjectHRC[SOi0].Name);
 
-                    if (Data.MObjectHRC[i0].Node != null)
+                    if (Data.MObjectHRC[SOi0].Node != null)
                     {
                         nameView = name + "node" + d;
-                        SO1 = Data.MObjectHRC[i0].Node.Length.SortWriter();
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
+                        SO1 = Data.MObjectHRC[SOi0].Node.Length.SortWriter();
+                        for (i1 = 0; i1 < Data.MObjectHRC[SOi0].Node.Length; i1++)
                         {
                             SOi1 = SO1[i1];
                             IO.Write(Data.MObjectHRC[SOi0].Node[SOi1].MT,
@@ -815,18 +820,18 @@ namespace KKdMainLib.A3DA
                     name = "objhrc" + d + SOi0 + d;
                     IO.Write(name + "name=", Data.ObjectHRC[SOi0].Name);
 
-                    if (IsX && Data.ObjectHRC[i0].JointOrient != null)
+                    if (IsX && Data.ObjectHRC[SOi0].JointOrient != null)
                     {
                         IO.Write(name + "joint_orient.x=", Data.ObjectHRC[SOi0].JointOrient.X);
                         IO.Write(name + "joint_orient.y=", Data.ObjectHRC[SOi0].JointOrient.Y);
                         IO.Write(name + "joint_orient.z=", Data.ObjectHRC[SOi0].JointOrient.Z);
                     }
 
-                    if (Data.ObjectHRC[i0].Node != null)
+                    if (Data.ObjectHRC[SOi0].Node != null)
                     {
-                        SO1 = Data.ObjectHRC[i0].Node.Length.SortWriter();
+                        SO1 = Data.ObjectHRC[SOi0].Node.Length.SortWriter();
                         nameView = name + "node" + d;
-                        for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
+                        for (i1 = 0; i1 < Data.ObjectHRC[SOi0].Node.Length; i1++)
                         {
                             SOi1 = SO1[i1];
                             IO.Write(Data.ObjectHRC[SOi0].Node[SOi1].MT, nameView + SOi1 + d, A3DC, IsX, 0b10000);
@@ -1014,7 +1019,7 @@ namespace KKdMainLib.A3DA
             }
         }
 
-        public void A3DCWriter(string file)
+        public byte[] A3DCWriter(string file = null)
         {
             int i0 = 0;
             int i1 = 0;
@@ -1221,7 +1226,8 @@ namespace KKdMainLib.A3DA
             byte[] A3DAData = IO.ToArray(true);
 
             Data.Head = new Header();
-            IO = File.OpenWriter(file + ".a3da");
+            if (file != null) IO = File.OpenWriter(file + ".a3da");
+            else              IO = File.OpenWriter();
             IO.Position = A3DCStart + 0x40;
 
             Data.Head.StringOffset = IO.Position - A3DCStart;
@@ -1267,7 +1273,9 @@ namespace KKdMainLib.A3DA
                 IO.WriteEOFC();
             }
 
-            IO.Close();
+            if (file != null) { IO.Close(); return null; }
+            else return IO.ToArray(true);
+            
         }
 
         private void Write(ref ModelTransform MT)
@@ -1359,13 +1367,16 @@ namespace KKdMainLib.A3DA
 
         public void MsgPackReader(string file, bool JSON)
         {
+            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
+            if (!MsgPack.Element("A3D", out MsgPack A3D)) { MsgPack = MsgPack.New; return; }
+            MsgPackReader(A3D);
+        }
+
+        public void MsgPackReader(MsgPack A3D)
+        {
             int i  = 0;
             int i0 = 0;
             int i1 = 0;
-
-            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-
-            if (!MsgPack.Element("A3D", out MsgPack A3D)) { MsgPack = MsgPack.New; return; }
 
             Data.Header = new PDHead();
             MsgPack Temp = MsgPack.New;
@@ -1701,7 +1712,10 @@ namespace KKdMainLib.A3DA
                 };
         }
 
-        public void MsgPackWriter(string file, bool JSON)
+        public void MsgPackWriter(string file, bool JSON) =>
+            MsgPackWriter().Write(true, file, JSON);
+
+        public MsgPack MsgPackWriter()
         {
             int i  = 0;
             int i0 = 0;
@@ -1765,7 +1779,7 @@ namespace KKdMainLib.A3DA
             }
 
             if (Data.DOF != null)
-                A3D.Add(new MsgPack("DOF").Add("Name", Data.DOF.Name).Add("MT", Data.DOF.MT));
+                A3D.Add(new MsgPack("DOF").Add("Name", Data.DOF.Name).Add(Data.DOF.MT));
 
             if (Data.Event != null)
             {
@@ -1983,8 +1997,7 @@ namespace KKdMainLib.A3DA
                                                   .Add("LensGhost", Data.PostProcess.LensGhost)
                                                   .Add("LensShaft", Data.PostProcess.LensShaft)
                                                   .Add("Specular" , Data.PostProcess.Specular ));
-            
-            A3D.Write(true, file, JSON);
+            return A3D;
         }
     }
 

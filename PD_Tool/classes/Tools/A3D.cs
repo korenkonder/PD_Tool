@@ -1,7 +1,9 @@
 ﻿using System;
 using KKdMainLib;
 using KKdMainLib.IO;
+using KKdMainLib.MessagePack;
 using KKdA3DA = KKdMainLib.A3DA.A3DA;
+using KKdFARC = KKdMainLib.FARC;
 
 namespace PD_Tool.Tools
 {
@@ -19,6 +21,7 @@ namespace PD_Tool.Tools
             foreach (string file in FileNames)
                      if (file.EndsWith(".mp"  )) { MP = true; break; }
                 else if (file.EndsWith(".json")) { MP = true; break; }
+                else if (file.EndsWith(".farc")) { MP = true; break; }
 
             Main.Format Format = Main.Format.NULL;
             string format = "";
@@ -50,6 +53,7 @@ namespace PD_Tool.Tools
             }
 
             KKdA3DA A;
+            int state;
             foreach (string file in FileNames)
             {
                 A = new KKdA3DA();
@@ -58,10 +62,38 @@ namespace PD_Tool.Tools
                 ext      = ext.ToLower();
 
                 Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
-                if (ext == ".a3da")
+                if (ext == ".farc")
                 {
-                    A.A3DAReader   (filepath);
-                    A.MsgPackWriter(filepath, JSON);
+                    KKdFARC FARC = new KKdFARC(file);
+                    MsgPack A3DA = MsgPack.Null;
+                    if (FARC.HeaderReader())
+                    {
+                        if (FARC.HasFiles)
+                        {
+                            byte[] data = null;
+                            for (int i = 0; i < FARC.Files.Length; i++)
+                            {
+                                data = FARC.FileReader(i);
+                                state = A.A3DAReader(data);
+                                if (state == 1)
+                                {
+                                    A3DA = A.MsgPackWriter();
+                                    A = new KKdA3DA();
+                                    A.MsgPackReader(A3DA);
+                                    A.IO = File.OpenWriter();
+                                    if (format != "1" && format != "3") data = A.A3DCWriter();
+                                    else { A.A3DAWriter(); data = A.IO.ToArray(true); }
+                                    FARC.Files[i].Data = data;
+                                }
+                            }
+                            FARC.CompressStuff();
+                        }
+                    }
+                }
+                else if (ext == ".a3da")
+                {
+                    state = A.A3DAReader(filepath);
+                    if (state == 1) A.MsgPackWriter(filepath, JSON);
                 }
                 else if (ext == ".mp" || ext == ".json")
                 {
@@ -71,7 +103,7 @@ namespace PD_Tool.Tools
                     A.Data.Header.Format = Format;
 
                     if (format != "1" && format != "3") A.A3DCWriter(filepath);
-                    else                                A.A3DAWriter();
+                    else { A.A3DAWriter(); A.IO.Close(); }
                 }
                 A = null;
             }

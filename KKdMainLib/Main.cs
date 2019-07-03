@@ -81,8 +81,8 @@ namespace KKdMainLib
                     Multiselect = true, Title = "Choose file(s) to open:" };
 
                 ofd.Filter = GetArgs("All;", false, "*");
-                    if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "json", "mp") +
-                        GetArgs("A3DA", true, "a3da") + JSON + MsgPack;
+                    if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "farc", "json", "mp") +
+                        GetArgs("A3DA", true, "a3da") + GetArgs("FARC", true, "farc") + JSON + MsgPack;
                 else if (filetype == "bin" ) ofd.Filter = GetArgs("BIN" , "bin", "json", "mp") +
                         BIN + JSON + MsgPack;
                 else if (filetype == "bon" ) ofd.Filter = GetArgs("BON" , "bon", "bin", "json", "mp") +
