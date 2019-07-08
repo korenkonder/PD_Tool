@@ -11,7 +11,8 @@ namespace KKdMainLib.A3DA
     {
         private const bool A3DCOpt = true;
         private const string d = ".";
-        
+
+        private int i, i0, i1;
         private int SOi0;
         private int SOi1;
         private int[] SO0;
@@ -23,10 +24,11 @@ namespace KKdMainLib.A3DA
         private Dictionary<int?, double?> UsedValues;
         private Dictionary<string, object> Dict;
 
-        private bool IsX => Data.Header.Format == Main.Format.X || Data.Header.Format == Main.Format.XHD;
+        private bool IsX => Data.Format == Main.Format.X || Data.Format == Main.Format.XHD;
 
         public Stream IO;
         public A3DAData Data;
+        //public PDHead Header;
 
         public A3DA()
         { Data = new A3DAData(); Dict = new Dictionary<string, object>();
@@ -44,47 +46,47 @@ namespace KKdMainLib.A3DA
             nameView = "";
             dataArray = new string[4];
             Dict = new Dictionary<string, object>();
-            Data = new A3DAData { Header = new PDHead() };
+            Data = new A3DAData();
+            PDHead Header = new PDHead();
 
-            Data.Header.Format = IO.Format = Main.Format.F;
-            Data.Header.Signature = IO.ReadInt32();
-            if (Data.Header.Signature == 0x41443341) Data.Header = IO.ReadHeader(true);
-            if (Data.Header.Signature != 0x44334123) { IO.Close(); return 0; }
+            Data.Format = IO.Format = Main.Format.F;
+            Header.SectionSignature = IO.ReadInt32();
+            if (Header.SectionSignature == 0x41443341) { Header = IO.ReadHeader(true); Data.Format = Header.Format; }
+            if (Header.SectionSignature != 0x44334123) { IO.Close(); return 0; }
 
             IO.Offset = IO.Position - 4;
-            Data.Header.Signature = IO.ReadInt32();
+            Header.SectionSignature = IO.ReadInt32();
 
-            if (Data.Header.Signature == 0x5F5F5F41)
+            if (Header.SectionSignature == 0x5F5F5F41)
             {
                 IO.Position = 0x10;
-                Data.Header.Format = IO.Format = Main.Format.DT;
+                Header.Format = IO.Format = Main.Format.DT;
             }
-            else if (Data.Header.Signature == 0x5F5F5F43)
+            else if (Header.SectionSignature == 0x5F5F5F43)
             {
-                Data.Head = new Header();
                 IO.Position = 0x10;
                 IO.ReadInt32();
                 IO.ReadInt32();
-                Data.Head.HeaderOffset = IO.ReadInt32Endian(true);
+                Data.HeaderOffset = IO.ReadInt32Endian(true);
 
-                IO.Position = Data.Head.HeaderOffset;
+                IO.Position = Data.HeaderOffset;
                 if (IO.ReadInt32() != 0x50) { IO.Close(); return 0; }
-                Data.Head.StringOffset = IO.ReadInt32Endian(true);
-                Data.Head.StringLength = IO.ReadInt32Endian(true);
-                Data.Head.Count = IO.ReadInt32Endian(true);
+                Data.StringOffset = IO.ReadInt32Endian(true);
+                Data.StringLength = IO.ReadInt32Endian(true);
+                Data.Count = IO.ReadInt32Endian(true);
                 if (IO.ReadInt32() != 0x4C42) { IO.Close(); return 0; }
-                Data.Head.BinaryOffset = IO.ReadInt32Endian(true);
-                Data.Head.BinaryLength = IO.ReadInt32Endian(true);
+                Data.BinaryOffset = IO.ReadInt32Endian(true);
+                Data.BinaryLength = IO.ReadInt32Endian(true);
 
-                IO.Position = Data.Head.StringOffset;
+                IO.Position = Data.StringOffset;
             }
             else { IO.Close(); return 0; }
 
-            if (Data.Header.Format == Main.Format.DT)
-                Data.Head.StringLength = IO.Length - 0x10;
+            if (Header.Format == Main.Format.DT)
+                Data.StringLength = IO.Length - 0x10;
 
-            string[] STRData = IO.ReadString(Data.Head.StringLength).Replace("\r", "").Split('\n');
-            for (int i = 0; i < STRData.Length; i++)
+            string[] STRData = IO.ReadString(Data.StringLength).Replace("\r", "").Split('\n');
+            for (i = 0; i < STRData.Length; i++)
             {
                 dataArray = STRData[i].Split('=');
                 if (dataArray.Length == 2)
@@ -94,9 +96,9 @@ namespace KKdMainLib.A3DA
 
             A3DAReader();
 
-            if (Data.Header.Format >= Main.Format.F && Data.Header.Format != Main.Format.FT)
+            if (Header.Format >= Main.Format.F && Header.Format != Main.Format.FT)
             {
-                IO.Position = IO.Offset + Data.Head.BinaryOffset;
+                IO.Position = IO.Offset + Data.BinaryOffset;
                 IO.Offset = IO.Position;
                 IO.Position = 0;
                 A3DCReader();
@@ -113,9 +115,6 @@ namespace KKdMainLib.A3DA
 
         private void A3DAReader()
         {
-            int i0 = 0;
-            int i1 = 0;
-
             if (Dict.StartsWith("_"))
             {
                 Data._ = new _();
@@ -169,14 +168,14 @@ namespace KKdMainLib.A3DA
             if (Dict.FindValue(out value, "dof.name"))
             {
                 Data.DOF = new DOF { Name = value };
-                Data.Header.Format = Main.Format.FT;
+                Data.Format = Main.Format.FT;
                 Data.DOF.MT = Dict.ReadMT("dof" + d);
             }
 
             if (Dict.FindValue(out value, "ambient.length"))
             {
                 Data.Ambient = new Ambient[int.Parse(value)];
-                Data.Header.Format = Main.Format.MGF;
+                Data.Format = Main.Format.MGF;
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
                     name = "ambient" + d + i0 + d;
@@ -194,21 +193,21 @@ namespace KKdMainLib.A3DA
                     name = "camera_root" + d + i0 + d;
                     nameView = name + "view_point" + d;
 
-                    Dict.FindValue(out Data.CameraRoot[i0].ViewPoint.
+                    Dict.FindValue(out Data.CameraRoot[i0].VP.
                         Aspect         , nameView + "aspect"           );
-                    Dict.FindValue(out Data.CameraRoot[i0].ViewPoint.
+                    Dict.FindValue(out Data.CameraRoot[i0].VP.
                         CameraApertureH, nameView + "camera_aperture_h");
-                    Dict.FindValue(out Data.CameraRoot[i0].ViewPoint.
+                    Dict.FindValue(out Data.CameraRoot[i0].VP.
                         CameraApertureW, nameView + "camera_aperture_w");
-                    Dict.FindValue(out Data.CameraRoot[i0].ViewPoint.
+                    Dict.FindValue(out Data.CameraRoot[i0].VP.
                         FOVHorizontal  , nameView + "fov_is_horizontal");
 
-                    Data.CameraRoot[i0].MT           = Dict.ReadMT(name);
-                    Data.CameraRoot[i0].Interest     = Dict.ReadMT(name + "interest" + d);
-                    Data.CameraRoot[i0].ViewPoint.MT = Dict.ReadMT(nameView);
-                    Data.CameraRoot[i0].ViewPoint.FocalLength = Dict.ReadKey(nameView + "focal_length" + d);
-                    Data.CameraRoot[i0].ViewPoint.FOV         = Dict.ReadKey(nameView +          "fov" + d);
-                    Data.CameraRoot[i0].ViewPoint.Roll        = Dict.ReadKey(nameView +         "roll" + d);
+                    Data.CameraRoot[i0].      MT = Dict.ReadMT(name);
+                    Data.CameraRoot[i0].Interest = Dict.ReadMT(name + "interest" + d);
+                    Data.CameraRoot[i0].VP.   MT = Dict.ReadMT(nameView);
+                    Data.CameraRoot[i0].VP.FocalLength = Dict.ReadKey(nameView + "focal_length" + d);
+                    Data.CameraRoot[i0].VP.FOV         = Dict.ReadKey(nameView +          "fov" + d);
+                    Data.CameraRoot[i0].VP.Roll        = Dict.ReadKey(nameView +         "roll" + d);
                 }
             }
 
@@ -304,16 +303,16 @@ namespace KKdMainLib.A3DA
 
                     if (Dict.FindValue(out value, name + "instance.length"))
                     {
-                        Data.MObjectHRC[i0].Instance = new Instance[int.Parse(value)];
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
+                        Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[int.Parse(value)];
+                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
                         {
                             nameView = name + "instance" + d + i1 + d;
 
-                            Dict.FindValue(out Data.MObjectHRC[i0].Instance[i1].   Name, nameView +     "name");
-                            Dict.FindValue(out Data.MObjectHRC[i0].Instance[i1]. Shadow, nameView +   "shadow");
-                            Dict.FindValue(out Data.MObjectHRC[i0].Instance[i1].UIDName, nameView + "uid_name");
+                            Dict.FindValue(out Data.MObjectHRC[i0].Instances[i1].   Name, nameView +     "name");
+                            Dict.FindValue(out Data.MObjectHRC[i0].Instances[i1]. Shadow, nameView +   "shadow");
+                            Dict.FindValue(out Data.MObjectHRC[i0].Instances[i1].UIDName, nameView + "uid_name");
 
-                            Data.MObjectHRC[i0].Instance[i1].MT = Dict.ReadMT(nameView);
+                            Data.MObjectHRC[i0].Instances[i1].MT = Dict.ReadMT(nameView);
                         }
                     }
 
@@ -344,7 +343,7 @@ namespace KKdMainLib.A3DA
             if (Dict.FindValue(out value, "material_list.length"))
             {
                 Data.MaterialList = new MaterialList[int.Parse(value)];
-                Data.Header.Format = Main.Format.X;
+                Data.Format = Main.Format.X;
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
                     name = "material_list" + d + i0 + d;
@@ -471,10 +470,9 @@ namespace KKdMainLib.A3DA
             }
         }
 
-        public void A3DAWriter(bool A3DC = false)
+        public byte[] A3DAWriter(bool A3DC = false)
         {
-            int i0 = 0;
-            int i1 = 0;
+            IO = File.OpenWriter();
             DateTime date = DateTime.Now;
             if (A3DC && Data._.CompressF16 != null)
                 if (Data._.CompressF16 != 0)
@@ -490,7 +488,7 @@ namespace KKdMainLib.A3DA
             IO.Write("_.file_name=", Data._.FileName);
             IO.Write("_.property.version=", Data._.PropertyVersion);
 
-            if (Data.Ambient != null && Data.Header.Format == Main.Format.MGF)
+            if (Data.Ambient != null && Data.Format == Main.Format.MGF)
             {
                 SO0 = Data.Ambient.Length.SortWriter();
                 SOi0 = 0;
@@ -528,19 +526,19 @@ namespace KKdMainLib.A3DA
 
                     IO.Write(Data.CameraRoot[SOi0].Interest, name + "interest" + d, A3DC, IsX);
                     IO.Write(Data.CameraRoot[SOi0].MT, name, A3DC, IsX, 0b11110);
-                    IO.Write(nameView + "aspect=", Data.CameraRoot[i0].ViewPoint.Aspect);
-                    if (Data.CameraRoot[i0].ViewPoint.CameraApertureH != null)
+                    IO.Write(nameView + "aspect=", Data.CameraRoot[i0].VP.Aspect);
+                    if (Data.CameraRoot[i0].VP.CameraApertureH != null)
                         IO.Write(nameView + "camera_aperture_h=",
-                            Data.CameraRoot[i0].ViewPoint.CameraApertureH);
-                    if (Data.CameraRoot[i0].ViewPoint.CameraApertureW != null)
-                        IO.Write(nameView + "camera_aperture_w=", Data.CameraRoot[i0].ViewPoint.CameraApertureW);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.FocalLength, nameView + "focal_length" + d, A3DC);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.FOV, nameView + "fov" + d, A3DC);
-                    IO.Write(nameView + "fov_is_horizontal=", Data.CameraRoot[i0].ViewPoint.FOVHorizontal);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT  , nameView, A3DC, IsX, 0b10000);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.Roll, nameView + "roll" + d, A3DC);
-                    IO.Write(Data.CameraRoot[SOi0].ViewPoint.MT  , nameView, A3DC, IsX, 0b01111);
-                    IO.Write(Data.CameraRoot[SOi0]          .MT  , name    , A3DC, IsX, 0b00001);
+                            Data.CameraRoot[i0].VP.CameraApertureH);
+                    if (Data.CameraRoot[i0].VP.CameraApertureW != null)
+                        IO.Write(nameView + "camera_aperture_w=", Data.CameraRoot[i0].VP.CameraApertureW);
+                    IO.Write(Data.CameraRoot[SOi0].VP.FocalLength, nameView + "focal_length" + d, A3DC);
+                    IO.Write(Data.CameraRoot[SOi0].VP.FOV, nameView + "fov" + d, A3DC);
+                    IO.Write(nameView + "fov_is_horizontal=", Data.CameraRoot[i0].VP.FOVHorizontal);
+                    IO.Write(Data.CameraRoot[SOi0].VP.MT  , nameView, A3DC, IsX, 0b10000);
+                    IO.Write(Data.CameraRoot[SOi0].VP.Roll, nameView + "roll" + d, A3DC);
+                    IO.Write(Data.CameraRoot[SOi0].VP.MT  , nameView, A3DC, IsX, 0b01111);
+                    IO.Write(Data.CameraRoot[SOi0]   .MT  , name    , A3DC, IsX, 0b00001);
                 }
                 IO.Write("camera_root.length=", Data.CameraRoot.Length);
             }
@@ -571,7 +569,7 @@ namespace KKdMainLib.A3DA
                 IO.Write("curve.length=", Data.Curve.Length);
             }
 
-            if (Data.DOF != null && Data.Header.Format == Main.Format.FT)
+            if (Data.DOF != null && Data.Format == Main.Format.FT)
             {
                 IO.Write("dof.name=", Data.DOF.Name);
                 IO.Write(Data.DOF.MT, "dof" + d, A3DC, IsX);
@@ -647,36 +645,36 @@ namespace KKdMainLib.A3DA
                     SOi0 = SO0[i0];
                     name = "m_objhrc" + d + SOi0 + d;
 
-                    if (IsX && Data.MObjectHRC[SOi0].JointOrient != null)
+                    if (IsX && Data.MObjectHRC[SOi0].JointOrient.NotNull)
                     {
                         IO.Write(name + "joint_orient.x=", Data.MObjectHRC[SOi0].JointOrient.X);
                         IO.Write(name + "joint_orient.y=", Data.MObjectHRC[SOi0].JointOrient.Y);
                         IO.Write(name + "joint_orient.z=", Data.MObjectHRC[SOi0].JointOrient.Z);
                     }
 
-                    if (Data.MObjectHRC[SOi0].Instance != null)
+                    if (Data.MObjectHRC[SOi0].Instances != null)
                     {
                         nameView = name + "instance" + d;
-                        SO1 = Data.MObjectHRC[SOi0].Instance.Length.SortWriter();
-                        for (i1 = 0; i1 < Data.MObjectHRC[SOi0].Instance.Length; i1++)
+                        SO1 = Data.MObjectHRC[SOi0].Instances.Length.SortWriter();
+                        for (i1 = 0; i1 < Data.MObjectHRC[SOi0].Instances.Length; i1++)
                         {
                             SOi1 = SO1[i1];
-                            IO.Write(Data.MObjectHRC[SOi0].Instance[SOi1].MT,
+                            IO.Write(Data.MObjectHRC[SOi0].Instances[SOi1].MT,
                                 nameView + SOi1 + d, A3DC, IsX, 0b10000);
                             IO.Write(nameView + SOi1 + d +     "name=",
-                                Data.MObjectHRC[SOi0].Instance[SOi1].   Name);
-                            IO.Write(Data.MObjectHRC[SOi0].Instance[SOi1].MT,
+                                Data.MObjectHRC[SOi0].Instances[SOi1].   Name);
+                            IO.Write(Data.MObjectHRC[SOi0].Instances[SOi1].MT,
                                 nameView + SOi1 + d, A3DC, IsX, 0b01100);
                             IO.Write(nameView + SOi1 + d +   "shadow=",
-                                Data.MObjectHRC[SOi0].Instance[SOi1]. Shadow);
-                            IO.Write(Data.MObjectHRC[SOi0].Instance[SOi1].MT,
+                                Data.MObjectHRC[SOi0].Instances[SOi1]. Shadow);
+                            IO.Write(Data.MObjectHRC[SOi0].Instances[SOi1].MT,
                                 nameView + SOi1 + d, A3DC, IsX, 0b00010);
                             IO.Write(nameView + SOi1 + d + "uid_name=",
-                                Data.MObjectHRC[SOi0].Instance[SOi1].UIDName);
-                            IO.Write(Data.MObjectHRC[SOi0].Instance[SOi1].MT,
+                                Data.MObjectHRC[SOi0].Instances[SOi1].UIDName);
+                            IO.Write(Data.MObjectHRC[SOi0].Instances[SOi1].MT,
                                 nameView + SOi1 + d, A3DC, IsX, 0b00001);
                         }
-                        IO.Write(nameView + "length=", Data.MObjectHRC[SOi0].Instance.Length);
+                        IO.Write(nameView + "length=", Data.MObjectHRC[SOi0].Instances.Length);
                     }
 
                     IO.Write(Data.MObjectHRC[SOi0].MT, name, A3DC, IsX, 0b10000);
@@ -820,7 +818,7 @@ namespace KKdMainLib.A3DA
                     name = "objhrc" + d + SOi0 + d;
                     IO.Write(name + "name=", Data.ObjectHRC[SOi0].Name);
 
-                    if (IsX && Data.ObjectHRC[SOi0].JointOrient != null)
+                    if (IsX && Data.ObjectHRC[SOi0].JointOrient.NotNull)
                     {
                         IO.Write(name + "joint_orient.x=", Data.ObjectHRC[SOi0].JointOrient.X);
                         IO.Write(name + "joint_orient.y=", Data.ObjectHRC[SOi0].JointOrient.Y);
@@ -857,19 +855,16 @@ namespace KKdMainLib.A3DA
                 IO.Write("objhrc_list.length=", Data.ObjectHRCList.Length);
             }
 
-            if (Data.PlayControl != null)
-            {
-                IO.Write("play_control.begin=", Data.PlayControl.Begin);
-                if (Data.PlayControl.Div    != null && A3DC)
-                    IO.Write("play_control.div=", Data.PlayControl.Div);
-                IO.Write("play_control.fps=", Data.PlayControl.FPS);
-                if (Data.PlayControl.Offset != null)
-                { if ( A3DC) { IO.Write("play_control.offset=", Data.PlayControl.Offset);
-                               IO.Write("play_control.size="  , Data.PlayControl.Size  ); }
-                  else IO.Write("play_control.size=", Data.PlayControl.Size + Data.PlayControl.Offset);
-                }
-                else   IO.Write("play_control.size=", Data.PlayControl.Size);
+            IO.Write("play_control.begin=", Data.PlayControl.Begin);
+            if (Data.PlayControl.Div    != null && A3DC)
+                IO.Write("play_control.div=", Data.PlayControl.Div);
+            IO.Write("play_control.fps=", Data.PlayControl.FPS);
+            if (Data.PlayControl.Offset != null)
+            { if ( A3DC) { IO.Write("play_control.offset=", Data.PlayControl.Offset);
+                           IO.Write("play_control.size="  , Data.PlayControl.Size  ); }
+              else IO.Write("play_control.size=", Data.PlayControl.Size + Data.PlayControl.Offset);
             }
+            else   IO.Write("play_control.size=", Data.PlayControl.Size);
 
             if (Data.PostProcess != null)
             {
@@ -890,17 +885,14 @@ namespace KKdMainLib.A3DA
                 IO.Write("point.length=", Data.Point.Length);
             }
 
-            if (!A3DC)
-                IO.Close();
+            IO.Align(0x1, true);
+            return IO.ToArray(true);
         }
 
         private int CompressF16 => Data._.CompressF16.GetValueOrDefault();
 
         private void A3DCReader()
         {
-            int i0 = 0;
-            int i1 = 0;
-
             if (Data.Ambient != null)
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
@@ -920,12 +912,12 @@ namespace KKdMainLib.A3DA
             if (Data.CameraRoot != null)
                 for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                 {
-                    IO.ReadMT(ref Data.CameraRoot[i0].MT          , CompressF16);
-                    IO.ReadMT(ref Data.CameraRoot[i0].Interest    , CompressF16);
-                    IO.ReadMT(ref Data.CameraRoot[i0].ViewPoint.MT, CompressF16);
-                    IO.ReadKey(ref Data.CameraRoot[i0].ViewPoint.FocalLength, CompressF16);
-                    IO.ReadKey(ref Data.CameraRoot[i0].ViewPoint.FOV        , CompressF16);
-                    IO.ReadKey(ref Data.CameraRoot[i0].ViewPoint.Roll       , CompressF16);
+                    IO.ReadMT(ref Data.CameraRoot[i0].      MT, CompressF16);
+                    IO.ReadMT(ref Data.CameraRoot[i0].Interest, CompressF16);
+                    IO.ReadMT(ref Data.CameraRoot[i0].VP.   MT, CompressF16);
+                    IO.ReadKey(ref Data.CameraRoot[i0].VP.FocalLength, CompressF16);
+                    IO.ReadKey(ref Data.CameraRoot[i0].VP.FOV        , CompressF16);
+                    IO.ReadKey(ref Data.CameraRoot[i0].VP.Roll       , CompressF16);
                 }
 
             if (Data.Chara != null)
@@ -964,9 +956,9 @@ namespace KKdMainLib.A3DA
                 {
                     IO.ReadMT(ref Data.MObjectHRC[i0].MT, CompressF16);
 
-                    if (Data.MObjectHRC[i0].Instance != null)
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                            IO.ReadMT(ref Data.MObjectHRC[i0].Instance[i1].MT, CompressF16);
+                    if (Data.MObjectHRC[i0].Instances != null)
+                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                            IO.ReadMT(ref Data.MObjectHRC[i0].Instances[i1].MT, CompressF16);
 
                     if (Data.MObjectHRC[i0].Node != null)
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
@@ -1019,38 +1011,12 @@ namespace KKdMainLib.A3DA
             }
         }
 
-        public byte[] A3DCWriter(string file = null)
+        public byte[] A3DCWriter()
         {
-            int i0 = 0;
-            int i1 = 0;
             if (A3DCOpt) UsedValues = new Dictionary<int?, double?>();
+            if (Data.Format < Main.Format.F2LE) Data._.CompressF16 = null;
 
-            if (Data.Header.Format > Main.Format.FT)
-            {
-                int a = (int)((long)int.Parse(Data._.ConverterVersion) * BitConverter.
-                    ToInt32(Data._.FileName.ToUTF8(), 0) * int.Parse(Data._.PropertyVersion));
-
-                IO.Write(0x41443341);
-                IO.Write(0x00);
-                IO.Write(0x40);
-                IO.Write(0x10000000);
-                IO.Write((long)0x00);
-                IO.Write((long)0x00);
-                IO.Write(a);
-                IO.Write(0x00);
-                IO.Write((long)0x00);
-                IO.Write(0x01131010);
-                IO.Write(0x00);
-                IO.Write(0x00);
-                IO.Write(0x00);
-            }
-            else Data._.CompressF16 = null;
-
-            int A3DCStart = IO.Position;
-
-            IO.Close();
             IO = File.OpenWriter();
-
             for (byte i = 0; i < 2; i++)
             {
                 bool ReturnToOffset = i == 1;
@@ -1059,9 +1025,9 @@ namespace KKdMainLib.A3DA
                 if (Data.CameraRoot != null)
                     for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                     {
-                        IO.WriteOffset(ref Data.CameraRoot[i0].Interest    , ReturnToOffset);
-                        IO.WriteOffset(ref Data.CameraRoot[i0].          MT, ReturnToOffset);
-                        IO.WriteOffset(ref Data.CameraRoot[i0].ViewPoint.MT, ReturnToOffset);
+                        IO.WriteOffset(ref Data.CameraRoot[i0].Interest, ReturnToOffset);
+                        IO.WriteOffset(ref Data.CameraRoot[i0].      MT, ReturnToOffset);
+                        IO.WriteOffset(ref Data.CameraRoot[i0].VP.   MT, ReturnToOffset);
                     }
 
                 if (Data.DOF != null)
@@ -1077,9 +1043,9 @@ namespace KKdMainLib.A3DA
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
-                        if (Data.MObjectHRC[i0].Instance != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                                IO.WriteOffset(ref Data.MObjectHRC[i0].Instance[i1].MT, ReturnToOffset);
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                IO.WriteOffset(ref Data.MObjectHRC[i0].Instances[i1].MT, ReturnToOffset);
 
                         IO.WriteOffset(ref Data.MObjectHRC[i0].MT, ReturnToOffset);
 
@@ -1119,12 +1085,12 @@ namespace KKdMainLib.A3DA
                 if (Data.CameraRoot != null)
                     for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                     {
-                        Write(ref Data.CameraRoot[i0].Interest    );
-                        Write(ref Data.CameraRoot[i0]          .MT);
-                        Write(ref Data.CameraRoot[i0].ViewPoint.MT);
-                        Write(ref Data.CameraRoot[i0].ViewPoint.FOV        );
-                        Write(ref Data.CameraRoot[i0].ViewPoint.FocalLength);
-                        Write(ref Data.CameraRoot[i0].ViewPoint.Roll       );
+                        Write(ref Data.CameraRoot[i0].Interest);
+                        Write(ref Data.CameraRoot[i0].      MT);
+                        Write(ref Data.CameraRoot[i0].VP.   MT);
+                        Write(ref Data.CameraRoot[i0].VP.FOV        );
+                        Write(ref Data.CameraRoot[i0].VP.FocalLength);
+                        Write(ref Data.CameraRoot[i0].VP.Roll       );
                     }
 
                 if (Data.Chara != null)
@@ -1135,7 +1101,7 @@ namespace KKdMainLib.A3DA
                     for (i0 = 0; i0 < Data.Curve.Length; i0++)
                         Write(ref Data.Curve[i0].CV);
 
-                if (Data.DOF != null && Data.Header.Format == Main.Format.FT)
+                if (Data.DOF != null && Data.Format == Main.Format.FT)
                     Write(ref Data.DOF.MT);
 
                 if (Data.Fog != null)
@@ -1161,9 +1127,9 @@ namespace KKdMainLib.A3DA
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
-                        if (Data.MObjectHRC[i0].Instance != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                                Write(ref Data.MObjectHRC[i0].Instance[i1].MT);
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                Write(ref Data.MObjectHRC[i0].Instances[i1].MT);
 
                         Write(ref Data.MObjectHRC[i0].MT);
 
@@ -1218,77 +1184,65 @@ namespace KKdMainLib.A3DA
 
                 IO.Align(0x10, true);
             }
-
             byte[] A3DCData = IO.ToArray(true);
+            byte[] A3DAData = A3DAWriter(true);
 
             IO = File.OpenWriter();
-            A3DAWriter(true);
-            byte[] A3DAData = IO.ToArray(true);
+            IO.Offset = Data.Format > Main.Format.FT ? 0x40 : 0;
+            IO.Position = 0x40;
 
-            Data.Head = new Header();
-            if (file != null) IO = File.OpenWriter(file + ".a3da");
-            else              IO = File.OpenWriter();
-            IO.Position = A3DCStart + 0x40;
-
-            Data.Head.StringOffset = IO.Position - A3DCStart;
+            Data.StringOffset = IO.Position;
+            Data.StringLength = A3DAData.Length;
             IO.Write(A3DAData);
-            Data.Head.StringLength = IO.Position - A3DCStart - Data.Head.StringOffset;
             IO.Align(0x20, true);
 
-            Data.Head.BinaryOffset = IO.Position - A3DCStart;
+            Data.BinaryOffset = IO.Position;
+            Data.BinaryLength = A3DCData.Length;
             IO.Write(A3DCData);
-            Data.Head.BinaryLength = IO.Position - A3DCStart - Data.Head.BinaryOffset;
             IO.Align(0x10, true);
 
             int A3DCEnd = IO.Position;
 
-            if (CompressF16 != 0)
-            {
-                IO.Align(0x10);
-                A3DCEnd = IO.Position;
-                IO.WriteEOFC(0);
-                IO.Position = 0x04;
-                IO.Write(A3DCEnd - A3DCStart);
-                IO.Position = 0x14;
-                IO.Write(A3DCEnd - A3DCStart);
-            }
-
-            IO.Position = A3DCStart;
+            IO.Position = 0;
             IO.Write("#A3D", "C__________");
             IO.Write(0x2000);
             IO.Write(0x00);
             IO.WriteEndian(0x20, true);
             IO.Write(0x10000200);
             IO.Write(0x50);
-            IO.WriteEndian(Data.Head.StringOffset, true);
-            IO.WriteEndian(Data.Head.StringLength, true);
+            IO.WriteEndian(Data.StringOffset, true);
+            IO.WriteEndian(Data.StringLength, true);
             IO.WriteEndian(0x01, true);
             IO.Write(0x4C42);
-            IO.WriteEndian(Data.Head.BinaryOffset, true);
-            IO.WriteEndian(Data.Head.BinaryLength, true);
+            IO.WriteEndian(Data.BinaryOffset, true);
+            IO.WriteEndian(Data.BinaryLength, true);
             IO.WriteEndian(0x20, true);
-            if (Data.Header.Format > Main.Format.FT)
+            
+            if (Data.Format > Main.Format.FT)
             {
                 IO.Position = A3DCEnd;
-                IO.WriteEOFC();
+                IO.WriteEOFC(0);
+                IO.Offset   = 0;
+                IO.Position = 0;
+                PDHead Header = new PDHead { Signature = 0x41443341, Format = Main.Format.F2LE,
+                    DataSize = A3DCEnd, SectionSize = A3DCEnd, InnerSignature = 0x01131010 };
+                IO.Write(Header);
             }
 
-            if (file != null) { IO.Close(); return null; }
-            else return IO.ToArray(true);
-            
+            return IO.ToArray(true);
         }
 
         private void Write(ref ModelTransform MT)
         { Write(ref MT.Scale); Write(ref MT.Rot, true); Write(ref MT.Trans); Write(ref MT.Visibility); }
 
-        private void Write(ref RGBAKey RGBA)
-        { Write(ref RGBA.R); Write(ref RGBA.G); Write(ref RGBA.B); Write(ref RGBA.A); }
+        private void Write(ref Vector4<Key> RGBA)
+        { Write(ref RGBA.X); Write(ref RGBA.Y); Write(ref RGBA.Z); Write(ref RGBA.W); }
 
         private void Write(ref Vector3<Key> Key, bool F16 = false)
         { Write(ref Key.X, F16); Write(ref Key.Y, F16); Write(ref Key.Z, F16); }
 
-        private void Write(ref KeyUV UV)
-        { Write(ref UV.U); Write(ref UV.V); }
+        private void Write(ref Vector2<Key> UV)
+        { Write(ref UV.X); Write(ref UV.Y); }
 
         private void Write(ref Key Key, bool F16 = false)
         {
@@ -1374,13 +1328,7 @@ namespace KKdMainLib.A3DA
 
         public void MsgPackReader(MsgPack A3D)
         {
-            int i  = 0;
-            int i0 = 0;
-            int i1 = 0;
-
-            Data.Header = new PDHead();
             MsgPack Temp = MsgPack.New;
-
             if (A3D.Element("_", out Temp))
             {
                 Data._ = new _
@@ -1427,7 +1375,7 @@ namespace KKdMainLib.A3DA
                     };
                     if (!Temp[i].Element("ViewPoint", out MsgPack ViewPoint)) continue;
 
-                    Data.CameraRoot[i].ViewPoint = new ViewPoint
+                    Data.CameraRoot[i].VP = new CameraRoot.ViewPoint
                     {
                         MT              = ViewPoint.ReadMT(),
                         Aspect          = ViewPoint.ReadNDouble("Aspect"         ),
@@ -1551,9 +1499,9 @@ namespace KKdMainLib.A3DA
 
                     if (Temp[i0].ElementArray("Instance", out MsgPack Instance))
                     {
-                        Data.MObjectHRC[i0].Instance = new Instance[Instance.Array.Length];
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                            Data.MObjectHRC[i0].Instance[i1] = new Instance
+                        Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[Instance.Array.Length];
+                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                            Data.MObjectHRC[i0].Instances[i1] = new MObjectHRC.Instance
                             {
                                 MT = Instance[i1].ReadMT(),
                                    Name = Instance[i1].ReadString(   "Name"),
@@ -1717,10 +1665,6 @@ namespace KKdMainLib.A3DA
 
         public MsgPack MsgPackWriter()
         {
-            int i  = 0;
-            int i0 = 0;
-            int i1 = 0;
-
             MsgPack A3D = new MsgPack("A3D")
                 .Add(new MsgPack("_").Add("CompressF16"     , Data._.CompressF16     )
                                      .Add("ConverterVersion", Data._.ConverterVersion)
@@ -1750,16 +1694,17 @@ namespace KKdMainLib.A3DA
                 MsgPack CameraRoot = new MsgPack(Data.CameraRoot.Length, "CameraRoot");
                 for (i = 0; i < Data.CameraRoot.Length; i++)
                     CameraRoot[i] = MsgPack.New
-                        .Add(Data.CameraRoot[i].MT)
                         .Add("Interest", Data.CameraRoot[i].Interest)
-                        .Add(new MsgPack("ViewPoint").Add(Data.CameraRoot[i].ViewPoint.MT)
-                        .Add("Aspect"         , Data.CameraRoot[i].ViewPoint.Aspect         )
-                        .Add("CameraApertureH", Data.CameraRoot[i].ViewPoint.CameraApertureH)
-                        .Add("CameraApertureW", Data.CameraRoot[i].ViewPoint.CameraApertureW)
-                        .Add("FOVHorizontal"  , Data.CameraRoot[i].ViewPoint.FOVHorizontal  )
-                        .Add("FocalLength"    , Data.CameraRoot[i].ViewPoint.FocalLength    )
-                        .Add("FOV"            , Data.CameraRoot[i].ViewPoint.FOV            )
-                        .Add("Roll"           , Data.CameraRoot[i].ViewPoint.Roll           ));
+                        .Add(new MsgPack("ViewPoint")
+                        .Add("Aspect"         , Data.CameraRoot[i].VP.Aspect         )
+                        .Add("CameraApertureH", Data.CameraRoot[i].VP.CameraApertureH)
+                        .Add("CameraApertureW", Data.CameraRoot[i].VP.CameraApertureW)
+                        .Add("FOVHorizontal"  , Data.CameraRoot[i].VP.FOVHorizontal  )
+                        .Add("FocalLength"    , Data.CameraRoot[i].VP.FocalLength    )
+                        .Add("FOV"            , Data.CameraRoot[i].VP.FOV            )
+                        .Add("Roll"           , Data.CameraRoot[i].VP.Roll           )
+                        .Add(Data.CameraRoot[i].VP.MT))
+                        .Add(Data.CameraRoot[i].   MT);
                 A3D.Add(CameraRoot);
             }
 
@@ -1832,20 +1777,20 @@ namespace KKdMainLib.A3DA
                 {
                     MsgPack _MObjectHRC = MsgPack.New.Add("Name", Data.MObjectHRC[i0].Name);
 
-                    if (IsX && Data.MObjectHRC[i0].JointOrient != null)
+                    if (IsX && Data.MObjectHRC[i0].JointOrient.NotNull)
                         _MObjectHRC.Add(new MsgPack("JointOrient")
                             .Add("X", Data.MObjectHRC[i0].JointOrient.X)
                             .Add("Y", Data.MObjectHRC[i0].JointOrient.Y)
                             .Add("Z", Data.MObjectHRC[i0].JointOrient.Z));
 
-                    if (Data.MObjectHRC[i0].Instance != null)
+                    if (Data.MObjectHRC[i0].Instances != null)
                     {
-                        MsgPack Instance = new MsgPack(Data.MObjectHRC[i0].Instance.Length, "Instance");
-                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instance.Length; i1++)
-                            Instance[i1] = MsgPack.New.Add(Data.MObjectHRC[i0].Instance[i1].MT)
-                                .Add(   "Name", Data.MObjectHRC[i0].Instance[i1].   Name)
-                                .Add("Shadow" , Data.MObjectHRC[i0].Instance[i1].Shadow )
-                                .Add("UIDName", Data.MObjectHRC[i0].Instance[i1].UIDName);
+                        MsgPack Instance = new MsgPack(Data.MObjectHRC[i0].Instances.Length, "Instance");
+                        for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                            Instance[i1] = MsgPack.New.Add(Data.MObjectHRC[i0].Instances[i1].MT)
+                                .Add(   "Name", Data.MObjectHRC[i0].Instances[i1].   Name)
+                                .Add("Shadow" , Data.MObjectHRC[i0].Instances[i1].Shadow )
+                                .Add("UIDName", Data.MObjectHRC[i0].Instances[i1].UIDName);
                         _MObjectHRC.Add(Instance);
                     }
 
@@ -1853,9 +1798,10 @@ namespace KKdMainLib.A3DA
                     {
                         MsgPack Node = new MsgPack(Data.MObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
-                            Node[i1] = MsgPack.New.Add(Data.MObjectHRC[i0].Node[i1].MT)
+                            Node[i1] = MsgPack.New
                                 .Add("Name"  , Data.MObjectHRC[i0].Node[i1].Name  )
-                                .Add("Parent", Data.MObjectHRC[i0].Node[i1].Parent);
+                                .Add("Parent", Data.MObjectHRC[i0].Node[i1].Parent)
+                                .Add(          Data.MObjectHRC[i0].Node[i1].MT    );
                         _MObjectHRC.Add(Node);
                     }
 
@@ -1897,12 +1843,11 @@ namespace KKdMainLib.A3DA
                 MsgPack Object = new MsgPack(Data.Object.Length, "Object");
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
                 {
-                    MsgPack _Object = MsgPack.New.Add(Data.Object[i0].MT)
-                        .Add("Morph"      , Data.Object[i0].Morph      )
-                        .Add("MorphOffset", Data.Object[i0].MorphOffset)
-                        .Add(      "Name" , Data.Object[i0].      Name )
-                        .Add("ParentName" , Data.Object[i0].ParentName )
-                        .Add(   "UIDName" , Data.Object[i0].   UIDName );
+                    MsgPack _Object = MsgPack.New.Add("Morph"      , Data.Object[i0].Morph      )
+                                                 .Add("MorphOffset", Data.Object[i0].MorphOffset)
+                                                 .Add(      "Name" , Data.Object[i0].      Name )
+                                                 .Add("ParentName" , Data.Object[i0].ParentName )
+                                                 .Add(   "UIDName" , Data.Object[i0].   UIDName );
                     if (Data.Object[i0].TexPat != null)
                     {
                         MsgPack TexPat = new MsgPack(Data.Object[i0].TexPat.Length, "TexturePattern");
@@ -1926,7 +1871,7 @@ namespace KKdMainLib.A3DA
                                 .Add("TranslateFrame", Data.Object[i0].TexTrans[i1].TranslateFrame);
                         _Object.Add(TexTrans);
                     }
-                    Object[i0] = _Object;
+                    Object[i0] = _Object.Add(Data.Object[i0].MT);
                 }
                 A3D.Add(Object);
             }
@@ -1940,7 +1885,7 @@ namespace KKdMainLib.A3DA
                                                     .Add("Shadow" , Data.ObjectHRC[i0].Shadow )
                                                     .Add("UIDName", Data.ObjectHRC[i0].UIDName);
                     
-                    if (IsX && Data.ObjectHRC[i0].JointOrient != null)
+                    if (IsX && Data.ObjectHRC[i0].JointOrient.NotNull)
                         _ObjectHRC.Add(new MsgPack("JointOrient")
                             .Add("X", Data.ObjectHRC[i0].JointOrient.X)
                             .Add("Y", Data.ObjectHRC[i0].JointOrient.Y)
@@ -1950,9 +1895,10 @@ namespace KKdMainLib.A3DA
                     {
                         MsgPack Node = new MsgPack(Data.ObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
-                            Node[i1] = MsgPack.New.Add(Data.ObjectHRC[i0].Node[i1].MT)
+                            Node[i1] = MsgPack.New
                                 .Add("Name"  , Data.ObjectHRC[i0].Node[i1].Name  )
-                                .Add("Parent", Data.ObjectHRC[i0].Node[i1].Parent);
+                                .Add("Parent", Data.ObjectHRC[i0].Node[i1].Parent)
+                                .Add(          Data.ObjectHRC[i0].Node[i1].MT    );
                         _ObjectHRC.Add(Node);
                     }
                     ObjectHRC[i0] = _ObjectHRC;
@@ -1974,13 +1920,12 @@ namespace KKdMainLib.A3DA
                 A3D.Add(ObjectList);
             }
 
-            if (Data.PlayControl != null)
-                A3D.Add(new MsgPack("PlayControl")
-                    .Add("Begin" , Data.PlayControl.Begin )
-                    .Add("Div"   , Data.PlayControl.Div   )
-                    .Add("FPS"   , Data.PlayControl.FPS   )
-                    .Add("Offset", Data.PlayControl.Offset)
-                    .Add("Size"  , Data.PlayControl.Size  ));
+            A3D.Add(new MsgPack("PlayControl")
+                .Add("Begin" , Data.PlayControl.Begin )
+                .Add("Div"   , Data.PlayControl.Div   )
+                .Add("FPS"   , Data.PlayControl.FPS   )
+                .Add("Offset", Data.PlayControl.Offset)
+                .Add("Size"  , Data.PlayControl.Size  ));
 
             if (Data.Point != null)
             {
@@ -2000,17 +1945,518 @@ namespace KKdMainLib.A3DA
             return A3D;
         }
     }
-
-    public struct _
+    
+    public static class A3DAExt
     {
-        public int? CompressF16;
-        public string FileName;
-        public string PropertyVersion;
-        public string ConverterVersion;
+        private const string d = ".";
+        private const string BO = "bin_offset";
+        private const string MTBO = "model_transform" + d + BO;
+
+        [ThreadStatic] private static string value;
+        [ThreadStatic] private static string[] dataArray;
+        [ThreadStatic] private static int SOi;
+        [ThreadStatic] private static int[] SO;
+
+        public static ModelTransform ReadMT(this Dictionary<string, object> Dict, string Temp)
+        {
+            ModelTransform MT = new ModelTransform();
+            Dict.FindValue(out MT.BinOffset, Temp + MTBO);
+            
+            MT.Rot        = Dict.ReadVec3(Temp + "rot"        + d);
+            MT.Scale      = Dict.ReadVec3(Temp + "scale"      + d);
+            MT.Trans      = Dict.ReadVec3(Temp + "trans"      + d);
+            MT.Visibility = Dict.ReadKey (Temp + "visibility" + d);
+            return MT;
+        }
+
+        public static Vector4<Key> ReadRGBAKey(this Dictionary<string, object> Dict, string Temp) =>
+            new Vector4<Key> { W = Dict.ReadKey(Temp + "a" + d), Z = Dict.ReadKey(Temp + "b" + d),
+                               Y = Dict.ReadKey(Temp + "g" + d), X = Dict.ReadKey(Temp + "r" + d) };
+
+        public static Vector3<Key> ReadVec3(this Dictionary<string, object> Dict, string Temp) =>
+            new Vector3<Key> { X = Dict.ReadKey(Temp + "x" + d), Y =
+                Dict.ReadKey(Temp + "y" + d), Z = Dict.ReadKey(Temp + "z" + d) };
+
+        public static Vector2<Key> ReadKeyUV(this Dictionary<string, object> Dict, string Temp) =>
+            new Vector2<Key> { X = Dict.ReadKey(Temp + "U" + d), Y = Dict.ReadKey(Temp + "V" + d) };
+
+        public static Key ReadKey(this Dictionary<string, object> Dict, string Temp)
+        {
+            Key Key = new Key();
+            Dict.FindValue(out Key.BinOffset, Temp + BO    );
+            Dict.FindValue(out Key.Type     , Temp + "type");
+
+            if (Key.BinOffset == null && Key.Type == null) return null;
+            if (Key.Type == null) return Key;
+            if (Key.Type == 0x0000) return Key;
+
+            if (Key.Type == 0x0001) { Dict.FindValue(out Key.Value, Temp + "value"); return Key; }
+
+            int i = 0;
+            Dict.FindValue(out Key.EPTypePost, Temp + "ep_type_post");
+            Dict.FindValue(out Key.EPTypePre , Temp + "ep_type_pre" );
+            Dict.FindValue(out Key.Length    , Temp + "key.length"  );
+            Dict.FindValue(out Key.Max       , Temp + "max"         );
+            if (Dict.StartsWith(Temp + "raw_data"))
+                Dict.FindValue(out Key.RawData.KeyType, Temp + "raw_data_key_type");
+
+            if (Key.Length != null)
+            {
+                int Type;
+                Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
+                for (i = 0; i < Key.Length; i++)
+                    if (Dict.FindValue(out value, Temp + "key" + d + i + d + "data"))
+                    {
+                        dataArray = value.Replace("(", "").Replace(")", "").Split(',');
+                        Type = dataArray.Length - 1;
+                             if (Type == 0) Key.Trans[i] = new KeyFrameT0<double, double>
+                        { Frame = dataArray[0].ToDouble() };
+                        else if (Type == 1) Key.Trans[i] = new KeyFrameT1<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble() };
+                        else if (Type == 2) Key.Trans[i] = new KeyFrameT2<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
+                            Interpolation = dataArray[2].ToDouble() };
+                        else if (Type == 3) Key.Trans[i] = new KeyFrameT3<double, double>
+                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
+                            Interpolation1 = dataArray[2].ToDouble(),
+                            Interpolation2 = dataArray[3].ToDouble() };
+                        Key.Trans[i] = Key.Trans[i].Check();
+                    }
+            }
+            else if (Key.RawData.KeyType != null)
+            {
+                Dict.FindValue(out Key.RawData.ValueType, Temp + "raw_data.value_type");
+                if (Dict.FindValue(out value, Temp + "raw_data.value_list"))
+                    Key.RawData.ValueList = value.Split(',');
+                Dict.FindValue(out Key.RawData.ValueListSize, Temp + "raw_data.value_list_size");
+                value = "";
+
+                int DS = (int)Key.RawData.KeyType + 1;
+                Key.Length = Key.RawData.ValueListSize / DS;
+                Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
+                     if (Key.RawData.KeyType == 0)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT0<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble() }.Check();
+                else if (Key.RawData.KeyType == 1)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT1<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble() }.Check();
+                else if (Key.RawData.KeyType == 2)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT2<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble(),
+                            Interpolation = Key.RawData.ValueList[i * DS + 2].ToDouble() }.Check();
+                else if (Key.RawData.KeyType == 3)
+                    for (i = 0; i < Key.Length; i++)
+                        Key.Trans[i] = new KeyFrameT3<double, double>
+                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
+                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble(),
+                            Interpolation1 = Key.RawData.ValueList[i * DS + 2].ToDouble(),
+                            Interpolation2 = Key.RawData.ValueList[i * DS + 3].ToDouble() }.Check();
+
+                for (i = 0; i < Key.Length; i++) Key.Trans[i].Check();
+                Key.RawData.ValueList = null;
+            }
+            return Key;
+        }
+
+        public static void Write(this Stream IO, ModelTransform MT,
+            string Temp, bool A3DC, bool IsX = false, byte Flags = 0b11111)
+        {
+            if (A3DC && !MT.Writed && (Flags & 0b10000) == 0b10000)
+            { IO.Write(Temp + MTBO + "=", MT.BinOffset); MT.Writed = true; }
+
+            if (A3DC && !IsX) return;
+
+            if ((Flags & 0b01000) == 0b01000) IO.Write(MT.Rot       , Temp + "rot"        + d, A3DC);
+            if ((Flags & 0b00100) == 0b00100) IO.Write(MT.Scale     , Temp + "scale"      + d, A3DC);
+            if ((Flags & 0b00010) == 0b00010) IO.Write(MT.Trans     , Temp + "trans"      + d, A3DC);
+            if ((Flags & 0b00001) == 0b00001) IO.Write(MT.Visibility, Temp + "visibility" + d, A3DC);
+        }
+
+        public static void Write(this Stream IO, Vector4<Key> RGBA, string Temp, string Data, bool A3DC = false)
+        {
+            if (RGBA.X == null && RGBA.Y == null && RGBA.Z == null && RGBA.W == null) return;
+            IO.Write(Temp + Data + "=", "true");
+            IO.Write(RGBA.W, Temp + Data + d + "a" + d, A3DC);
+            IO.Write(RGBA.Z, Temp + Data + d + "b" + d, A3DC);
+            IO.Write(RGBA.Y, Temp + Data + d + "g" + d, A3DC);
+            IO.Write(RGBA.X, Temp + Data + d + "r" + d, A3DC);
+        }
+
+        public static void Write(this Stream IO, Vector3<Key> Key, string Temp, bool A3DC = false)
+        { IO.Write(Key.X, Temp + "x" + d, A3DC); IO.Write(Key.Y,
+            Temp + "y" + d, A3DC); IO.Write(Key.Z, Temp + "z" + d, A3DC); }
+
+        public static void Write(this Stream IO, Vector2<Key> UV, string Temp, string Data, bool A3DC = false)
+        { IO.Write(UV.X, Temp, Data + "U", A3DC); IO.Write(UV.Y, Temp, Data + "V", A3DC); }
+
+        public static void Write(this Stream IO, Key Key, string Temp, string Data, bool A3DC = false)
+        { if (Key != null) { IO.Write(Temp + Data + "=", "true"); IO.Write(Key, Temp + Data + d, A3DC); } }
+
+        public static void Write(this Stream IO, Key Key, string Temp, bool A3DC = false)
+        {
+            if (Key == null) return;
+
+            if (A3DC) { IO.Write(Temp + BO + "=", Key.BinOffset); return; }
+
+            int i = 0;
+            if (Key.Trans != null)
+                if (Key.Trans.Length == 0)
+                {
+                    IO.Write(Temp + "type=", Key.Type);
+                    if (Key.Type > 0) IO.Write(Temp + "value=", Key.Value);
+                    return;
+                }
+
+            if (Key.EPTypePost != null) IO.Write(Temp + "ep_type_post=", Key.EPTypePost);
+            if (Key.EPTypePre  != null) IO.Write(Temp + "ep_type_pre=" , Key.EPTypePre );
+            if (Key.RawData.KeyType == null && Key.Trans != null)
+            {
+                SO = Key.Trans.Length.SortWriter();
+                for (i = 0; i < Key.Trans.Length; i++)
+                {
+                    SOi = SO[i];
+                    IO.Write(Temp + "key" + d + SOi + d + "data=", Key.Trans[SOi].ToString());
+                         if (Key.Trans[SOi] is KeyFrameT0<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 0);
+                    else if (Key.Trans[SOi] is KeyFrameT1<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 1);
+                    else if (Key.Trans[SOi] is KeyFrameT2<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 2);
+                    else if (Key.Trans[SOi] is KeyFrameT3<double, double>)
+                        IO.Write(Temp + "key" + d + SOi + d + "type=", 3);
+                }
+                IO.Write(Temp + "key.length=", Key.Length);
+                if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
+            }
+            else if (Key.Trans != null)
+            {
+                Key.RawData.KeyType = 0;
+                if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
+                for (i = 0; i < Key.Trans.Length; i++)
+                {
+                         if (Key.Trans[i] is KeyFrameT0<double, double> &&
+                        Key.RawData.KeyType < 0) Key.RawData.KeyType = 0;
+                    else if (Key.Trans[i] is KeyFrameT1<double, double> &&
+                        Key.RawData.KeyType < 1) Key.RawData.KeyType = 1;
+                    else if (Key.Trans[i] is KeyFrameT2<double, double> &&
+                        Key.RawData.KeyType < 2) Key.RawData.KeyType = 2;
+                    else if (Key.Trans[i] is KeyFrameT3<double, double> &&
+                        Key.RawData.KeyType < 3) break;
+                }
+                Key.RawData.ValueListSize = Key.Trans.Length * (Key.RawData.KeyType + 1);
+                IO.Write(Temp + "raw_data.value_list=");
+                     if (Key.RawData.KeyType == 0) for (i = 0; i < Key.Trans.Length; i++)
+                        IO.Write(Key.Trans[i].ToKeyFrameT0().ToString(false) +
+                            ((i + 1 < Key.Trans.Length) ? "," : ""));
+                else if (Key.RawData.KeyType == 1) for (i = 0; i < Key.Trans.Length; i++)
+                        IO.Write(Key.Trans[i].ToKeyFrameT1().ToString(false) +
+                            ((i + 1 < Key.Trans.Length) ? "," : ""));
+                else if (Key.RawData.KeyType == 2) for (i = 0; i < Key.Trans.Length; i++)
+                        IO.Write(Key.Trans[i].ToKeyFrameT2().ToString(false) +
+                            ((i + 1 < Key.Trans.Length) ? "," : ""));
+                else if (Key.RawData.KeyType == 3) for (i = 0; i < Key.Trans.Length; i++)
+                        IO.Write(Key.Trans[i].ToKeyFrameT3().ToString(false) +
+                            ((i + 1 < Key.Trans.Length) ? "," : ""));
+                IO.Position = IO.Position - 1;
+                IO.Write('\n');
+                IO.Write(Temp + "raw_data.value_list_size=", Key.RawData.ValueListSize);
+                IO.Write(Temp + "raw_data.value_type="     , Key.RawData.ValueType    );
+                IO.Write(Temp + "raw_data_key_type="       , Key.RawData.  KeyType    );
+            }
+            IO.Write(Temp + "type=", Key.Type & 0xFF);
+            if (Key.RawData.KeyType == null && Key.Trans == null && Key.Value != null)
+                if (Key.Value != 0) IO.Write(Temp + "value=", Key.Value);
+        }
+
+        public static void ReadMT(this Stream IO, ref ModelTransform MT, int C_F16)
+        {
+            if (MT.BinOffset == null) return;
+
+            IO.Position = (int)MT.BinOffset;
+
+            IO.ReadOffset(out MT.Scale);
+            IO.ReadOffset(out MT.Rot  );
+            IO.ReadOffset(out MT.Trans);
+            MT.Visibility = new Key { BinOffset = IO.ReadInt32() };
+
+            IO.ReadVec3(ref MT.Scale     , C_F16);
+            IO.ReadVec3(ref MT.Rot       , C_F16,  true);
+            IO.ReadVec3(ref MT.Trans     , C_F16);
+            IO.ReadKey (ref MT.Visibility, C_F16);
+        }
+
+        public static void ReadRGBAKey(this Stream IO, ref Vector4<Key> RGBA, int C_F16)
+        { IO.ReadKey(ref RGBA.X, C_F16); IO.ReadKey(ref RGBA.Y, C_F16);
+          IO.ReadKey(ref RGBA.Z, C_F16); IO.ReadKey(ref RGBA.W, C_F16); }
+
+        public static void ReadVec3(this Stream IO, ref Vector3<Key> Key, int C_F16, bool F16 = false)
+        { IO.ReadKey(ref Key.X, C_F16, F16); IO.ReadKey(ref Key.Y,
+            C_F16, F16); IO.ReadKey(ref Key.Z, C_F16, F16); }
+
+        public static void ReadKeyUV(this Stream IO, ref Vector2<Key> UV, int C_F16)
+        { IO.ReadKey(ref UV.X, C_F16); IO.ReadKey(ref UV.Y, C_F16); }
+
+        public static void ReadKey(this Stream IO, ref Key Key, int C_F16, bool F16 = false)
+        {
+            if (Key == null) return;
+            if (Key.BinOffset == null || Key.BinOffset < 0) return;
+            
+            IO.Position = (int)Key.BinOffset;
+            Key.Type = IO.ReadInt32();
+
+            Key.Value = IO.ReadSingle();
+            if (Key.Type == 0x0000 || Key.Type == 0x0001) return;
+            Key.Max    = IO.ReadSingle();
+            Key.Length = IO.ReadInt32 ();
+            if (Key.Type >> 8 != 0)
+            {
+                Key.EPTypePost = (Key.Type >> 12) & 0xF;
+                Key.EPTypePre  = (Key.Type >>  8) & 0xF;
+                if (Key.EPTypePost == 0) Key.EPTypePost = null;
+                if (Key.EPTypePre  == 0) Key.EPTypePre  = null;
+            }
+            Key.Type = Key.Type & 0xFF;
+            Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
+            KeyFrameT3<double, double> Temp;
+            for (int i = 0; i < Key.Length; i++)
+            {
+                Temp = new KeyFrameT3<double, double>();
+                if (F16 && C_F16 > 0)
+                { Temp.Frame = IO.ReadUInt16(); Temp.Value = (double)IO.ReadHalf  (); }
+                else
+                { Temp.Frame = IO.ReadSingle(); Temp.Value =         IO.ReadSingle(); }
+
+                if (F16 && C_F16 == 2)
+                { Temp.Interpolation1 = (double)IO.ReadHalf  ();
+                  Temp.Interpolation2 = (double)IO.ReadHalf  (); }
+                else
+                { Temp.Interpolation1 =         IO.ReadSingle();
+                  Temp.Interpolation2 =         IO.ReadSingle(); }
+
+                Key.Trans[i] = Temp.Check();
+            }
+        }
+
+        public static void ReadOffset(this Stream IO, out Vector3<Key> Key)
+        { Key = new Vector3<Key> { X = new Key { BinOffset = IO.ReadInt32() },
+                                   Y = new Key { BinOffset = IO.ReadInt32() },
+                                   Z = new Key { BinOffset = IO.ReadInt32() }, }; }
+
+        public static void WriteOffset(this Stream IO, ref ModelTransform MT, bool ReturnToOffset)
+        {
+            if (ReturnToOffset)
+            {
+                IO.Position = (int)MT.BinOffset;
+                IO.WriteOffset(MT.Scale);
+                IO.WriteOffset(MT.Rot  );
+                IO.WriteOffset(MT.Trans);
+                IO.Write(MT.Visibility.BinOffset);
+            }
+            else
+            {
+                MT.BinOffset = IO.Position;
+                IO.Position += 0x30;
+                IO.Length   += 0x30;
+            }
+        }
+
+        public static void WriteOffset(this Stream IO, Vector3<Key> Key)
+        {
+            IO.Write(Key.X.BinOffset);
+            IO.Write(Key.Y.BinOffset);
+            IO.Write(Key.Z.BinOffset);
+        }
+
+        public static ModelTransform ReadMT(this MsgPack k, string name) =>
+            k.Element(name, out MsgPack Name) ? Name.ReadMT() : default;
+
+        public static ModelTransform ReadMT(this MsgPack k) =>
+            new ModelTransform { Rot   = k.ReadVec3("Rot"  ), Scale      = k.ReadVec3("Scale"     ),
+                                 Trans = k.ReadVec3("Trans"), Visibility = k.ReadKey ("Visibility") };
+
+        public static Vector4<Key> ReadRGBAKey(this MsgPack k, string name) =>
+            k.Element(name, out MsgPack Name) ? Name.ReadRGBAKey() : default;
+
+        public static Vector4<Key> ReadRGBAKey(this MsgPack k) =>
+            new Vector4<Key> { X = k.ReadKey("R"), Y = k.ReadKey("G"), Z = k.ReadKey("B"), W = k.ReadKey("A") };
+
+        public static Vector3<Key> ReadVec3(this MsgPack k, string name) =>
+            k.Element(name, out MsgPack Name) ? Name.ReadVec3() : default;
+
+        public static Vector3<Key> ReadVec3(this MsgPack k) =>
+            new Vector3<Key> { X = k.ReadKey("X"), Y = k.ReadKey("Y"), Z = k.ReadKey("Z") };
+
+        public static Vector2<Key> ReadKeyUV(this MsgPack k, string name) =>
+            k.Element(name, out MsgPack Name) ? Name.ReadKeyUV() : default;
+
+        public static Vector2<Key> ReadKeyUV(this MsgPack k) =>
+            new Vector2<Key> { X = k.ReadKey("U"), Y = k.ReadKey("V") };
+
+        public static Key ReadKey(this MsgPack k, string name) =>
+            k.Element(name, out MsgPack Name) ? Name.ReadKey() : default;
+
+        public static Key ReadKey(this MsgPack k)
+        {
+            if (k.Object == null) return null;
+            
+            Key Key = new Key { EPTypePost = k.ReadNInt32("EPTypePost"),
+                EPTypePre = k.ReadNInt32("EPTypePre"), Max = k.ReadNDouble("Max"),
+                Type = k.ReadNInt32("Type"), Value = k.ReadNDouble("Value") };
+            if (k.ReadBoolean("RawData")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
+            if (Key.Type == 0) Key.Value = 0.0;
+
+            if (Key.Type < 2) return Key;
+
+            if (!k.ElementArray("Trans", out MsgPack Trans)) return Key;
+
+            Key.Length = Trans.Array.Length;
+            Key.Trans = new IKeyFrame<double, double>[Key.Length.Value];
+            for (int i = 0; i < Key.Length; i++)
+            {
+                if (Trans[i].Array == null) continue;
+                else if (Trans[i].Array.Length == 0) continue;
+                else if (Trans[i].Array.Length == 1)
+                    Key.Trans[i] = new KeyFrameT0<double, double>
+                    {   Frame          = Trans[i][0].ReadDouble() };
+                else if (Trans[i].Array.Length == 2)
+                    Key.Trans[i] = new KeyFrameT1<double, double>
+                    {
+                        Frame          = Trans[i][0].ReadDouble(),
+                        Value          = Trans[i][1].ReadDouble(),
+                    };
+                else if (Trans[i].Array.Length == 3)
+                    Key.Trans[i] = new KeyFrameT2<double, double>
+                    {
+                        Frame          = Trans[i][0].ReadDouble(),
+                        Value          = Trans[i][1].ReadDouble(),
+                        Interpolation  = Trans[i][2].ReadDouble(),
+                    };
+                else if (Trans[i].Array.Length == 4)
+                    Key.Trans[i] = new KeyFrameT3<double, double>
+                    {
+                        Frame          = Trans[i][0].ReadDouble(),
+                        Value          = Trans[i][1].ReadDouble(),
+                        Interpolation1 = Trans[i][2].ReadDouble(),
+                        Interpolation2 = Trans[i][3].ReadDouble(),
+                    };
+                Key.Trans[i] = Key.Trans[i].Check();
+            }
+            return Key;
+        }
+
+        public static MsgPack Add(this MsgPack MsgPack, ModelTransform MT) =>
+            MsgPack.Add("Rot"       , MT.Rot       )
+                   .Add("Scale"     , MT.Scale     )
+                   .Add("Trans"     , MT.Trans     )
+                   .Add("Visibility", MT.Visibility);
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, ModelTransform MT) =>
+            MsgPack.Add(new MsgPack(name).Add("Rot"       , MT.Rot       )
+                                         .Add("Scale"     , MT.Scale     )
+                                         .Add("Trans"     , MT.Trans     )
+                                         .Add("Visibility", MT.Visibility));
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, Vector4<Key> RGBA) =>
+            (RGBA.X == null && RGBA.Y == null && RGBA.Z == null && RGBA.W == null) ? MsgPack :
+           MsgPack.Add(new MsgPack(name).Add("R", RGBA.X).Add("G", RGBA.Y)
+                                        .Add("B", RGBA.Z).Add("A", RGBA.W));
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, Vector3<Key> Key) =>
+            MsgPack.Add(new MsgPack(name).Add("X", Key.X).Add("Y", Key.Y).Add("Z", Key.Z));
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, Vector2<Key> UV) =>
+            (UV.X == null && UV.Y == null) ? MsgPack :
+            MsgPack.Add(new MsgPack(name).Add("U", UV.X).Add("V", UV.Y));
+
+        public static MsgPack Add(this MsgPack MsgPack, string name, Key Key)
+        {
+            if (Key == null) return MsgPack;
+            if (Key.Type == null) return MsgPack;
+
+            MsgPack Keys = new MsgPack(name).Add("Type", Key.Type);
+            if (Key.Trans != null)
+            {
+                Keys = Keys.Add("Max", Key.Max).Add("EPTypePost", Key.EPTypePost).Add("EPTypePre", Key.EPTypePre);
+
+                if (Key.RawData.KeyType != null) Keys.Add("RawData", true);
+                
+                MsgPack Trans = new MsgPack(Key.Trans.Length, "Trans");
+                MsgPack K;
+                for (int i = 0; i < Key.Trans.Length; i++)
+                         if (Key.Trans[i] is KeyFrameT0<double, double> KeyFrameT0)
+                    {
+                        K = new MsgPack(1);
+                        K[0] = (MsgPack)KeyFrameT0.Frame;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT1<double, double> KeyFrameT1)
+                    {
+                        K = new MsgPack(2);
+                        K[0] = (MsgPack)KeyFrameT1.Frame;
+                        K[1] = (MsgPack)KeyFrameT1.Value;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT2<double, double> KeyFrameT2)
+                    {
+                        K = new MsgPack(3);
+                        K[0] = (MsgPack)KeyFrameT2.Frame;
+                        K[1] = (MsgPack)KeyFrameT2.Value;
+                        K[2] = (MsgPack)KeyFrameT2.Interpolation;
+                        Trans[i] = K;
+                    }
+                    else if (Key.Trans[i] is KeyFrameT3<double, double> KeyFrameT3)
+                    {
+                        K = new MsgPack(4);
+                        K[0] = (MsgPack)KeyFrameT3.Frame;
+                        K[1] = (MsgPack)KeyFrameT3.Value;
+                        K[2] = (MsgPack)KeyFrameT3.Interpolation1;
+                        K[3] = (MsgPack)KeyFrameT3.Interpolation2;
+                        Trans[i] = K;
+                    }
+                Keys.Add(Trans);
+            }
+            else if (Key.Value != 0) Keys.Add("Value", Key.Value);
+            return MsgPack.Add(Keys);
+        }
+
+        public static void Write(this Stream IO, string Data, ref bool? val)
+        { if (val != null) IO.Write(Data, (  bool)val   ); }
+        public static void Write(this Stream IO, string Data,     long? val)
+        { if (val != null) IO.Write(Data, (  long)val   ); }
+        public static void Write(this Stream IO, string Data,    ulong? val)
+        { if (val != null) IO.Write(Data, ( ulong)val   ); }
+        public static void Write(this Stream IO, string Data,   double? val)
+        { if (val != null) IO.Write(Data, (double)val   ); }
+        public static void Write(this Stream IO, string Data,   double? val, byte r)
+        { if (val != null) IO.Write(Data, (double)val, r); }
+        public static void Write(this Stream IO, string Data, ref bool  val)         =>
+            IO.Write(Data, Main.ToString(val));
+        public static void Write(this Stream IO, string Data,     long  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,    ulong  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,   double  val)         =>
+            IO.Write(Data,  val.ToString(   ));
+        public static void Write(this Stream IO, string Data,   double  val, byte r) =>
+            IO.Write(Data,  val.ToString(r  ));
+        public static void Write(this Stream IO, string Data,   string  val)
+        { if (val != null) IO.Write((Data + val + "\n").ToUTF8()); }
     }
 
     public struct A3DAData
     {
+        public int Count;
+        public int BinaryLength;
+        public int BinaryOffset;
+        public int HeaderOffset;
+        public int StringLength;
+        public int StringOffset;
+
         public string[] Motion;
         public string[] ObjectList;
         public string[] ObjectHRCList;
@@ -2021,13 +2467,12 @@ namespace KKdMainLib.A3DA
         public Curve[] Curve;
         public Event[] Event;
         public Light[] Light;
-        public Header Head;
-        public PDHead Header;
         public Object[] Object;
         public Ambient[] Ambient;
         public ObjectHRC[] ObjectHRC;
         public CameraRoot[] CameraRoot;
         public MObjectHRC[] MObjectHRC;
+        public Main.Format Format;
         public PlayControl PlayControl;
         public PostProcess PostProcess;
         public MaterialList[] MaterialList;
@@ -2036,11 +2481,19 @@ namespace KKdMainLib.A3DA
         public CameraAuxiliary CameraAuxiliary;
     }
 
+    public struct _
+    {
+        public int? CompressF16;
+        public string FileName;
+        public string PropertyVersion;
+        public string ConverterVersion;
+    }
+
     public struct Ambient
     {
         public string  Name;
-        public RGBAKey    LightDiffuse;
-        public RGBAKey RimLightDiffuse;
+        public Vector4<Key>    LightDiffuse;
+        public Vector4<Key> RimLightDiffuse;
     }
 
     public class CameraAuxiliary
@@ -2054,9 +2507,21 @@ namespace KKdMainLib.A3DA
 
     public struct CameraRoot
     {
-        public ViewPoint ViewPoint;
+        public ViewPoint VP;
         public ModelTransform MT;
         public ModelTransform Interest;
+
+        public struct ViewPoint
+        {
+            public double? Aspect;
+            public double? FOVHorizontal;
+            public double? CameraApertureH;
+            public double? CameraApertureW;
+            public Key FOV;
+            public Key Roll;
+            public Key FocalLength;
+            public ModelTransform MT;
+        }
     }
 
     public struct Curve
@@ -2090,17 +2555,7 @@ namespace KKdMainLib.A3DA
         public Key End;
         public Key Start;
         public Key Density;
-        public RGBAKey Diffuse;
-    }
-
-    public struct Header
-    {
-        public int Count;
-        public int BinaryLength;
-        public int BinaryOffset;
-        public int HeaderOffset;
-        public int StringLength;
-        public int StringOffset;
+        public Vector4<Key> Diffuse;
     }
 
     public class Key
@@ -2124,29 +2579,15 @@ namespace KKdMainLib.A3DA
         }
     }
 
-    public struct Instance
-    {
-        public int? Shadow;
-        public string Name;
-        public string UIDName;
-        public ModelTransform MT;
-    }
-
-    public struct KeyUV
-    {
-        public Key U;
-        public Key V;
-    }
-
     public struct Light
     {
         public int? Id;
         public string Name;
         public string Type;
-        public RGBAKey Ambient;
-        public RGBAKey Diffuse;
-        public RGBAKey Specular;
-        public RGBAKey Incandescence;
+        public Vector4<Key> Ambient;
+        public Vector4<Key> Diffuse;
+        public Vector4<Key> Specular;
+        public Vector4<Key> Incandescence;
         public ModelTransform Position;
         public ModelTransform SpotDirection;
     }
@@ -2156,8 +2597,8 @@ namespace KKdMainLib.A3DA
         public string Name;
         public string HashName;
         public Key GlowIntensity;
-        public RGBAKey BlendColor;
-        public RGBAKey Incandescence;
+        public Vector4<Key> BlendColor;
+        public Vector4<Key> Incandescence;
     }
 
     public struct MObjectHRC
@@ -2165,8 +2606,16 @@ namespace KKdMainLib.A3DA
         public string Name;
         public Node[] Node;
         public Vector3<double?> JointOrient;
-        public Instance[] Instance;
+        public Instance[] Instances;
         public ModelTransform MT;
+
+        public struct Instance
+        {
+            public int? Shadow;
+            public string Name;
+            public string UIDName;
+            public ModelTransform MT;
+        }
     }
 
     public struct ModelTransform
@@ -2207,12 +2656,12 @@ namespace KKdMainLib.A3DA
         public struct TextureTransform
         {
             public string Name;
-            public KeyUV Coverage;
-            public KeyUV Offset;
-            public KeyUV Repeat;
-            public Key   Rotate;
-            public Key   RotateFrame;
-            public KeyUV TranslateFrame;
+            public Key Rotate;
+            public Key RotateFrame;
+            public Vector2<Key> Offset;
+            public Vector2<Key> Repeat;
+            public Vector2<Key> Coverage;
+            public Vector2<Key> TranslateFrame;
         }
     }
 
@@ -2225,7 +2674,7 @@ namespace KKdMainLib.A3DA
         public Vector3<double?> JointOrient;
     }
 
-    public class PlayControl
+    public struct PlayControl
     {
         public double? Begin;
         public double? Div;
@@ -2239,35 +2688,8 @@ namespace KKdMainLib.A3DA
         public Key LensFlare;
         public Key LensGhost;
         public Key LensShaft;
-        public RGBAKey Ambient;
-        public RGBAKey Diffuse;
-        public RGBAKey Specular;
-    }
-
-    public struct RGBAKey
-    {
-        public Key R;
-        public Key G;
-        public Key B;
-        public Key A;
-    }
-
-    public class Vector3<T>
-    {
-        public T X;
-        public T Y;
-        public T Z;
-    }
-
-    public struct ViewPoint
-    {
-        public double? Aspect;
-        public double? FOVHorizontal;
-        public double? CameraApertureH;
-        public double? CameraApertureW;
-        public Key FOV;
-        public Key Roll;
-        public Key FocalLength;
-        public ModelTransform MT;
+        public Vector4<Key> Ambient;
+        public Vector4<Key> Diffuse;
+        public Vector4<Key> Specular;
     }
 }

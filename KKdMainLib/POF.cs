@@ -29,7 +29,7 @@ namespace KKdMainLib
         public static Stream GetOffset(this Stream stream, ref POF POF)
         {
             if (POF != null) if (stream.Format > Main.Format.F)
-                    POF.POFOffsets.Add(stream.Position - (stream.IsX ? stream.Offset : 0x00));
+                    POF.POFOffsets.Add(stream.Position + (stream.IsX ? stream.Offset : 0x00));
             return stream;
         }
 
@@ -97,7 +97,7 @@ namespace KKdMainLib
             POF.Header = new PDHead { DataSize = (int)POFLenghtAling, ID = ID, Format = Main.Format.F2LE,
                 Lenght = 0x20, SectionSize = (int)POFLenghtAling, Signature = 0x30464F50 };
             POF.Header.Signature += POF.Type << 24;
-            stream.Write(POF.Header);
+            stream.Write(POF.Header, true);
 
             stream.Write(POF.Lenght);
             for (int i = 0; i < POF.POFOffsets.Count; i++)

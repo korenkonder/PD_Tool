@@ -11,7 +11,6 @@ namespace KKdMainLib.IO
         private ushort ValRead;
         private  byte BitRead, BitWrite, ValWrite;
         private byte[] buf;
-        private byte[] data;
 
         private Main.Format _format = Main.Format.NULL;
 
@@ -46,7 +45,7 @@ namespace KKdMainLib.IO
 
         public string File = null;
 
-        public Stream(MSIO.Stream output = null, byte[] Data = null, bool isBE = false)
+        public Stream(MSIO.Stream output = null, bool isBE = false)
         {
             if (output == null) output = MSIO.Stream.Null;
             LongOffset = 0;
@@ -56,7 +55,6 @@ namespace KKdMainLib.IO
             Format = Main.Format.NULL;
             buf = new byte[128];
             IsBE = isBE;
-            data = Data;
         }
 
         public void Close() => Dispose();
@@ -75,7 +73,7 @@ namespace KKdMainLib.IO
         { CheckWrited(); Dispose(true); }
 
         private void Dispose(bool disposing)
-        { if (disposing && stream != MSIO.Stream.Null) stream.Flush(); stream.Dispose(); data = null; }
+        { if (disposing && stream != MSIO.Stream.Null) stream.Flush(); stream.Dispose(); }
 
         public MSIO.Stream BaseStream
         { get { stream.Flush(); return stream; } set { stream = value; } }
@@ -84,23 +82,23 @@ namespace KKdMainLib.IO
         {
             long Al = Align - Position % Align;
             if (Position % Align != 0)
-                stream.Seek(Position + Al, 0);
+                stream.Seek(Position + Offset + Al, 0);
         }
 
         public void Align(long Align, bool SetLength)
         {
-            if (SetLength) stream.SetLength(Position);
+            if (SetLength) stream.SetLength(Position + Offset);
             long Al = Align - Position % Align;
-            if (Position % Align != 0) stream.Seek(Position + Al, 0);
-            if (SetLength) stream.SetLength(Position);
+            if (Position % Align != 0) stream.Seek(Position + Offset + Al, 0);
+            if (SetLength) stream.SetLength(Position + Offset);
         }
 
         public void Align(long Align, bool SetLength0, bool SetLength1)
         {
-            if (SetLength0) stream.SetLength(Position);
+            if (SetLength0) stream.SetLength(Position + Offset);
             long Al = Align - Position % Align;
             if (Position % Align != 0) stream.Seek(Position + Al, 0);
-            if (SetLength1) stream.SetLength(Position);
+            if (SetLength1) stream.SetLength(Position + Offset);
         }
 
         public   bool ReadBoolean() =>         stream.ReadByte() == 1;
@@ -375,10 +373,10 @@ namespace KKdMainLib.IO
 
         public byte[] ToArray()
         {
-            long Offset = stream.Position;
-            LongPosition = 0;
+            long Position = stream.Position;
+            stream.Position = 0;
             byte[] Data = ReadBytes(stream.Length);
-            LongPosition = Offset;
+            stream.Position = Position;
             return Data;
         }
     }

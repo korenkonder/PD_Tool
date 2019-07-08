@@ -7,7 +7,7 @@ namespace KKdMainLib
 {
     public class DataBank
     {
-        public DataBank() { Success = false; IO = null; pvList = null; }
+        public DataBank() { Success = false; IO = null; pvList = null; psrDat = null; }
 
         private Stream IO;
         private int i;
@@ -34,12 +34,14 @@ namespace KKdMainLib
                 for (i = 0; i < psrDat.Length; i++) psrDat[i].SetValue(array, i);
                 Success = true;
             }
+            else if (file.Contains("psrData")) { psrDat = null; Success = true; }
             else if (file.Contains("PvList") && array.Length % 7 < 2)
             {
                 pvList = new PvList[array.Length / 7];
                 for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i);
                 Success = true;
             }
+            else if (file.Contains("PvList")) { pvList = null; Success = true; }
         }
 
         public void DBWriter(string file)
@@ -48,14 +50,19 @@ namespace KKdMainLib
 
             IO = File.OpenWriter();
             if (file.Contains("psrData"))
-                for (i = 0; i < psrDat.Length; i++)
-                    IO.Write(psrDat[i].ToString() + c);
+            {
+                if (psrDat != null || psrDat.Length > 0)
+                    for (i = 0; i < psrDat.Length; i++)
+                        IO.Write(psrDat[i].ToString() + c);
+            }
             else if (file.Contains("PvList"))
-                if (pvList.Length != 0)
+            {
+                if (pvList != null || pvList.Length > 0)
                     for (i = 0; i < pvList.Length; i++)
                         IO.Write(UrlEncode(pvList[i].ToString() +
-                            ((i + 1 != pvList.Length) ? c : "")));
-                else IO.Write("%2A%2A%2A");
+                            (i < pvList.Length ? c : "")));
+            }
+            else IO.Write("%2A%2A%2A");
              
 
             byte[] data = IO.ToArray(true);
@@ -70,20 +77,29 @@ namespace KKdMainLib
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
             bool compact = MsgPack.ReadBoolean("Compact");
 
-            if (file.Contains("psrData") && MsgPack.ElementArray("psrData", out MsgPack psrData))
+            if (file.Contains("psrData"))
             {
-                psrDat = new psrData[psrData.Array.Length];
-                for (i = 0; i < psrDat.Length; i++)
-                    psrDat[i].SetValue(psrData[i]);
+                if (MsgPack.ElementArray("psrData", out MsgPack psrData))
+                {
+                    psrDat = new psrData[psrData.Array.Length];
+                    for (i = 0; i < psrDat.Length; i++)
+                        psrDat[i].SetValue(psrData[i]);
+                }
+                else if (MsgPack.ContainsKey("psrData")) psrDat = null;
                 Success = true;
             }
-            else if (file.Contains("PvList") && MsgPack.ElementArray("PvList", out MsgPack PvList))
+            else if (file.Contains("PvList"))
             {
-                pvList = new PvList[PvList.Array.Length];
-                for (i = 0; i < pvList.Length; i++)
-                    pvList[i].SetValue(PvList[i], compact);
+                if (MsgPack.ElementArray("PvList", out MsgPack PvList))
+                {
+                    pvList = new PvList[PvList.Array.Length];
+                    for (i = 0; i < pvList.Length; i++)
+                        pvList[i].SetValue(PvList[i], compact);
+                }
+                else if (MsgPack.ContainsKey("PvList")) pvList = null;
                 Success = true;
             }
+            
             MsgPack = MsgPack.New;
         }
 
@@ -94,17 +110,25 @@ namespace KKdMainLib
 
             if (file.Contains("psrData"))
             {
-                MsgPack psrData = new MsgPack(psrDat.Length, "psrData");
-                for (i = 0; i < psrDat.Length; i++) psrData[i] = psrDat[i].WriteMP();
-                msgPack.Add(psrData);
+                if (psrDat != null)
+                {
+                    MsgPack psrData = new MsgPack(psrDat.Length, "psrData");
+                    for (i = 0; i < psrDat.Length; i++) psrData[i] = psrDat[i].WriteMP();
+                    msgPack.Add(psrData);
+                }
+                else msgPack.Add(new MsgPack("psrData", null));
             }
             else if (file.Contains("PvList"))
             {
-                if (Compact) msgPack.Add("Compact", Compact);
+                if (psrDat != null)
+                {
+                    if (Compact) msgPack.Add("Compact", Compact);
 
-                MsgPack PvList = new MsgPack(pvList.Length, "PvList");
-                for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
-                msgPack.Add(PvList);
+                    MsgPack PvList = new MsgPack(pvList.Length, "PvList");
+                    for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
+                    msgPack.Add(PvList);
+                }
+                else msgPack.Add(new MsgPack("PvList", null));
             }
             msgPack.Write(file, JSON).Dispose();
         }
@@ -112,7 +136,6 @@ namespace KKdMainLib
         public static string UrlEncode(string value) =>
             WebUtility.UrlEncode(value).Replace("+", "%20");
 
-        
         public struct psrData
         {
             public Player p1;
@@ -237,8 +260,8 @@ namespace KKdMainLib
                 else { ID = msg.ReadNInt32("ID"); if (ID != null) PV_ID = (int)ID; }
                 bool? Enable = msg.ReadNBoolean("Enable");
                 bool? Extra  = msg.ReadNBoolean("Extra");
-                if (Enable == null) this.Enable = (bool)Enable;
-                if (Extra  == null) this.Extra  = (bool)Extra ;
+                if (Enable != null) this.Enable = (bool)Enable;
+                if (Extra  != null) this.Extra  = (bool)Extra ;
                 if (Compact)
                 {
                     AdvDemoStart.SetValue(msg.ReadNInt32("AdvDemoStart"),  true);
@@ -256,7 +279,7 @@ namespace KKdMainLib
             public MsgPack WriteMP(bool Compact)
             {
                 MsgPack msgPack = MsgPack.New;
-                msgPack.Add("PV_ID", PV_ID);
+                msgPack.Add("ID", PV_ID);
                 if (!Enable) msgPack.Add("Enable", Enable);
                 if ( Extra ) msgPack.Add("Extra" , Extra );
                 if (Compact)

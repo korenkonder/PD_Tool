@@ -211,10 +211,10 @@ namespace KKdMainLib
             for (int i = 0; i < files.Length; i++)
                 Files[i] = new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) };
             files = null;
-            CompressStuff();
+            Save();
         }
 
-        public void CompressStuff()
+        public void Save()
         {
             for (int i = 0; i < Files.Length; i++)
             {

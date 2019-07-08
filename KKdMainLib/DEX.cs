@@ -12,8 +12,8 @@ namespace KKdMainLib
 
         private int Offset = 0;
         private PDHead Header;
-        
-        public Stream IO;
+        private Stream IO;
+
         public EXP[] Dex;
 
         public int DEXReader(string filepath, string ext)
@@ -22,10 +22,10 @@ namespace KKdMainLib
             IO = File.OpenReader(filepath + ext);
 
             Header.Format = Main.Format.F;
-            Header.Signature = IO.ReadInt32();
-            if (Header.Signature == 0x43505845)
+            Header.SectionSignature = IO.ReadInt32();
+            if (Header.SectionSignature == 0x43505845)
                 Header = IO.ReadHeader(true);
-            if (Header.Signature != 0x64)
+            if (Header.SectionSignature != 0x64)
                 return 0;
 
             Offset = IO.Position - 0x4;
@@ -95,18 +95,10 @@ namespace KKdMainLib
         public void DEXWriter(string filepath, Main.Format Format)
         {
             Header = new PDHead() { Format = Format };
-            IO = File.OpenWriter(filepath + (Header.Format > Main.Format.F ? ".dex" : ".bin"), true);
-            IO.Format = Header.Format;
+            IO = File.OpenWriter(filepath + (Format > Main.Format.F ? ".dex" : ".bin"), true);
+            IO.Format = Format;
 
-            if (IO.Format > Main.Format.F)
-            {
-                Header.Lenght = 0x20;
-                Header.DataSize = 0x00;
-                Header.Signature = 0x43505845;
-                Header.SectionSize = 0x00;
-                IO.Write(Header);
-            }
-
+            IO.Offset = Format > Main.Format.F ? 0x20 : 0;
             IO.Write(0x64);
             IO.Write(Dex.Length);
 
@@ -114,8 +106,8 @@ namespace KKdMainLib
             IO.WriteX(0x00);
 
             int Position0 = IO.Position;
-            IO.Write((long)0x00);
-            IO.Write((long)0x00);
+            IO.Write(0x00L);
+            IO.Write(0x00L);
 
             for (int i = 0; i < Dex.Length * 3; i++) IO.WriteX(0x00);
 
@@ -123,7 +115,7 @@ namespace KKdMainLib
 
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
-                Dex[i0].MainOffset = IO.Position - Header.Lenght;
+                Dex[i0].MainOffset = IO.Position;
                 for (int i1 = 0; i1 < Dex[i0].Main.Count; i1++)
                 {
                     IO.Write(Dex[i0].Main[i1].Frame);
@@ -134,7 +126,7 @@ namespace KKdMainLib
                 }
                 IO.Align(0x20, true);
 
-                Dex[i0].EyesOffset = IO.Position - Header.Lenght;
+                Dex[i0].EyesOffset = IO.Position;
                 for (int i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
                 {
                     IO.Write(Dex[i0].Eyes[i1].Frame);
@@ -147,38 +139,35 @@ namespace KKdMainLib
             }
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
-                Dex[i0].NameOffset = IO.Position - Header.Lenght;
+                Dex[i0].NameOffset = IO.Position;
                 IO.Write(Dex[i0].Name + "\0");
             }
             IO.Align(0x10, true);
 
-            IO.Position = Header.Lenght + (Header.IsX ? 0x28 : 0x20);
+            IO.Position = Header.IsX ? 0x28 : 0x20;
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
-                IO.Write(Dex[i0].MainOffset);
-                if (Header.IsX) IO.Write(0x00);
-                IO.Write(Dex[i0].EyesOffset);
-                if (Header.IsX) IO.Write(0x00);
+                IO.WriteX(Dex[i0].MainOffset);
+                IO.WriteX(Dex[i0].EyesOffset);
             }
-            int Position1 = IO.Position - Header.Lenght;
+            int Position1 = IO.Position;
             for (int i0 = 0; i0 < Dex.Length; i0++)
-            {
-                IO.Write(Dex[i0].NameOffset);
-                if (Header.IsX) IO.Write(0x00);
-            }
+                IO.WriteX(Dex[i0].NameOffset);
 
             IO.Position = Position0 - (Header.IsX ? 8 : 4);
             IO.Write(Position1);
 
-            if (IO.Format > Main.Format.F)
+            if (Format > Main.Format.F)
             {
-                Offset = IO.Length - Header.Lenght;
-                IO.Seek(IO.Length, 0);
+                Offset = IO.Length;
+                IO.Offset = 0;
+                IO.Position = IO.Length;
                 IO.WriteEOFC(0);
-                IO.Seek(0, 0);
+                IO.Position = 0;
                 Header.DataSize = Offset;
                 Header.SectionSize = Offset;
-                IO.Write(Header);
+                Header.Signature = 0x43505845;
+                IO.Write(Header, true);
             }
             IO.Close();
         }

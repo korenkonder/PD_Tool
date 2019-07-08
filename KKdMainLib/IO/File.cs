@@ -5,7 +5,7 @@ namespace KKdMainLib.IO
 {
     public static class File
     {
-        public static Stream OpenReader(byte[] Data) => new Stream(new MSIO.MemoryStream(Data), Data);
+        public static Stream OpenReader(byte[] Data) => new Stream(new MSIO.MemoryStream(Data));
         public static Stream OpenWriter(           ) => new Stream(new MSIO.MemoryStream(    ));
 
         public static Stream OpenReader(string file, bool ReadAllAtOnce)
@@ -14,7 +14,7 @@ namespace KKdMainLib.IO
         { Stream IO = new Stream(new MSIO.FileStream(file, MSIO.FileMode.Open, MSIO.FileAccess.ReadWrite,
               MSIO.FileShare.ReadWrite)) { File = file }; return IO; }
         public static Stream OpenWriter(string file, bool SetLength0)
-        { Stream IO = OpenWriter(file); IO.SetLength(0        ); return IO; }
+        { Stream IO = OpenWriter(file); if (SetLength0) IO.SetLength(0); return IO; }
         public static Stream OpenWriter(string file, int SetLength)
         { Stream IO = OpenWriter(file); IO.SetLength(SetLength); return IO; }
         public static Stream OpenWriter(string file)

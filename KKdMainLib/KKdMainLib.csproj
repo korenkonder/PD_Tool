@@ -39,10 +39,6 @@
     <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="A3DA\A3DAExt.cs" />
-    <Compile Include="A3DA\A3DA.cs" />
-    <Compile Include="Aet\Aet.cs" />
-    <Compile Include="Aet\AetExt.cs" />
     <Compile Include="DB\Aet.cs" />
     <Compile Include="DB\Auth.cs" />
     <Compile Include="DB\Spr.cs" />
@@ -60,6 +56,8 @@
     <Compile Include="Types\KKdList.cs" />
     <Compile Include="Types\Pointer.cs" />
     <Compile Include="Types\Vector.cs" />
+    <Compile Include="A3DA.cs" />
+    <Compile Include="Aet.cs" />
     <Compile Include="DataBank.cs" />
     <Compile Include="DCC.cs" />
     <Compile Include="DEX.cs" />

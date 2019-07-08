@@ -120,7 +120,7 @@ namespace KKdMainLib.DB
                         if ( Ids.Contains((int)temp.Id)) { NotAdd.Add(i); break; }
                         else Ids.Add     ((int)temp.Id);
                 }
-                if (i0 + 1 != set.Sprites.Length) continue;
+                if (i0 < set.Sprites.Length) continue;
 
                 for (i0 = 0; i0 < set.Textures.Length; i0++)
                 {

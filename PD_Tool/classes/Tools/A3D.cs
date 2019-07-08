@@ -65,30 +65,29 @@ namespace PD_Tool.Tools
                 if (ext == ".farc")
                 {
                     KKdFARC FARC = new KKdFARC(file);
+                    if (!FARC.HeaderReader()) continue;
+                    if (!FARC.HasFiles) continue;
+
                     MsgPack A3DA = MsgPack.Null;
-                    if (FARC.HeaderReader())
+                    byte[] data = null;
+                    for (int i = 0; i < FARC.Files.Length; i++)
                     {
-                        if (FARC.HasFiles)
+                        data = FARC.FileReader(i);
+                        state = A.A3DAReader(data);
+                        if (state == 1)
                         {
-                            byte[] data = null;
-                            for (int i = 0; i < FARC.Files.Length; i++)
-                            {
-                                data = FARC.FileReader(i);
-                                state = A.A3DAReader(data);
-                                if (state == 1)
-                                {
-                                    A3DA = A.MsgPackWriter();
-                                    A = new KKdA3DA();
-                                    A.MsgPackReader(A3DA);
-                                    A.IO = File.OpenWriter();
-                                    if (format != "1" && format != "3") data = A.A3DCWriter();
-                                    else { A.A3DAWriter(); data = A.IO.ToArray(true); }
-                                    FARC.Files[i].Data = data;
-                                }
-                            }
-                            FARC.CompressStuff();
+                            A3DA = A.MsgPackWriter();
+                            A = new KKdA3DA();
+                            A.MsgPackReader(A3DA);
+                            A.IO = File.OpenWriter();
+                            A.Data._.CompressF16 = Format > Main.Format.FT ?
+                                Format == Main.Format.MGF ? 2 : 1 : 0;
+                            A.Data.Format = Format;
+                            FARC.Files[i].Data = (format != "1" &&
+                                format != "3") ? A.A3DCWriter() : A.A3DAWriter();
                         }
                     }
+                    FARC.Save();
                 }
                 else if (ext == ".a3da")
                 {
@@ -98,12 +97,12 @@ namespace PD_Tool.Tools
                 else if (ext == ".mp" || ext == ".json")
                 {
                     A.MsgPackReader(filepath, ext == ".json");
-                    A.IO = File.OpenWriter(filepath + ".a3da", true);
-                    A.Data._.CompressF16 = A.Data.Header.Format > Main.Format.FT ? Format == Main.Format.MGF ? 2 : 1 : 0;
-                    A.Data.Header.Format = Format;
+                    A.Data._.CompressF16 = Format > Main.Format.FT ?
+                        Format == Main.Format.MGF ? 2 : 1 : 0;
+                    A.Data.Format = Format;
 
-                    if (format != "1" && format != "3") A.A3DCWriter(filepath);
-                    else { A.A3DAWriter(); A.IO.Close(); }
+                    File.WriteAllBytes(filepath + ".a3da", (format != "1" &&
+                        format != "3") ? A.A3DCWriter() : A.A3DAWriter());
                 }
                 A = null;
             }

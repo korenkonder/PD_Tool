@@ -1,4 +1,6 @@
-﻿namespace KKdMainLib.Types
+﻿using KKdMainLib.IO;
+
+namespace KKdMainLib.Types
 {
     public struct Pointer<T>
     {
@@ -22,5 +24,20 @@
 
         public override string ToString() => Count < 1 ? "No Entries" :
             Count == 1 ? Entries[0].ToString() : "Count: " + Count;
+    }
+
+    public static class PointerExt
+    {
+        public static Pointer<T> ReadPointer<T>(this Stream IO) =>
+            new Pointer<T> { Offset = IO.ReadInt32() };
+
+        public static Pointer<string> ReadPointerString(this Stream IO)
+        {
+            Pointer<string> val = IO.ReadPointer<string>();
+            val.Value = IO.ReadStringAtOffset(val.Offset); return val;
+        }
+
+        public static CountPointer<T> ReadCountPointer<T>(this Stream IO) =>
+            new CountPointer<T> { Count = IO.ReadInt32(), Offset = IO.ReadInt32() };
     }
 }

@@ -5,7 +5,7 @@ namespace KKdMainLib.Types
     public struct KKdList<T> : IEnumerator, IEnumerable
     {
         public static KKdList<T> Null => new KKdList<T>();
-        public static KKdList<T> New => new KKdList<T>() { Capacity = 0 };
+        public static KKdList<T> New  => new KKdList<T>() { Capacity = 0 };
         public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { Capacity = Capacity };
 
         private int index;
@@ -83,7 +83,9 @@ namespace KKdMainLib.Types
         {
             if (IsNull) return false;
             for (int i = 0; i < Count; i++)
-                if (array[i].Equals(val)) return true;
+                     if (array[i] == null && val == null) return true;
+                else if (                    val == null)    continue;
+                else if (array[i]    .Equals(val)       ) return true;
             return false;
         }
 
@@ -91,7 +93,9 @@ namespace KKdMainLib.Types
         {
             if (IsNull) return -1;
             for (int i = 0; i < Count; i++)
-                if (array[i].Equals(val)) return i;
+                     if (array[i] == null && val == null) return i;
+                else if (                    val == null) continue;
+                else if (array[i]    .Equals(val)       ) return i;
             return -1;
         }
     }

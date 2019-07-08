@@ -16,6 +16,7 @@ namespace KKdMainLib.MessagePack
                 MsgPack = IO.Read(); IO.Close(); IO = null; }
             return MsgPack;
         }
+
         public static MsgPack ReadMP(this string file, bool JSON = false)
         {
             MsgPack MsgPack;

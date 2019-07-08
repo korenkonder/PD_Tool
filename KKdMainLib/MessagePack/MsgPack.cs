@@ -44,6 +44,9 @@ namespace KKdMainLib.MessagePack
             (Array != null ? ((Name != null ? " " : "") + "Elements Count: " + Array.Length) :
             Object.ToString()));
 
+        public MsgPack Add(string Val, byte[] val) => val != null ? Add(new MsgPack(Val, val)) : this;
+        public MsgPack Add(string Val, string val) => val != null ? Add(new MsgPack(Val, val)) : this;
+
         public static explicit operator MsgPack(byte[] val) => new MsgPack(null, val);
         public static explicit operator MsgPack(string val) => new MsgPack(null, val);
         public static explicit operator MsgPack( sbyte val) => new MsgPack(null, val);
@@ -57,17 +60,17 @@ namespace KKdMainLib.MessagePack
         public static explicit operator MsgPack( float val) => new MsgPack(null, val);
         public static explicit operator MsgPack(double val) => new MsgPack(null, val);
 
-        public MsgPack Add( sbyte? val) => val != null ? Add(new MsgPack(null, ( sbyte)val)) : this;
-        public MsgPack Add(  byte? val) => val != null ? Add(new MsgPack(null, (  byte)val)) : this;
-        public MsgPack Add( short? val) => val != null ? Add(new MsgPack(null, ( short)val)) : this;
-        public MsgPack Add(ushort? val) => val != null ? Add(new MsgPack(null, (ushort)val)) : this;
-        public MsgPack Add(   int? val) => val != null ? Add(new MsgPack(null, (   int)val)) : this;
-        public MsgPack Add(  uint? val) => val != null ? Add(new MsgPack(null, (  uint)val)) : this;
-        public MsgPack Add(  long? val) => val != null ? Add(new MsgPack(null, (  long)val)) : this;
-        public MsgPack Add( ulong? val) => val != null ? Add(new MsgPack(null, ( ulong)val)) : this;
-        public MsgPack Add( float? val) => val != null ? Add(new MsgPack(null, ( float)val)) : this;
-        public MsgPack Add(double? val) => val != null ? Add(new MsgPack(null, (double)val)) : this;
-        
+        public MsgPack Add( sbyte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(  byte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add( short? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(ushort? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(   int? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(  uint? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(  long? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add( ulong? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add( float? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+        public MsgPack Add(double? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
+
         public MsgPack Add(byte[]  val) => Add(new MsgPack(null, val));
         public MsgPack Add(string  val) => Add(new MsgPack(null, val));
         public MsgPack Add(  bool  val) => Add(new MsgPack(null, val));
@@ -82,19 +85,16 @@ namespace KKdMainLib.MessagePack
         public MsgPack Add( float  val) => Add(new MsgPack(null, val));
         public MsgPack Add(double  val) => Add(new MsgPack(null, val));
         
-
-        public MsgPack Add(string Val,  byte[] val) => val != null ? Add(new MsgPack(Val, val)) : this;
-        public MsgPack Add(string Val,  string val) => val != null ? Add(new MsgPack(Val, val)) : this;
-        public MsgPack Add(string Val,  sbyte? val) => val != null ? Add(Val, ( sbyte)val) : this;
-        public MsgPack Add(string Val,   byte? val) => val != null ? Add(Val, (  byte)val) : this;
-        public MsgPack Add(string Val,  short? val) => val != null ? Add(Val, ( short)val) : this;
-        public MsgPack Add(string Val, ushort? val) => val != null ? Add(Val, (ushort)val) : this;
-        public MsgPack Add(string Val,    int? val) => val != null ? Add(Val, (   int)val) : this;
-        public MsgPack Add(string Val,   uint? val) => val != null ? Add(Val, (  uint)val) : this;
-        public MsgPack Add(string Val,   long? val) => val != null ? Add(Val, (  long)val) : this;
-        public MsgPack Add(string Val,  ulong? val) => val != null ? Add(Val, ( ulong)val) : this;
-        public MsgPack Add(string Val,  float? val) => val != null ? Add(Val, ( float)val) : this;
-        public MsgPack Add(string Val, double? val) => val != null ? Add(Val, (double)val) : this;
+        public MsgPack Add(string Val,  sbyte? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,   byte? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,  short? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val, ushort? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,    int? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,   uint? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,   long? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,  ulong? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val,  float? val) => val.HasValue ? Add(Val, val.Value) : this;
+        public MsgPack Add(string Val, double? val) => val.HasValue ? Add(Val, val.Value) : this;
 
         public MsgPack Add(string Val,   bool val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,  sbyte val) => Add(new MsgPack(Val, val));

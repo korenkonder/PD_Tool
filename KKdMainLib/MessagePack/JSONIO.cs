@@ -136,13 +136,13 @@ namespace KKdMainLib.MessagePack
             else
             {
                 long val = long.Parse(s);
-                     if (val >=  0x000000 && val < 0x0000100) return (  byte)val;
-                else if (val >= -0x000080 && val < 0x0000080) return ( sbyte)val;
-                else if (val >= -0x008000 && val < 0x0008000) return ( short)val;
-                else if (val >=  0x000000 && val < 0x0010000) return (ushort)val;
-                else if (val >= -0x800000 && val < 0x0800000) return (   int)val;
-                else if (val >=  0x000000 && val < 0x1000000) return (  uint)val;
-                else                                          return         val;
+                     if (val >=  0x00000000 && val < 0x000000100) return (  byte)val;
+                else if (val >= -0x00000080 && val < 0x000000080) return ( sbyte)val;
+                else if (val >= -0x00008000 && val < 0x000008000) return ( short)val;
+                else if (val >=  0x00000000 && val < 0x000010000) return (ushort)val;
+                else if (val >= -0x80000000 && val < 0x000800000) return (   int)val;
+                else if (val >=  0x00000000 && val < 0x100000000) return (  uint)val;
+                else                                              return         val;
             }
 
             char c = _IO.PeekCharUTF8();
@@ -255,8 +255,8 @@ namespace KKdMainLib.MessagePack
         }
         private void Write(  bool val) => _IO.Write(val ? "true" : "false");
         private void Write(string val) => _IO.Write("\"" + val
-            .Replace("\\", "\\\\").Replace("/" , "\\/").Replace("\'", "\\\'").Replace("\"", "\\\"")
-            .Replace("\0", "\\0" ).Replace("\a", "\\a").Replace("\b", "\\b" ).Replace("\f", "\\f" )
+            .Replace("\\", "\\\\").Replace("/" , "\\/").Replace("\"", "\\\"")
+            .Replace("\0", "\\0" ).Replace("\b", "\\b").Replace("\f", "\\f" )
             .Replace("\n", "\\n" ).Replace("\r", "\\r").Replace("\t", "\\t" ) + "\"");
 
         private void WriteNil() => _IO.Write("null");

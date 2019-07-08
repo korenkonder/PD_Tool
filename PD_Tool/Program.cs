@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using KKdMainLib.IO;
-using KKdMainLib.Types;
 using KKdMain = KKdMainLib.Main;
 using KKdFARC = KKdMainLib.FARC;
 
@@ -9,7 +7,7 @@ namespace PD_Tool
 {
     public static class Program
     {
-        public static string function = "";
+        [ThreadStatic] public static string function = "";
 
         [STAThread]
         public static void Main(string[] args)
@@ -39,7 +37,7 @@ namespace PD_Tool
             Exit();
         }
 
-        private static bool JSON = true;
+        [ThreadStatic] private static bool JSON = true;
 
         private static void MainMenu()
         {

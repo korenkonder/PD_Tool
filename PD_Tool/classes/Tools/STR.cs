@@ -29,9 +29,9 @@ namespace PD_Tool.Tools
                     Data.STRReader    (filepath, ext);
                     Data.MsgPackWriter(filepath, JSON);
                 }
-                else if (ext == ".mp")
+                else if (ext == ".json" || ext == ".mp")
                 {
-                    Data.MsgPackReader(filepath, JSON);
+                    Data.MsgPackReader(filepath, ext == ".json");
                     Data.STRWriter    (filepath);
                 }
                 Data = null;
