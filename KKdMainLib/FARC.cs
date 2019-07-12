@@ -2,6 +2,7 @@
 
 using System.IO.Compression;
 using System.Security.Cryptography;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using MSIO = System.IO;
 
@@ -203,7 +204,7 @@ namespace KKdMainLib
             return SkipData;
         }
 
-        public void Pack()
+        public void Pack(Farc Signature = Farc.FArC)
         {
             NewFARC();
             string[] files = Directory.GetFiles(DirectoryPath);
@@ -211,6 +212,7 @@ namespace KKdMainLib
             for (int i = 0; i < files.Length; i++)
                 Files[i] = new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) };
             files = null;
+            this.Signature = Signature;
             Save();
         }
 
@@ -219,7 +221,8 @@ namespace KKdMainLib
             for (int i = 0; i < Files.Length; i++)
             {
                 string ext = Path.GetExtension(Files[i].Name).ToLower();
-                if (ext == ".a3da" || ext == ".diva" || ext == ".vag") Signature = Farc.FArc;
+                if (ext == ".a3da" || ext == ".diva" || ext == ".drs" || ext == ".dve" || ext == ".vag")
+                { Signature = Farc.FArc; break; }
             }
 
             Stream writer = File.OpenWriter(DirectoryPath + ".farc", true);

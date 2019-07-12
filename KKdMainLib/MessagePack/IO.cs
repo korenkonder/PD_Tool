@@ -1,6 +1,6 @@
 ﻿using System;
+using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.Types;
 
 namespace KKdMainLib.MessagePack
 {

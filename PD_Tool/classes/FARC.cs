@@ -64,7 +64,7 @@ namespace PD_Tool
                     else if (type == "R") return;
                     else FARC.Signature = KKdFARC.Farc.FArC;
                     Console.Title = "FARC Creator - Directory: " + Path.GetDirectoryName(file);
-                    new KKdFARC(file, true).Pack();
+                    new KKdFARC(file, true).Pack(FARC.Signature);
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
 using System.Collections.Generic;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.MessagePack;
 

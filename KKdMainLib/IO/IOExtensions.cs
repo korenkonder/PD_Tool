@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using KKdBaseLib;
 
 namespace KKdMainLib.IO
 {
@@ -10,7 +10,7 @@ namespace KKdMainLib.IO
             stream.NullTerminated(End).ToUTF8 ();
         public static byte[] NullTerminated     (this Stream stream, byte End = 0)
         {
-            List<byte> s = new List<byte>();
+            KKdList<byte> s = KKdList<byte>.New;
             while (stream.LongPosition < stream.LongLength)
             {
                 byte a = stream.ReadByte();
@@ -73,5 +73,15 @@ namespace KKdMainLib.IO
             stream.LongPosition = Position;
             return s;
         }
+
+        public static Pointer<string> ReadPointerStringShiftJIS(this Stream IO)
+        { Pointer<string> val = IO.ReadPointer<string>();
+            val.Value = IO.ReadStringShiftJISAtOffset(val.Offset); return val; }
+
+        public static string ReadStringShiftJISAtOffset(this Stream IO, long Offset = 0, long Length = 0) =>
+            Text.ShiftJIS.GetString(IO.ReadAtOffset(Offset, Length));
+
+        public static void WriteShiftJIS(this Stream IO, string String) =>
+            IO.Write(Text.ShiftJIS.GetBytes(String));
     }
 }

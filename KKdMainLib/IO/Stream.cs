@@ -1,5 +1,5 @@
 ﻿using System;
-using KKdMainLib.Types;
+using KKdBaseLib;
 using MSIO = System.IO;
 
 namespace KKdMainLib.IO

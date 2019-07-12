@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KKdMainLib.Types
+namespace KKdBaseLib
 {
     public struct Half : IFormattable
     {
@@ -34,49 +34,44 @@ namespace KKdMainLib.Types
             Half h = new Half();
                  if (val == +0                      ) h._value = 0x0000;
             else if (val == -0                      ) h._value = 0x8000;
-            else if (val ==  double.NaN             ) h._value = 0x7FFF;
-            else if (val == -double.NaN             ) h._value = 0xFFFF;
             else if (val ==  double.PositiveInfinity) h._value = 0x7C00;
             else if (val ==  double.NegativeInfinity) h._value = 0xFC00;
-            else                                      h._value = ToDouble(val);
+            else if (val ==  double.NaN             ) h._value = 0x7FFF;
+            else if (val == -double.NaN             ) h._value = 0xFFFF;
+            else
+            {
+                ushort Sign = (ushort)(val < 0 ? 0x8000 : 0);
+                val = Math.Abs(val);
+                double Pow1 = 1;
+                double Pow2 = 1 << 10;
+                double x = 0;
+
+                int MaxPow = (1 << 4);
+
+                int i = 0;
+                while (i < MaxPow && i > -MaxPow + 1)
+                {
+                    Pow1 = Math.Pow(2, i);
+                    x = val / Pow1;
+                    if (x >= 1 && x < 2)
+                    {
+                        ushort exponent_max = (ushort)Math.Ceiling(x * Pow2);
+                        ushort exponent_min = (ushort)Math.Floor  (x * Pow2);
+                        ushort exponent = Math.Abs(x - exponent_max / Pow2) >
+                            Math.Abs(x - exponent_min / Pow2) ? exponent_max : exponent_min;
+                        ushort mantissa = (ushort)(i + MaxPow - 1);
+                        h._value = (ushort)(Sign | ((mantissa & 0x001F) << 10) | (exponent & 0x03FF));
+                        return h;
+                    }
+                    if (val < 1) i--;
+                    else         i++;
+                }
+                h._value = (ushort)(Sign | 0x7C00);
+            }
             return h;
         }
 
-        public static ushort ToDouble(double val)
-        {
-            ushort Sign = 0;
-            if (val < 0)
-                Sign = 0x8000;
-            val = Math.Abs(val);
-            double Pow1 = 1;
-            double Pow2 = 1 << 10;
-            double x = 0;
-
-            int MaxPow = (1 << 4);
-
-            int i = 0;
-            while (i < MaxPow && i > -MaxPow + 1)
-            {
-                Pow1 = Math.Pow(2, i);
-                x = val / Pow1;
-                if (x >= 1 && x < 2)
-                {
-                    ushort exponent_max = (ushort)Math.Ceiling(x * Pow2);
-                    ushort exponent_min = (ushort)Math.Floor  (x * Pow2);
-                    ushort exponent = Math.Abs(x - exponent_max / Pow2) >
-                        Math.Abs(x - exponent_min / Pow2) ? exponent_max : exponent_min;
-                    ushort mantissa = (ushort)(i + MaxPow - 1);
-                    ushort d = (ushort)(Sign | ((mantissa & 0x001F) << 10) | (exponent & 0x03FF));
-                    return d;
-                }
-                else if (val < 1) i--;
-                else              i++;
-            }
-
-            return i >= +0 ? (ushort)0x7C00 : (ushort)0xFC00;
-        }
-
-        public override string ToString() => ((double)this).ToString();
+        public override string ToString() => Extensions.ToString((double)this);
         public string ToString(string format, IFormatProvider formatProvider) =>
             ((double)this).ToString(format, formatProvider);
         public override int GetHashCode() => base.GetHashCode();

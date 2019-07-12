@@ -1,8 +1,6 @@
 ﻿//Original research by Samyuu
 
-using KKdMainLib.IO;
-
-namespace KKdMainLib
+namespace KKdBaseLib
 {
     public static class DCC //Databank_Checksum_Calculator
     {
@@ -41,14 +39,11 @@ namespace KKdMainLib
             0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0,
         };
 
-        public static ushort CalculateChecksum(string file) => CalculateChecksum(File.ReadAllBytes(file));
-
         public static ushort CalculateChecksum(byte[] data)
         {
             ushort result = 0xFFFF;
             for (int i = 0; i < data.Length; i++)
                 result = (ushort)(ChecksumLookupTable[(result >> 8) ^ data[i]] ^ (result << 8));
-
             return result;
         }
     }

@@ -1,24 +1,24 @@
 ﻿using System.Collections.Generic;
 using KKdMainLib.IO;
+using KKdMainLib.F2nd;
 using KKdMainLib.MessagePack;
-using MPIO = KKdMainLib.MessagePack.IO;
 
 namespace KKdMainLib
 {
     public class DEX
     {
         public DEX()
-        { Dex = null; Header = new PDHead(); }
+        { Dex = null; Header = new Header(); }
 
         private int Offset = 0;
-        private PDHead Header;
+        private Header Header;
         private Stream IO;
 
         public EXP[] Dex;
 
         public int DEXReader(string filepath, string ext)
         {
-            Header = new PDHead();
+            Header = new Header();
             IO = File.OpenReader(filepath + ext);
 
             Header.Format = Main.Format.F;
@@ -94,9 +94,9 @@ namespace KKdMainLib
 
         public void DEXWriter(string filepath, Main.Format Format)
         {
-            Header = new PDHead() { Format = Format };
+            Header = new Header();
             IO = File.OpenWriter(filepath + (Format > Main.Format.F ? ".dex" : ".bin"), true);
-            IO.Format = Format;
+            Header.Format = IO.Format = Format;
 
             IO.Offset = Format > Main.Format.F ? 0x20 : 0;
             IO.Write(0x64);
@@ -177,7 +177,7 @@ namespace KKdMainLib
             int i0 = 0;
             int i1 = 0;
             this.Dex = new EXP[0];
-            Header = new PDHead();
+            Header = new Header();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
             if (!MsgPack.ElementArray("Dex", out MsgPack Dex)) return;

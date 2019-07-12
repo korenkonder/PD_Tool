@@ -1,5 +1,5 @@
 ﻿using System;
-using KKdMainLib.Types;
+using KKdBaseLib;
 
 namespace KKdMainLib.MessagePack
 {

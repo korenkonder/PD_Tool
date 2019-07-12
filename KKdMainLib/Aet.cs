@@ -1,7 +1,8 @@
 ﻿//Original: AetSet.bt Version: 2.0 by samyuu
 
+using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.Types;
+using KKdMainLib.F2nd;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.Aet
@@ -436,15 +437,6 @@ namespace KKdMainLib.Aet
     
     public static class AetExt
     {
-        private readonly static System.Text.Encoding ShiftJIS = System.Text.Encoding.GetEncoding(932);
-
-        public static Pointer<string> ReadPointerStringShiftJIS(this Stream IO)
-        { Pointer<string> val = IO.ReadPointer<string>();
-            val.Value = ShiftJIS.GetString(IO.ReadAtOffset(val.Offset)); return val; }
-
-        public static void WriteShiftJIS(this Stream IO, string String) =>
-            IO.Write(ShiftJIS.GetBytes(String));
-        
         public static MsgPack ReadMP(this MsgPack msg, ref CountPointer<float> val, string Name)
         {
             val.Offset = 0;

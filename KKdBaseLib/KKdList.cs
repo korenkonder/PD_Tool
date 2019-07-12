@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace KKdMainLib.Types
+namespace KKdBaseLib
 {
     public struct KKdList<T> : IEnumerator, IEnumerable
     {
@@ -64,8 +64,8 @@ namespace KKdMainLib.Types
         {
             if (IsNull) return;
 
-            for (int i = index; i < Count; i++)
-                array[i] = array[i + 1];
+            for (int i = index + 1; i < Count; i++)
+                array[i - 1] = array[i];
         }
 
         public void RemoveRange(int IndexStart, int IndexEnd)
@@ -84,7 +84,7 @@ namespace KKdMainLib.Types
             if (IsNull) return false;
             for (int i = 0; i < Count; i++)
                      if (array[i] == null && val == null) return true;
-                else if (                    val == null)    continue;
+                else if (array[i] == null || val == null)    continue;
                 else if (array[i]    .Equals(val)       ) return true;
             return false;
         }
@@ -94,7 +94,7 @@ namespace KKdMainLib.Types
             if (IsNull) return -1;
             for (int i = 0; i < Count; i++)
                      if (array[i] == null && val == null) return i;
-                else if (                    val == null) continue;
+                else if (array[i] == null || val == null) continue;
                 else if (array[i]    .Equals(val)       ) return i;
             return -1;
         }

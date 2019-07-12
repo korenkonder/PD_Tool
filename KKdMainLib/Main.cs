@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Globalization;
 using System.Collections.Generic;
+using KKdBaseLib;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
@@ -219,7 +220,7 @@ namespace KKdMainLib
         public static bool FindValue(this Dictionary<string, object> Dict,
             out double? value, string   args)
         { if (Dict.FindValue(out string val, args.Split('.'  )))
-                return      ToDouble(val, out value); value =  null; return false; }
+                return       val.ToDouble(out value); value =  null; return false; }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
             out string  value, string   args)
@@ -294,59 +295,6 @@ namespace KKdMainLib
             for (i = 0; i < Length; i++) B[i] = int.Parse(A[i]);
             return B;
         }
-
-        private static readonly string NumberDecimalSeparator =
-            NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
-        
-        public static string ToString(this  object d)
-        {
-            if (d == null) return "Null";
-            else if (d is  float F32) return ToString(F32);
-            else if (d is double F64) return ToString(F64);
-            return d.ToString();
-        }
-        public static string ToString(this   bool? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this   bool  d) => d.ToString().ToLower();
-        public static string ToString(this  sbyte? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this  sbyte  d) => d.ToString();
-        public static string ToString(this   byte? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this   byte  d) => d.ToString();
-        public static string ToString(this  short? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this  short  d) => d.ToString();
-        public static string ToString(this ushort? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this ushort  d) => d.ToString();
-        public static string ToString(this    int? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this    int  d) => d.ToString();
-        public static string ToString(this   uint? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this   uint  d) => d.ToString();
-        public static string ToString(this   long? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this   long  d) => d.ToString();
-        public static string ToString(this  ulong? d) => d.GetValueOrDefault().ToString();
-        public static string ToString(this  ulong  d) => d.ToString();
-        public static string ToString(this  float? d, byte round) => d.GetValueOrDefault().ToString(round);
-        public static string ToString(this  float? d)             => d.GetValueOrDefault().ToString();
-        public static string ToString(this  float  d, byte round) =>
-            Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this  float  d) =>
-                       d        .ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this double? d, byte round) => d.GetValueOrDefault().ToString(round);
-        public static string ToString(this double? d)             => d.GetValueOrDefault().ToString();
-        public static string ToString(this double  d, byte round) => 
-            Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this double  d) =>
-                       d        .ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static  float ToSingle(this string s) =>
-             float.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToSingle(this string s, out float value) =>
-             float.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static double ToDouble(this string s) =>
-            double.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToDouble(this string s, out double value) =>
-            double.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static   bool ToSingle(this string s, out float? value)
-        { bool Val = ToSingle(s, out  float val); value = val; return Val; }
-        public static   bool ToDouble(this string s, out double? value)
-        { bool Val = ToDouble(s, out double val); value = val; return Val; }
         
         public enum Format : byte
         {

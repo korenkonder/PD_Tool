@@ -1,4 +1,4 @@
-﻿namespace KKdMainLib.Types
+﻿namespace KKdBaseLib
 {
     public interface IKeyFrame<TKey, TVal>
     {
@@ -27,9 +27,9 @@
         public IKeyFrame<TKey, TVal> Check() => this;
 
         public override string ToString() =>
-            Main.ToString(Frame);
+            Extensions.ToString(Frame);
         public string ToString(bool Brackets) =>
-            Main.ToString(Frame);
+            Extensions.ToString(Frame);
     }
     
     public struct KeyFrameT1<TKey, TVal> : IKeyFrame<TKey, TVal>
@@ -51,8 +51,8 @@
 
         public override string ToString() => ToString(true);
         public string ToString(bool Brackets) =>
-            (Brackets ? "(" : "") + Main.ToString(Frame) + "," +
-                Main.ToString(Value) + (Brackets ? ")" : "");
+            (Brackets ? "(" : "") + Extensions.ToString(Frame) + "," +
+                Extensions.ToString(Value) + (Brackets ? ")" : "");
     }
     
     public struct KeyFrameT2<TKey, TVal> : IKeyFrame<TKey, TVal>
@@ -81,16 +81,15 @@
 
         public IKeyFrame<TKey, TVal> Check()
         {
-                 if (Value.Equals(default(TVal)) && Interpolation.Equals(default(TVal)))
-                                                  return ToKeyFrameT0();
-            else if (Value.Equals(default(TVal))) return ToKeyFrameT1();
+                 if (Value.Equals(default(TVal)) && Interpolation.Equals(default(TVal))) return ToKeyFrameT0();
+            else if (                               Interpolation.Equals(default(TVal))) return ToKeyFrameT1();
             return this;
         }
 
         public override string ToString() => ToString(true);
         public string ToString(bool Brackets) =>
-            (Brackets ? "(" : "") + Main.ToString(Frame) + "," + Main.
-            ToString(Value) + "," + Main.ToString(Interpolation) + (Brackets ? ")" : "");
+            (Brackets ? "(" : "") + Extensions.ToString(Frame) + "," + Extensions.
+            ToString(Value) + "," + Extensions.ToString(Interpolation) + (Brackets ? ")" : "");
     }
     
     public struct KeyFrameT3<TKey, TVal> : IKeyFrame<TKey, TVal>
@@ -123,8 +122,8 @@
 
         public override string ToString() => ToString(true);
         public string ToString(bool Brackets) =>
-            (Brackets ? "(" : "") + Main.ToString(Frame) + "," + Main.ToString(Value) + "," +
-            Main.ToString(Interpolation1) + "," + Main.ToString(Interpolation2) + (Brackets ? ")" : "");
+            (Brackets ? "(" : "") + Extensions.ToString(Frame) + "," + Extensions.ToString(Value) + "," +
+            Extensions.ToString(Interpolation1) + "," + Extensions.ToString(Interpolation2) + (Brackets ? ")" : "");
 
         public IKeyFrame<TKey, TVal> ToKeyFrameT2(IKeyFrame<TKey, TVal>
             Previous, out IKeyFrame<TKey, TVal> Current)

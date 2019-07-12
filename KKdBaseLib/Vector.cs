@@ -1,4 +1,4 @@
-﻿namespace KKdMainLib.Types
+﻿namespace KKdBaseLib
 {
     public struct Vector2<T>
     {

@@ -1,186 +1,184 @@
-﻿using KKdMainLib.IO;
-using KKdMainLib.Types;
+﻿using KKdBaseLib;
+using KKdMainLib.IO;
+using KKdMainLib.F2nd;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib
 {
     public class STR
     {
-        public struct String
-        {
-            public int ID;
-            public int StrOffset;
-            public string Str;
-        }
-
         public STR()
-        { Offset = 0; OffsetX = 0; STRs = null; POF = null; Header = new PDHead(); }
+        { Offset = 0; OffsetX = 0; STRs = null; Header = new Header(); }
         
         private long Offset;
         private long OffsetX;
-        public String[] STRs;
         private POF POF;
-        private PDHead Header;
+        private Header Header;
+        private Stream IO;
+
+        public String[] STRs;
 
         public int STRReader(string filepath, string ext)
         {
-            Stream reader =  File.OpenReader(filepath + ext);
+            IO =  File.OpenReader(filepath + ext);
 
-            Header = new PDHead();
-            reader.Format = Main.Format.F;
-            Header.Signature = reader.ReadInt32();
+            Header = new Header();
+            IO.Format = Main.Format.F;
+            Header.Signature = IO.ReadInt32();
             if (Header.Signature == 0x41525453)
             {
-                Header = reader.ReadHeader(true);
+                Header = IO.ReadHeader(true);
                 POF = Header.AddPOF();
-                reader.Position = Header.Lenght;
+                IO.Position = Header.Length;
                 
-                long Count = reader.ReadInt32Endian();
-                Offset = reader.ReadInt32Endian();
+                long Count = IO.ReadInt32Endian();
+                Offset = IO.ReadInt32Endian();
                 
                 if (Offset == 0)
                 {
                     Offset = Count;
-                    OffsetX = reader.ReadInt64();
-                    Count   = reader.ReadInt64();
-                    reader.Offset = Header.Lenght;
-                    reader.Format = Main.Format.X;
+                    OffsetX = IO.ReadInt64();
+                    Count   = IO.ReadInt64();
+                    IO.Offset = Header.Length;
+                    IO.Format = Main.Format.X;
+                    IO.LongOffset += Offset;
+                    IO.Position = 0;
                 }
-                reader.LongPosition = reader.IsX ? Offset + reader.Offset : Offset;
+                else IO.Position = Header.Length + 0x40;
 
                 STRs = new String[Count];
                 for (int i = 0; i < Count; i++)
+                    STRs[i].ID  = IO.ReadInt32Endian();
+
+                if (IO.IsX)
                 {
-                    STRs[i].StrOffset = reader.GetOffset(ref POF).ReadInt32Endian();
-                    STRs[i].ID        = reader.ReadInt32Endian();
-                    if (reader.IsX) STRs[i].StrOffset += (int)OffsetX;
+                    IO.Offset = Header.Length;
+                    for (int i = 0; i < Count; i++)
+                        STRs[i].Str.Value = IO.ReadStringAtOffset(STRs[i].Str.Offset + OffsetX);
+                }
+                else
+                {
+                    IO.Offset = 0;
+                    for (int i = 0; i < Count; i++)
+                        STRs[i].Str.Value = STRs[i].Str.Offset > 0 ?
+                            IO.ReadStringAtOffset(STRs[i].Str.Offset) : null;
                 }
 
-                for (int i = 0; i < Count; i++)
-                {
-                    reader.LongPosition = STRs[i].StrOffset + (reader.IsX ? reader.Offset : 0);
-                    STRs[i].Str = reader.NullTerminatedUTF8();
-                }
-
-                reader.Position = POF.Offset;
-                reader.ReadPOF(ref POF);
+                IO.Position = POF.Offset;
+                IO.ReadPOF(ref POF);
             }
             else
             {
-                reader.Position -= 4;
+                IO.Position -= 4;
                 int Count = 0;
-                for (int a = 0, i = 0; reader.Position > 0 && reader.Position < reader.Length; i++, Count++)
+                for (int a = 0, i = 0; IO.Position > 0 && IO.Position < IO.Length; i++, Count++)
                 {
-                    a = reader.ReadInt32();
+                    a = IO.ReadInt32();
                     if (a == 0) break;
                 }
                 STRs = new String[Count];
 
                 for (int i = 0; i < Count; i++)
                 {
-                    reader.LongPosition = STRs[i].StrOffset + (reader.IsX ? reader.Offset : 0);
-                    STRs[i].ID  = i;
-                    STRs[i].Str = reader.NullTerminatedUTF8();
+                    IO.LongPosition = STRs[i].Str.Offset;
+                    STRs[i].ID = i;
+                    STRs[i].Str.Value = IO.NullTerminatedUTF8();
                 }
             }
 
-            reader.Close();
+            IO.Close();
             return 1;
         }
 
         public void STRWriter(string filepath)
         {
+            if (STRs == null || STRs.Length == 0 || Header.Format > Main.Format.F2BE) return;
             uint Offset = 0;
             uint CurrentOffset = 0;
-            Stream writer = File.OpenWriter(filepath + (Header.
-                Format > Main.Format.FT ? ".str" : ".bin"), true);
-            writer.Format = Header.Format;
+            IO = File.OpenWriter(filepath + (Header.Format > Main.Format.FT ? ".str" : ".bin"), true);
+            IO.Format = Header.Format;
             POF = new POF();
-            writer.IsBE = writer.Format == Main.Format.F2BE;
+            IO.IsBE = IO.Format == Main.Format.F2BE;
 
             long Count = STRs.LongLength;
-            if (writer.Format > Main.Format.FT)
+            if (IO.Format > Main.Format.FT)
             {
-                writer.Position = 0x40;
-                writer.WriteEndian(Count);
-                writer.GetOffset(ref POF).WriteEndian(0x80);
-                writer.Position = 0x80;
-                for (int i = 0; i < Count; i++)
-                {
-                    writer.GetOffset(ref POF).Write(0x00);
-                    writer.WriteEndian(STRs[i].ID);
-                }
-                writer.Align(0x10);
+                IO.Position = 0x40;
+                IO.WriteX(Count);
+                IO.GetOffset(ref POF);
+                IO.WriteX(0x80);
+                IO.Position = 0x80;
+                for (int i = 0; i < Count; i++) IO.Write(0x00L);
+                IO.Align(0x10);
             }
             else
             {
-                for (int i = 0; i < Count; i++) writer.Write(0x00);
-                writer.Align(0x20);
+                for (int i = 0; i < Count; i++) IO.Write(0x00);
+                IO.Align(0x20);
             }
 
             KKdList<string> UsedSTR = KKdList<string>.New;
             KKdList<int> UsedSTRPos = KKdList<int>.New;
             int[] STRPos = new int[Count];
-            for (int i1 = 0; i1 < Count; i1++)
+            for (int i = 0; i < Count; i++)
             {
-                if (UsedSTR.Contains(STRs[i1].Str))
+                if (!UsedSTR.Contains(STRs[i].Str.Value))
                 {
-                    for (int i2 = 0; i2 < Count; i2++)
-                        if (UsedSTR[i2] == STRs[i1].Str)
-                        { STRPos[i1] = UsedSTRPos[i2]; break; }
+                    STRPos[i] = IO.Position;
+                    UsedSTRPos.Add(STRPos[i]);
+                    UsedSTR.Add(STRs[i].Str.Value);
+                    IO.Write(STRs[i].Str.Value + "\0");
                 }
                 else
-                {
-                    STRPos[i1] = writer.Position;
-                    UsedSTRPos.Add(STRPos[i1]);
-                    UsedSTR.Add(STRs[i1].Str);
-                    writer.Write(STRs[i1].Str);
-                    writer.WriteByte(0);
-                }
-            }
-            if (writer.Format > Main.Format.FT)
-            {
-                writer.Align(0x10);
-                Offset = writer.UIntPosition;
-                writer.Position = 0x80;
-            }
-            else
-                writer.Position = 0;
-            for (int i1 = 0; i1 < Count; i1++)
-            {
-                writer.WriteEndian(STRPos[i1]);
-                if (writer.Format > Main.Format.FT) writer.Position += 4;
+                    for (int i2 = 0; i2 < Count; i2++)
+                        if (UsedSTR[i2] == STRs[i].Str.Value)
+                        { STRPos[i] = UsedSTRPos[i2]; break; }
             }
 
-            if (writer.Format > Main.Format.FT)
+            if (IO.Format > Main.Format.FT)
             {
-                writer.UIntPosition = Offset;
-                writer.Write(ref POF, 1);
-                CurrentOffset = writer.UIntPosition;
-                writer.WriteEOFC(0);
-                Header.Lenght = 0x40;
-                Header.DataSize = (int)(CurrentOffset - Header.Lenght);
+                IO.Align(0x10);
+                Offset = IO.UIntPosition;
+                IO.Position = 0x80;
+                for (int i = 0; i < Count; i++)
+                {
+                    IO.GetOffset(ref POF);
+                    IO.WriteEndian(STRPos[i]);
+                    IO.WriteEndian(STRs[i].ID);
+                }
+
+                IO.UIntPosition = Offset;
+                IO.Write(ref POF, 1);
+                CurrentOffset = IO.UIntPosition;
+                IO.WriteEOFC(0);
+                Header.DataSize = (int)(CurrentOffset - 0x40);
                 Header.Signature = 0x41525453;
-                Header.SectionSize = (int)(Offset - Header.Lenght);
-                writer.Position = 0;
-                writer.Write(Header);
+                Header.SectionSize = (int)(Offset - 0x40);
+                IO.Position = 0;
+                IO.Write(Header);
             }
-            writer.Close();
+            else
+            {
+                IO.Position = 0;
+                for (int i = 0; i < Count; i++) IO.Write(STRPos[i]);
+            }
+            IO.Close();
         }
 
         public void MsgPackReader(string file, bool JSON)
         {
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-
             if (!MsgPack.Element("STR", out MsgPack STR)) return;
+            Header = new Header();
+            System.Enum.TryParse(STR.ReadString("Format"), out Header.Format);
 
             if (!STR.ElementArray("Strings", out MsgPack Strings)) return;
 
             STRs = new String[Strings.Array.Length];
             for (int i = 0; i < STRs.Length; i++)
             {
-                STRs[i].ID  = Strings[i].ReadInt32 ("ID" );
-                STRs[i].Str = Strings[i].ReadString("Str");
+                STRs[i].ID        = Strings[i].ReadInt32 ("ID" );
+                STRs[i].Str.Value = Strings[i].ReadString("Str");
             }
 
             MsgPack = MsgPack.New;
@@ -188,17 +186,27 @@ namespace KKdMainLib
 
         public void MsgPackWriter(string file, bool JSON)
         {
+            if (STRs == null || STRs.Length == 0) return;
             MsgPack STR_ = new MsgPack("STR").Add("Format", Header.Format.ToString());
             MsgPack Strings = new MsgPack(STRs.Length, "Strings");
             for (int i = 0; i < STRs.Length; i++)
             {
                 Strings[i] = MsgPack.New.Add("ID", STRs[i].ID);
-                if (STRs[i].Str != null) if (STRs[i].Str != "")
-                        Strings[i].Add("S", STRs[i].Str); ;
+                if (STRs[i].Str.Value != null || STRs[i].Str.Value != "")
+                    Strings[i] = Strings[i].Add("Str", STRs[i].Str.Value);
             }
             STR_.Add(Strings);
 
-            STR_.Write(true, file, JSON);
+            STR_.WriteAfterAll(true, file, JSON);
+        }
+
+        public struct String
+        {
+            public int ID;
+            public Pointer<string> Str;
+
+            public override string ToString() => "ID: " + ID + (Str.Value != null || 
+                Str.Value != "" ? ("; Str: " + Str.Value) : "");
         }
     }
 }

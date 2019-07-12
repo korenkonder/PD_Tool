@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using KKdMainLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.Types;
+using KKdMainLib.F2nd;
 using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.A3DA
@@ -28,7 +28,6 @@ namespace KKdMainLib.A3DA
 
         public Stream IO;
         public A3DAData Data;
-        //public PDHead Header;
 
         public A3DA()
         { Data = new A3DAData(); Dict = new Dictionary<string, object>();
@@ -47,11 +46,12 @@ namespace KKdMainLib.A3DA
             dataArray = new string[4];
             Dict = new Dictionary<string, object>();
             Data = new A3DAData();
-            PDHead Header = new PDHead();
+            Header Header = new Header();
 
             Data.Format = IO.Format = Main.Format.F;
             Header.SectionSignature = IO.ReadInt32();
-            if (Header.SectionSignature == 0x41443341) { Header = IO.ReadHeader(true); Data.Format = Header.Format; }
+            if (Header.SectionSignature == 0x41443341)
+            { Header = IO.ReadHeader(true, true); Data.Format = Header.Format; }
             if (Header.SectionSignature != 0x44334123) { IO.Close(); return 0; }
 
             IO.Offset = IO.Position - 4;
@@ -96,14 +96,14 @@ namespace KKdMainLib.A3DA
 
             A3DAReader();
 
-            if (Header.Format >= Main.Format.F && Header.Format != Main.Format.FT)
+            if (Header.SectionSignature == 0x5F5F5F43)
             {
                 IO.Position = IO.Offset + Data.BinaryOffset;
                 IO.Offset = IO.Position;
                 IO.Position = 0;
+                IO = File.OpenReader(IO.ReadBytes(Data.BinaryLength));
                 A3DCReader();
             }
-
             IO.Close();
 
             name = "";
@@ -1224,9 +1224,9 @@ namespace KKdMainLib.A3DA
                 IO.WriteEOFC(0);
                 IO.Offset   = 0;
                 IO.Position = 0;
-                PDHead Header = new PDHead { Signature = 0x41443341, Format = Main.Format.F2LE,
+                Header Header = new Header { Signature = 0x41443341, Format = Main.Format.F2LE,
                     DataSize = A3DCEnd, SectionSize = A3DCEnd, InnerSignature = 0x01131010 };
-                IO.Write(Header);
+                IO.Write(Header, true);
             }
 
             return IO.ToArray(true);
@@ -2435,7 +2435,7 @@ namespace KKdMainLib.A3DA
         public static void Write(this Stream IO, string Data,   double? val, byte r)
         { if (val != null) IO.Write(Data, (double)val, r); }
         public static void Write(this Stream IO, string Data, ref bool  val)         =>
-            IO.Write(Data, Main.ToString(val));
+            IO.Write(Data, Extensions.ToString(val));
         public static void Write(this Stream IO, string Data,     long  val)         =>
             IO.Write(Data,  val.ToString(   ));
         public static void Write(this Stream IO, string Data,    ulong  val)         =>

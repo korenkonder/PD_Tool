@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.MessagePack;
 
@@ -120,7 +121,7 @@ namespace KKdMainLib
             }
             else if (file.Contains("PvList"))
             {
-                if (psrDat != null)
+                if (pvList != null)
                 {
                     if (Compact) msgPack.Add("Compact", Compact);
 

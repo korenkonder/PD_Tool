@@ -52,6 +52,10 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj">
+      <Project>{da55bfd3-927e-473c-a779-f9e6365384ae}</Project>
+      <Name>KKdBaseLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\KKdMainLib\KKdMainLib.csproj">
       <Project>{2BA7EFC6-91D1-8BBC-C487-06C7F36CC789}</Project>
       <Name>KKdMainLib</Name>

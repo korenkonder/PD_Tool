@@ -1,16 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2BA7EFC6-91D1-8BBC-C487-06C7F36CC789}</ProjectGuid>
+    <ProjectGuid>{437F63F1-8C23-429E-AB14-38B85C9EDB16}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>KKdMainLib</RootNamespace>
-    <AssemblyName>KKdMainLib</AssemblyName>
+    <RootNamespace>KKdBaseLib</RootNamespace>
+    <AssemblyName>KKdBaseLib</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -39,30 +39,16 @@
     <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DB\Aet.cs" />
-    <Compile Include="DB\Auth.cs" />
-    <Compile Include="DB\Spr.cs" />
-    <Compile Include="F2nd\Header.cs" />
-    <Compile Include="F2nd\POF.cs" />
-    <Compile Include="F2nd\Struct.cs" />
-    <Compile Include="IO\Directory.cs" />
-    <Compile Include="IO\File.cs" />
-    <Compile Include="IO\IOExtensions.cs" />
-    <Compile Include="IO\Path.cs" />
-    <Compile Include="IO\Stream.cs" />
-    <Compile Include="MessagePack\JSONIO.cs" />
-    <Compile Include="MessagePack\MPExt.cs" />
-    <Compile Include="MessagePack\MsgPack.cs" />
-    <Compile Include="MessagePack\IO.cs" />
-    <Compile Include="A3DA.cs" />
-    <Compile Include="Aet.cs" />
-    <Compile Include="DataBank.cs" />
-    <Compile Include="DEX.cs" />
-    <Compile Include="DIVAFILE.cs" />
+    <Compile Include="DCC.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="FARC.cs" />
-    <Compile Include="Main.cs" />
-    <Compile Include="STR.cs" />
+    <Compile Include="Half.cs" />
+    <Compile Include="IKeyFrame.cs" />
+    <Compile Include="KKdList.cs" />
+    <Compile Include="Pointer.cs" />
+    <Compile Include="Text.cs" />
+    <Compile Include="Vector.cs" />
+    <Compile Include="Vector3.cs" />
+    <Compile Include="Vector4.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -70,12 +56,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj">
-      <Project>{437f63f1-8c23-429e-ab14-38b85c9edb16}</Project>
-      <Name>KKdBaseLib</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

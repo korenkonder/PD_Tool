@@ -36,7 +36,6 @@ namespace PD_Tool.Tools
 
             DataBank DB;
             string[] file_split;
-            int File_Checksum = 0, Get_Checksum;
             foreach (string file in FileNames)
             {
                 ext      = Path.GetExtension(file);
@@ -48,11 +47,6 @@ namespace PD_Tool.Tools
                 DB = new DataBank();
                 if (file_split.Length == 5 && ext == ".dat" && MP)
                 {
-                    if (!int.TryParse(file_split[3], out File_Checksum)) continue;
-
-                    Get_Checksum = DCC.CalculateChecksum(file);
-                    if (File_Checksum != Get_Checksum) continue;
-
                     filepath = file.Replace(filename + ".dat", "");
                     Console.Title = "DataBank Converter: " + filename;
                     DB.     DBReader(file);

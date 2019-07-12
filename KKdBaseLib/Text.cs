@@ -1,9 +1,11 @@
 ﻿using System.Text;
 
-namespace KKdMainLib
+namespace KKdBaseLib
 {
     public static class Text
     {
+        public readonly static Encoding ShiftJIS = Encoding.GetEncoding(932);
+        
         public static string ToASCII(this byte[] Array) => Encoding.ASCII.GetString(Array ?? new byte[0]);
         public static string ToUTF8 (this byte[] Array) => Encoding.UTF8 .GetString(Array ?? new byte[0]);
         public static byte[] ToASCII(this string Data ) => Encoding.ASCII.GetBytes (Data  ?? ""         );

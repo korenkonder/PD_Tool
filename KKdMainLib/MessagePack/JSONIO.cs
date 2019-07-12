@@ -1,7 +1,7 @@
 ﻿//Original or reader part: https://github.com/MarcosLopezC/LightJson/
 
+using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.Types;
 
 namespace KKdMainLib.MessagePack
 {
@@ -241,16 +241,16 @@ namespace KKdMainLib.MessagePack
                 case MsgPack val: Write(val, End, TabChar, Tab, Style); break;
                 case    bool val: Write(val); break;
                 case  string val: Write(val); break;
-                case   sbyte val: _IO.Write(Main.ToString(val)); break;
-                case    byte val: _IO.Write(Main.ToString(val)); break;
-                case   short val: _IO.Write(Main.ToString(val)); break;
-                case  ushort val: _IO.Write(Main.ToString(val)); break;
-                case     int val: _IO.Write(Main.ToString(val)); break;
-                case    uint val: _IO.Write(Main.ToString(val)); break;
-                case    long val: _IO.Write(Main.ToString(val)); break;
-                case   ulong val: _IO.Write(Main.ToString(val)); break;
-                case   float val: _IO.Write(Main.ToString(val)); break;
-                case  double val: _IO.Write(Main.ToString(val)); break;
+                case   sbyte val: _IO.Write(Extensions.ToString(val)); break;
+                case    byte val: _IO.Write(Extensions.ToString(val)); break;
+                case   short val: _IO.Write(Extensions.ToString(val)); break;
+                case  ushort val: _IO.Write(Extensions.ToString(val)); break;
+                case     int val: _IO.Write(Extensions.ToString(val)); break;
+                case    uint val: _IO.Write(Extensions.ToString(val)); break;
+                case    long val: _IO.Write(Extensions.ToString(val)); break;
+                case   ulong val: _IO.Write(Extensions.ToString(val)); break;
+                case   float val: _IO.Write(Extensions.ToString(val)); break;
+                case  double val: _IO.Write(Extensions.ToString(val)); break;
             }
         }
         private void Write(  bool val) => _IO.Write(val ? "true" : "false");
