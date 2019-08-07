@@ -8,15 +8,15 @@ namespace KKdMainLib.F2nd
         public Header Header;
         public byte[] Data;
         public Struct[] SubStructs;
-        public bool HasEOFC;
-        public Mini POF;
-        public Mini ENRS;
+        public bool EOFC;
+        public ENRS[] ENRS;
+        public KKdList<long> POF;
 
         public long DataOffset;
 
-        public override string ToString() => Header.ToString() + (SubStructs != null ? "; SubStructs: " +
-            SubStructs.Length : "") + (POF != null ? "; Has " + POF.Header.ToString() : "") +
-            (ENRS != null ? "; Has ENRS" : "") + (HasEOFC ? "; Has EOFC" : "");
+        public override string ToString() => Header.ToString() + (SubStructs != null ?
+            "; SubStructs: " + SubStructs.Length : "")+ (ENRS != null ? "; Has ENRS" : "") +
+            (POF.NotNull ? "; Has POF" : "") + (EOFC ? "; Has EOFC" : "");
 
         public static Struct ReadStruct(byte[] Data)
         {
@@ -40,48 +40,30 @@ namespace KKdMainLib.F2nd
                 Header = stream.ReadHeader(false);
                 Position += Header.Length + Header.DataSize;
                 if (Header.ID == ID && Header.Signature == 0x43464F45)
-                { Struct.HasEOFC = true; break; }
-                else if (Header.ID == 0 && Header.Signature == 0x53524E45)
+                { Struct.EOFC = true; break; }
+                else if (Header.ID == 0 && (Header.Signature == 0x30464F50 ||
+                    Header.Signature == 0x31464F50 || Header.Signature == 0x53524E45))
                     SubStructs.Add(new Struct { Header = Header, DataOffset =
                         stream.Position, Data = stream.ReadBytes(Header.SectionSize) });
                 else if (Header.ID <= ID)
                 { stream.LongPosition -= Header.Length; break; }
                 else SubStructs.Add(ReadStruct(ref stream, Header));
-                //(Header.Signature == 0x30464F50 || Header.Signature ==
-                //    0x31464F50 || Header.Signature == 0x53524E45)
             }
 
             for (int i = 0; i < SubStructs.Capacity; i++)
             {
                 string Sig = SubStructs[i].Header.ToString();
-                if (Sig == "ENRS" || Sig == "POF0" || Sig == "POF1")
+                if (Sig == "ENRS" || Sig == "EOFC" || Sig == "POF0" || Sig == "POF1")
                 {
-                    if (Sig == "ENRS") Struct.ENRS = (Mini)SubStructs[i];
-                    else               Struct.POF  = (Mini)SubStructs[i];
+                         if (Sig == "EOFC") Struct.EOFC = true;
+                    else if (Sig == "ENRS") Struct.ENRS = F2nd.ENRS.Read(SubStructs[i].Data);
+                    else                    Struct.POF  = F2nd.POF .Read(SubStructs[i].Data, Sig == "POF1");
                     SubStructs.RemoveAt(i); SubStructs.Capacity--; i--;
                 }
             }
 
-            if (SubStructs.Capacity > 0)
-            {
-                Struct.SubStructs = SubStructs.ToArray();
-            }
+            if (SubStructs.Capacity > 0) Struct.SubStructs = SubStructs.ToArray();
             return Struct;
-        }
-
-        public class Mini
-        {
-            public Header Header;
-            public byte[] Data;
-            public bool HasEOFC;
-
-            public static explicit operator   Mini(Struct Struct) =>
-                new   Mini() { Header = Struct.Header, Data = Struct.Data, HasEOFC = Struct.HasEOFC };
-
-            public static explicit operator Struct(  Mini Struct) =>
-                new Struct() { Header = Struct.Header, Data = Struct.Data, HasEOFC = Struct.HasEOFC };
-
-            public override string ToString() => Header.ToString() + (HasEOFC ? "; Has EOFC" : "");
         }
     }
 }

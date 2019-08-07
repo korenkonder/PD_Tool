@@ -8,12 +8,7 @@ namespace PD_Tool
         public static void Decrypt(string file)
         {
             Stream reader = File.OpenReader(file);
-            if (reader.ReadInt64() != 0x454C494641564944)
-            {
-                reader.Close();
-                Encrypt(file);
-                return;
-            }
+            if (reader.ReadInt64() != 0x454C494641564944) { reader.Close(); return; }
             reader.Close();
             file.Decrypt();
         }
@@ -21,13 +16,7 @@ namespace PD_Tool
         public static void Encrypt(string file)
         {
             Stream reader = File.OpenReader(file);
-            if (reader.ReadInt64() == 0x454C494641564944)
-            {
-                reader.Close();
-                Decrypt(file);
-                return;
-            }
-
+            if (reader.ReadInt64() == 0x454C494641564944) { reader.Close(); return; }
             file.Encrypt();
         }
     }

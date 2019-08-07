@@ -112,9 +112,9 @@ namespace PD_Tool
             {
                 KKdMain.Choose(1, JSON ? "mp" : "json", out string[] FileNames);
                 if (JSON) foreach (string file in FileNames)
-                        KKdMainLib.MessagePack.MPExt.ToJSON   (file.Replace(Path.GetExtension(file), ""));
+                        KKdMainLib.MPExt.ToJSON   (file.Replace(Path.GetExtension(file), ""));
                 else      foreach (string file in FileNames)
-                        KKdMainLib.MessagePack.MPExt.ToMsgPack(file.Replace(Path.GetExtension(file), ""));
+                        KKdMainLib.MPExt.ToMsgPack(file.Replace(Path.GetExtension(file), ""));
             }
         }
 

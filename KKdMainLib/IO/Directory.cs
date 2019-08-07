@@ -1,5 +1,4 @@
-﻿using System;
-using MSIO = System.IO;
+﻿using MSIO = System.IO;
 
 namespace KKdMainLib.IO
 {

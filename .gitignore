@@ -1,5 +1,7 @@
 .vs
 build
+KKdBaseLib/bin
+KKdBaseLib/obj
 KKdMainLib/bin
 KKdMainLib/obj
 KKdMathLib/bin

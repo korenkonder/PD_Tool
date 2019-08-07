@@ -1,6 +1,7 @@
 ﻿using System;
-using KKdMainLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
+using KKdMainLib;
 using KKdDEX = KKdMainLib.DEX;
 
 namespace PD_Tool.Tools
@@ -39,11 +40,11 @@ namespace PD_Tool.Tools
             Console.WriteLine();
             format = Console.ReadLine();
             
-            Main.Format Format = Main.Format.NULL;
-                 if (format == "1") Format = Main.Format.F   ;
-            else if (format == "2") Format = Main.Format.F2LE;
-            else if (format == "3") Format = Main.Format.X   ;
-            else if (format == "9" && (MP && _JSON)) Format = Main.Format.NULL;
+            Format Format = Format.NULL;
+                 if (format == "1") Format = Format.F   ;
+            else if (format == "2") Format = Format.F2LE;
+            else if (format == "3") Format = Format.X   ;
+            else if (format == "9" && (MP && _JSON)) Format = Format.NULL;
             else return;
 
             foreach (string file in FileNames)
@@ -58,7 +59,7 @@ namespace PD_Tool.Tools
                      DEX.    DEXReader(filepath, ext );
                 else DEX.MsgPackReader(filepath, JSON);
 
-                if (Format > Main.Format.NULL)
+                if (Format > Format.NULL)
                      DEX.    DEXWriter(filepath, Format);
                 else DEX.MsgPackWriter(filepath, JSON  );
                 DEX = null;

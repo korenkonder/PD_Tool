@@ -99,7 +99,6 @@ namespace KKdBaseLib
         { if (IsBE) { for (byte i = 0; i < Len; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < Len; i++) { LE |= bufPtr[i]; if (i < Len - 1) LE <<= 8; } } return LE; }
         
-        
         public static  sbyte CITSB(this    int c)
         {                if (c >  0x0000007F) c =  0x0000007F;
                     else if (c < -0x00000080) c = -0x00000080; return ( sbyte)c; }
@@ -162,6 +161,16 @@ namespace KKdBaseLib
         { c = c.Round(); if (c >  0xFFFFFFFF) c =  0xFFFFFFFF;
                     else if (c <  0x00000000) c =  0x00000000; return (  uint)c; }
 
+        public static    int  ToInt32(this  float f) => *(  int*)&f;
+        public static   uint ToUInt32(this  float f) => *( uint*)&f;
+        public static   long  ToInt64(this double f) => *( long*)&f;
+        public static  ulong ToUInt64(this double f) => *(ulong*)&f;
+
+        public static  float ToSingle(this   int i) => *( float*)&i;
+        public static  float ToSingle(this  uint i) => *( float*)&i;
+        public static double ToSingle(this  long i) => *(double*)&i;
+        public static double ToSingle(this ulong i) => *(double*)&i;
+
         public static  sbyte* GetPtr(this  sbyte[] array) { fixed ( sbyte* tempPtr = array) return tempPtr; }
         public static   byte* GetPtr(this   byte[] array) { fixed (  byte* tempPtr = array) return tempPtr; }
         public static  short* GetPtr(this  short[] array) { fixed ( short* tempPtr = array) return tempPtr; }
@@ -179,8 +188,9 @@ namespace KKdBaseLib
         public static string ToString(this  object d)
         {
             if (d == null) return "Null";
-            else if (d is  float F32) return ToString(F32);
-            else if (d is double F64) return ToString(F64);
+            else if (d is   bool Boolean) return Boolean ? "true" : "false";
+            else if (d is  float F32    ) return ToString(F32);
+            else if (d is double F64    ) return ToString(F64);
             return d.ToString();
         }
 

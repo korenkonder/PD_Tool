@@ -1,7 +1,7 @@
 ﻿using System;
-using KKdMainLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.MessagePack;
+using KKdMainLib;
 using KKdA3DA = KKdMainLib.A3DA.A3DA;
 using KKdFARC = KKdMainLib.FARC;
 
@@ -19,11 +19,9 @@ namespace PD_Tool.Tools
 
             bool MP = false;
             foreach (string file in FileNames)
-                     if (file.EndsWith(".mp"  )) { MP = true; break; }
-                else if (file.EndsWith(".json")) { MP = true; break; }
-                else if (file.EndsWith(".farc")) { MP = true; break; }
+                if (file.EndsWith(".mp") || file.EndsWith(".json") || file.EndsWith(".farc")) { MP = true; break; }
 
-            Main.Format Format = Main.Format.NULL;
+            Format Format = Format.NULL;
             string format = "";
             if (MP)
             {
@@ -42,13 +40,13 @@ namespace PD_Tool.Tools
                 Main.ConsoleDesign(true);
                 Console.WriteLine();
                 format = Console.ReadLine();
-                     if (format == "1") Format = Main.Format.DT  ;
-                else if (format == "2") Format = Main.Format.F   ;
-                else if (format == "3") Format = Main.Format.FT  ;
-                else if (format == "4") Format = Main.Format.FT  ;
-                else if (format == "5") Format = Main.Format.F2LE;
-                else if (format == "6") Format = Main.Format.MGF ;
-                else if (format == "7") Format = Main.Format.X   ;
+                     if (format == "1") Format = Format.DT  ;
+                else if (format == "2") Format = Format.F   ;
+                else if (format == "3") Format = Format.FT  ;
+                else if (format == "4") Format = Format.FT  ;
+                else if (format == "5") Format = Format.F2LE;
+                else if (format == "6") Format = Format.MGF ;
+                else if (format == "7") Format = Format.X   ;
                 else return;
             }
 
@@ -79,12 +77,9 @@ namespace PD_Tool.Tools
                             A3DA = A.MsgPackWriter();
                             A = new KKdA3DA();
                             A.MsgPackReader(A3DA);
-                            A.IO = File.OpenWriter();
-                            A.Data._.CompressF16 = Format > Main.Format.FT ?
-                                Format == Main.Format.MGF ? 2 : 1 : 0;
+                            A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
                             A.Data.Format = Format;
-                            FARC.Files[i].Data = (format != "1" &&
-                                format != "3") ? A.A3DCWriter() : A.A3DAWriter();
+                            FARC.Files[i].Data = (format != "1" && format != "3") ? A.A3DCWriter() : A.A3DAWriter();
                         }
                     }
                     FARC.Save();
@@ -97,8 +92,7 @@ namespace PD_Tool.Tools
                 else if (ext == ".mp" || ext == ".json")
                 {
                     A.MsgPackReader(filepath, ext == ".json");
-                    A.Data._.CompressF16 = Format > Main.Format.FT ?
-                        Format == Main.Format.MGF ? 2 : 1 : 0;
+                    A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
                     A.Data.Format = Format;
 
                     File.WriteAllBytes(filepath + ".a3da", (format != "1" &&

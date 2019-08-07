@@ -1,3 +1,0 @@
-F:\Source\PD_Tool\KKdBaseLib\bin\KKdBaseLib.dll
-F:\Source\PD_Tool\KKdBaseLib\obj\Release\KKdBaseLib.csproj.CoreCompileInputs.cache
-F:\Source\PD_Tool\KKdBaseLib\obj\Release\KKdBaseLib.dll

@@ -10,8 +10,7 @@
         { this.X = X; this.Y = Y; this.Z = Z; }
 
         public double Length => (X * X + Y * Y + Z * Z).Sqrt();
-        public Vector3 Normalized => this = new Vector3()
-        { X = X * (1 / Length), Y = Y * (1 / Length), Z = Z * (1 / Length) };
+        public Vector3 Normalized => this = Length == 0 ? new Vector3() : this / Length;
 
         public static Vector3 operator +(Vector3 left, Vector3 right)
         { left.X += right.X; left.Y += right.Y; left.Z += right.Z; return left; }

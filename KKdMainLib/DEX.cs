@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.F2nd;
-using KKdMainLib.MessagePack;
 
 namespace KKdMainLib
 {
@@ -21,7 +21,7 @@ namespace KKdMainLib
             Header = new Header();
             IO = File.OpenReader(filepath + ext);
 
-            Header.Format = Main.Format.F;
+            Header.Format = Format.F;
             Header.SectionSignature = IO.ReadInt32();
             if (Header.SectionSignature == 0x43505845)
                 Header = IO.ReadHeader(true);
@@ -31,7 +31,7 @@ namespace KKdMainLib
             Offset = IO.Position - 0x4;
             Dex = new EXP[IO.ReadInt32()];
             int DEXOffset = IO.ReadInt32();
-            if (IO.ReadInt32() == 0x00) Header.Format = Main.Format.X;
+            if (IO.ReadInt32() == 0x00) Header.Format = Format.X;
             int DEXNameOffset = IO.ReadInt32();
             if (Header.IsX) IO.ReadInt32();
 
@@ -92,13 +92,13 @@ namespace KKdMainLib
             return 1;
         }
 
-        public void DEXWriter(string filepath, Main.Format Format)
+        public void DEXWriter(string filepath, Format Format)
         {
             Header = new Header();
-            IO = File.OpenWriter(filepath + (Format > Main.Format.F ? ".dex" : ".bin"), true);
+            IO = File.OpenWriter(filepath + (Format > Format.F ? ".dex" : ".bin"), true);
             Header.Format = IO.Format = Format;
 
-            IO.Offset = Format > Main.Format.F ? 0x20 : 0;
+            IO.Offset = Format > Format.F ? 0x20 : 0;
             IO.Write(0x64);
             IO.Write(Dex.Length);
 
@@ -157,7 +157,7 @@ namespace KKdMainLib
             IO.Position = Position0 - (Header.IsX ? 8 : 4);
             IO.Write(Position1);
 
-            if (Format > Main.Format.F)
+            if (Format > Format.F)
             {
                 Offset = IO.Length;
                 IO.Offset = 0;

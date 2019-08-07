@@ -111,14 +111,18 @@ namespace KKdMainLib
 
                 if (ofd.ShowDialog() == DialogResult.OK)
                     FileNames = ofd.FileNames;
+                ofd.Dispose();
             }
             else if (code == 2)
             {
                 OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
                     ValidateNames = false, CheckFileExists = false, Filter = " | ", CheckPathExists = true,
                     Title = "Choose any file in folder:", FileName = "Folder Selection." };
+                string Return = "";
                 if (ofd.ShowDialog() == DialogResult.OK)
-                    return Path.GetDirectoryName(ofd.FileName);
+                    Return = Path.GetDirectoryName(ofd.FileName);
+                ofd.Dispose();
+                return Return;
             }
             return "";
         }
@@ -141,6 +145,7 @@ namespace KKdMainLib
                 InitialDirectory = sfd.InitialDirectory.ToString();
                 FileNames = sfd.FileNames;
             }
+            sfd.Dispose();
         }
         
         public static string NullTerminated(this string Source, ref int i, byte End)
@@ -164,8 +169,10 @@ namespace KKdMainLib
         public static bool StartsWith(this Dictionary<string, object> Dict, string[] args)
         {
             Dictionary<string, object> bufDict = new Dictionary<string, object>();
-            if (Dict == null)
-                Dict = new Dictionary<string, object>();
+                 if (Dict == null)    return false;
+            else if (args.Length < 1) return false;
+
+            args[0] = args[0].ToLower();
             if (args.Length > 1)
             {
                 string[] NewArgs = new string[args.Length - 1];
@@ -231,10 +238,11 @@ namespace KKdMainLib
             out string  value, string[] args)
         {
             value = "";
-            if (Dict == null)         return false;
+                 if (Dict == null)    return false;
             else if (args.Length < 1) return false;
 
-            if (!Dict.ContainsKey(args[0])) return false;
+            args[0] = args[0].ToLower();
+                 if (!Dict.ContainsKey(args[0])) return false;
             else if (args.Length > 1)
             {
                 string[] NewArgs = new string[args.Length - 1];
@@ -260,7 +268,10 @@ namespace KKdMainLib
             string[] args, string value)
         {
             Dictionary<string, object> bufDict = new Dictionary<string, object>();
-            if (Dict == null) Dict = new Dictionary<string, object>();
+                 if (Dict == null) Dict = new Dictionary<string, object>();
+            else if (args.Length < 1) return;
+
+            args[0] = args[0].ToLower();
             if (args.Length > 1)
             {
                 string[] NewArgs = new string[args.Length - 1];
@@ -294,22 +305,6 @@ namespace KKdMainLib
             int[] B = new int[Length];
             for (i = 0; i < Length; i++) B[i] = int.Parse(A[i]);
             return B;
-        }
-        
-        public enum Format : byte
-        {
-            NULL =  0,
-            DT   =  1,
-            PDA  =  2,
-            DT2  =  3,
-            DTe  =  4,
-            F    =  5,
-            FT   =  6,
-            F2LE =  7,
-            F2BE =  8,
-            MGF  =  9,
-            X    = 10,
-            XHD  = 11,
         }
     }
 }

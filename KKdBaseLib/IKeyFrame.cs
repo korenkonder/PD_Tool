@@ -2,6 +2,8 @@
 {
     public interface IKeyFrame<TKey, TVal>
     {
+        TKey Frame { get; set; }
+
         IKeyFrame<TKey, TVal> Check();
         IKeyFrame<TKey, TVal> ToKeyFrameT0();
         IKeyFrame<TKey, TVal> ToKeyFrameT1();
@@ -13,7 +15,7 @@
     
     public struct KeyFrameT0<TKey, TVal> : IKeyFrame<TKey, TVal>
     {
-        public TKey Frame;
+        public TKey Frame { get; set; }
 
         public IKeyFrame<TKey, TVal> ToKeyFrameT0() =>
             new KeyFrameT0<TKey, TVal> { Frame = Frame };
@@ -34,7 +36,7 @@
     
     public struct KeyFrameT1<TKey, TVal> : IKeyFrame<TKey, TVal>
     {
-        public TKey Frame;
+        public TKey Frame { get; set; }
         public TVal Value;
 
         public IKeyFrame<TKey, TVal> ToKeyFrameT0() =>
@@ -57,7 +59,7 @@
     
     public struct KeyFrameT2<TKey, TVal> : IKeyFrame<TKey, TVal>
     {
-        public TKey Frame;
+        public TKey Frame { get; set; }
         public TVal Value;
         public TVal Interpolation;
 
@@ -94,7 +96,7 @@
     
     public struct KeyFrameT3<TKey, TVal> : IKeyFrame<TKey, TVal>
     {
-        public TKey Frame;
+        public TKey Frame { get; set; }
         public TVal Value;
         public TVal Interpolation1;
         public TVal Interpolation2;

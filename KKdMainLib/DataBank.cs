@@ -2,7 +2,6 @@
 using System.Net;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.MessagePack;
 
 namespace KKdMainLib
 {

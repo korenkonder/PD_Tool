@@ -1,7 +1,6 @@
 ﻿using System;
-using KKdBaseLib;
 
-namespace KKdMainLib.MessagePack
+namespace KKdBaseLib
 {
     public struct MsgPack : IDisposable, IEquatable<MsgPack>
     {
@@ -107,7 +106,7 @@ namespace KKdMainLib.MessagePack
         public MsgPack Add(string Val,  ulong val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,  float val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val, double val) => Add(new MsgPack(Val, val));
-        
+
         public   bool ReadBoolean(string Name) => ReadNBoolean(Name).GetValueOrDefault();
         public  sbyte    ReadInt8(string Name) =>    ReadNInt8(Name).GetValueOrDefault();
         public   byte   ReadUInt8(string Name) =>   ReadNUInt8(Name).GetValueOrDefault();

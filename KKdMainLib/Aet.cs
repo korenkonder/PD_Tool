@@ -3,7 +3,6 @@
 using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.F2nd;
-using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.Aet
 {

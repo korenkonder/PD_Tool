@@ -1,15 +1,13 @@
 ﻿using System;
 using KKdBaseLib;
-using KKdMainLib.IO;
 
-namespace KKdMainLib.MessagePack
+namespace KKdMainLib.IO
 {
-    public class IO
+    public struct MP
     {
-        public Stream _IO;
+        public MP(Stream IO) => _IO = IO;
 
-        public IO(         ) => _IO = File.OpenWriter();
-        public IO(Stream IO) => _IO = IO;
+        private Stream _IO;
 
         public void Close() => _IO.Close();
 
@@ -18,51 +16,38 @@ namespace KKdMainLib.MessagePack
         public MsgPack Read(bool Array = false)
         {
             MsgPack MsgPack = MsgPack.New;
+            if (!Array) MsgPack.Name = ReadString((Types)_IO.ReadByte());
             byte Unk = _IO.ReadByte();
             Types Type = (Types)Unk;
-            if (!Array)
-            {
-                MsgPack.Name = ReadString(Type);
-                if (MsgPack.Name != null) { Unk = _IO.ReadByte(); Type = (Types)Unk; }
-            }
 
-            bool FixArr = Type >= Types.FixArr && Type <= Types.FixArrMax;
-            bool FixMap = Type >= Types.FixMap && Type <= Types.FixMapMax;
-            bool FixStr = Type >= Types.FixStr && Type <= Types.FixStrMax;
-            bool PosInt = Type >= Types.PosInt && Type <= Types.PosIntMax;
-            bool NegInt = Type >= Types.NegInt && Type <= Types.NegIntMax;
-            if (FixArr || FixMap || FixStr || PosInt || NegInt)
+            if (Type >= Types.FixMap && Type <= Types.FixMapMax)
             {
-                if (FixMap)
-                {
-                    MsgPack.Object = KKdList<MsgPack>.New;
-                    for (int i = 0; i < Unk - (byte)Types.FixMap; i++) MsgPack.Add( Read(false));
-                }
-                else if (FixArr)
-                {
-                    MsgPack.Object = new MsgPack[Unk - (byte)Types.FixArr];
-                    for (int i = 0; i < Unk - (byte)Types.FixArr; i++) MsgPack[i] = Read( true);
-                }
-                else if (FixStr) MsgPack.Object = ReadString( Type);
-                else if (PosInt) MsgPack.Object =        Unk; 
-                else if (NegInt) MsgPack.Object = (sbyte)Unk;
-                return MsgPack;
+                MsgPack.Object = KKdList<MsgPack>.New;
+                for (int i = 0; i < Unk - (byte)Types.FixMap; i++) MsgPack.Add( Read(false));
             }
-            
-            while (true)
+            else if (Type >= Types.FixArr && Type <= Types.FixArrMax)
             {
-                if (ReadNil    (ref MsgPack, ref Type)) break;
-                if (ReadArr    (ref MsgPack, ref Type)) break;
-                if (ReadMap    (ref MsgPack, ref Type)) break;
-                if (ReadExt    (ref MsgPack, ref Type)) break;
-                if (ReadString (ref MsgPack, ref Type)) break;
-                if (ReadBoolean(ref MsgPack, ref Type)) break;
-                if (ReadBytes  (ref MsgPack, ref Type)) break;
-                if (ReadInt    (ref MsgPack, ref Type)) break;
-                if (ReadUInt   (ref MsgPack, ref Type)) break;
-                if (ReadFloat  (ref MsgPack, ref Type)) break;
-                break;
+                MsgPack.Object = new MsgPack[Unk - (byte)Types.FixArr];
+                for (int i = 0; i < Unk - (byte)Types.FixArr; i++) MsgPack[i] = Read( true);
             }
+            else if (Type >= Types.FixStr && Type <= Types.FixStrMax) MsgPack.Object = ReadString( Type);
+            else if (Type >= Types.PosInt && Type <= Types.PosIntMax) MsgPack.Object =        Unk;
+            else if (Type >= Types.NegInt && Type <= Types.NegIntMax) MsgPack.Object = (sbyte)Unk;
+            else
+                while (true)
+                {
+                    if (ReadNil    (ref MsgPack, ref Type)) break;
+                    if (ReadArr    (ref MsgPack, ref Type)) break;
+                    if (ReadMap    (ref MsgPack, ref Type)) break;
+                    if (ReadExt    (ref MsgPack, ref Type)) break;
+                    if (ReadString (ref MsgPack, ref Type)) break;
+                    if (ReadBoolean(ref MsgPack, ref Type)) break;
+                    if (ReadBytes  (ref MsgPack, ref Type)) break;
+                    if (ReadInt    (ref MsgPack, ref Type)) break;
+                    if (ReadUInt   (ref MsgPack, ref Type)) break;
+                    if (ReadFloat  (ref MsgPack, ref Type)) break;
+                    break;
+                }
             return MsgPack;
         }
 
@@ -182,7 +167,7 @@ namespace KKdMainLib.MessagePack
             return true;
         }
         
-        public IO Write(MsgPack MsgPack, bool IsArray = false)
+        public MP Write(MsgPack MsgPack, bool IsArray = false)
         {
             if   (MsgPack.Name != null && !IsArray) Write(MsgPack.Name);
             Write(MsgPack.Object);

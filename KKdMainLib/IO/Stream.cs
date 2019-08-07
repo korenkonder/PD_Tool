@@ -7,18 +7,16 @@ namespace KKdMainLib.IO
     public unsafe class Stream : IDisposable
     {
         private MSIO.Stream stream;
-        private   int I, i, i0, TempBitRead, TempBitWrite;
-        private ushort ValRead;
-        private  byte BitRead, BitWrite, ValWrite;
+        private int I, i, i0, BitRead, BitWrite, TempBitRead, TempBitWrite, ValRead, ValWrite;
         private byte[] buf;
 
-        private Main.Format _format = Main.Format.NULL;
+        private Format _format = Format.NULL;
 
-        public Main.Format Format
+        public Format Format
         {   get =>       _format;
             set {        _format = value;
-                  IsBE = _format == Main.Format.F2BE;
-                  IsX  = _format == Main.Format.X || _format == Main.Format.XHD; } }
+                  IsBE = _format == Format.F2BE;
+                  IsX  = _format == Format.X || _format == Format.XHD; } }
 
         public bool IsBE = false;
         public bool IsX  = false;
@@ -27,9 +25,12 @@ namespace KKdMainLib.IO
         public uint UIntOffset { get => (uint)LongOffset; set => LongOffset = value; }
         public long LongOffset;
 
-        public  int       Length { get => ( int)stream.Length -     Offset; set => stream.SetLength(value +     Offset); }
-        public uint   UIntLength { get => (uint)stream.Length - UIntOffset; set => stream.SetLength(value + UIntOffset); }
-        public long   LongLength { get =>       stream.Length - LongOffset; set => stream.SetLength(value + LongOffset); }
+        public  int       Length { get => ( int)stream.Length -     Offset;
+            set => stream.SetLength(value +     Offset); }
+        public uint   UIntLength { get => (uint)stream.Length - UIntOffset;
+            set => stream.SetLength(value + UIntOffset); }
+        public long   LongLength { get =>       stream.Length - LongOffset;
+            set => stream.SetLength(value + LongOffset); }
 
         public  int     Position
         { get => ( int)stream.Position -     Offset; set => stream.Position = value +     Offset; }
@@ -52,7 +53,7 @@ namespace KKdMainLib.IO
             BitRead = 8;
             ValRead = ValRead = BitWrite = 0;
             stream = output;
-            Format = Main.Format.NULL;
+            Format = Format.NULL;
             buf = new byte[128];
             IsBE = isBE;
         }
@@ -322,18 +323,18 @@ namespace KKdMainLib.IO
         public string ReadStringUTF8 (long? Length) => ReadBytes(Length).ToUTF8 ();
         public string ReadStringASCII(long? Length) => ReadBytes(Length).ToASCII();
         
-        public byte[] ReadBytes(long  Length, int Offset = 0)
-        { byte[] Buf = new byte[Length]; if (Offset > 0) stream.Position = Offset;
+        public byte[] ReadBytes(long Length, int Offset = -1)
+        { byte[] Buf = new byte[Length]; if (Offset > -1) stream.Position = Offset;
             stream.Read(Buf, 0, (int)Length); return Buf; }
         
-        public void ReadBytes(long  Length, byte[] Buf, long Offset = 0)
-        { if (Offset > 0) stream.Position = Offset; stream.Read(Buf, 0, (int)Length); }
+        public void ReadBytes(long Length, byte[] Buf, long Offset = -1)
+        { if (Offset > -1) stream.Position = Offset; stream.Read(Buf, 0, (int)Length); }
 
-        public byte[] ReadBytes(long? Length, int Offset = 0)
+        public byte[] ReadBytes(long? Length, int Offset = -1)
         { if (Length == null) return new byte[0]; else return ReadBytes((long)Length, Offset); }
 
-        public void ReadBytes(long Length, byte Bits, byte[] Buf, long Offset = 0)
-        { if (Offset > 0) stream.Seek(Offset, 0);
+        public void ReadBytes(long  Length, byte Bits, byte[] Buf, long Offset = -1)
+        { if (Offset > -1) stream.Seek(Offset, 0);
                  if (Bits > 0 && Bits < 8) for (i0 = 0; i0 < Length; i0++) Buf[i0] = ReadBits(Bits); }
            
         public byte ReadBits(byte Bits)
@@ -351,8 +352,9 @@ namespace KKdMainLib.IO
 
         public byte ReadHalfByte() => ReadBits(4);
         
-        public void Write(byte val, byte Bits)
+        public void Write(int val, byte Bits)
         {
+            val &= (1 << Bits) - 1;
             BitWrite += Bits;
             TempBitWrite = 8 - BitWrite;
             if (TempBitWrite < 0)
@@ -362,11 +364,12 @@ namespace KKdMainLib.IO
                 stream.WriteByte((byte)(ValWrite | (val >> BitWrite)));
                 ValWrite = 0;
             }
-            ValWrite |= (byte)(val << TempBitWrite);
+            ValWrite |= val << TempBitWrite;
+            ValWrite &= 0xFF;
         }
 
-        public void CheckRead  () { if (BitRead  > 0)                    ValRead  = 0; BitRead  = 8; }
-        public void CheckWrited() { if (BitWrite > 0) { Write(ValWrite); ValWrite =    BitWrite = 0; } }
+        public void CheckRead  () { if (BitRead  > 0)                    ValRead  = 0; BitRead  = 8;   }
+        public void CheckWrited() { if (BitWrite > 0) { Write(ValWrite); ValWrite = 0; BitWrite = 0; } }
 
         public byte[] ToArray(bool Close)
         { byte[] Data = ToArray(); if (Close) this.Close(); return Data; }
@@ -374,8 +377,7 @@ namespace KKdMainLib.IO
         public byte[] ToArray()
         {
             long Position = stream.Position;
-            stream.Position = 0;
-            byte[] Data = ReadBytes(stream.Length);
+            byte[] Data = ReadBytes(stream.Length, 0);
             stream.Position = Position;
             return Data;
         }

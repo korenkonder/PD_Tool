@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.F2nd;
-using KKdMainLib.MessagePack;
+using Extensions = KKdBaseLib.Extensions;
 
 namespace KKdMainLib.A3DA
 {
     public class A3DA
     {
-        private const bool A3DCOpt = true;
+        private bool A3DCOpt = true;
         private const string d = ".";
 
         private int i, i0, i1;
@@ -24,7 +24,7 @@ namespace KKdMainLib.A3DA
         private Dictionary<int?, double?> UsedValues;
         private Dictionary<string, object> Dict;
 
-        private bool IsX => Data.Format == Main.Format.X || Data.Format == Main.Format.XHD;
+        private bool IsX => Data.Format == Format.X || Data.Format == Format.XHD;
 
         public Stream IO;
         public A3DAData Data;
@@ -48,7 +48,7 @@ namespace KKdMainLib.A3DA
             Data = new A3DAData();
             Header Header = new Header();
 
-            Data.Format = IO.Format = Main.Format.F;
+            Data.Format = IO.Format = Format.F;
             Header.SectionSignature = IO.ReadInt32();
             if (Header.SectionSignature == 0x41443341)
             { Header = IO.ReadHeader(true, true); Data.Format = Header.Format; }
@@ -60,7 +60,7 @@ namespace KKdMainLib.A3DA
             if (Header.SectionSignature == 0x5F5F5F41)
             {
                 IO.Position = 0x10;
-                Header.Format = IO.Format = Main.Format.DT;
+                Header.Format = IO.Format = Format.DT;
             }
             else if (Header.SectionSignature == 0x5F5F5F43)
             {
@@ -82,7 +82,7 @@ namespace KKdMainLib.A3DA
             }
             else { IO.Close(); return 0; }
 
-            if (Header.Format == Main.Format.DT)
+            if (Header.Format == Format.DT)
                 Data.StringLength = IO.Length - 0x10;
 
             string[] STRData = IO.ReadString(Data.StringLength).Replace("\r", "").Split('\n');
@@ -110,6 +110,7 @@ namespace KKdMainLib.A3DA
             nameView = "";
             dataArray = null;
             Dict = null;
+            IO = null;
             return 1;
         }
 
@@ -168,14 +169,14 @@ namespace KKdMainLib.A3DA
             if (Dict.FindValue(out value, "dof.name"))
             {
                 Data.DOF = new DOF { Name = value };
-                Data.Format = Main.Format.FT;
+                Data.Format = Format.FT;
                 Data.DOF.MT = Dict.ReadMT("dof" + d);
             }
 
             if (Dict.FindValue(out value, "ambient.length"))
             {
                 Data.Ambient = new Ambient[int.Parse(value)];
-                Data.Format = Main.Format.MGF;
+                Data.Format = Format.MGF;
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
                     name = "ambient" + d + i0 + d;
@@ -343,7 +344,7 @@ namespace KKdMainLib.A3DA
             if (Dict.FindValue(out value, "material_list.length"))
             {
                 Data.MaterialList = new MaterialList[int.Parse(value)];
-                Data.Format = Main.Format.X;
+                Data.Format = Format.X;
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
                     name = "material_list" + d + i0 + d;
@@ -488,7 +489,7 @@ namespace KKdMainLib.A3DA
             IO.Write("_.file_name=", Data._.FileName);
             IO.Write("_.property.version=", Data._.PropertyVersion);
 
-            if (Data.Ambient != null && Data.Format == Main.Format.MGF)
+            if (Data.Ambient != null && Data.Format == Format.MGF)
             {
                 SO0 = Data.Ambient.Length.SortWriter();
                 SOi0 = 0;
@@ -569,7 +570,7 @@ namespace KKdMainLib.A3DA
                 IO.Write("curve.length=", Data.Curve.Length);
             }
 
-            if (Data.DOF != null && Data.Format == Main.Format.FT)
+            if (Data.DOF != null && Data.Format == Format.FT)
             {
                 IO.Write("dof.name=", Data.DOF.Name);
                 IO.Write(Data.DOF.MT, "dof" + d, A3DC, IsX);
@@ -1014,7 +1015,7 @@ namespace KKdMainLib.A3DA
         public byte[] A3DCWriter()
         {
             if (A3DCOpt) UsedValues = new Dictionary<int?, double?>();
-            if (Data.Format < Main.Format.F2LE) Data._.CompressF16 = null;
+            if (Data.Format < Format.F2LE) Data._.CompressF16 = null;
 
             IO = File.OpenWriter();
             for (byte i = 0; i < 2; i++)
@@ -1025,9 +1026,9 @@ namespace KKdMainLib.A3DA
                 if (Data.CameraRoot != null)
                     for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                     {
-                        IO.WriteOffset(ref Data.CameraRoot[i0].Interest, ReturnToOffset);
                         IO.WriteOffset(ref Data.CameraRoot[i0].      MT, ReturnToOffset);
                         IO.WriteOffset(ref Data.CameraRoot[i0].VP.   MT, ReturnToOffset);
+                        IO.WriteOffset(ref Data.CameraRoot[i0].Interest, ReturnToOffset);
                     }
 
                 if (Data.DOF != null)
@@ -1085,12 +1086,12 @@ namespace KKdMainLib.A3DA
                 if (Data.CameraRoot != null)
                     for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                     {
-                        Write(ref Data.CameraRoot[i0].Interest);
                         Write(ref Data.CameraRoot[i0].      MT);
                         Write(ref Data.CameraRoot[i0].VP.   MT);
-                        Write(ref Data.CameraRoot[i0].VP.FOV        );
-                        Write(ref Data.CameraRoot[i0].VP.FocalLength);
                         Write(ref Data.CameraRoot[i0].VP.Roll       );
+                        Write(ref Data.CameraRoot[i0].VP.FocalLength);
+                        Write(ref Data.CameraRoot[i0].VP.FOV        );
+                        Write(ref Data.CameraRoot[i0].Interest);
                     }
 
                 if (Data.Chara != null)
@@ -1101,16 +1102,14 @@ namespace KKdMainLib.A3DA
                     for (i0 = 0; i0 < Data.Curve.Length; i0++)
                         Write(ref Data.Curve[i0].CV);
 
-                if (Data.DOF != null && Data.Format == Main.Format.FT)
+                if (Data.DOF != null && Data.Format == Format.FT)
                     Write(ref Data.DOF.MT);
 
-                if (Data.Fog != null)
-                    for (i0 = 0; i0 < Data.Fog.Length; i0++)
+                if (Data.Light != null)
+                    for (i0 = 0; i0 < Data.Light.Length; i0++)
                     {
-                        Write(ref Data.Fog[i0].Density);
-                        Write(ref Data.Fog[i0].Diffuse);
-                        Write(ref Data.Fog[i0].End    );
-                        Write(ref Data.Fog[i0].Start  );
+                        Write(ref Data.Light[i0].Position     );
+                        Write(ref Data.Light[i0].SpotDirection);
                     }
 
                 if (Data.Light != null)
@@ -1120,8 +1119,15 @@ namespace KKdMainLib.A3DA
                         Write(ref Data.Light[i0].Diffuse      );
                         Write(ref Data.Light[i0].Incandescence);
                         Write(ref Data.Light[i0].Specular     );
-                        Write(ref Data.Light[i0].Position     );
-                        Write(ref Data.Light[i0].SpotDirection);
+                    }
+
+                if (Data.Fog != null)
+                    for (i0 = 0; i0 < Data.Fog.Length; i0++)
+                    {
+                        Write(ref Data.Fog[i0].Density);
+                        Write(ref Data.Fog[i0].Diffuse);
+                        Write(ref Data.Fog[i0].Start  );
+                        Write(ref Data.Fog[i0].End    );
                     }
 
                 if (Data.MObjectHRC != null)
@@ -1178,8 +1184,8 @@ namespace KKdMainLib.A3DA
                     Write(ref Data.PostProcess.Diffuse  );
                     Write(ref Data.PostProcess.Specular );
                     Write(ref Data.PostProcess.LensFlare);
-                    Write(ref Data.PostProcess.LensGhost);
                     Write(ref Data.PostProcess.LensShaft);
+                    Write(ref Data.PostProcess.LensGhost);
                 }
 
                 IO.Align(0x10, true);
@@ -1188,7 +1194,7 @@ namespace KKdMainLib.A3DA
             byte[] A3DAData = A3DAWriter(true);
 
             IO = File.OpenWriter();
-            IO.Offset = Data.Format > Main.Format.FT ? 0x40 : 0;
+            IO.Offset = Data.Format > Format.FT ? 0x40 : 0;
             IO.Position = 0x40;
 
             Data.StringOffset = IO.Position;
@@ -1218,13 +1224,13 @@ namespace KKdMainLib.A3DA
             IO.WriteEndian(Data.BinaryLength, true);
             IO.WriteEndian(0x20, true);
             
-            if (Data.Format > Main.Format.FT)
+            if (Data.Format > Format.FT)
             {
                 IO.Position = A3DCEnd;
                 IO.WriteEOFC(0);
                 IO.Offset   = 0;
                 IO.Position = 0;
-                Header Header = new Header { Signature = 0x41443341, Format = Main.Format.F2LE,
+                Header Header = new Header { Signature = 0x41443341, Format = Format.F2LE,
                     DataSize = A3DCEnd, SectionSize = A3DCEnd, InnerSignature = 0x01131010 };
                 IO.Write(Header, true);
             }
@@ -1254,7 +1260,7 @@ namespace KKdMainLib.A3DA
                 Key.BinOffset = IO.Position;
                 int Type = Key.Type.Value;
                 if (Key.EPTypePost.HasValue) Type |= (Key.EPTypePost.Value & 0xF) << 12;
-                if (Key.EPTypePre .HasValue) Type |= (Key.EPTypePre .Value & 0xF) << 12;
+                if (Key.EPTypePre .HasValue) Type |= (Key.EPTypePre .Value & 0xF) <<  8;
                 IO.Write(Type);
                 IO.Write(0x00);
                 IO.Write((float)Key.Max);
@@ -2162,7 +2168,7 @@ namespace KKdMainLib.A3DA
                 else if (Key.RawData.KeyType == 3) for (i = 0; i < Key.Trans.Length; i++)
                         IO.Write(Key.Trans[i].ToKeyFrameT3().ToString(false) +
                             ((i + 1 < Key.Trans.Length) ? "," : ""));
-                IO.Position = IO.Position - 1;
+                IO.Position--;
                 IO.Write('\n');
                 IO.Write(Temp + "raw_data.value_list_size=", Key.RawData.ValueListSize);
                 IO.Write(Temp + "raw_data.value_type="     , Key.RawData.ValueType    );
@@ -2220,7 +2226,7 @@ namespace KKdMainLib.A3DA
                 if (Key.EPTypePost == 0) Key.EPTypePost = null;
                 if (Key.EPTypePre  == 0) Key.EPTypePre  = null;
             }
-            Key.Type = Key.Type & 0xFF;
+            Key.Type &= 0xFF;
             Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
             KeyFrameT3<double, double> Temp;
             for (int i = 0; i < Key.Length; i++)
@@ -2386,38 +2392,21 @@ namespace KKdMainLib.A3DA
                 if (Key.RawData.KeyType != null) Keys.Add("RawData", true);
                 
                 MsgPack Trans = new MsgPack(Key.Trans.Length, "Trans");
-                MsgPack K;
                 for (int i = 0; i < Key.Trans.Length; i++)
                          if (Key.Trans[i] is KeyFrameT0<double, double> KeyFrameT0)
-                    {
-                        K = new MsgPack(1);
-                        K[0] = (MsgPack)KeyFrameT0.Frame;
-                        Trans[i] = K;
-                    }
+                        Trans[i] = new MsgPack(null, new MsgPack[] 
+                        { (MsgPack)KeyFrameT0.Frame });
                     else if (Key.Trans[i] is KeyFrameT1<double, double> KeyFrameT1)
-                    {
-                        K = new MsgPack(2);
-                        K[0] = (MsgPack)KeyFrameT1.Frame;
-                        K[1] = (MsgPack)KeyFrameT1.Value;
-                        Trans[i] = K;
-                    }
+                        Trans[i] = new MsgPack(null, new MsgPack[]
+                        { (MsgPack)KeyFrameT1.Frame, (MsgPack)KeyFrameT1.Value });
                     else if (Key.Trans[i] is KeyFrameT2<double, double> KeyFrameT2)
-                    {
-                        K = new MsgPack(3);
-                        K[0] = (MsgPack)KeyFrameT2.Frame;
-                        K[1] = (MsgPack)KeyFrameT2.Value;
-                        K[2] = (MsgPack)KeyFrameT2.Interpolation;
-                        Trans[i] = K;
-                    }
+                        Trans[i] = new MsgPack(null, new MsgPack[]
+                        { (MsgPack)KeyFrameT2.Frame, (MsgPack)KeyFrameT2.Value,
+                          (MsgPack)KeyFrameT2.Interpolation });
                     else if (Key.Trans[i] is KeyFrameT3<double, double> KeyFrameT3)
-                    {
-                        K = new MsgPack(4);
-                        K[0] = (MsgPack)KeyFrameT3.Frame;
-                        K[1] = (MsgPack)KeyFrameT3.Value;
-                        K[2] = (MsgPack)KeyFrameT3.Interpolation1;
-                        K[3] = (MsgPack)KeyFrameT3.Interpolation2;
-                        Trans[i] = K;
-                    }
+                        Trans[i] = new MsgPack(null, new MsgPack[]
+                        { (MsgPack)KeyFrameT3.Frame, (MsgPack)KeyFrameT3.Value,
+                          (MsgPack)KeyFrameT3.Interpolation1, (MsgPack)KeyFrameT3.Interpolation2 });
                 Keys.Add(Trans);
             }
             else if (Key.Value != 0) Keys.Add("Value", Key.Value);
@@ -2457,6 +2446,8 @@ namespace KKdMainLib.A3DA
         public int StringLength;
         public int StringOffset;
 
+        public Format Format;
+
         public string[] Motion;
         public string[] ObjectList;
         public string[] ObjectHRCList;
@@ -2472,7 +2463,6 @@ namespace KKdMainLib.A3DA
         public ObjectHRC[] ObjectHRC;
         public CameraRoot[] CameraRoot;
         public MObjectHRC[] MObjectHRC;
-        public Main.Format Format;
         public PlayControl PlayControl;
         public PostProcess PostProcess;
         public MaterialList[] MaterialList;

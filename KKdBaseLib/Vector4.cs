@@ -11,8 +11,7 @@
         { this.X = X; this.Y = Y; this.Z = Z; this.W = W; }
 
         public double Length => (X * X + Y * Y + Z * Z + W * W).Sqrt();
-        public Vector4 Normalized => this = new Vector4()
-        { X = X * (1 / Length), Y = Y * (1 / Length), Z = Z * (1 / Length), W = W * (1 / Length) };
+        public Vector4 Normalized => this = Length == 0 ? new Vector4() : this / Length;
 
         public static Vector4 operator +(Vector4 left, Vector4 right)
         { left.X += right.X; left.Y += right.Y; left.Z += right.Z; left.W += right.W; return left; }

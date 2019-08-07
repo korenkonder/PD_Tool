@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdMainLib.A3DA;
-using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.DB
 {
@@ -20,7 +20,7 @@ namespace KKdMainLib.DB
 
             IO = File.OpenReader(file + ".bin");
 
-            IO.Format = Main.Format.F;
+            IO.Format = Format.F;
             Signature = IO.ReadInt32();
             if (Signature != 0x44334123) return;
             Signature = IO.ReadInt32();

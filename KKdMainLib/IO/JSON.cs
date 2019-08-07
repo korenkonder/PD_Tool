@@ -1,16 +1,15 @@
 ﻿//Original or reader part: https://github.com/MarcosLopezC/LightJson/
 
 using KKdBaseLib;
-using KKdMainLib.IO;
+using BaseExtensions = KKdBaseLib.Extensions;
 
-namespace KKdMainLib.MessagePack
+namespace KKdMainLib.IO
 {
-    public class JSONIO
+    public struct JSON
     {
-        public Stream _IO;
+        public JSON(Stream IO) => _IO = IO;
 
-        public JSONIO(         ) => _IO = File.OpenWriter();
-        public JSONIO(Stream IO) => _IO = IO;
+        private Stream _IO;
 
         public void Close() => _IO.Close();
 
@@ -66,7 +65,8 @@ namespace KKdMainLib.MessagePack
 					}
 				}
 				else if (c == '"') break;
-				else if (char.IsControl(c)) return null;
+				else if (char.IsControl(c))
+                    return null;
                 else s += c;
 			}
 
@@ -83,7 +83,8 @@ namespace KKdMainLib.MessagePack
         {
             KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
             if (!_IO.Assert('{')) return KKdList<MsgPack>.Null;
-			if (_IO.SkipWhitespace().PeekCharUTF8() == '}') { _IO.ReadCharUTF8(); return KKdList<MsgPack>.Null; }
+			if (_IO.SkipWhitespace().PeekCharUTF8() == '}')
+            { _IO.ReadCharUTF8(); return KKdList<MsgPack>.Null; }
 
             string key;
             char c;
@@ -110,7 +111,8 @@ namespace KKdMainLib.MessagePack
         {
             KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
             if (!_IO.Assert('[')) return null;
-            if (_IO.SkipWhitespace().PeekCharUTF8() == ']') { _IO.ReadCharUTF8(); return null; }
+            if (_IO.SkipWhitespace().PeekCharUTF8() == ']')
+            { _IO.ReadCharUTF8(); return null; }
 
             char c;
             while (true)
@@ -171,13 +173,13 @@ namespace KKdMainLib.MessagePack
         { string s = ""; while (char.IsDigit(_IO.SkipWhitespace().
             PeekCharUTF8())) s += _IO.ReadCharUTF8(); return s; }
 
-        public JSONIO Write(MsgPack MsgPack, string End = "\n", string TabChar = "  ")
+        public JSON Write(MsgPack MsgPack, string End = "\n", string TabChar = "  ")
         { Write(MsgPack, End, TabChar, "", true); return this; }
 
-        public JSONIO Write(MsgPack MsgPack, bool Style = false)
+        public JSON Write(MsgPack MsgPack, bool Style = false)
         { Write(MsgPack, "\n", "  ", "", Style); return this; }
 
-        private JSONIO Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style, bool IsArray = false)
+        private JSON Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style, bool IsArray = false)
         {
             string OldTab = Tab;
             Tab += TabChar;
@@ -239,21 +241,20 @@ namespace KKdMainLib.MessagePack
             switch (obj)
             {
                 case MsgPack val: Write(val, End, TabChar, Tab, Style); break;
-                case    bool val: Write(val); break;
                 case  string val: Write(val); break;
-                case   sbyte val: _IO.Write(Extensions.ToString(val)); break;
-                case    byte val: _IO.Write(Extensions.ToString(val)); break;
-                case   short val: _IO.Write(Extensions.ToString(val)); break;
-                case  ushort val: _IO.Write(Extensions.ToString(val)); break;
-                case     int val: _IO.Write(Extensions.ToString(val)); break;
-                case    uint val: _IO.Write(Extensions.ToString(val)); break;
-                case    long val: _IO.Write(Extensions.ToString(val)); break;
-                case   ulong val: _IO.Write(Extensions.ToString(val)); break;
-                case   float val: _IO.Write(Extensions.ToString(val)); break;
-                case  double val: _IO.Write(Extensions.ToString(val)); break;
+                case    bool Boolean:
+                case   sbyte   Int8 :
+                case    byte  UInt8 :
+                case   short   Int16:
+                case  ushort  UInt16:
+                case     int   Int32:
+                case    uint  UInt32:
+                case    long   Int64:
+                case   ulong  UInt64:
+                case   float Float32:
+                case  double Float64: _IO.Write(BaseExtensions.ToString(obj)); break;
             }
         }
-        private void Write(  bool val) => _IO.Write(val ? "true" : "false");
         private void Write(string val) => _IO.Write("\"" + val
             .Replace("\\", "\\\\").Replace("/" , "\\/").Replace("\"", "\\\"")
             .Replace("\0", "\\0" ).Replace("\b", "\\b").Replace("\f", "\\f" )

@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.MessagePack;
 
 namespace KKdMainLib.DB
 {
@@ -85,8 +84,8 @@ namespace KKdMainLib.DB
             List<string> SetName     = new List<string>();
             List<string> SetFileName = new List<string>();
 
-            List<int>    Ids        = new List<int>();
-            List<int> SetIds        = new List<int>();
+            List<int>    Ids = new List<int>();
+            List<int> SetIds = new List<int>();
 
             List<int> NotAdd = new List<int>();
             SpriteTexture temp;

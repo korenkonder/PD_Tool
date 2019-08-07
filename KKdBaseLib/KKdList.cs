@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace KKdBaseLib
 {
@@ -17,20 +18,12 @@ namespace KKdBaseLib
         public bool NotNull => array != null;
 
         public int Capacity { get => array != null ? array.Length : -1;
-            set
-            {
-                if (array != null) System.Array.Resize(ref array, value);
-                else array = new T[value];
-            }
-        }
+            set { if (array != null) System.Array.Resize(ref array, value); else array = new T[value];
+                if (Count >= value) Count = value; } }
 
 
         public KKdList(T[] Array)
-        {
-            index = 0;
-            Count = Array.Length;
-            array = Array;
-        }
+        { index = 0; Count = Array.Length; array = Array; }
 
         public T Current => index < Count ? array[index] : default;
 
@@ -66,15 +59,17 @@ namespace KKdBaseLib
 
             for (int i = index + 1; i < Count; i++)
                 array[i - 1] = array[i];
+            Count--;
         }
 
         public void RemoveRange(int IndexStart, int IndexEnd)
         {
-            if (IndexEnd - IndexStart < 1) return;
             if (IsNull) return;
+            if (IndexEnd - IndexStart < 1) return;
 
             for (int i = IndexStart; i < Count; i++)
                 array[i] = array[i + IndexEnd - IndexStart];
+            Count -= IndexEnd - IndexStart;
         }
 
         public T[] ToArray() => array;
@@ -97,6 +92,19 @@ namespace KKdBaseLib
                 else if (array[i] == null || val == null) continue;
                 else if (array[i]    .Equals(val)       ) return i;
             return -1;
+        }
+
+        public void Sort()
+        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); Count = List.Count; }
+
+        public static explicit operator KKdList<T>(   List<T> List) =>
+            new KKdList<T> { array = List.ToArray(), Count = List.Count };
+
+        public static explicit operator    List<T>(KKdList<T> List)
+        {
+            List<T> list = new List<T>();
+            for (int i = 0; i < List.Count; i++) list.Add(List[i]);
+            return list;
         }
     }
 }
