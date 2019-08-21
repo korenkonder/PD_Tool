@@ -11,7 +11,7 @@
     public struct CountPointer<T>
     {
         public int Count { get => Entries != null ? Entries.Length : 0;
-                           set => Entries  =  new T[value]; }
+                           set => Entries = value < 0 ? null : new T[value]; }
         public int Offset;
         public T[] Entries;
         

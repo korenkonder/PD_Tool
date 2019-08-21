@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using KKdBaseLib;
+using KKdBaseLib.F2;
 using KKdMainLib.IO;
-using KKdMainLib.F2nd;
 
 namespace KKdMainLib
 {
@@ -24,18 +24,16 @@ namespace KKdMainLib
             Header.Format = Format.F;
             Header.SectionSignature = IO.ReadInt32();
             if (Header.SectionSignature == 0x43505845)
-                Header = IO.ReadHeader(true);
-            if (Header.SectionSignature != 0x64)
-                return 0;
+                Header = IO.ReadHeader(true, true);
+            if (Header.SectionSignature != 0x64) return 0;
 
-            Offset = IO.Position - 0x4;
+            IO.Offset = IO.Position - 0x4;
             Dex = new EXP[IO.ReadInt32()];
             int DEXOffset = IO.ReadInt32();
-            if (IO.ReadInt32() == 0x00) Header.Format = Format.X;
             int DEXNameOffset = IO.ReadInt32();
-            if (Header.IsX) IO.ReadInt32();
+            if (DEXNameOffset == 0x00) { Header.Format = Format.X; DEXNameOffset = (int)IO.ReadInt64(); }
 
-            IO.Seek(DEXOffset + Offset, 0);
+            IO.Seek(DEXOffset, 0);
             for (int i0 = 0; i0 < Dex.Length; i0++)
                 Dex[i0] = new EXP { Main = new List<EXPElement>(), Eyes = new List<EXPElement>() };
 
@@ -46,7 +44,7 @@ namespace KKdMainLib
                 Dex[i0].EyesOffset = IO.ReadInt32();
                 if (Header.IsX) IO.ReadInt32();
             }
-            IO.Seek(DEXNameOffset + Offset, 0);
+            IO.Seek(DEXNameOffset, 0);
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
                 Dex[i0].NameOffset = IO.ReadInt32();
@@ -70,7 +68,7 @@ namespace KKdMainLib
                         break;
                 }
 
-                IO.Seek(Dex[i0].EyesOffset + Offset, 0);
+                IO.Seek(Dex[i0].EyesOffset, 0);
                 while(true)
                 {
                     element.Frame = IO.ReadSingle();
@@ -80,12 +78,10 @@ namespace KKdMainLib
                     element.Trans = IO.ReadSingle();
                     Dex[i0].Eyes.Add(element);
 
-                    if (element.Frame == 999999 || element.Both == 0xFFFF)
-                        break;
+                    if (element.Frame == 999999 || element.Both == 0xFFFF) break;
                 }
 
-                IO.Seek(Dex[i0].NameOffset + Offset, 0);
-                Dex[i0].Name = IO.NullTerminatedUTF8();
+                Dex[i0].Name = IO.ReadStringAtOffset(Dex[i0].NameOffset);
             }
 
             IO.Close();
@@ -172,7 +168,7 @@ namespace KKdMainLib
             IO.Close();
         }
 
-        public void MsgPackReader(string file, bool JSON)
+        public int MsgPackReader(string file, bool JSON)
         {
             int i0 = 0;
             int i1 = 0;
@@ -180,7 +176,7 @@ namespace KKdMainLib
             Header = new Header();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.ElementArray("Dex", out MsgPack Dex)) return;
+            if (!MsgPack.ElementArray("Dex", out MsgPack Dex)) return 0;
 
             this.Dex = new EXP[Dex.Array.Length];
             for (i0 = 0; i0 < this.Dex.Length; i0++)
@@ -191,22 +187,18 @@ namespace KKdMainLib
                 {
                     this.Dex[i0].Main = new List<EXPElement>();
                     for (i1 = 0; i1 < Main.Array.Length; i1++)
-                        this.Dex[i0].Main.Add(ReadEXP(Main[i1]));
+                        this.Dex[i0].Main.Add(EXPElement.Read(Main[i1]));
                 }
                 if (Dex[i0].ElementArray("Eyes", out MsgPack Eyes))
                 {
                     this.Dex[i0].Eyes = new List<EXPElement>();
                     for (i1 = 0; i1 < Eyes.Array.Length; i1++)
-                        this.Dex[i0].Eyes.Add(ReadEXP(Eyes[i1]));
+                        this.Dex[i0].Eyes.Add(EXPElement.Read(Eyes[i1]));
                 }
             }
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
+            return 1;
         }
-
-        private EXPElement ReadEXP(MsgPack mp) =>
-            new EXPElement() { Frame = mp.ReadSingle("F"), Both  = mp.ReadUInt16("B"),
-                               ID    = mp.ReadUInt16("I"), Value = mp.ReadSingle("V"),
-                               Trans = mp.ReadSingle("T") };
 
         public void MsgPackWriter(string file, bool JSON)
         {
@@ -218,22 +210,18 @@ namespace KKdMainLib
                 MsgPack EXP = MsgPack.New.Add("Name", this.Dex[i0].Name);
                 MsgPack Main = new MsgPack(this.Dex[i0].Main.Count, "Main");
                 for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
-                    Main[i1] = WriteEXP(this.Dex[i0].Main[i1]);
+                    Main[i1] = this.Dex[i0].Main[i1].Write();
                 EXP.Add(Main);
 
                 MsgPack Eyes = new MsgPack(this.Dex[i0].Eyes.Count, "Eyes");
                 for (i1 = 0; i1 < this.Dex[i0].Eyes.Count; i1++)
-                    Eyes[i1] = WriteEXP(this.Dex[i0].Eyes[i1]);
+                    Eyes[i1] = this.Dex[i0].Eyes[i1].Write();
                 EXP.Add(Eyes);
                 Dex[i0] = EXP;
             }
 
             Dex.Write(true, file, JSON);
         }
-
-        private MsgPack WriteEXP(EXPElement element) =>
-            MsgPack.New.Add("F", element.Frame).Add("B", element.Both ).Add("I", element.ID   )
-                         .Add("V", element.Value).Add("T", element.Trans);
 
         public struct EXP
         {
@@ -243,6 +231,8 @@ namespace KKdMainLib
             public string Name;
             public List<EXPElement> Main;
             public List<EXPElement> Eyes;
+
+            public override string ToString() => Name;
         }
 
         public struct EXPElement
@@ -252,6 +242,16 @@ namespace KKdMainLib
             public ushort ID;
             public  float Value;
             public  float Trans;
+
+            public static EXPElement Read(MsgPack msg) =>
+                new EXPElement() { Frame = msg.ReadSingle("F"), Both  = msg.ReadUInt16("B"),
+                                   ID    = msg.ReadUInt16("I"), Value = msg.ReadSingle("V"),
+                                   Trans = msg.ReadSingle("T"), };
+
+            public MsgPack Write() =>
+                MsgPack.New.Add("F", Frame).Add("B", Both )
+                           .Add("I",    ID).Add("V", Value)
+                           .Add("T", Trans);
         }
     }
 }

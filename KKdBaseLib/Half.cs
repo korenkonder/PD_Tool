@@ -10,6 +10,8 @@ namespace KKdBaseLib
 
         public static explicit operator ushort(Half bits) => bits._value;
 
+        public static explicit operator  float(Half h) => (float)(double)h;
+
         public static explicit operator double(Half h)
         {
                  if (h._value       == 0x0000) return +0;
@@ -28,6 +30,8 @@ namespace KKdBaseLib
             double d = n * m * x;
             return d;
         }
+
+        public static explicit operator Half( float val) => (Half)(double)val;
 
         public static explicit operator Half(double val)
         {

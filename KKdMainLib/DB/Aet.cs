@@ -198,7 +198,7 @@ namespace KKdMainLib.DB
                 for (int i = 0; i < AetSets.Length; i++)
                     AetSets[i].ReadMsgPack(AetDB[i]);
             }
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
 

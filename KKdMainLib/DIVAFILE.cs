@@ -14,7 +14,6 @@ namespace KKdMainLib
 
         public static void Decrypt(this string file)
         {
-            Console.Title = "DIVAFILE Decrypt - File: " + Path.GetFileName(file);
             Stream IO = File.OpenReader(file);
             if (IO.ReadInt64() != 0x454C494641564944)
             { IO.Close(); return; }
@@ -39,7 +38,6 @@ namespace KKdMainLib
 
         public static void Encrypt(this string file)
         {
-            Console.Title = "DIVAFILE Encrypt - File: " + Path.GetFileName(file);
             Stream IO = File.OpenReader(file);
             int FileLengthOrigin = IO.Length;
             int FileLength = FileLengthOrigin.Align(16);

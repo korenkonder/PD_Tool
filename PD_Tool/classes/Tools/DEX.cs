@@ -31,7 +31,7 @@ namespace PD_Tool.Tools
             Main.ConsoleDesign("        Choose type of exporting file:");
             Main.ConsoleDesign(false);
             Main.ConsoleDesign("1. F/FT PS3/PS4/PSVita");
-            Main.ConsoleDesign("2. F2nd PS3/PSVita");
+            Main.ConsoleDesign("2. F2   PS3/PSVita");
             Main.ConsoleDesign("3. X    PS4/PSVita");
             if ( MP   && !JSON)   Main.ConsoleDesign("9. MessagePack");
             if (_JSON &&  JSON)   Main.ConsoleDesign("9. JSON");
@@ -47,6 +47,7 @@ namespace PD_Tool.Tools
             else if (format == "9" && (MP && _JSON)) Format = Format.NULL;
             else return;
 
+            int state;
             foreach (string file in FileNames)
             {
                 DEX = new KKdDEX();
@@ -56,12 +57,15 @@ namespace PD_Tool.Tools
                 
                 Console.Title = "DEX Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".bin" || ext == ".dex")
-                     DEX.    DEXReader(filepath, ext );
-                else DEX.MsgPackReader(filepath, JSON);
+                     state = DEX.    DEXReader(filepath, ext );
+                else state = DEX.MsgPackReader(filepath, JSON);
 
-                if (Format > Format.NULL)
-                     DEX.    DEXWriter(filepath, Format);
-                else DEX.MsgPackWriter(filepath, JSON  );
+                if (state == 1)
+                {
+                    if (Format > Format.NULL)
+                         DEX.    DEXWriter(filepath, Format);
+                    else DEX.MsgPackWriter(filepath, JSON);
+                }
                 DEX = null;
             }
         }

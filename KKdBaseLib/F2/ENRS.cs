@@ -1,6 +1,4 @@
-﻿using KKdBaseLib;
-
-namespace KKdMainLib.F2nd
+﻿namespace KKdBaseLib.F2
 {
     public struct ENRS
     {
@@ -10,22 +8,13 @@ namespace KKdMainLib.F2nd
         public int Repeat;
         public SubENRS[] Sub;
 
-        public struct SubENRS
-        {
-            public int Skip;
-            public int Reverse;
-            public Type Type;
-
-            public override string ToString() => "Skip: " + Skip + "; Reverse: " + Reverse + "; Type: " + Type;
-        }
-
         public static unsafe ENRS[] Read(byte[] data)
         {
             byte* ptr = data.GetPtr();
             int i, i0;
             int ENRSCount = ((int*)ptr)[1];
             ENRS[] ENRSArr = new ENRS[ENRSCount];
-            ptr = ptr + 0x10;
+            ptr += 0x10;
 
             ENRS ENR = new ENRS();
             for (i = 0; i < ENRSCount; i++)
@@ -96,6 +85,15 @@ namespace KKdMainLib.F2nd
             Int16   = 0b01000000,
             Int32   = 0b10000000,
             Invalid = 0b11000000,
+        }
+
+        public struct SubENRS
+        {
+            public int Skip;
+            public int Reverse;
+            public Type Type;
+
+            public override string ToString() => "Skip: " + Skip + "; Reverse: " + Reverse + "; Type: " + Type;
         }
 
         public override string ToString() =>

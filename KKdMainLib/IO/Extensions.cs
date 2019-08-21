@@ -19,9 +19,15 @@ namespace KKdMainLib.IO
             }
             return s.ToArray();
         }
+        
+        public static byte PeekByte(this Stream stream)
+        { byte val = stream.ReadByte(); stream.LongPosition--; return       val; }
+        public static char PeekCharASCII(this Stream stream)
+        { byte val = stream.ReadByte(); stream.LongPosition--; return (char)val; }
         public static char PeekCharUTF8(this Stream stream)
         {   long LongPosition = stream.LongPosition;   char val = stream.ReadCharUTF8();
           stream.LongPosition =        LongPosition; return val; }
+
         public static Stream SkipWhitespace(this Stream stream)
         {
             while (true)
@@ -29,6 +35,25 @@ namespace KKdMainLib.IO
                 else break;
             return stream;
         }
+
+		public static bool Assert(this Stream stream, byte next)
+		{ if (stream.PeekByte() == next) { stream.PeekByte(); return true; } else return false; }
+		public static bool Assert(this Stream stream, byte[] next)
+		{
+            for (var i = 0; i < next.Length; i++)
+                if (!stream.Assert(next[i])) return false;
+            return true;
+		}
+        
+		public static bool AssertASCII(this Stream stream, char next)
+		{ if (stream.PeekCharUTF8() == next) { stream.ReadCharUTF8(); return true; } else return false; }
+		public static bool AssertASCII(this Stream stream, string next)
+		{
+            for (var i = 0; i < next.Length; i++)
+                if (!stream.AssertASCII(next[i])) return false;
+            return true;
+		}
+
 		public static bool Assert(this Stream stream, char next)
 		{ if (stream.PeekCharUTF8() == next) { stream.ReadCharUTF8(); return true; } else return false; }
 		public static bool Assert(this Stream stream, string next)

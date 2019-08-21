@@ -42,10 +42,10 @@
     <Compile Include="DB\Aet.cs" />
     <Compile Include="DB\Auth.cs" />
     <Compile Include="DB\Spr.cs" />
-    <Compile Include="F2nd\ENRS.cs" />
-    <Compile Include="F2nd\Header.cs" />
-    <Compile Include="F2nd\POF.cs" />
-    <Compile Include="F2nd\Struct.cs" />
+    <Compile Include="F2\Bloom.cs" />
+    <Compile Include="F2\ColorCorrection.cs" />
+    <Compile Include="F2\DOF.cs" />
+    <Compile Include="F2\Light.cs" />
     <Compile Include="IO\Directory.cs" />
     <Compile Include="IO\Extensions.cs" />
     <Compile Include="IO\File.cs" />
@@ -61,6 +61,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FARC.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Mot.cs" />
     <Compile Include="STR.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

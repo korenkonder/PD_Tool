@@ -368,8 +368,8 @@ namespace KKdMainLib.IO
             ValWrite &= 0xFF;
         }
 
-        public void CheckRead  () { if (BitRead  > 0)                    ValRead  = 0; BitRead  = 8;   }
-        public void CheckWrited() { if (BitWrite > 0) { Write(ValWrite); ValWrite = 0; BitWrite = 0; } }
+        public void CheckRead  () { if (BitRead  > 0)                              ValRead  = 0; BitRead  = 8;   }
+        public void CheckWrited() { if (BitWrite > 0) { WriteByte((byte)ValWrite); ValWrite = 0; BitWrite = 0; } }
 
         public byte[] ToArray(bool Close)
         { byte[] Data = ToArray(); if (Close) this.Close(); return Data; }

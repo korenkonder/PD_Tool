@@ -89,7 +89,6 @@ namespace KKdSoundLib
                             VAGData.DataPtr[i  * ch + c] = temp_bufferPtr[i ];
                             VAGData.DataPtr[i2 * ch + c] = temp_bufferPtr[i2];
                         }
-
                     }
             else
                 for (i1 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)

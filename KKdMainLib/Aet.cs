@@ -1,8 +1,8 @@
 ﻿//Original: AetSet.bt Version: 2.0 by samyuu
 
 using KKdBaseLib;
+using KKdMainLib.F2;
 using KKdMainLib.IO;
-using KKdMainLib.F2nd;
 
 namespace KKdMainLib.Aet
 {
@@ -200,8 +200,7 @@ namespace KKdMainLib.Aet
             {
                 IO.Align(0x10);
                 Aet.Unknown.Offset = IO.Position;
-                for (i = 0; i < Aet.Unknown.Count * 10; i++)
-                    IO.Write(0L);
+                for (i = 0; i < Aet.Unknown.Count * 10; i++) IO.Write(0L);
             }
 
             IO.Align(0x10);
@@ -213,7 +212,7 @@ namespace KKdMainLib.Aet
             for (i = 0; i < NullValPointers.Count; i++)
             {
                 IO.Position = NullValPointers[i];
-                IO.Write(ReturnPosition + i * 4);
+                IO.Write(ReturnPosition + i << 2);
             }
 
             for (i = 0; i < Aet.Layers.Count; i++)
@@ -861,7 +860,6 @@ namespace KKdMainLib.Aet
     public struct AetHeader
     {
         public Pointer<AetData>[] Data;
-        public POF POF;
     }
 
     public struct AetData

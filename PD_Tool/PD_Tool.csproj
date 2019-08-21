@@ -39,14 +39,19 @@
     <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="classes\DataBase.cs" />
     <Compile Include="classes\Tools\A3D.cs" />
     <Compile Include="classes\Tools\AET.cs" />
+    <Compile Include="classes\Tools\BLT.cs" />
+    <Compile Include="classes\Tools\CCT.cs" />
     <Compile Include="classes\Tools\DB.cs" />
     <Compile Include="classes\Tools\DEX.cs" />
+    <Compile Include="classes\Tools\DFT.cs" />
     <Compile Include="classes\Tools\DIV.cs" />
+    <Compile Include="classes\Tools\LIT.cs" />
+    <Compile Include="classes\Tools\MOT.cs" />
     <Compile Include="classes\Tools\STR.cs" />
     <Compile Include="classes\Tools\VAG.cs" />
+    <Compile Include="classes\DataBase.cs" />
     <Compile Include="classes\DIVAFILE.cs" />
     <Compile Include="classes\FARC.cs" />
     <Compile Include="Program.cs" />

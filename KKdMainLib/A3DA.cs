@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using KKdBaseLib;
+using KKdBaseLib.F2;
 using KKdMainLib.IO;
-using KKdMainLib.F2nd;
 using Extensions = KKdBaseLib.Extensions;
 
 namespace KKdMainLib.A3DA
@@ -1252,13 +1252,13 @@ namespace KKdMainLib.A3DA
 
         private void Write(ref Key Key, bool F16 = false)
         {
-            if (Key == null) return;
+            if (Key == null || Key.Type == null) return;
 
             int i = 0;
             if (Key.Trans != null)
             {
                 Key.BinOffset = IO.Position;
-                int Type = Key.Type.Value;
+                int Type = (int)Key.Type & 0xFF;
                 if (Key.EPTypePost.HasValue) Type |= (Key.EPTypePost.Value & 0xF) << 12;
                 if (Key.EPTypePre .HasValue) Type |= (Key.EPTypePre .Value & 0xF) <<  8;
                 IO.Write(Type);
@@ -1267,46 +1267,15 @@ namespace KKdMainLib.A3DA
                 IO.Write(Key.Trans.Length);
                 for (i = 0; i < Key.Trans.Length; i++)
                 {
-                    if (Key.Trans[i] is KeyFrameT0<double, double> TransT0)
-                    {
-                        if (F16 && CompressF16 > 0)
-                        { IO.Write((ushort)TransT0.Frame); IO.Write((ushort)0); }
-                        else
-                        { IO.Write(( float)TransT0.Frame); IO.Write(( float)0); }
-                        if (F16 && CompressF16 == 2) IO.Write(0 );
-                        else                         IO.Write(0L);
-                    }
-                    else if (Key.Trans[i] is KeyFrameT1<double, double> TransT1)
-                    {
-                        if (F16 && CompressF16 > 0)
-                        { IO.Write((ushort)TransT1.Frame); IO.Write(( Half)TransT1.Value); }
-                        else
-                        { IO.Write(( float)TransT1.Frame); IO.Write((float)TransT1.Value); }
-                        if (F16 && CompressF16 == 2) IO.Write(0 );
-                        else                         IO.Write(0L);
-                    }
-                    else if (Key.Trans[i] is KeyFrameT2<double, double> TransT2)
-                    {
-                        if (F16 && CompressF16 > 0)
-                        { IO.Write((ushort)TransT2.Frame); IO.Write(( Half)TransT2.Value); }
-                        else
-                        { IO.Write(( float)TransT2.Frame); IO.Write((float)TransT2.Value); }
-                        if (F16 && CompressF16 == 2)
-                        { IO.Write((  Half)TransT2.Interpolation); IO.Write(( Half)TransT2.Interpolation); }
-                        else
-                        { IO.Write(( float)TransT2.Interpolation); IO.Write((float)TransT2.Interpolation); }
-                    }
-                    else if (Key.Trans[i] is KeyFrameT3<double, double> TransT3)
-                    {
-                        if (F16 && CompressF16 > 0)
-                        { IO.Write((ushort)TransT3.Frame); IO.Write(( Half)TransT3.Value); }
-                        else
-                        { IO.Write(( float)TransT3.Frame); IO.Write((float)TransT3.Value); }
-                        if (F16 && CompressF16 == 2)
-                        { IO.Write((  Half)TransT3.Interpolation1); IO.Write(( Half)TransT3.Interpolation2); }
-                        else
-                        { IO.Write(( float)TransT3.Interpolation1); IO.Write((float)TransT3.Interpolation2); }
-                    }
+                    ref KFT3<double, double> KF = ref Key.Trans[i];
+                    if (F16 && CompressF16 > 0)
+                    { IO.Write((ushort)KF.F ); IO.Write(( Half)KF.V ); }
+                    else
+                    { IO.Write(( float)KF.F ); IO.Write((float)KF.V ); }
+                    if (F16 && CompressF16 == 2)
+                    { IO.Write((  Half)KF.T1); IO.Write(( Half)KF.T2); }
+                    else
+                    { IO.Write(( float)KF.T1); IO.Write((float)KF.T2); }
                 }
             }
             else
@@ -1314,8 +1283,8 @@ namespace KKdMainLib.A3DA
                 if (!UsedValues.ContainsValue(Key.Value) || !A3DCOpt)
                 {
                     Key.BinOffset = IO.Position;
-                    IO.Write(        Key.Type );
-                    IO.Write((float?)Key.Value);
+                    IO.Write((  int)Key.Type );
+                    IO.Write((float)Key.Value);
                     if (A3DCOpt)
                     { UsedValues.Add(Key.BinOffset, Key.Value); }
                     return;
@@ -1328,7 +1297,7 @@ namespace KKdMainLib.A3DA
         public void MsgPackReader(string file, bool JSON)
         {
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.Element("A3D", out MsgPack A3D)) { MsgPack = MsgPack.New; return; }
+            if (!MsgPack.Element("A3D", out MsgPack A3D)) { MsgPack.Dispose(); return; }
             MsgPackReader(A3D);
         }
 
@@ -1989,14 +1958,13 @@ namespace KKdMainLib.A3DA
         public static Key ReadKey(this Dictionary<string, object> Dict, string Temp)
         {
             Key Key = new Key();
-            Dict.FindValue(out Key.BinOffset, Temp + BO    );
-            Dict.FindValue(out Key.Type     , Temp + "type");
+            if ( Dict.FindValue(out Key.BinOffset, Temp + BO    )) return  Key;
+            if (!Dict.FindValue(out int Type     , Temp + "type")) return null;
 
-            if (Key.BinOffset == null && Key.Type == null) return null;
-            if (Key.Type == null) return Key;
-            if (Key.Type == 0x0000) return Key;
-
-            if (Key.Type == 0x0001) { Dict.FindValue(out Key.Value, Temp + "value"); return Key; }
+            if (Key.BinOffset != null) return null;
+            Key.Type = (Key.Interpolation)Type;
+            if (Type == 0x0000) return Key;
+            if (Type == 0x0001) { Dict.FindValue(out Key.Value, Temp + "value"); return Key; }
 
             int i = 0;
             Dict.FindValue(out Key.EPTypePost, Temp + "ep_type_post");
@@ -2006,65 +1974,59 @@ namespace KKdMainLib.A3DA
             if (Dict.StartsWith(Temp + "raw_data"))
                 Dict.FindValue(out Key.RawData.KeyType, Temp + "raw_data_key_type");
 
-            if (Key.Length != null)
+            if (Key.RawData.KeyType != 0)
             {
-                int Type;
-                Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
-                for (i = 0; i < Key.Length; i++)
-                    if (Dict.FindValue(out value, Temp + "key" + d + i + d + "data"))
-                    {
-                        dataArray = value.Replace("(", "").Replace(")", "").Split(',');
-                        Type = dataArray.Length - 1;
-                             if (Type == 0) Key.Trans[i] = new KeyFrameT0<double, double>
-                        { Frame = dataArray[0].ToDouble() };
-                        else if (Type == 1) Key.Trans[i] = new KeyFrameT1<double, double>
-                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble() };
-                        else if (Type == 2) Key.Trans[i] = new KeyFrameT2<double, double>
-                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
-                            Interpolation = dataArray[2].ToDouble() };
-                        else if (Type == 3) Key.Trans[i] = new KeyFrameT3<double, double>
-                        { Frame = dataArray[0].ToDouble(), Value = dataArray[1].ToDouble(),
-                            Interpolation1 = dataArray[2].ToDouble(),
-                            Interpolation2 = dataArray[3].ToDouble() };
-                        Key.Trans[i] = Key.Trans[i].Check();
-                    }
-            }
-            else if (Key.RawData.KeyType != null)
-            {
+                ref string[] ValueList = ref Key.RawData.ValueList;
                 Dict.FindValue(out Key.RawData.ValueType, Temp + "raw_data.value_type");
                 if (Dict.FindValue(out value, Temp + "raw_data.value_list"))
-                    Key.RawData.ValueList = value.Split(',');
+                    ValueList = value.Split(',');
                 Dict.FindValue(out Key.RawData.ValueListSize, Temp + "raw_data.value_list_size");
                 value = "";
 
-                int DS = (int)Key.RawData.KeyType + 1;
+                int DS = Key.RawData.KeyType + 1;
                 Key.Length = Key.RawData.ValueListSize / DS;
-                Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
+                Key.Trans = new KFT3<double, double>[Key.Length];
                      if (Key.RawData.KeyType == 0)
                     for (i = 0; i < Key.Length; i++)
-                        Key.Trans[i] = new KeyFrameT0<double, double>
-                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble() }.Check();
+                        Key.Trans[i] = new KFT3<double, double>
+                        (ValueList[i * DS + 0].ToDouble());
                 else if (Key.RawData.KeyType == 1)
                     for (i = 0; i < Key.Length; i++)
-                        Key.Trans[i] = new KeyFrameT1<double, double>
-                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
-                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble() }.Check();
+                        Key.Trans[i] = new KFT3<double, double>
+                        (ValueList[i * DS + 0].ToDouble(), ValueList[i * DS + 1].ToDouble());
                 else if (Key.RawData.KeyType == 2)
                     for (i = 0; i < Key.Length; i++)
-                        Key.Trans[i] = new KeyFrameT2<double, double>
-                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
-                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble(),
-                            Interpolation = Key.RawData.ValueList[i * DS + 2].ToDouble() }.Check();
+                        Key.Trans[i] = new KFT3<double, double>
+                        (ValueList[i * DS + 0].ToDouble(), ValueList[i * DS + 1].ToDouble(),
+                         ValueList[i * DS + 2].ToDouble(), ValueList[i * DS + 2].ToDouble());
                 else if (Key.RawData.KeyType == 3)
                     for (i = 0; i < Key.Length; i++)
-                        Key.Trans[i] = new KeyFrameT3<double, double>
-                        { Frame = Key.RawData.ValueList[i * DS + 0].ToDouble(),
-                            Value = Key.RawData.ValueList[i * DS + 1].ToDouble(),
-                            Interpolation1 = Key.RawData.ValueList[i * DS + 2].ToDouble(),
-                            Interpolation2 = Key.RawData.ValueList[i * DS + 3].ToDouble() }.Check();
+                        Key.Trans[i] = new KFT3<double, double>
+                        (ValueList[i * DS + 0].ToDouble(), ValueList[i * DS + 1].ToDouble(),
+                         ValueList[i * DS + 2].ToDouble(), ValueList[i * DS + 3].ToDouble());
 
-                for (i = 0; i < Key.Length; i++) Key.Trans[i].Check();
                 Key.RawData.ValueList = null;
+            }
+            else
+            {
+                Key.Trans = new KFT3<double, double>[Key.Length];
+                for (i = 0; i < Key.Length; i++)
+                {
+                    if (!Dict.FindValue(out value, Temp + "key" + d + i + d + "data")) continue;
+
+                    dataArray = value.Replace("(", "").Replace(")", "").Split(',');
+                    Type = dataArray.Length - 1;
+                         if (Type == 0) Key.Trans[i] = new KFT3<double, double>
+                        (dataArray[0].ToDouble());
+                    else if (Type == 1) Key.Trans[i] = new KFT3<double, double>
+                        (dataArray[0].ToDouble(), dataArray[1].ToDouble());
+                    else if (Type == 2) Key.Trans[i] = new KFT3<double, double>
+                        (dataArray[0].ToDouble(), dataArray[1].ToDouble(),
+                         dataArray[2].ToDouble(), dataArray[2].ToDouble());
+                    else if (Type == 3) Key.Trans[i] = new KFT3<double, double>
+                        (dataArray[0].ToDouble(), dataArray[1].ToDouble(),
+                         dataArray[2].ToDouble(), dataArray[3].ToDouble());
+                }
             }
             return Key;
         }
@@ -2105,7 +2067,7 @@ namespace KKdMainLib.A3DA
 
         public static void Write(this Stream IO, Key Key, string Temp, bool A3DC = false)
         {
-            if (Key == null) return;
+            if (Key == null || Key.Type == null) return;
 
             if (A3DC) { IO.Write(Temp + BO + "=", Key.BinOffset); return; }
 
@@ -2113,69 +2075,65 @@ namespace KKdMainLib.A3DA
             if (Key.Trans != null)
                 if (Key.Trans.Length == 0)
                 {
-                    IO.Write(Temp + "type=", Key.Type);
+                    IO.Write(Temp + "type=", (int)Key.Type);
                     if (Key.Type > 0) IO.Write(Temp + "value=", Key.Value);
                     return;
                 }
 
             if (Key.EPTypePost != null) IO.Write(Temp + "ep_type_post=", Key.EPTypePost);
             if (Key.EPTypePre  != null) IO.Write(Temp + "ep_type_pre=" , Key.EPTypePre );
-            if (Key.RawData.KeyType == null && Key.Trans != null)
+            if (Key.RawData.KeyType == 0 && Key.Trans != null)
             {
+                IKF<double, double> KF;
                 SO = Key.Trans.Length.SortWriter();
                 for (i = 0; i < Key.Trans.Length; i++)
                 {
                     SOi = SO[i];
-                    IO.Write(Temp + "key" + d + SOi + d + "data=", Key.Trans[SOi].ToString());
-                         if (Key.Trans[SOi] is KeyFrameT0<double, double>)
-                        IO.Write(Temp + "key" + d + SOi + d + "type=", 0);
-                    else if (Key.Trans[SOi] is KeyFrameT1<double, double>)
-                        IO.Write(Temp + "key" + d + SOi + d + "type=", 1);
-                    else if (Key.Trans[SOi] is KeyFrameT2<double, double>)
-                        IO.Write(Temp + "key" + d + SOi + d + "type=", 2);
-                    else if (Key.Trans[SOi] is KeyFrameT3<double, double>)
-                        IO.Write(Temp + "key" + d + SOi + d + "type=", 3);
+                    KF = Key.Trans[SOi].Check();
+                    IO.Write(Temp + "key" + d + SOi + d + "data=", KF.ToString());
+                    int Type = 0;
+                         if (KF is KFT0<double, double>) Type = 0;
+                    else if (KF is KFT1<double, double>) Type = 1;
+                    else if (KF is KFT2<double, double>) Type = 2;
+                    else if (KF is KFT3<double, double>) Type = 3;
+                    IO.Write(Temp + "key" + d + SOi + d + "type=", Type);
                 }
                 IO.Write(Temp + "key.length=", Key.Length);
                 if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
             }
             else if (Key.Trans != null)
             {
-                Key.RawData.KeyType = 0;
+                int Length = Key.Trans.Length;
+                ref int KeyType = ref Key.RawData.KeyType;
+                KeyType = 0;
+                IKF<double, double> KF;
                 if (Key.Max != null) IO.Write(Temp + "max=", Key.Max);
-                for (i = 0; i < Key.Trans.Length; i++)
+                for (i = 0; i < Length; i++)
                 {
-                         if (Key.Trans[i] is KeyFrameT0<double, double> &&
-                        Key.RawData.KeyType < 0) Key.RawData.KeyType = 0;
-                    else if (Key.Trans[i] is KeyFrameT1<double, double> &&
-                        Key.RawData.KeyType < 1) Key.RawData.KeyType = 1;
-                    else if (Key.Trans[i] is KeyFrameT2<double, double> &&
-                        Key.RawData.KeyType < 2) Key.RawData.KeyType = 2;
-                    else if (Key.Trans[i] is KeyFrameT3<double, double> &&
-                        Key.RawData.KeyType < 3) break;
+                    KF = Key.Trans[i].Check();
+                         if (KF is KFT0<double, double> && KeyType < 0) KeyType = 0;
+                    else if (KF is KFT1<double, double> && KeyType < 1) KeyType = 1;
+                    else if (KF is KFT2<double, double> && KeyType < 2) KeyType = 2;
+                    else if (KF is KFT3<double, double> && KeyType < 3) break;
                 }
-                Key.RawData.ValueListSize = Key.Trans.Length * (Key.RawData.KeyType + 1);
+                Key.RawData.ValueListSize = Length * KeyType + Length;
                 IO.Write(Temp + "raw_data.value_list=");
-                     if (Key.RawData.KeyType == 0) for (i = 0; i < Key.Trans.Length; i++)
-                        IO.Write(Key.Trans[i].ToKeyFrameT0().ToString(false) +
-                            ((i + 1 < Key.Trans.Length) ? "," : ""));
-                else if (Key.RawData.KeyType == 1) for (i = 0; i < Key.Trans.Length; i++)
-                        IO.Write(Key.Trans[i].ToKeyFrameT1().ToString(false) +
-                            ((i + 1 < Key.Trans.Length) ? "," : ""));
-                else if (Key.RawData.KeyType == 2) for (i = 0; i < Key.Trans.Length; i++)
-                        IO.Write(Key.Trans[i].ToKeyFrameT2().ToString(false) +
-                            ((i + 1 < Key.Trans.Length) ? "," : ""));
-                else if (Key.RawData.KeyType == 3) for (i = 0; i < Key.Trans.Length; i++)
-                        IO.Write(Key.Trans[i].ToKeyFrameT3().ToString(false) +
-                            ((i + 1 < Key.Trans.Length) ? "," : ""));
+                     if (KeyType == 0) for (i = 0; i < Length; i++)
+                        IO.Write(Key.Trans[i].ToT0().ToString(false) + ((i + 1 < Length) ? "," : ""));
+                else if (KeyType == 1) for (i = 0; i < Length; i++)
+                        IO.Write(Key.Trans[i].ToT1().ToString(false) + ((i + 1 < Length) ? "," : ""));
+                else if (KeyType == 2) for (i = 0; i < Length; i++)
+                        IO.Write(Key.Trans[i].ToT2().ToString(false) + ((i + 1 < Length) ? "," : ""));
+                else if (KeyType == 3) for (i = 0; i < Length; i++)
+                        IO.Write(Key.Trans[i].ToT3().ToString(false) + ((i + 1 < Length) ? "," : ""));
                 IO.Position--;
                 IO.Write('\n');
                 IO.Write(Temp + "raw_data.value_list_size=", Key.RawData.ValueListSize);
                 IO.Write(Temp + "raw_data.value_type="     , Key.RawData.ValueType    );
                 IO.Write(Temp + "raw_data_key_type="       , Key.RawData.  KeyType    );
             }
-            IO.Write(Temp + "type=", Key.Type & 0xFF);
-            if (Key.RawData.KeyType == null && Key.Trans == null && Key.Value != null)
+            IO.Write(Temp + "type=", (int)Key.Type);
+            if (Key.RawData.KeyType == 0 && Key.Trans == null && Key.Value != null)
                 if (Key.Value != 0) IO.Write(Temp + "value=", Key.Value);
         }
 
@@ -2213,38 +2171,36 @@ namespace KKdMainLib.A3DA
             if (Key.BinOffset == null || Key.BinOffset < 0) return;
             
             IO.Position = (int)Key.BinOffset;
-            Key.Type = IO.ReadInt32();
+            int Type = IO.ReadInt32();
 
             Key.Value = IO.ReadSingle();
-            if (Key.Type == 0x0000 || Key.Type == 0x0001) return;
+            Key.Type = (Key.Interpolation)(Type & 0xFF);
+            if (Key.Type < Key.Interpolation.Lerp) return;
             Key.Max    = IO.ReadSingle();
             Key.Length = IO.ReadInt32 ();
-            if (Key.Type >> 8 != 0)
+            if (Type >> 8 != 0)
             {
-                Key.EPTypePost = (Key.Type >> 12) & 0xF;
-                Key.EPTypePre  = (Key.Type >>  8) & 0xF;
+                Key.EPTypePost = (Type >> 12) & 0xF;
+                Key.EPTypePre  = (Type >>  8) & 0xF;
                 if (Key.EPTypePost == 0) Key.EPTypePost = null;
                 if (Key.EPTypePre  == 0) Key.EPTypePre  = null;
             }
-            Key.Type &= 0xFF;
-            Key.Trans = new IKeyFrame<double, double>[(int)Key.Length];
-            KeyFrameT3<double, double> Temp;
+            Key.Trans = new KFT3<double, double>[Key.Length];
+            KFT3<double, double> Temp;
             for (int i = 0; i < Key.Length; i++)
             {
-                Temp = new KeyFrameT3<double, double>();
+                Temp = new KFT3<double, double>();
                 if (F16 && C_F16 > 0)
-                { Temp.Frame = IO.ReadUInt16(); Temp.Value = (double)IO.ReadHalf  (); }
+                { Temp.F  =         IO.ReadUInt16(); Temp.V  = (double)IO.ReadHalf  (); }
                 else
-                { Temp.Frame = IO.ReadSingle(); Temp.Value =         IO.ReadSingle(); }
+                { Temp.F  =         IO.ReadSingle(); Temp.V  =         IO.ReadSingle(); }
 
                 if (F16 && C_F16 == 2)
-                { Temp.Interpolation1 = (double)IO.ReadHalf  ();
-                  Temp.Interpolation2 = (double)IO.ReadHalf  (); }
+                { Temp.T1 = (double)IO.ReadHalf  (); Temp.T2 = (double)IO.ReadHalf  (); }
                 else
-                { Temp.Interpolation1 =         IO.ReadSingle();
-                  Temp.Interpolation2 =         IO.ReadSingle(); }
+                { Temp.T1 =         IO.ReadSingle(); Temp.T2 =         IO.ReadSingle(); }
 
-                Key.Trans[i] = Temp.Check();
+                Key.Trans[i] = Temp;
             }
         }
 
@@ -2310,47 +2266,36 @@ namespace KKdMainLib.A3DA
         {
             if (k.Object == null) return null;
             
-            Key Key = new Key { EPTypePost = k.ReadNInt32("EPTypePost"),
-                EPTypePre = k.ReadNInt32("EPTypePre"), Max = k.ReadNDouble("Max"),
-                Type = k.ReadNInt32("Type"), Value = k.ReadNDouble("Value") };
+            Key Key = new Key { EPTypePost = k.ReadNInt32("EPTypePost"), EPTypePre =
+                k.ReadNInt32("EPTypePre"), Max = k.ReadNDouble("Max"), Value = k.ReadNDouble("Value") };
+            if (!Enum.TryParse(k.ReadString("Type"), out Key.Interpolation Type)) { Key.Value = null; return Key; }
+            Key.Type = Type;
+            if (Key.Type == 0) { Key.Value = 0; return Key; }
+            else if (Key.Type < Key.Interpolation.Lerp) return Key;
+
             if (k.ReadBoolean("RawData")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
-            if (Key.Type == 0) Key.Value = 0.0;
-
-            if (Key.Type < 2) return Key;
-
             if (!k.ElementArray("Trans", out MsgPack Trans)) return Key;
 
             Key.Length = Trans.Array.Length;
-            Key.Trans = new IKeyFrame<double, double>[Key.Length.Value];
+            Key.Trans = new KFT3<double, double>[Key.Length];
             for (int i = 0; i < Key.Length; i++)
             {
                 if (Trans[i].Array == null) continue;
                 else if (Trans[i].Array.Length == 0) continue;
                 else if (Trans[i].Array.Length == 1)
-                    Key.Trans[i] = new KeyFrameT0<double, double>
-                    {   Frame          = Trans[i][0].ReadDouble() };
+                    Key.Trans[i] = new KFT3<double, double>
+                        (Trans[i][0].ReadDouble());
                 else if (Trans[i].Array.Length == 2)
-                    Key.Trans[i] = new KeyFrameT1<double, double>
-                    {
-                        Frame          = Trans[i][0].ReadDouble(),
-                        Value          = Trans[i][1].ReadDouble(),
-                    };
+                    Key.Trans[i] = new KFT3<double, double>
+                        (Trans[i][0].ReadDouble(), Trans[i][1].ReadDouble());
                 else if (Trans[i].Array.Length == 3)
-                    Key.Trans[i] = new KeyFrameT2<double, double>
-                    {
-                        Frame          = Trans[i][0].ReadDouble(),
-                        Value          = Trans[i][1].ReadDouble(),
-                        Interpolation  = Trans[i][2].ReadDouble(),
-                    };
+                    Key.Trans[i] = new KFT3<double, double>
+                        (Trans[i][0].ReadDouble(), Trans[i][1].ReadDouble(),
+                         Trans[i][2].ReadDouble(), Trans[i][2].ReadDouble());
                 else if (Trans[i].Array.Length == 4)
-                    Key.Trans[i] = new KeyFrameT3<double, double>
-                    {
-                        Frame          = Trans[i][0].ReadDouble(),
-                        Value          = Trans[i][1].ReadDouble(),
-                        Interpolation1 = Trans[i][2].ReadDouble(),
-                        Interpolation2 = Trans[i][3].ReadDouble(),
-                    };
-                Key.Trans[i] = Key.Trans[i].Check();
+                    Key.Trans[i] = new KFT3<double, double>
+                        (Trans[i][0].ReadDouble(), Trans[i][1].ReadDouble(),
+                         Trans[i][2].ReadDouble(), Trans[i][3].ReadDouble());
             }
             return Key;
         }
@@ -2381,32 +2326,32 @@ namespace KKdMainLib.A3DA
 
         public static MsgPack Add(this MsgPack MsgPack, string name, Key Key)
         {
-            if (Key == null) return MsgPack;
-            if (Key.Type == null) return MsgPack;
+            if (Key == null || Key.Type == null) return MsgPack;
 
-            MsgPack Keys = new MsgPack(name).Add("Type", Key.Type);
-            if (Key.Trans != null)
+            MsgPack Keys = new MsgPack(name).Add("Type", Key.Type.ToString());
+            if (Key.Trans != null && Key.Type != Key.Interpolation.Null)
             {
                 Keys = Keys.Add("Max", Key.Max).Add("EPTypePost", Key.EPTypePost).Add("EPTypePre", Key.EPTypePre);
 
-                if (Key.RawData.KeyType != null) Keys.Add("RawData", true);
+                if (Key.RawData.KeyType != 0) Keys.Add("RawData", true);
                 
                 MsgPack Trans = new MsgPack(Key.Trans.Length, "Trans");
                 for (int i = 0; i < Key.Trans.Length; i++)
-                         if (Key.Trans[i] is KeyFrameT0<double, double> KeyFrameT0)
+                {
+                    IKF<double, double> KF = Key.Trans[i].Check();
+                         if (KF is KFT0<double, double> KFT0)
                         Trans[i] = new MsgPack(null, new MsgPack[] 
-                        { (MsgPack)KeyFrameT0.Frame });
-                    else if (Key.Trans[i] is KeyFrameT1<double, double> KeyFrameT1)
+                        { (MsgPack)KFT0.F });
+                    else if (KF is KFT1<double, double> KFT1)
                         Trans[i] = new MsgPack(null, new MsgPack[]
-                        { (MsgPack)KeyFrameT1.Frame, (MsgPack)KeyFrameT1.Value });
-                    else if (Key.Trans[i] is KeyFrameT2<double, double> KeyFrameT2)
+                        { (MsgPack)KFT1.F, (MsgPack)KFT1.V });
+                    else if (KF is KFT2<double, double> KFT2)
                         Trans[i] = new MsgPack(null, new MsgPack[]
-                        { (MsgPack)KeyFrameT2.Frame, (MsgPack)KeyFrameT2.Value,
-                          (MsgPack)KeyFrameT2.Interpolation });
-                    else if (Key.Trans[i] is KeyFrameT3<double, double> KeyFrameT3)
+                        { (MsgPack)KFT2.F, (MsgPack)KFT2.V, (MsgPack)KFT2.T });
+                    else if (KF is KFT3<double, double> KFT3)
                         Trans[i] = new MsgPack(null, new MsgPack[]
-                        { (MsgPack)KeyFrameT3.Frame, (MsgPack)KeyFrameT3.Value,
-                          (MsgPack)KeyFrameT3.Interpolation1, (MsgPack)KeyFrameT3.Interpolation2 });
+                        { (MsgPack)KFT3.F, (MsgPack)KFT3.V, (MsgPack)KFT3.T1, (MsgPack)KFT3.T2, });
+                }
                 Keys.Add(Trans);
             }
             else if (Key.Value != 0) Keys.Add("Value", Key.Value);
@@ -2550,22 +2495,31 @@ namespace KKdMainLib.A3DA
 
     public class Key
     {
-        public int? Type;
-        public int? Length;
+        public Interpolation? Type;
+        public int Length;
         public int? BinOffset;
         public int? EPTypePre;
         public int? EPTypePost;
         public double? Max;
         public double? Value;
         public RawD RawData;
-        public IKeyFrame<double, double>[] Trans;
+        public KFT3<double, double>[] Trans;
 
         public struct RawD
         {
-            public int? KeyType;
-            public int? ValueListSize;
+            public int KeyType;
+            public int ValueListSize;
             public string ValueType;
             public string[] ValueList;
+        }
+
+        public enum Interpolation
+        {
+            Null    = 0,
+            Value   = 1,
+            Lerp    = 2,
+            Hermite = 3,
+            Hold    = 4,
         }
     }
 

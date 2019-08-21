@@ -143,13 +143,13 @@ namespace KKdMainLib.DB
                 if (set.Id    == null) while (true)
                     { if (!SetIds.Contains(i1)) { SpriteSets[i].Id = i1; SetIds.Add(i1); break; } i1++; }
 
-                for (i0 = 0, i1 = 0; i0 < set. Sprites.Length; i0++)
-                    if (set. Sprites[i0].Id == null) while (true) { if (!Ids.Contains(i1))
-                            { SpriteSets[i]. Sprites[i0].Id = i1; Ids.Add(i1); break; } i1++; }
-
                 for (i0 = 0, i1 = 0; i0 < set.Textures.Length; i0++)
-                    if (set.Textures[i0].Id == null) while (true) { if (!Ids.Contains(i1))
-                            { SpriteSets[i].Textures[i0].Id = i1; Ids.Add(i1); break; } i1++; }
+                    while (set.Textures[i0].Id == null)
+                        if (!Ids.Contains(i1)) Ids.Add((int)(SpriteSets[i].Textures[i0].Id = i1)); else i1++;
+
+                for (i0 = 0, i1 = 0; i0 < set. Sprites.Length; i0++)
+                    while (set. Sprites[i0].Id == null)
+                        if (!Ids.Contains(i1)) Ids.Add((int)(SpriteSets[i]. Sprites[i0].Id = i1)); else i1++;
             }
 
                Ids = null;
@@ -175,18 +175,20 @@ namespace KKdMainLib.DB
             for (i = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
-                SpriteSets[i].    NameOffset = IO.Position; IO.Write(SpriteSets[i].    Name + "\0");
-                SpriteSets[i].FileNameOffset = IO.Position; IO.Write(SpriteSets[i].FileName + "\0");
+                for (i0 = 0; i0 < SpriteSets[i].Textures.Length; i0++)
+                { SpriteSets[i].Textures[i0].NameOffset = IO.Position;
+                    IO.Write(SpriteSets[i].Textures[i0].Name + "\0"); }
+
+                for (i0 = 0; i0 < SpriteSets[i]. Sprites.Length; i0++)
+                { SpriteSets[i]. Sprites[i0].NameOffset = IO.Position;
+                    IO.Write(SpriteSets[i]. Sprites[i0].Name + "\0"); }
             }
 
             for (i = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
-                for (i0 = 0; i0 < SpriteSets[i].Textures.Length; i0++)
-                { SpriteSets[i].Textures[i0].NameOffset = IO.Position; IO.Write(SpriteSets[i].Textures[i0].Name + "\0"); }
-
-                for (i0 = 0; i0 < SpriteSets[i]. Sprites.Length; i0++)
-                { SpriteSets[i]. Sprites[i0].NameOffset = IO.Position; IO.Write(SpriteSets[i]. Sprites[i0].Name + "\0"); }
+                SpriteSets[i].    NameOffset = IO.Position; IO.Write(SpriteSets[i].    Name + "\0");
+                SpriteSets[i].FileNameOffset = IO.Position; IO.Write(SpriteSets[i].FileName + "\0");
             }
             
             IO.Align(0x08, true);
@@ -235,7 +237,7 @@ namespace KKdMainLib.DB
                 for (int i = 0; i < SpriteSets.Length; i++)
                     SpriteSets[i].ReadMsgPack(SprDB[i]);
             }
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON)

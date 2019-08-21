@@ -173,11 +173,11 @@ namespace KKdMainLib.IO
         { string s = ""; while (char.IsDigit(_IO.SkipWhitespace().
             PeekCharUTF8())) s += _IO.ReadCharUTF8(); return s; }
 
-        public JSON Write(MsgPack MsgPack, string End = "\n", string TabChar = "  ")
-        { Write(MsgPack, End, TabChar, "", true); return this; }
+        public JSON Write(MsgPack MsgPack, string End = "\n", string TabChar = "  ") =>
+            Write(MsgPack, End, TabChar, "", true);
 
-        public JSON Write(MsgPack MsgPack, bool Style = false)
-        { Write(MsgPack, "\n", "  ", "", Style); return this; }
+        public JSON Write(MsgPack MsgPack, bool Style = false) =>
+                Write(MsgPack, "\n", "  ", "", Style);
 
         private JSON Write(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style, bool IsArray = false)
         {
@@ -185,7 +185,7 @@ namespace KKdMainLib.IO
             Tab += TabChar;
             if (MsgPack.Name   != null && !IsArray) _IO.Write("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
             if (MsgPack.Object == null) { WriteNil(); return this; }
-            
+
             if (MsgPack.List.NotNull)
             {
                 WriteMap();
@@ -228,33 +228,13 @@ namespace KKdMainLib.IO
                 if (Style) _IO.Write(OldTab);
                 WriteArr(true);
             }
-            else if (MsgPack.Object is MsgPack msg)
-                Write(msg, End, TabChar, Tab, Style);
-            else Write(MsgPack.Object, End, TabChar, Tab, Style);
+            else if (MsgPack.Object is MsgPack msg) Write(msg, End, TabChar, Tab, Style);
+            else if (MsgPack.Object is  string str) Write(str);
+            else _IO.Write(BaseExtensions.ToString(MsgPack.Object));
 
             return this;
         }
 
-        private void Write(object obj, string End, string TabChar, string Tab, bool Style)
-        {
-            if (obj == null) { WriteNil(); return; }
-            switch (obj)
-            {
-                case MsgPack val: Write(val, End, TabChar, Tab, Style); break;
-                case  string val: Write(val); break;
-                case    bool Boolean:
-                case   sbyte   Int8 :
-                case    byte  UInt8 :
-                case   short   Int16:
-                case  ushort  UInt16:
-                case     int   Int32:
-                case    uint  UInt32:
-                case    long   Int64:
-                case   ulong  UInt64:
-                case   float Float32:
-                case  double Float64: _IO.Write(BaseExtensions.ToString(obj)); break;
-            }
-        }
         private void Write(string val) => _IO.Write("\"" + val
             .Replace("\\", "\\\\").Replace("/" , "\\/").Replace("\"", "\\\"")
             .Replace("\0", "\\0" ).Replace("\b", "\\b").Replace("\f", "\\f" )

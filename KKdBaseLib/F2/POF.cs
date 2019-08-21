@@ -1,6 +1,4 @@
-﻿using KKdBaseLib;
-
-namespace KKdMainLib.F2nd
+﻿namespace KKdBaseLib.F2
 {
     public struct POF
     {

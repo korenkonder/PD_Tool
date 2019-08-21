@@ -39,11 +39,15 @@
     <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="F2\ENRS.cs" />
+    <Compile Include="F2\Header.cs" />
+    <Compile Include="F2\POF.cs" />
+    <Compile Include="F2\Struct.cs" />
     <Compile Include="DCC.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Format.cs" />
     <Compile Include="Half.cs" />
-    <Compile Include="IKeyFrame.cs" />
+    <Compile Include="IKF.cs" />
     <Compile Include="KKdList.cs" />
     <Compile Include="MsgPack.cs" />
     <Compile Include="Pointer.cs" />

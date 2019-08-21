@@ -117,7 +117,7 @@ namespace KKdMainLib.DB
                     }
                 }
             }
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON)

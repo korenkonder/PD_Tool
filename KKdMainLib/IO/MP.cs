@@ -16,8 +16,8 @@ namespace KKdMainLib.IO
         public MsgPack Read(bool Array = false)
         {
             MsgPack MsgPack = MsgPack.New;
-            if (!Array) MsgPack.Name = ReadString((Types)_IO.ReadByte());
             byte Unk = _IO.ReadByte();
+            if (!Array) { MsgPack.Name = ReadString((Types)Unk); Unk = _IO.ReadByte(); }
             Types Type = (Types)Unk;
 
             if (Type >= Types.FixMap && Type <= Types.FixMapMax)
@@ -30,7 +30,7 @@ namespace KKdMainLib.IO
                 MsgPack.Object = new MsgPack[Unk - (byte)Types.FixArr];
                 for (int i = 0; i < Unk - (byte)Types.FixArr; i++) MsgPack[i] = Read( true);
             }
-            else if (Type >= Types.FixStr && Type <= Types.FixStrMax) MsgPack.Object = ReadString( Type);
+            else if (Type >= Types.FixStr && Type <= Types.FixStrMax) MsgPack.Object = ReadString(Type);
             else if (Type >= Types.PosInt && Type <= Types.PosIntMax) MsgPack.Object =        Unk;
             else if (Type >= Types.NegInt && Type <= Types.NegIntMax) MsgPack.Object = (sbyte)Unk;
             else

@@ -71,6 +71,7 @@
         public bool Equals(Vector3 other) =>
             X == other.X && Y == other.Y && Z == other.Z;
 
-        public override string ToString() => "X: " + X + "; Y: " + Y + "; Z: " + Z;
+        public override string ToString() => $"{X},{Y},{Z}";
+        public string ToString(int d) => $"{X.Round(d)},{Y.Round(d)},{Z.Round(d)}";
     }
 }

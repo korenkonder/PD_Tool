@@ -100,13 +100,13 @@ namespace KKdMainLib
                 Success = true;
             }
             
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON, bool Compact = true)
         {
             if (!Success) return;
-            MsgPack msgPack = MsgPack.New;
+            MsgPack MsgPack = MsgPack.New;
 
             if (file.Contains("psrData"))
             {
@@ -114,23 +114,23 @@ namespace KKdMainLib
                 {
                     MsgPack psrData = new MsgPack(psrDat.Length, "psrData");
                     for (i = 0; i < psrDat.Length; i++) psrData[i] = psrDat[i].WriteMP();
-                    msgPack.Add(psrData);
+                    MsgPack.Add(psrData);
                 }
-                else msgPack.Add(new MsgPack("psrData", null));
+                else MsgPack.Add(new MsgPack("psrData", null));
             }
             else if (file.Contains("PvList"))
             {
                 if (pvList != null)
                 {
-                    if (Compact) msgPack.Add("Compact", Compact);
+                    if (Compact) MsgPack.Add("Compact", Compact);
 
                     MsgPack PvList = new MsgPack(pvList.Length, "PvList");
                     for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
-                    msgPack.Add(PvList);
+                    MsgPack.Add(PvList);
                 }
-                else msgPack.Add(new MsgPack("PvList", null));
+                else MsgPack.Add(new MsgPack("PvList", null));
             }
-            msgPack.Write(file, JSON).Dispose();
+            MsgPack.Write(file, JSON).Dispose();
         }
 
         public static string UrlEncode(string value) =>
@@ -278,25 +278,25 @@ namespace KKdMainLib
 
             public MsgPack WriteMP(bool Compact)
             {
-                MsgPack msgPack = MsgPack.New;
-                msgPack.Add("ID", PV_ID);
-                if (!Enable) msgPack.Add("Enable", Enable);
-                if ( Extra ) msgPack.Add("Extra" , Extra );
+                MsgPack MsgPack = MsgPack.New;
+                MsgPack.Add("ID", PV_ID);
+                if (!Enable) MsgPack.Add("Enable", Enable);
+                if ( Extra ) MsgPack.Add("Extra" , Extra );
                 if (Compact)
                 {
-                    if (AdvDemoStart.WriteLower) msgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
-                    if (AdvDemoEnd  .WriteLower) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WriteInt());
-                    if (StartShow   .WriteLower) msgPack.Add("StartShow"   , StartShow   .WriteInt());
-                    if (  EndShow   .WriteUpper) msgPack.Add(  "EndShow"   ,   EndShow   .WriteInt());
+                    if (AdvDemoStart.WriteLower) MsgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
+                    if (AdvDemoEnd  .WriteLower) MsgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WriteInt());
+                    if (StartShow   .WriteLower) MsgPack.Add("StartShow"   , StartShow   .WriteInt());
+                    if (  EndShow   .WriteUpper) MsgPack.Add(  "EndShow"   ,   EndShow   .WriteInt());
                 }
                 else
                 {
-                    if (AdvDemoStart.WriteLower) msgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
-                    if (AdvDemoEnd  .WriteLower) msgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
-                    if (StartShow   .WriteLower) msgPack.Add(StartShow   .WriteMP("StartShow"   ));
-                    if (  EndShow   .WriteUpper) msgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
+                    if (AdvDemoStart.WriteLower) MsgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
+                    if (AdvDemoEnd  .WriteLower) MsgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
+                    if (StartShow   .WriteLower) MsgPack.Add(StartShow   .WriteMP("StartShow"   ));
+                    if (  EndShow   .WriteUpper) MsgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
                 }
-                return msgPack;
+                return MsgPack;
             }
 
             public override string ToString() =>

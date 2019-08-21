@@ -1,6 +1,6 @@
 ﻿using KKdBaseLib;
+using KKdBaseLib.F2;
 using KKdMainLib.IO;
-using KKdMainLib.F2nd;
 
 namespace KKdMainLib
 {
@@ -76,6 +76,57 @@ namespace KKdMainLib
             stream.WriteEOFC(ID);
         }
     }
+
+    public static class StructExtensions
+    {
+        public static Struct ReadStruct(byte[] Data)
+        {
+            Stream stream = File.OpenReader(Data);
+            Struct Struct = stream.ReadStruct(stream.ReadHeader(false));
+            stream.Close();
+            return Struct;
+        }
+
+        public static Struct ReadStruct(this Stream stream, Header Header)
+        {
+            Struct Struct = new Struct { Header = Header, DataOffset =
+                stream.Position, Data = stream.ReadBytes(Header.SectionSize) };
+            int ID = Header.ID;
+
+            KKdList<Struct> SubStructs = KKdList<Struct>.New;
+            long Length = stream.Length - stream.Position;
+            long Position = 0;
+            while (Length > Position)
+            {
+                Header = stream.ReadHeader(false);
+                Position += Header.Length + Header.DataSize;
+                if (Header.ID == ID && Header.Signature == 0x43464F45)
+                { Struct.EOFC = true; break; }
+                else if (Header.ID == 0 && (Header.Signature == 0x30464F50 ||
+                    Header.Signature == 0x31464F50 || Header.Signature == 0x53524E45))
+                    SubStructs.Add(new Struct { Header = Header, DataOffset =
+                        stream.Position, Data = stream.ReadBytes(Header.SectionSize) });
+                else if (Header.ID <= ID)
+                { stream.LongPosition -= Header.Length; break; }
+                else SubStructs.Add(stream.ReadStruct(Header));
+            }
+
+            for (int i = 0; i < SubStructs.Capacity; i++)
+            {
+                string Sig = SubStructs[i].Header.ToString();
+                if (Sig == "ENRS" || Sig == "EOFC" || Sig == "POF0" || Sig == "POF1")
+                {
+                         if (Sig == "EOFC") Struct.EOFC = true;
+                    else if (Sig == "ENRS") Struct.ENRS = ENRS.Read(SubStructs[i].Data);
+                    else                    Struct.POF  = POF .Read(SubStructs[i].Data, Sig == "POF1");
+                    SubStructs.RemoveAt(i); SubStructs.Capacity--; i--;
+                }
+            }
+
+            if (SubStructs.Capacity > 0) Struct.SubStructs = SubStructs.ToArray();
+            return Struct;
+        }
+    }
     
     public static class MPExt
     {
@@ -84,10 +135,10 @@ namespace KKdMainLib
             MsgPack MsgPack;
             if (JSON)
             { JSON IO = new JSON(File.OpenReader(array));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(    ); IO.Close(); }
             else
             {   MP IO = new   MP(File.OpenReader(array));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(true); IO.Close(); }
             return MsgPack;
         }
 
@@ -96,10 +147,10 @@ namespace KKdMainLib
             MsgPack MsgPack;
             if (JSON)
             { JSON IO = new JSON(File.OpenReader(file + ".json", true));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(    ); IO.Close(); }
             else
             {   MP IO = new   MP(File.OpenReader(file + ".mp"  , true));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(true); IO.Close(); }
             return MsgPack;
         }
 
@@ -108,10 +159,10 @@ namespace KKdMainLib
             MsgPack MsgPack;
             if (JSON)
             { JSON IO = new JSON(File.OpenReader(file + ".json"));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(    ); IO.Close(); }
             else
             {   MP IO = new   MP(File.OpenReader(file + ".mp"  ));
-                MsgPack = IO.Read(); IO.Close(); }
+                MsgPack = IO.Read(true); IO.Close(); }
             return MsgPack;
         }
         

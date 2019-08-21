@@ -1,6 +1,6 @@
 ﻿using KKdBaseLib;
+using KKdBaseLib.F2;
 using KKdMainLib.IO;
-using KKdMainLib.F2nd;
 
 namespace KKdMainLib
 {
@@ -183,7 +183,7 @@ namespace KKdMainLib
                 if (STRs[i].Str.Value == null) STRs[i].Str.Value = "";
             }
 
-            MsgPack = MsgPack.New;
+            MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON)
