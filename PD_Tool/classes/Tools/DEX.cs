@@ -12,7 +12,7 @@ namespace PD_Tool.Tools
         {
             Console.Title = "DEX Converter";
             KKdDEX DEX;
-            Main.Choose(1, "dex", out string[] FileNames);
+            Program.Choose(1, "dex", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext      = "";

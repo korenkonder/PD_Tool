@@ -11,7 +11,7 @@ namespace PD_Tool.Tools
         {
             Console.Title = "Bloom Converter";
             Bloom Bloom;
-            Main.Choose(1, "blt", out string[] FileNames);
+            Program.Choose(1, "blt", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

@@ -256,35 +256,35 @@ namespace KKdMainLib
                 if (KeySet.Type == KeySetType.None) continue;
 
                 KeySets[i0] = new MsgPack(2);
-                KeySets[i0].Array[0] = (MsgPack)(byte)KeySet.Type;
+                KeySets[i0].Array[0] = (byte)KeySet.Type;
                 KeySets[i0].Array[1] = new MsgPack(KeySet.Keys.Length);
                 if (KeySet.Type == KeySetType.Static)
                 {
                     KeySets[i0].Array[1][0] = new MsgPack(2);
-                    KeySets[i0].Array[1][0].Array[0] = (MsgPack)KeySet.Keys[0].F;
-                    KeySets[i0].Array[1][0].Array[1] = (MsgPack)KeySet.Keys[0].V;
+                    KeySets[i0].Array[1][0].Array[0] = KeySet.Keys[0].F;
+                    KeySets[i0].Array[1][0].Array[1] = KeySet.Keys[0].V;
                 }
                 else if (KeySet.Type == KeySetType.Linear)
                     for (i1 = 0; i1 < KeySet.Keys.Length; i1++)
                     {
                         KeySets[i0].Array[1][i1] = new MsgPack(2);
-                        KeySets[i0].Array[1][i1].Array[0] = (MsgPack)KeySet.Keys[i1].F;
-                        KeySets[i0].Array[1][i1].Array[1] = (MsgPack)KeySet.Keys[i1].V;
+                        KeySets[i0].Array[1][i1].Array[0] = KeySet.Keys[i1].F;
+                        KeySets[i0].Array[1][i1].Array[1] = KeySet.Keys[i1].V;
                     }
                 else
                     for (i1 = 0; i1 < KeySet.Keys.Length; i1++)
                     {
                         KeySets[i0].Array[1][i1] = new MsgPack(3);
-                        KeySets[i0].Array[1][i1].Array[0] = (MsgPack)KeySet.Keys[i1].F;
-                        KeySets[i0].Array[1][i1].Array[1] = (MsgPack)KeySet.Keys[i1].V;
-                        KeySets[i0].Array[1][i1].Array[2] = (MsgPack)KeySet.Keys[i1].T;
+                        KeySets[i0].Array[1][i1].Array[0] = KeySet.Keys[i1].F;
+                        KeySets[i0].Array[1][i1].Array[1] = KeySet.Keys[i1].V;
+                        KeySets[i0].Array[1][i1].Array[2] = KeySet.Keys[i1].T;
                     }
             }
             MOT.Add(KeySets);
 
             MsgPack BoneInfo = new MsgPack(Mot.BoneInfo.Value.Length, "BoneInfo");
             for (i0 = 0; i0 < Mot.BoneInfo.Value.Length; i0++)
-                BoneInfo[i0] = (MsgPack)Mot.BoneInfo.Value[i0].Id;
+                BoneInfo[i0] = Mot.BoneInfo.Value[i0].Id;
             MOT.Add(BoneInfo);
 
             return MOT;

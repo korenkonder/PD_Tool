@@ -95,7 +95,7 @@ namespace KKdSoundLib
                         ref currentclampPtr[c], ref stepindexPtr[c]);
                     writer.Write(value, 4);
                 }
-            writer.CheckWrited();
+            writer.CW();
 
             writer.LongPosition = 0x00;
             writer.Write("DIVA");

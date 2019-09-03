@@ -10,7 +10,7 @@ namespace PD_Tool.Tools
         public static void Processor(bool JSON)
         {
             Console.Title = "STR Converter";
-            Main.Choose(1, "str", out string[] FileNames);
+            Program.Choose(1, "str", out string[] FileNames);
 
             KKdSTR Data;
             string filepath = "";

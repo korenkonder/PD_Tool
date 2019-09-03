@@ -32,7 +32,7 @@ namespace PD_Tool
         {
             Console.Title = "Auth DB Converter";
             DB.Auth Auth;
-            Main.Choose(1, "bin", out string[] FileNames);
+            Program.Choose(1, "bin", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext      = "";
@@ -62,7 +62,7 @@ namespace PD_Tool
         {
             Console.Title = "AET DB Converter";
             DB.Aet Aet;
-            Main.Choose(1, "bin", out string[] FileNames);
+            Program.Choose(1, "bin", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext      = "";
@@ -92,7 +92,7 @@ namespace PD_Tool
         {
             Console.Title = "SPR DB Converter";
             DB.Spr Spr;
-            Main.Choose(1, "bin", out string[] FileNames);
+            Program.Choose(1, "bin", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext      = "";

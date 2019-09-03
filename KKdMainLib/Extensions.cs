@@ -79,7 +79,7 @@ namespace KKdMainLib
 
     public static class StructExtensions
     {
-        public static Struct ReadStruct(byte[] Data)
+        public static Struct ReadStruct(this byte[] Data)
         {
             Stream stream = File.OpenReader(Data);
             Struct Struct = stream.ReadStruct(stream.ReadHeader(false));
@@ -125,6 +125,11 @@ namespace KKdMainLib
 
             if (SubStructs.Capacity > 0) Struct.SubStructs = SubStructs.ToArray();
             return Struct;
+        }
+
+        public static void Write(this Stream stream, Struct Struct)
+        {
+
         }
     }
     
@@ -203,5 +208,32 @@ namespace KKdMainLib
 
         public static void ToMsgPack(this string file) =>
             file.ReadMP(true).Write(file      ).Dispose();
+    }
+
+    public static class IKFExt
+    {
+        public static IKF<float, float> Round(this IKF<float, float> KF, int d)
+        {
+                 if (KF is KFT0<float, float> KFT0) { KFT0.F = KFT0.F.Round(d);                   return KFT0; }
+            else if (KF is KFT1<float, float> KFT1) { KFT1.F = KFT1.F.Round(d);
+                KFT1.V = KFT1.V.Round(d);                                                         return KFT1; }
+            else if (KF is KFT2<float, float> KFT2) { KFT2.F = KFT2.F.Round(d);
+                KFT2.V = KFT2.V.Round(d); KFT2.T  = KFT2.T .Round(d);                             return KFT2; }
+            else if (KF is KFT3<float, float> KFT3) { KFT3.F = KFT3.F.Round(d);
+                KFT3.V = KFT3.V.Round(d); KFT3.T1 = KFT3.T1.Round(d); KFT3.T2 = KFT3.T2.Round(d); return KFT3; }
+            return   KF;
+        }
+
+        public static IKF<double, double> Round(this IKF<double, double> KF, int d)
+        {
+                 if (KF is KFT0<double, double> KFT0) { KFT0.F = KFT0.F.Round(d);                 return KFT0; }
+            else if (KF is KFT1<double, double> KFT1) { KFT1.F = KFT1.F.Round(d);
+                KFT1.V = KFT1.V.Round(d);                                                         return KFT1; }
+            else if (KF is KFT2<double, double> KFT2) { KFT2.F = KFT2.F.Round(d);
+                KFT2.V = KFT2.V.Round(d); KFT2.T  = KFT2.T .Round(d);                             return KFT2; }
+            else if (KF is KFT3<double, double> KFT3) { KFT3.F = KFT3.F.Round(d);
+                KFT3.V = KFT3.V.Round(d); KFT3.T1 = KFT3.T1.Round(d); KFT3.T2 = KFT3.T2.Round(d); return KFT3; }
+            return   KF;
+        }
     }
 }

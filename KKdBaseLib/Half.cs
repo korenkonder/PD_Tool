@@ -6,78 +6,82 @@ namespace KKdBaseLib
     {
         private ushort _value;
 
+        public static Half         NaN => new Half { _value = 0x7FFF };
+        public static Half PositiveNaN => new Half { _value = 0x7FFF };
+        public static Half NegativeNaN => new Half { _value = 0xFFFF };
+        public static Half PositiveZero => new Half { _value = 0x0000 };
+        public static Half NegativeZero => new Half { _value = 0x8000 };
+        public static Half PositiveInfinity => new Half { _value = 0x7C00 };
+        public static Half NegativeInfinity => new Half { _value = 0xFC00 };
+
         public static explicit operator Half(ushort bits) => new Half() { _value = bits };
 
         public static explicit operator ushort(Half bits) => bits._value;
 
-        public static explicit operator  float(Half h) => (float)(double)h;
-
-        public static explicit operator double(Half h)
+        public static unsafe implicit operator  float(Half h)
         {
-                 if (h._value       == 0x0000) return +0;
-            else if (h._value       == 0x8000) return -0;
-            else if (h._value       == 0x7C00) return  double.PositiveInfinity;
-            else if (h._value       == 0xFC00) return  double.NegativeInfinity;
-            else if (h._value >> 10 == 0x001F) return  double.NaN;
-            else if (h._value >> 10 == 0x003F) return -double.NaN;
+            int sign     =  (h._value >> 15) & 0x001;
+            int exponent = ((h._value >> 10) & 0x01F) + 127 - 15;
+            int mantissa =   h._value        & 0x3FF;
 
-            long exponent = ((h._value >> 10) & 0x1F);
-            long mantissa = (h._value & 0x3FF);
-            sbyte n = (sbyte)(((h._value >> 15 & 0x01) == 0) ? 1 : -1);
-
-            double m = (((long)1 << 10) | mantissa) / Math.Pow(2, 10);
-            double x = Math.Pow(2, exponent - (0x1F >> 1));
-            double d = n * m * x;
-            return d;
+            int si32 = (sign << 31) | (exponent << 23) | (mantissa << 13);
+            return *(float*)&si32;
         }
 
-        public static explicit operator Half( float val) => (Half)(double)val;
-
-        public static explicit operator Half(double val)
+        public static unsafe implicit operator Half(float val)
         {
-            Half h = new Half();
-                 if (val == +0                      ) h._value = 0x0000;
-            else if (val == -0                      ) h._value = 0x8000;
-            else if (val ==  double.PositiveInfinity) h._value = 0x7C00;
-            else if (val ==  double.NegativeInfinity) h._value = 0xFC00;
-            else if (val ==  double.NaN             ) h._value = 0x7FFF;
-            else if (val == -double.NaN             ) h._value = 0xFFFF;
-            else
-            {
-                ushort Sign = (ushort)(val < 0 ? 0x8000 : 0);
-                val = Math.Abs(val);
-                double Pow1 = 1;
-                double Pow2 = 1 << 10;
-                double x = 0;
+            int si32 = *(int*)&val;
+            ushort sign     = (ushort)( (si32 >> 16) & 0x8000);
+             short exponent = ( short)(((si32 >> 23) & 0x00FF) - 127 + 15);
+            ushort mantissa = (ushort)( (si32 >> 13) & 0x03FF);
 
-                int MaxPow = (1 << 4);
+                 if (exponent <  0) { exponent =  0; mantissa = 0; }
+            else if (exponent > 30)   exponent = 31;
 
-                int i = 0;
-                while (i < MaxPow && i > -MaxPow + 1)
-                {
-                    Pow1 = Math.Pow(2, i);
-                    x = val / Pow1;
-                    if (x >= 1 && x < 2)
-                    {
-                        ushort exponent_max = (ushort)Math.Ceiling(x * Pow2);
-                        ushort exponent_min = (ushort)Math.Floor  (x * Pow2);
-                        ushort exponent = Math.Abs(x - exponent_max / Pow2) >
-                            Math.Abs(x - exponent_min / Pow2) ? exponent_max : exponent_min;
-                        ushort mantissa = (ushort)(i + MaxPow - 1);
-                        h._value = (ushort)(Sign | ((mantissa & 0x001F) << 10) | (exponent & 0x03FF));
-                        return h;
-                    }
-                    if (val < 1) i--;
-                    else         i++;
-                }
-                h._value = (ushort)(Sign | 0x7C00);
-            }
-            return h;
+            return new Half { _value = (ushort)(sign | (exponent << 10) | mantissa) };
         }
 
+        public static unsafe implicit operator double(Half h) 
+        {
+            int sign     =  (h._value >> 15) & 0x001;
+            int exponent = ((h._value >> 10) & 0x01F) + 1023 - 15;
+            int mantissa =   h._value        & 0x3FF;
+
+            long si64 = ((long)sign << 63) | ((long)exponent << 52) | ((long)mantissa << 42);
+            return *(double*)&si64;
+        }
+
+        public static unsafe implicit operator Half(double val)
+        {
+            long si64 = *(long*)&val;
+            ushort sign     = (ushort) ((si64 >> 48) & 0x8000);
+             short exponent = ( short)(((si64 >> 52) & 0x07FF) - 1023 + 15);
+            ushort mantissa = (ushort) ((si64 >> 42) & 0x03FF);
+
+                 if (exponent <  0) { exponent =  0; mantissa = 0; }
+            else if (exponent > 30)   exponent = 31;
+
+            return new Half { _value = (ushort)(sign | (exponent << 10) | mantissa) };
+        }
+
+        public static Half operator + (Half a, Half b) => (float)a +  (float)b;
+        public static Half operator - (Half a, Half b) => (float)a -  (float)b;
+        public static Half operator * (Half a, Half b) => (float)a *  (float)b;
+        public static Half operator / (Half a, Half b) => (float)a /  (float)b;
+        public static bool operator > (Half a, Half b) => (float)a >  (float)b;
+        public static bool operator < (Half a, Half b) => (float)a <  (float)b;
+        public static bool operator >=(Half a, Half b) => (float)a >= (float)b;
+        public static bool operator <=(Half a, Half b) => (float)a <= (float)b;
+        public static bool operator ==(Half a, Half b) => (float)a == (float)b;
+        public static bool operator !=(Half a, Half b) => (float)a != (float)b;
+
+        public int CompareTo(object obj) => CompareTo((Half)obj);
+        public int CompareTo(Half h) => this == h ? 0 : (this > h ? 1 : -1);
+        public bool Equals(Half other) => this == other;
+        public override bool Equals(object obj) => base.Equals(obj);
         public override string ToString() => Extensions.ToString((double)this);
         public string ToString(string format, IFormatProvider formatProvider) =>
-            ((double)this).ToString(format, formatProvider);
+            ((float)this).ToString(format, formatProvider);
         public override int GetHashCode() => base.GetHashCode();
     }
 }

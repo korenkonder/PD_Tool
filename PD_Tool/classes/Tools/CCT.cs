@@ -11,7 +11,7 @@ namespace PD_Tool.Tools
         {
             Console.Title = "Color Correction Converter";
             ColorCorrection ColorCorrection;
-            Main.Choose(1, "cct", out string[] FileNames);
+            Program.Choose(1, "cct", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

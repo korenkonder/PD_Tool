@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace KKdBaseLib
 {
-    public struct KKdList<T> : IEnumerator, IEnumerable
+    public struct KKdList<T> : System.IDisposable, IEnumerator, IEnumerable
     {
         public static KKdList<T> Null => new KKdList<T>();
         public static KKdList<T> New  => new KKdList<T>() { Capacity = 0 };
@@ -29,7 +29,11 @@ namespace KKdBaseLib
 
         object IEnumerator.Current => Current;
 
-        public T this[int index]
+        public T this[ int index]
+        {   get =>    array != null ? array[index] : default;
+            set { if (array != null)  array[index] =   value; } }
+
+        public T this[uint index]
         {   get =>    array != null ? array[index] : default;
             set { if (array != null)  array[index] =   value; } }
 
@@ -95,12 +99,12 @@ namespace KKdBaseLib
         }
 
         public void Sort()
-        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); Count = List.Count; }
+        { List<T> List = this; List.Sort(); array = List.ToArray(); Count = List.Count; }
 
-        public static explicit operator KKdList<T>(   List<T> List) =>
+        public static implicit operator KKdList<T>(   List<T> List) =>
             new KKdList<T> { array = List.ToArray(), Count = List.Count };
 
-        public static explicit operator    List<T>(KKdList<T> List)
+        public static implicit operator    List<T>(KKdList<T> List)
         {
             List<T> list = new List<T>();
             for (int i = 0; i < List.Count; i++) list.Add(List[i]);

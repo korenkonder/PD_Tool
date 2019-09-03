@@ -10,7 +10,7 @@ namespace PD_Tool.Tools
         public static void Processor()
         {
             Console.Title = "VAG Converter";
-            Main.Choose(1, "vag", out string[] FileNames);
+            Program.Choose(1, "vag", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

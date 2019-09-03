@@ -12,7 +12,7 @@ namespace PD_Tool.Tools
         public static void Processor(bool JSON)
         {
             Console.Title = "A3DA Converter";
-            Main.Choose(1, "a3da", out string[] FileNames);
+            Program.Choose(1, "a3da", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext      = "";

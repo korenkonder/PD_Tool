@@ -14,14 +14,14 @@ namespace PD_Tool
             if (Extract)
             {
                 Console.Title = "FARC Extractor";
-                Main.Choose(1, "farc", out string[] FileNames);
+                Program.Choose(1, "farc", out string[] FileNames);
                 foreach (string FileName in FileNames)
                     if (FileName != "" && File.Exists(FileName))
                         new KKdFARC(FileName).UnPack();
             }
             else
             {
-                string file = Main.Choose(2, "", out string[] FileNames);
+                string file = Program.Choose(2, "", out string[] FileNames);
                 Console.Clear();
                 Console.Title = "FARC Creator";
                 if (file != "")

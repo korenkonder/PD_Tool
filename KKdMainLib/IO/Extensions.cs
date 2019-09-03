@@ -20,11 +20,11 @@ namespace KKdMainLib.IO
             return s.ToArray();
         }
         
-        public static byte PeekByte(this Stream stream)
+        public static byte PeekByte     (this Stream stream)
         { byte val = stream.ReadByte(); stream.LongPosition--; return       val; }
         public static char PeekCharASCII(this Stream stream)
         { byte val = stream.ReadByte(); stream.LongPosition--; return (char)val; }
-        public static char PeekCharUTF8(this Stream stream)
+        public static char PeekCharUTF8 (this Stream stream)
         {   long LongPosition = stream.LongPosition;   char val = stream.ReadCharUTF8();
           stream.LongPosition =        LongPosition; return val; }
 
@@ -106,44 +106,44 @@ namespace KKdMainLib.IO
             return s;
         }
 
-        public static Pointer<string> ReadPointerStringShiftJIS(this Stream IO)
-        { Pointer<string> val = IO.ReadPointer<string>();
-            val.Value = IO.ReadStringShiftJISAtOffset(val.Offset); return val; }
+        public static Pointer<string> ReadPointerStringShiftJIS(this Stream stream)
+        { Pointer<string> val = stream.ReadPointer<string>();
+            val.Value = stream.ReadStringShiftJISAtOffset(val.Offset); return val; }
 
-        public static string ReadStringShiftJISAtOffset(this Stream IO, long Offset = 0, long Length = 0) =>
-            Text.ShiftJIS.GetString(IO.ReadAtOffset(Offset, Length));
+        public static string ReadStringShiftJISAtOffset(this Stream stream, long Offset = 0, long Length = 0) =>
+            Text.ShiftJIS.GetString(stream.ReadAtOffset(Offset, Length));
 
-        public static void WriteShiftJIS(this Stream IO, string String) =>
-            IO.Write(Text.ShiftJIS.GetBytes(String));
+        public static void WriteShiftJIS(this Stream stream, string String) =>
+            stream.Write(Text.ShiftJIS.GetBytes(String));
         
-        public static Pointer<T> ReadPointer<T>(this Stream IO) =>
-            new Pointer<T> { Offset = IO.ReadInt32() };
+        public static Pointer<T> ReadPointer<T>(this Stream stream) =>
+            new Pointer<T> { Offset = stream.ReadInt32() };
 
-        public static Pointer<string> ReadPointerString(this Stream IO)
-        { Pointer<string> val = IO.ReadPointer<string>();
-            val.Value = IO.ReadStringAtOffset(val.Offset); return val; }
+        public static Pointer<string> ReadPointerString(this Stream stream)
+        { Pointer<string> val = stream.ReadPointer<string>();
+            val.Value = stream.ReadStringAtOffset(val.Offset); return val; }
 
-        public static CountPointer<T> ReadCountPointer<T>(this Stream IO) =>
-            new CountPointer<T> { Count = IO.ReadInt32(), Offset = IO.ReadInt32() };
+        public static CountPointer<T> ReadCountPointer<T>(this Stream stream) =>
+            new CountPointer<T> { Count = stream.ReadInt32(), Offset = stream.ReadInt32() };
 
-        public static Pointer<T> ReadPointerEndian<T>(this Stream IO) =>
-            new Pointer<T> { Offset = IO.ReadInt32Endian() };
+        public static Pointer<T> ReadPointerEndian<T>(this Stream stream) =>
+            new Pointer<T> { Offset = stream.ReadInt32Endian() };
 
-        public static Pointer<string> ReadPointerStringEndian(this Stream IO)
-        { Pointer<string> val = IO.ReadPointerEndian<string>();
-            val.Value = IO.ReadStringAtOffset(val.Offset); return val; }
+        public static Pointer<string> ReadPointerStringEndian(this Stream stream)
+        { Pointer<string> val = stream.ReadPointerEndian<string>();
+            val.Value = stream.ReadStringAtOffset(val.Offset); return val; }
 
-        public static CountPointer<T> ReadCountPointerEndian<T>(this Stream IO) =>
-            new CountPointer<T> { Count = IO.ReadInt32Endian(), Offset = IO.ReadInt32Endian() };
+        public static CountPointer<T> ReadCountPointerEndian<T>(this Stream stream) =>
+            new CountPointer<T> { Count = stream.ReadInt32Endian(), Offset = stream.ReadInt32Endian() };
 
-        public static Pointer<T> ReadPointerX<T>(this Stream IO) =>
-            new Pointer<T> { Offset = (int)IO.ReadIntX() };
+        public static Pointer<T> ReadPointerX<T>(this Stream stream) =>
+            new Pointer<T> { Offset = (int)stream.ReadIntX() };
 
-        public static Pointer<string> ReadPointerStringX(this Stream IO)
-        { Pointer<string> val = IO.ReadPointerX<string>();
-            val.Value = IO.ReadStringAtOffset(val.Offset); return val; }
+        public static Pointer<string> ReadPointerStringX(this Stream stream)
+        { Pointer<string> val = stream.ReadPointerX<string>();
+            val.Value = stream.ReadStringAtOffset(val.Offset); return val; }
 
-        public static CountPointer<T> ReadCountPointerX<T>(this Stream IO) =>
-            new CountPointer<T> { Count = (int)IO.ReadIntX(), Offset = (int)IO.ReadIntX() };
+        public static CountPointer<T> ReadCountPointerX<T>(this Stream stream) =>
+            new CountPointer<T> { Count = (int)stream.ReadIntX(), Offset = (int)stream.ReadIntX() };
     }
 }

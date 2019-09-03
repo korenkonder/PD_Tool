@@ -43,22 +43,20 @@ namespace KKdBaseLib
             (Array != null ? ((Name != null ? " " : "") + "Elements Count: " + Array.Length) :
             Object.ToString()));
 
-        public MsgPack Add(string Val, byte[] val) => val != null ? Add(new MsgPack(Val, val)) : this;
-        public MsgPack Add(string Val, string val) => val != null ? Add(new MsgPack(Val, val)) : this;
-
-        public static explicit operator MsgPack(byte[] val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(string val) => new MsgPack(null, val);
-        public static explicit operator MsgPack( sbyte val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(  byte val) => new MsgPack(null, val);
-        public static explicit operator MsgPack( short val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(ushort val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(   int val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(  uint val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(  long val) => new MsgPack(null, val);
-        public static explicit operator MsgPack( ulong val) => new MsgPack(null, val);
-        public static explicit operator MsgPack( float val) => new MsgPack(null, val);
-        public static explicit operator MsgPack(double val) => new MsgPack(null, val);
-
+        public static implicit operator MsgPack(byte[] val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(string val) => new MsgPack(null, val);
+        public static implicit operator MsgPack( sbyte val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(  byte val) => new MsgPack(null, val);
+        public static implicit operator MsgPack( short val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(ushort val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(   int val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(  uint val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(  long val) => new MsgPack(null, val);
+        public static implicit operator MsgPack( ulong val) => new MsgPack(null, val);
+        public static implicit operator MsgPack( float val) => new MsgPack(null, val);
+        public static implicit operator MsgPack(double val) => new MsgPack(null, val);
+        
+        public MsgPack Add(  bool? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
         public MsgPack Add( sbyte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
         public MsgPack Add(  byte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
         public MsgPack Add( short? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
@@ -84,6 +82,7 @@ namespace KKdBaseLib
         public MsgPack Add( float  val) => Add(new MsgPack(null, val));
         public MsgPack Add(double  val) => Add(new MsgPack(null, val));
         
+        public MsgPack Add(string Val,   bool? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,  sbyte? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,   byte? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,  short? val) => val.HasValue ? Add(Val, val.Value) : this;
@@ -94,7 +93,9 @@ namespace KKdBaseLib
         public MsgPack Add(string Val,  ulong? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,  float? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val, double? val) => val.HasValue ? Add(Val, val.Value) : this;
-
+        
+        public MsgPack Add(string Val, byte[] val) => Add(new MsgPack(Val, val));
+        public MsgPack Add(string Val, string val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,   bool val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,  sbyte val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,   byte val) => Add(new MsgPack(Val, val));

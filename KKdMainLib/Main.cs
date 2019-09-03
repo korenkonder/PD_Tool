@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
-using System.Windows.Forms;
 using System.Globalization;
 using System.Collections.Generic;
 using KKdBaseLib;
-using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
@@ -40,89 +38,6 @@ namespace KKdMainLib
                     time.Hours, time.Minutes, time.Seconds, time.Milliseconds);
             else           Console.Write    (TimeFormatHHmmssfff + " - " + Text,
                     time.Hours, time.Minutes, time.Seconds, time.Milliseconds);
-        }
-
-        private static string GetArgs(string name, bool And, params string[] ext)
-        {
-            string Out = "";
-            if (And) Out = "|";
-            Out += name + " files (";
-            for (int i = 0; i < ext.Length; i++)
-            { Out += "*." + ext[i]; if (i + 1 < ext.Length) Out += ", "; }
-            Out += ")|";
-            for (int i = 0; i < ext.Length; i++)
-            { Out += "*." + ext[i]; if (i + 1 < ext.Length) Out += ";"; }
-
-            return Out;
-        }
-
-        private static string GetArgs(string name, params string[] ext)
-        {
-            string Out = name + " files (";
-            for (int i = 0; i < ext.Length; i++)
-            { Out += "*." + ext[i]; if (i + 1 < ext.Length) Out += ", "; }
-            Out += ")|";
-            for (int i = 0; i < ext.Length; i++)
-            { Out += "*." + ext[i]; if (i + 1 < ext.Length) Out += ";"; }
-
-            return Out;
-        }
-
-        public static string Choose(int code, string filetype, out string[] FileNames)
-        {
-            string MsgPack = GetArgs("MessagePack", true, "mp");
-            string JSON = GetArgs("JSON", true, "json");
-            string BIN = GetArgs("BIN", true, "bin");
-            string WAV = GetArgs("WAV", true, "wav");
-
-            FileNames = new string[0];
-            if (code == 1)
-            {
-                OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
-                    Multiselect = true, Title = "Choose file(s) to open:" };
-
-                ofd.Filter = GetArgs("All;", false, "*");
-                     if (filetype == "a3da") ofd.Filter = GetArgs("A3DA", "a3da", "farc", "json", "mp") +
-                        GetArgs("A3DA", true, "a3da") +   GetArgs("FARC", true, "farc") + JSON + MsgPack;
-                else if (filetype == "bin" ) ofd.Filter = GetArgs("BIN" , "bin", "json", "mp") +
-                        BIN + JSON + MsgPack;
-                else if (filetype == "blt" ) ofd.Filter = GetArgs("BLT" , "blt");
-                else if (filetype == "bon" ) ofd.Filter = GetArgs("BON" , "bon", "bin", "json", "mp") +
-                        GetArgs("BON", true, "bon") + BIN + JSON + MsgPack;
-                else if (filetype == "cct" ) ofd.Filter = GetArgs("CCT" , "cct");
-                else if (filetype == "databank") ofd.Filter = GetArgs("DAT", "dat", "json", "mp") +
-                        GetArgs("DAT", true, "dat") + JSON + MsgPack;
-                else if (filetype == "dex" ) ofd.Filter = GetArgs("DEX" , "dex", "bin", "json", "mp") +
-                        GetArgs("DEX", true, "dex") + BIN + JSON + MsgPack;
-                else if (filetype == "dft")  ofd.Filter = GetArgs("DFT" , "dft");
-                else if (filetype == "diva") ofd.Filter = GetArgs("DIVA", "diva", "wav") +
-                        GetArgs("DIVA", true, "diva") + GetArgs("WAV", true, "wav");
-                else if (filetype == "dsc" ) ofd.Filter = GetArgs("DSC" , "dsc", "json", "mp") +
-                        GetArgs("DSC", true, "dsc") + JSON + MsgPack;
-                else if (filetype == "farc") ofd.Filter = "FARC Archives (*.farc)|*.farc";
-                else if (filetype == "json") ofd.Filter = "JSON (*.json)|*.json";
-                else if (filetype == "mp"  ) ofd.Filter = GetArgs("MessagePack", "mp");
-                else if (filetype == "lit")  ofd.Filter = GetArgs("LIT" , "lit");
-                else if (filetype == "str" ) ofd.Filter = GetArgs("STR" , "str", "bin", "json", "mp") +
-                        GetArgs("STR", true, "str") + BIN + JSON + MsgPack;
-                else if (filetype == "vag" ) ofd.Filter = GetArgs("VAG" , "vag", "wav") +
-                        GetArgs("VAG", true, "vag") + GetArgs("WAV", true, "wav");
-
-                if (ofd.ShowDialog() == DialogResult.OK) FileNames = ofd.FileNames;
-                ofd.Dispose();
-            }
-            else if (code == 2)
-            {
-                OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
-                    ValidateNames = false, CheckFileExists = false, Filter = " | ", CheckPathExists = true,
-                    Title = "Choose any file in folder:", FileName = "Folder Selection." };
-                string Return = "";
-                if (ofd.ShowDialog() == DialogResult.OK)
-                    Return = Path.GetDirectoryName(ofd.FileName);
-                ofd.Dispose();
-                return Return;
-            }
-            return "";
         }
         
         public static string NullTerminated(this string Source, ref int i, byte End)

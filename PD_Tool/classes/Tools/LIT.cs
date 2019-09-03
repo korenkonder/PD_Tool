@@ -11,7 +11,7 @@ namespace PD_Tool.Tools
         {
             Console.Title = "Light Converter";
             Light LIT;
-            Main.Choose(1, "lit", out string[] FileNames);
+            Program.Choose(1, "lit", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

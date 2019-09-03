@@ -10,7 +10,7 @@ namespace PD_Tool.Tools
         {
             Console.Title = "MOT Converter";
             Mot Mot;
-            Main.Choose(1, "bin", out string[] FileNames);
+            Program.Choose(1, "bin", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

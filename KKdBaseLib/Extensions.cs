@@ -90,14 +90,38 @@ namespace KKdBaseLib
 
         public static byte[] buf    = new  byte[8];
         public static byte*  bufPtr = buf.GetPtr();
+        
+        public static byte[] Endian(this byte[] LE, byte Len)
+        { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
+            for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; return LE; }
+        
+        public static byte[] Endian(this byte[] LE, byte Len, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
+                for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; } return LE; }
 
-        public static  long Endian(this   long LE, byte Len, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < Len; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < Len; i++) { LE |= bufPtr[i]; if (i < Len - 1) LE <<= 8; } } return LE; }
+        public static  short Endian(this  short LE, bool IsBE)
+        { if (IsBE) { int TLE = 0; for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 2; i++) { TLE |= bufPtr[i]; if (i < 1) TLE <<= 8; } LE = (short)TLE; } return LE; }
 
-        public static ulong Endian(this  ulong LE, byte Len, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < Len; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < Len; i++) { LE |= bufPtr[i]; if (i < Len - 1) LE <<= 8; } } return LE; }
+        public static ushort Endian(this ushort LE, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 2; i++) { LE |= bufPtr[i]; if (i < 1) LE <<= 8; } } return LE; }
+
+        public static    int Endian(this    int LE, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
+
+        public static   uint Endian(this   uint LE, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
+
+        public static   long Endian(this   long LE, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
+
+        public static  ulong Endian(this  ulong LE, bool IsBE)
+        { if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+                for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
         
         public static  sbyte CITSB(this    int c)
         {                if (c >  0x0000007F) c =  0x0000007F;
@@ -168,8 +192,8 @@ namespace KKdBaseLib
 
         public static  float ToSingle(this   int i) => *( float*)&i;
         public static  float ToSingle(this  uint i) => *( float*)&i;
-        public static double ToSingle(this  long i) => *(double*)&i;
-        public static double ToSingle(this ulong i) => *(double*)&i;
+        public static double ToDouble(this  long i) => *(double*)&i;
+        public static double ToDouble(this ulong i) => *(double*)&i;
 
         public static  sbyte* GetPtr(this  sbyte[] array) { fixed ( sbyte* tempPtr = array) return tempPtr; }
         public static   byte* GetPtr(this   byte[] array) { fixed (  byte* tempPtr = array) return tempPtr; }
@@ -183,7 +207,7 @@ namespace KKdBaseLib
         public static double* GetPtr(this double[] array) { fixed (double* tempPtr = array) return tempPtr; }
 
         public static string ToString(this     int d, bool IsBE) =>
-            BitConverter.GetBytes((int)((long)d).Endian(4, IsBE)).ToASCII();
+            BitConverter.GetBytes(d.Endian(IsBE)).ToASCII();
         
         public static string ToString(this  object d)
         {

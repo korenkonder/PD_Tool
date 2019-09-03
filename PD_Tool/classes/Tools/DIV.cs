@@ -10,7 +10,7 @@ namespace PD_Tool.Tools
         public static void Processor()
         {
             Console.Title = "DIVA Converter";
-            Main.Choose(1, "diva", out string[] FileNames);
+            Program.Choose(1, "diva", out string[] FileNames);
             if (FileNames.Length < 1) return;
             string filepath = "";
             string ext = "";

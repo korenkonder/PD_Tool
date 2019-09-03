@@ -1,8 +1,8 @@
 ﻿namespace KKdBaseLib.F2
 {
-    public struct POF
+    public unsafe struct POF
     {
-        public static unsafe KKdList<long> Read(byte[] data, bool ShiftX)
+        public static KKdList<long> Read(byte[] data, bool ShiftX)
         {
             Value Val = 0;
             KKdList<long> Offsets = KKdList<long>.New;
@@ -27,7 +27,7 @@
             return Offsets;
         }
 
-        public static unsafe byte[] Write(KKdList<long> Offsets, bool ShiftX)
+        public static byte[] Write(KKdList<long> Offsets, bool ShiftX)
         {
             Offsets.Sort();
             int Length = 5;
@@ -49,7 +49,7 @@
             byte[] data = new byte[Length.Align(0x10)];
             byte* ptr = data.GetPtr();
 
-            Value Val = 0;
+            byte Val = 0;
             *(int*)ptr = Length; ptr += 4;
             for (int i = 0; i < Offsets.Count; i++)
             {
@@ -57,14 +57,14 @@
                 if (i > 0) { Offset -= Offsets[i - 1]; if (Offset == 0) continue; }
 
                 Offset >>= BitShift;
-                Val = Offset > Max2 ? Value.Int32 : Offset > Max1 ? Value.Int16 : Value.Int8;
-                     if (Offset <= Max1)   *ptr = (byte)((byte)Val |  Offset       );
-                else if (Offset <= Max2) { *ptr = (byte)((byte)Val | (Offset >>  8)); ptr++;
-                                           *ptr = (byte)              Offset        ; }
-                else                     { *ptr = (byte)((byte)Val | (Offset >> 24)); ptr++;
-                                           *ptr = (byte)             (Offset >> 16) ; ptr++;
-                                           *ptr = (byte)             (Offset >>  8) ; ptr++; 
-                                           *ptr = (byte)              Offset        ; }
+                Val = (byte)(Offset > Max2 ? Value.Int32 : Offset > Max1 ? Value.Int16 : Value.Int8);
+                     if (Offset <= Max1)   *ptr = (byte)(Val |  Offset       );
+                else if (Offset <= Max2) { *ptr = (byte)(Val | (Offset >>  8)); ptr++;
+                                           *ptr = (byte)        Offset        ; }
+                else                     { *ptr = (byte)(Val | (Offset >> 24)); ptr++;
+                                           *ptr = (byte)       (Offset >> 16) ; ptr++;
+                                           *ptr = (byte)       (Offset >>  8) ; ptr++; 
+                                           *ptr = (byte)        Offset        ; }
                 ptr++;
             }
             return data;

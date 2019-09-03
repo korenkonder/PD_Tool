@@ -459,7 +459,7 @@ namespace KKdMainLib.Aet
             else if (val.Count > 1)
             {
                 MsgPack Val = new MsgPack(val.Count, Name);
-                for (int i = 0; i < val.Count; i++) Val[i] = (MsgPack)val[i];
+                for (int i = 0; i < val.Count; i++) Val[i] = val[i];
                 return MsgPack.Add(Val);
             }
             return MsgPack;

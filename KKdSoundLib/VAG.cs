@@ -117,8 +117,8 @@ namespace KKdSoundLib
                         d1 = four_bitPtr[i2];
                         if (d0 > 7) d0 -= 16;
                         if (d1 > 7) d1 -= 16;
-                        d0 = d0 << (20 - ShF);
-                        d1 = d1 << (20 - ShF);
+                        d0 <<= (20 - ShF);
+                        d1 <<= (20 - ShF);
 
                         g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
                         tS2 = tS1; tS1 = g + d0;
@@ -155,8 +155,8 @@ namespace KKdSoundLib
                 d1 = four_bitPtr[i2];
                 if (d0 > 7) d0 -= 16;
                 if (d1 > 7) d1 -= 16;
-                d0 = d0 << (20 - ShF);
-                d1 = d1 << (20 - ShF);
+                d0 <<= (20 - ShF);
+                d1 <<= (20 - ShF);
 
                 g = ((tS1 >> 8) * HEVAG_1 + (tS2 >> 8) * HEVAG_2 +
                      (tS3 >> 8) * HEVAG_3 + (tS4 >> 8) * HEVAG_4) >> 5;
@@ -612,7 +612,7 @@ namespace KKdSoundLib
 
             ShF = 0;
             ShM = 0x4000;
-            min = min >> 8;
+            min >>= 8;
             
             while (ShF < 12)
             {
@@ -635,7 +635,7 @@ namespace KKdSoundLib
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
                 four_bitPtr[i] = d0 & 0xF;
-                d0 = d0 << (20 - ShF);
+                d0 <<= (20 - ShF);
 
                 S2 = S1; S1 = d0 - e;
             }
@@ -713,7 +713,7 @@ namespace KKdSoundLib
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
                 four_bitPtr[i] = d0 & 0xF;
-                d0 = d0 << (20 - ShF);
+                d0 <<= (20 - ShF);
 
                 tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = d0 - e;
                 i++;
