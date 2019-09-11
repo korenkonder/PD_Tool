@@ -5,7 +5,7 @@ using BaseExtensions = KKdBaseLib.Extensions;
 
 namespace KKdMainLib.IO
 {
-    public struct JSON
+    public struct JSON : System.IDisposable
     {
         public JSON(Stream IO) => _IO = IO;
 
@@ -234,6 +234,8 @@ namespace KKdMainLib.IO
 
             return this;
         }
+
+        public void Dispose() => _IO.Close();
 
         private void Write(string val) => _IO.Write("\"" + val
             .Replace("\\", "\\\\").Replace("/" , "\\/").Replace("\"", "\\\"")

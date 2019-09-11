@@ -27,6 +27,13 @@ namespace KKdMainLib.F2
             {
                 LITs[i] = IO.ReadCountPointerX<LIT>();
                 if ((LITs[i].Count > 0 || LITs[i].Offset == 0) && !IO.IsX) { IO.Close(); LITs.Count = -1; return; }
+                /*{
+                    IO.Format = Header.Format = Format.X;
+                    IO.Offset = Header.Length;
+                    IO.Position = LITs.Offset;
+                    LITs[i] = IO.ReadCountPointerX<LIT>();
+                }
+                if (IO.IsX) IO.ReadInt64();*/
             }
 
             for (i = 0; i < LITs.Count; i++)

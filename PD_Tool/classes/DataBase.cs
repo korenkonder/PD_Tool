@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using KKdMainLib;
 using DB = KKdMainLib.DB;
 
 namespace PD_Tool
@@ -11,16 +10,16 @@ namespace PD_Tool
         {
             Console.Title = "DB Converter";
             Console.Clear();
-            Main.ConsoleDesign(true);
-            Main.ConsoleDesign("         Choose type of DataBase file:");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign("1. Auth DB Converter");
-            Main.ConsoleDesign("2. AET DB Converter");
-            Main.ConsoleDesign("3. SPR DB Converter");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign("R. Return to Main Menu");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign(true);
+            Program.ConsoleDesign(true);
+            Program.ConsoleDesign("         Choose type of DataBase file:");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign("1. Auth DB Converter");
+            Program.ConsoleDesign("2. AET DB Converter");
+            Program.ConsoleDesign("3. SPR DB Converter");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign("R. Return to Main Menu");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign(true);
             Console.WriteLine();
             string format = Console.ReadLine();
             if (format == "1") AuthDBProcessor(JSON);

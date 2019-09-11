@@ -1,5 +1,4 @@
 ﻿using System;
-using KKdMainLib;
 using KKdMainLib.IO;
 using KKdMainLib.F2;
 

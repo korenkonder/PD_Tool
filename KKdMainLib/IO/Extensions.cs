@@ -1,4 +1,5 @@
 ﻿using KKdBaseLib;
+using KKdBaseLib.F2;
 
 namespace KKdMainLib.IO
 {
@@ -68,12 +69,12 @@ namespace KKdMainLib.IO
         public static long ReadIntX(this Stream stream, bool IsBE) => stream.IsX ?
             stream.ReadInt64() : stream.ReadUInt32Endian(IsBE);
 
-        public static void WriteX(this Stream stream, long val, ref KKdList<long> POF)
+        public static void WriteX(this Stream stream, long val, ref POF POF)
         {   if (stream.IsX) stream.Write      (     val);
-            else            stream.WriteEndian((int)val);       POF.Add(stream.Position); }
-        public static void WriteX(this Stream stream, long val, ref KKdList<long> POF, bool IsBE)
+            else            stream.WriteEndian((int)val);       POF.Offsets.Add(stream.Position); }
+        public static void WriteX(this Stream stream, long val, ref POF POF, bool IsBE)
         {   if (stream.IsX) stream.Write      (     val      );
-            else            stream.WriteEndian((int)val, IsBE); POF.Add(stream.Position); }
+            else            stream.WriteEndian((int)val, IsBE); POF.Offsets.Add(stream.Position); }
 
         public static void WriteX(this Stream stream, long val)
         {   if (stream.IsX) stream.Write      (     val);

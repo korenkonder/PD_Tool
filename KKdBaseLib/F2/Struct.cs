@@ -5,14 +5,21 @@
         public Header Header;
         public byte[] Data;
         public Struct[] SubStructs;
+
         public bool EOFC;
-        public ENRS[] ENRS;
-        public KKdList<long> POF;
+        public ENRSList ENRS;
+        public POF POF;
+
+        public int ID => Header.ID;
+
+        public bool HasPOF        => POF .NotNull;
+        public bool HasENRS       => ENRS.NotNull;
+        public bool HasSubStructs => SubStructs != null;
 
         public long DataOffset;
 
-        public override string ToString() => Header.ToString() + (SubStructs != null ?
-            "; SubStructs: " + SubStructs.Length : "") + (ENRS != null ? "; Has ENRS" : "") +
-            (POF.NotNull ? "; Has POF" : "") + (EOFC ? "; Has EOFC" : "");
+        public override string ToString() => $"{Header.ToString()}" +
+            $"{(HasSubStructs ? $"; SubStructs: {SubStructs.Length}" : "")}" +
+            $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}{(EOFC ? "; Has EOFC" : "")}";
     }
 }

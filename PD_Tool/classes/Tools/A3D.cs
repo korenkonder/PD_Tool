@@ -1,7 +1,6 @@
 ﻿using System;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib;
 using KKdA3DA = KKdMainLib.A3DA.A3DA;
 using KKdFARC = KKdMainLib.FARC;
 
@@ -26,18 +25,18 @@ namespace PD_Tool.Tools
             if (MP)
             {
                 Console.Clear();
-                Main.ConsoleDesign(true);
-                Main.ConsoleDesign("          Choose type of format to export:");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign("1. A3DA [DT/AC/F]");
-                Main.ConsoleDesign("2. A3DC [DT/AC/F]");
-                Main.ConsoleDesign("3. A3DA [AFT/FT] ");
-                Main.ConsoleDesign("4. A3DC [AFT/FT] ");
-                Main.ConsoleDesign("5. A3DC [F2]     ");
-                Main.ConsoleDesign("6. A3DC [MGF]    ");
-                Main.ConsoleDesign("7. A3DC [X]      ");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign(true);
+                Program.ConsoleDesign(true);
+                Program.ConsoleDesign("          Choose type of format to export:");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("1. A3DA [DT/AC/F]");
+                Program.ConsoleDesign("2. A3DC [DT/AC/F]");
+                Program.ConsoleDesign("3. A3DA [AFT/FT] ");
+                Program.ConsoleDesign("4. A3DC [AFT/FT] ");
+                Program.ConsoleDesign("5. A3DC [F2]     ");
+                Program.ConsoleDesign("6. A3DC [MGF]    ");
+                Program.ConsoleDesign("7. A3DC [X]      ");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign(true);
                 Console.WriteLine();
                 format = Console.ReadLine();
                      if (format == "1") Format = Format.DT  ;
@@ -61,29 +60,29 @@ namespace PD_Tool.Tools
 
                 Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".farc")
-                {
-                    KKdFARC FARC = new KKdFARC(file);
-                    if (!FARC.HeaderReader()) continue;
-                    if (!FARC.HasFiles) continue;
-
-                    MsgPack A3DA = MsgPack.Null;
-                    byte[] data = null;
-                    for (int i = 0; i < FARC.Files.Length; i++)
+                    using (KKdFARC FARC = new KKdFARC(file))
                     {
-                        data = FARC.FileReader(i);
-                        state = A.A3DAReader(data);
-                        if (state == 1)
+                        if (!FARC.HeaderReader()) continue;
+                        if (!FARC.HasFiles) continue;
+
+                        MsgPack A3DA = MsgPack.Null;
+                        byte[] data = null;
+                        for (int i = 0; i < FARC.Files.Length; i++)
                         {
-                            A3DA = A.MsgPackWriter();
-                            A = new KKdA3DA();
-                            A.MsgPackReader(A3DA);
-                            A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
-                            A.Data.Format = Format;
-                            FARC.Files[i].Data = (format != "1" && format != "3") ? A.A3DCWriter() : A.A3DAWriter();
+                            data = FARC.FileReader(i);
+                            state = A.A3DAReader(data);
+                            if (state == 1)
+                            {
+                                A3DA = A.MsgPackWriter();
+                                A = new KKdA3DA();
+                                A.MsgPackReader(A3DA);
+                                A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
+                                A.Data.Format = Format;
+                                FARC.Files[i].Data = (format != "1" && format != "3") ? A.A3DCWriter() : A.A3DAWriter();
+                            }
                         }
+                        FARC.Save();
                     }
-                    FARC.Save();
-                }
                 else if (ext == ".a3da")
                 {
                     state = A.A3DAReader(filepath);

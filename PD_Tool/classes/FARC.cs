@@ -15,9 +15,12 @@ namespace PD_Tool
             {
                 Console.Title = "FARC Extractor";
                 Program.Choose(1, "farc", out string[] FileNames);
-                foreach (string FileName in FileNames)
-                    if (FileName != "" && File.Exists(FileName))
-                        new KKdFARC(FileName).UnPack();
+                foreach (string file in FileNames)
+                    if (file != "" && File.Exists(file))
+                    {
+                        Console.Title = "FARC Extractor: " + Path.GetFileNameWithoutExtension(file);
+                        new KKdFARC(file).UnPack();
+                    }
             }
             else
             {
@@ -26,17 +29,18 @@ namespace PD_Tool
                 Console.Title = "FARC Creator";
                 if (file != "")
                 {
+                    Console.Title = "FARC Creator: " + Path.GetDirectoryName(file);
                     FARC = new KKdFARC();
-                    Main.ConsoleDesign(true);
-                    Main.ConsoleDesign("         Choose type of created FARC:");
-                    Main.ConsoleDesign(false);
-                    Main.ConsoleDesign("1. FArc [DT/DT2nd/DTex/F/F2nd/X]");
-                    Main.ConsoleDesign("2. FArC [DT/DT2nd/DTex/F/F2nd/X] (Compressed)");
-                    Main.ConsoleDesign("3. FARC [F/F2nd/X]");
-                    Main.ConsoleDesign(false);
-                    Main.ConsoleDesign("R. Return to Main Menu");
-                    Main.ConsoleDesign(false);
-                    Main.ConsoleDesign(true);
+                    Program.ConsoleDesign(true);
+                    Program.ConsoleDesign("         Choose type of created FARC:");
+                    Program.ConsoleDesign(false);
+                    Program.ConsoleDesign("1. FArc [DT/DT2/DTex/F/F2/X]");
+                    Program.ConsoleDesign("2. FArC [DT/DT2/DTex/F/F2/X] (Compressed)");
+                    Program.ConsoleDesign("3. FARC [F/F2/X]");
+                    Program.ConsoleDesign(false);
+                    Program.ConsoleDesign("R. Return to Main Menu");
+                    Program.ConsoleDesign(false);
+                    Program.ConsoleDesign(true);
                     Console.WriteLine();
                     Console.WriteLine("Choosed folder: {0}", file);
                     Console.WriteLine();
@@ -47,15 +51,15 @@ namespace PD_Tool
                         FARC.Signature = KKdFARC.Farc.FARC;
 
                         Console.WriteLine();
-                        Main.ConsoleDesign(true);
-                        Main.ConsoleDesign("             Choose type of FARC:");
-                        Main.ConsoleDesign(false);
-                        Main.ConsoleDesign("1. FARC");
-                        Main.ConsoleDesign("2. FARC (Compressed)");
-                        Main.ConsoleDesign("3. FARC (Encrypted)");
-                        Main.ConsoleDesign("4. FARC (Compressed & Encrypted)");
-                        Main.ConsoleDesign(false);
-                        Main.ConsoleDesign(true);
+                        Program.ConsoleDesign(true);
+                        Program.ConsoleDesign("             Choose type of FARC:");
+                        Program.ConsoleDesign(false);
+                        Program.ConsoleDesign("1. FARC");
+                        Program.ConsoleDesign("2. FARC (Compressed)");
+                        Program.ConsoleDesign("3. FARC (Encrypted)");
+                        Program.ConsoleDesign("4. FARC (Compressed & Encrypted)");
+                        Program.ConsoleDesign(false);
+                        Program.ConsoleDesign(true);
                         Console.WriteLine();
                         type = Console.ReadLine();
                         if (type == "2" || type == "4") FARC.FARCType |= KKdFARC.Type.GZip;
@@ -63,7 +67,6 @@ namespace PD_Tool
                     }
                     else if (type == "R") return;
                     else FARC.Signature = KKdFARC.Farc.FArC;
-                    Console.Title = "FARC Creator - Directory: " + Path.GetDirectoryName(file);
                     new KKdFARC(file, true).Pack(FARC.Signature);
                 }
             }

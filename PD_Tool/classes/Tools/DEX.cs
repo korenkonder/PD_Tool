@@ -1,7 +1,6 @@
 ﻿using System;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib;
 using KKdDEX = KKdMainLib.DEX;
 
 namespace PD_Tool.Tools
@@ -27,16 +26,16 @@ namespace PD_Tool.Tools
 
             Console.Clear();
             string format = "";
-            Main.ConsoleDesign(true);
-            Main.ConsoleDesign("        Choose type of exporting file:");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign("1. F/FT PS3/PS4/PSVita");
-            Main.ConsoleDesign("2. F2   PS3/PSVita");
-            Main.ConsoleDesign("3. X    PS4/PSVita");
-            if ( MP   && !JSON)   Main.ConsoleDesign("9. MessagePack");
-            if (_JSON &&  JSON)   Main.ConsoleDesign("9. JSON");
-            Main.ConsoleDesign(false);
-            Main.ConsoleDesign(true);
+            Program.ConsoleDesign(true);
+            Program.ConsoleDesign("        Choose type of exporting file:");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign("1. F/FT PS3/PS4/PSVita");
+            Program.ConsoleDesign("2. F2   PS3/PSVita");
+            Program.ConsoleDesign("3. X    PS4/PSVita");
+            if ( MP   && !JSON) Program.ConsoleDesign("9. MessagePack");
+            if (_JSON &&  JSON) Program.ConsoleDesign("9. JSON");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign(true);
             Console.WriteLine();
             format = Console.ReadLine();
             

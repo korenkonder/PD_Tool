@@ -23,6 +23,12 @@ namespace KKdMainLib.F2
             if (CCTs.Count < 1) { IO.Close(); CCTs.Count = -1; return; }
 
             if (CCTs.Count > 0 && CCTs.Offset == 0) { IO.Close(); CCTs.Count = -1; return; }
+            /*{
+                IO.Format = Header.Format = Format.X;
+                IO.Offset = Header.Length;
+                IO.Position = CCTs.Offset;
+                CCTs = IO.ReadCountPointerX<CCT>();
+            }*/
 
             IO.Position = CCTs.Offset;
             for (i = 0; i < CCTs.Count; i++)

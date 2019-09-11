@@ -2,7 +2,14 @@
 {
     public unsafe struct POF
     {
-        public static KKdList<long> Read(byte[] data, bool ShiftX)
+        public int ID;
+        public bool EOFC;
+        public KKdList<long> Offsets;
+
+        public bool  IsNull => Offsets. IsNull;
+        public bool NotNull => Offsets.NotNull;
+
+        public static POF Read(byte[] data, bool ShiftX, int ID = 0, bool EOFC = false)
         {
             Value Val = 0;
             KKdList<long> Offsets = KKdList<long>.New;
@@ -24,21 +31,21 @@
                 Offset += V;
                 Offsets.Add(Offset << BitShift);
             }
-            return Offsets;
+            return new POF { EOFC = EOFC, ID = ID, Offsets = Offsets };
         }
 
-        public static byte[] Write(KKdList<long> Offsets, bool ShiftX)
+        public static byte[] Write(POF POF, bool ShiftX)
         {
-            Offsets.Sort();
+            POF.Offsets.Sort();
             int Length = 5;
             long Offset = 0;
             byte BitShift = (byte)(ShiftX ? 3 : 2);
             int Max1 = 0x00FF >> BitShift;
             int Max2 = 0xFFFF >> BitShift;
-            for (int i = 0; i < Offsets.Count; i++)
+            for (int i = 0; i < POF.Offsets.Count; i++)
             {
-                Offset = Offsets[i];
-                if (i > 0) { Offset -= Offsets[i - 1]; if (Offset == 0) continue; }
+                Offset = POF.Offsets[i];
+                if (i > 0) { Offset -= POF.Offsets[i - 1]; if (Offset == 0) continue; }
 
                 Offset >>= BitShift;
                      if (Offset <= Max1) Length += 1;
@@ -51,10 +58,10 @@
 
             byte Val = 0;
             *(int*)ptr = Length; ptr += 4;
-            for (int i = 0; i < Offsets.Count; i++)
+            for (int i = 0; i < POF.Offsets.Count; i++)
             {
-                Offset = Offsets[i];
-                if (i > 0) { Offset -= Offsets[i - 1]; if (Offset == 0) continue; }
+                Offset = POF.Offsets[i];
+                if (i > 0) { Offset -= POF.Offsets[i - 1]; if (Offset == 0) continue; }
 
                 Offset >>= BitShift;
                 Val = (byte)(Offset > Max2 ? Value.Int32 : Offset > Max1 ? Value.Int16 : Value.Int8);
@@ -77,5 +84,8 @@
             Int16   = 0b10000000,
             Int32   = 0b11000000,
         }
+
+        public override string ToString() =>
+            $"ID: {ID}{(NotNull ? $"; Offsets Count: {Offsets.Count}" : "")}{(EOFC ? "; Has EOFC" : "")}";
     }
 }

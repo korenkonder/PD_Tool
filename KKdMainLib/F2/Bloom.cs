@@ -23,6 +23,12 @@ namespace KKdMainLib.F2
             if (BLTs.Count < 1) { IO.Close(); BLTs.Count = -1; return; }
 
             if (BLTs.Count > 0 && BLTs.Offset == 0) { IO.Close(); BLTs.Count = -1; return; }
+            /*{
+                IO.Format = Header.Format = Format.X;
+                IO.Offset = Header.Length;
+                IO.Position = BLTs.Offset;
+                BLTs = IO.ReadCountPointerX<BLT>();
+            }*/
 
             IO.Position = BLTs.Offset;
             for (i = 0; i < BLTs.Count; i++)

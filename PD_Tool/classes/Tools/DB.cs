@@ -1,5 +1,4 @@
 ﻿using System;
-using KKdMainLib;
 using KKdMainLib.IO;
 
 namespace PD_Tool.Tools
@@ -23,18 +22,18 @@ namespace PD_Tool.Tools
             if (MP)
             {
                 Console.Clear();
-                Main.ConsoleDesign(true);
-                Main.ConsoleDesign("        Choose type of exporting file:");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign("1. Compact");
-                Main.ConsoleDesign("2. Normal");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign(true);
+                Program.ConsoleDesign(true);
+                Program.ConsoleDesign("        Choose type of exporting file:");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("1. Compact");
+                Program.ConsoleDesign("2. Normal");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign(true);
                 Console.WriteLine();
                 format = Console.ReadLine();
             }
 
-            DataBank DB;
+            KKdMainLib.DataBank DB;
             string[] file_split;
             foreach (string file in FileNames)
             {
@@ -44,7 +43,7 @@ namespace PD_Tool.Tools
 
                 string filename = Path.GetFileNameWithoutExtension(file);
                 file_split = filename.Split('_');
-                DB = new DataBank();
+                DB = new KKdMainLib.DataBank();
                 if (file_split.Length == 5 && ext == ".dat" && MP)
                 {
                     filepath = file.Replace(filename + ".dat", "");

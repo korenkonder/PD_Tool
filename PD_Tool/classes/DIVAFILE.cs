@@ -10,6 +10,8 @@ namespace PD_Tool
             Stream reader = File.OpenReader(file);
             if (reader.ReadInt64() != 0x454C494641564944) { reader.Close(); return; }
             reader.Close();
+
+            System.Console.Title = "DIVAFILE Decrypt: " + Path.GetFileName(file);
             file.Decrypt();
         }
 
@@ -17,6 +19,9 @@ namespace PD_Tool
         {
             Stream reader = File.OpenReader(file);
             if (reader.ReadInt64() == 0x454C494641564944) { reader.Close(); return; }
+            reader.Close();
+
+            System.Console.Title = "DIVAFILE Encrypt: " + Path.GetFileName(file);
             file.Encrypt();
         }
     }

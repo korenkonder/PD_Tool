@@ -1,9 +1,8 @@
-﻿using System;
-using KKdBaseLib;
+﻿using KKdBaseLib;
 
 namespace KKdMainLib.IO
 {
-    public struct MP
+    public struct MP : System.IDisposable
     {
         public MP(Stream IO) => _IO = IO;
 
@@ -112,7 +111,7 @@ namespace KKdMainLib.IO
                 return _IO.ReadString(Val - Types.FixStr);
             else if (Val >= Types.   Str8 && Val <= Types.   Str32 )
             {
-                Enum.TryParse(Val.ToString(), out Types Type);
+                System.Enum.TryParse(Val.ToString(), out Types Type);
                 int Length = 0;
                      if (Type == Types.Str8 ) Length = _IO.ReadByte();
                 else if (Type == Types.Str16) Length = _IO.ReadInt16Endian(true);
@@ -296,6 +295,8 @@ namespace KKdMainLib.IO
             _IO.Write(val.Type);
             _IO.Write(val.Data);
         }
+
+        public void Dispose() => _IO.Close();
     }
 
     public enum Types : byte

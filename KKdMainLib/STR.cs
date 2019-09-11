@@ -11,7 +11,7 @@ namespace KKdMainLib
         
         private long Offset;
         private long OffsetX;
-        private KKdList<long> POF;
+        private POF POF;
         private Header Header;
         private Stream IO;
 
@@ -27,7 +27,7 @@ namespace KKdMainLib
             if (Header.Signature == 0x41525453)
             {
                 Header = IO.ReadHeader(true, false);
-                POF = KKdList<long>.New;
+                POF.Offsets = KKdList<long>.New;
                 
                 long Count = IO.ReadInt32Endian();
                 Offset = IO.ReadInt32Endian();
@@ -95,7 +95,7 @@ namespace KKdMainLib
             uint CurrentOffset = 0;
             IO = File.OpenWriter(filepath + (Header.Format > Format.FT ? ".str" : ".bin"), true);
             IO.Format = Header.Format;
-            POF = KKdList<long>.New;
+            POF.Offsets = KKdList<long>.New;
             IO.IsBE = IO.Format == Format.F2BE;
 
             long Count = STRs.LongLength;
@@ -143,15 +143,16 @@ namespace KKdMainLib
                 IO.Position = 0x80;
                 for (int i = 0; i < Count; i++)
                 {
-                    POF.Add(IO.Position);
+                    POF.Offsets.Add(IO.Position);
                     IO.WriteEndian(STRPos[i]);
                     IO.WriteEndian(STRs[i].ID);
                 }
 
                 IO.UIntPosition = Offset;
-                IO.Write(ref POF, 0, false);
+                POF.ID = 1;
+                IO.Write(POF);
                 CurrentOffset = IO.UIntPosition;
-                IO.WriteEOFC(0);
+                IO.WriteEOFC();
                 Header.DataSize = (int)(CurrentOffset - 0x40);
                 Header.Signature = 0x41525453;
                 Header.SectionSize = (int)(Offset - 0x40);

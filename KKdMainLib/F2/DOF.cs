@@ -23,6 +23,12 @@ namespace KKdMainLib.F2
             if (DFTs.Count < 1) { IO.Close(); DFTs.Count = -1; return; }
 
             if (DFTs.Count > 0 && DFTs.Offset == 0) { IO.Close(); DFTs.Count = -1; return; }
+            /*{
+                IO.Format = Header.Format = Format.X;
+                IO.Offset = Header.Length;
+                IO.Position = DFTs.Offset;
+                DFTs = IO.ReadCountPointerX<DFT>();
+            }*/
 
             IO.Position = DFTs.Offset;
             for (i = 0; i < DFTs.Count; i++)

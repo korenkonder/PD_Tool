@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using KKdMainLib;
 using KKdVAG = KKdSoundLib.VAG;
 
 namespace PD_Tool.Tools
@@ -24,13 +23,13 @@ namespace PD_Tool.Tools
             if (InputWAV)
             {
                 Console.Clear();
-                Main.ConsoleDesign(true);
-                Main.ConsoleDesign("          Choose type of format to export:");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign("1. VAG (Downmix to 1 ch)");
-                Main.ConsoleDesign("2. HEVAG");
-                Main.ConsoleDesign(false);
-                Main.ConsoleDesign(true);
+                Program.ConsoleDesign(true);
+                Program.ConsoleDesign("          Choose type of format to export:");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("1. VAG (Downmix to 1 ch)");
+                Program.ConsoleDesign("2. HEVAG");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign(true);
                 Console.WriteLine();
                 string format = Console.ReadLine();
                 HE_VAG = format == "2";

@@ -1,7 +1,6 @@
 ﻿//Original: AetSet.bt Version: 2.0 by samyuu
 
 using KKdBaseLib;
-using KKdMainLib.F2;
 using KKdMainLib.IO;
 
 namespace KKdMainLib.Aet
@@ -61,14 +60,22 @@ namespace KKdMainLib.Aet
             Aet.Unk       = IO.ReadSingle();
             Aet.Duration  = IO.ReadSingle();
             Aet.FrameRate = IO.ReadSingle();
-            IO.ReadInt32();
-            Aet.Width      = IO.ReadInt32();
-            Aet.Height     = IO.ReadInt32();
-            Aet.DontChange = IO.ReadInt32();
-            if (Aet.DontChange != 0) { IO.Close(); return; }
+            Aet.BackgroundColor = IO.ReadInt32();
+            Aet.Width           = IO.ReadInt32();
+            Aet.Height          = IO.ReadInt32();
+            Aet.Position = IO.ReadPointer<Vector2<KeyFrameEntry>>();
             Aet.Layers        = IO.ReadCountPointer<   AetLayer>();
             Aet.SpriteEntries = IO.ReadCountPointer<SpriteEntry>();
             Aet.Unknown = IO.ReadCountPointer<int>();
+
+            if (Aet.Position.Offset > 0)
+            {
+                IO.Position = Aet.Position.Offset;
+                Aet.Position.Value.X.Offset = IO.ReadInt32();
+                Aet.Position.Value.Y.Offset = IO.ReadInt32();
+                IO.ReadKeyFrameEntry(ref Aet.Position.Value.X);
+                IO.ReadKeyFrameEntry(ref Aet.Position.Value.Y);
+            }
 
             IO.Position = Aet.Layers.Offset;
             for (i = 0; i < Aet.Layers.Count; i++)
@@ -149,16 +156,37 @@ namespace KKdMainLib.Aet
                 for (i0 = 0; i0 < Aet.Layers.Entries[i].Count; i0++)
                     IO.Write(ref Aet.Layers.Entries[i].Objects[i0]);
             }
-         
+
+            if (Aet.Position.Offset > 0)
+            {
+                IO.Align(0x10);
+                int Flags = 0;
+                Flags |= IO.Write(ref Aet.Position.Value.X) ? 0b10 : 0;
+                Flags |= IO.Write(ref Aet.Position.Value.Y) ? 0b01 : 0;
+
+                IO.Align(0x20);
+                Aet.Position.Offset = IO.Position;
+                IO.Write(Aet.Position.Value.X.Count );
+                if ((Flags & 0b10) == 0b10) NullValPointers.Add(IO.Position);
+                IO.Write(Aet.Position.Value.X.Offset);
+                IO.Write(Aet.Position.Value.X.Count );
+                if ((Flags & 0b01) == 0b01) NullValPointers.Add(IO.Position);
+                IO.Write(Aet.Position.Value.Y.Offset);
+
+                IO.Write(ref Aet.Position.Value.X);
+                IO.Write(ref Aet.Position.Value.Y);
+            }
+            else Aet.Position.Offset = 0;
+
             IO.Align(0x20);
             AET.Offset = IO.Position;
             IO.Write(0L);
             IO.Write(Aet.Duration);
             IO.Write(Aet.FrameRate);
-            IO.Write(0);
+            IO.Write(Aet.BackgroundColor);
             IO.Write(Aet.Width);
             IO.Write(Aet.Height);
-            IO.Write(0);
+            IO.Write(Aet.Position.Offset);
             IO.Write(0L);
             IO.Write(0L);
             IO.Write(0L);
@@ -212,7 +240,7 @@ namespace KKdMainLib.Aet
             for (i = 0; i < NullValPointers.Count; i++)
             {
                 IO.Position = NullValPointers[i];
-                IO.Write(ReturnPosition + i << 2);
+                IO.Write(ReturnPosition + (i << 2));
             }
 
             for (i = 0; i < Aet.Layers.Count; i++)
@@ -355,12 +383,19 @@ namespace KKdMainLib.Aet
             Aet.Unk        = AET.ReadSingle("Unk"      );
             Aet.Duration   = AET.ReadSingle("Duration" );
             Aet.FrameRate  = AET.ReadSingle("FrameRate");
-            Aet.Width  = AET.ReadInt32("Width" );
-            Aet.Height = AET.ReadInt32("Height");
+            Aet.BackgroundColor = AET.ReadInt32("BackgroundColor");
+            Aet.Width           = AET.ReadInt32("Width"          );
+            Aet.Height          = AET.ReadInt32("Height"         );
 
             if (AET.Element("Unknown", out Temp))
                 Aet.Unknown.Count = Temp.ReadInt32();
 
+            if (AET.Element("Position", out Temp))
+            {
+                Aet.Position.Offset = 1;
+                Aet.Position.Value.X.ReadMP(Temp, "X");
+                Aet.Position.Value.Y.ReadMP(Temp, "Y");
+            }
 
             if (AET.ElementArray("SpriteEntries", out Temp))
             {
@@ -377,8 +412,7 @@ namespace KKdMainLib.Aet
                 for (i = 0; i < Aet.Layers.Count - 1; i++)
                     Aet.Layers.Entries[i].ReadMP(Temp[i]);
             }
-            else return;
-
+            else Aet.Layers.Count = 1;
 
             i = Aet.Layers.Count - 1;
             if (AET.ElementArray("RootLayer", out Temp))
@@ -402,11 +436,15 @@ namespace KKdMainLib.Aet
             if (AetData.Offset <= 0) return MsgPack.New;
             ref AetData Aet = ref AetData.Value;
 
-            MsgPack AET = MsgPack.New.Add("Name", Aet.Name.Value).Add("Duration",
-                Aet.Duration).Add("FrameRate", Aet.FrameRate).Add("Width",
-                Aet.Width).Add("Height", Aet.Height).Add("Unk", Aet.Unk);
+            MsgPack AET = MsgPack.New.Add("Name", Aet.Name.Value).Add("Duration", Aet.Duration).
+                Add("FrameRate", Aet.FrameRate).Add("BackgroundColor", Aet.BackgroundColor).
+                Add("Width", Aet.Width).Add("Height", Aet.Height).Add("Unk", Aet.Unk);
             if (Aet.Unknown.Count > 0)
                 AET.Add("Unknown", Aet.Unknown.Count);
+
+            if (Aet.Position.Offset > 0)
+                AET.Add(new MsgPack("Position").Add(Aet.Position.Value.X.WriteMP("X"))
+                                               .Add(Aet.Position.Value.Y.WriteMP("Y")));
 
             i = Aet.Layers.Count - 1;
             if (Aet.Layers[i].Count == 1)
@@ -417,12 +455,12 @@ namespace KKdMainLib.Aet
                 for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
                     RootLayer[i0] = Aet.Layers[i][i0].WriteMP(ref Aet);
                 AET.Add(RootLayer);
-            }
 
-            MsgPack Layers = new MsgPack(Aet.Layers.Count - 1, "Layers");
-            for (i = 0; i < Aet.Layers.Count - 1; i++)
-                Layers[i] = Aet.Layers[i].WriteMP(i, ref Aet);
-            AET.Add(Layers);
+                MsgPack Layers = new MsgPack(Aet.Layers.Count - 1, "Layers");
+                for (i = 0; i < Aet.Layers.Count - 1; i++)
+                    Layers[i] = Aet.Layers[i].WriteMP(i, ref Aet);
+                AET.Add(Layers);
+            }
 
             MsgPack SpriteEntries = new MsgPack(Aet.SpriteEntries.Count, "SpriteEntries");
             for (i = 0; i < Aet.SpriteEntries.Count; i++)
@@ -825,7 +863,7 @@ namespace KKdMainLib.Aet
             if (entry.Count > 2) IO.Align(0x20);
             entry.Offset = IO.Position;
             if (entry.Count == 1) if (entry.Value == 0) return  true;
-                      else { IO.Write(entry.Value);     return false; }  
+                      else { IO.Write(entry.Value);     return false; }
 
             for (int i = 0; i < entry.Count; i++) IO.Write(entry.KeyFrame     [i]);
             for (int i = 0; i < entry.Count; i++)
@@ -868,9 +906,10 @@ namespace KKdMainLib.Aet
         public float Unk;
         public float Duration;
         public float FrameRate;
+        public int BackgroundColor;
         public int Width;
         public int Height;
-        public int DontChange;
+        public Pointer<Vector2<KeyFrameEntry>> Position;
         public CountPointer<   AetLayer> Layers;
         public CountPointer<SpriteEntry> SpriteEntries;
         public CountPointer<int> Unknown;
@@ -951,12 +990,9 @@ namespace KKdMainLib.Aet
             Unk0 = msg.ReadUInt8("Unk0");
             Unk1 = msg.ReadUInt8("Unk1");
             Unk2 = msg.ReadUInt8("Unk2");
-                 if (msg.Element("Pic", out MsgPack Pic))
-            { Type = ObjType.Pic; this.Pic.Value.ReadMP(Pic); }
-            else if (msg.Element("Aif", out MsgPack Aif))
-            { Type = ObjType.Aif; this.Aif.Value.ReadMP(Aif); }
-            else if (msg.Element("Eff", out MsgPack Eff))
-            { Type = ObjType.Eff; this.Eff.Value.ReadMP(Eff); }
+                 if (msg.Element("Pic", out MsgPack Pic)) { Type = ObjType.Pic; this.Pic.Value.ReadMP(Pic); }
+            else if (msg.Element("Aif", out MsgPack Aif)) { Type = ObjType.Aif; this.Aif.Value.ReadMP(Aif); }
+            else if (msg.Element("Eff", out MsgPack Eff)) { Type = ObjType.Eff; this.Eff.Value.ReadMP(Eff); }
             else Type = ObjType.Nop;
         }
 
