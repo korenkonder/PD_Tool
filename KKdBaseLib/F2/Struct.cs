@@ -6,11 +6,13 @@
         public byte[] Data;
         public Struct[] SubStructs;
 
-        public bool EOFC;
         public ENRSList ENRS;
         public POF POF;
+        
+        public int Length  => length(false);
+        public int LengthX => length( true);
 
-        public int ID => Header.ID;
+        public int Depth => Header.Depth;
 
         public bool HasPOF        => POF .NotNull;
         public bool HasENRS       => ENRS.NotNull;
@@ -20,6 +22,27 @@
 
         public override string ToString() => $"{Header.ToString()}" +
             $"{(HasSubStructs ? $"; SubStructs: {SubStructs.Length}" : "")}" +
-            $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}{(EOFC ? "; Has EOFC" : "")}";
+            $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}";
+
+        private int length(bool ShiftX = false)
+        {
+            int length = Data != null ? Data.Length : 0;
+            if (HasPOF ) length += 0x20 + (ShiftX ? POF.LengthX : POF.Length);
+            if (HasENRS) length += 0x20 + ENRS.Length;
+
+            if (HasSubStructs)
+            {
+                for (int i = 0; i < SubStructs.Length; i++)
+                    length += (ShiftX ? SubStructs[i].LengthX : SubStructs[i].Length) + SubStructs[i].Header.Length;
+                length += 0x20;
+            }
+            return length; 
+        }
+
+        public void Update(bool ShiftX = false)
+        {
+            Header.SectionSize = Data != null ? Data.Length : 0;
+            Header.DataSize = length(ShiftX);
+        }
     }
 }

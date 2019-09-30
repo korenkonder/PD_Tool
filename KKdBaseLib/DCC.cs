@@ -46,5 +46,13 @@ namespace KKdBaseLib
                 result = (ushort)(ChecksumLookupTable[(result >> 8) ^ data[i]] ^ (result << 8));
             return result;
         }
+
+        public static uint CalculateChecksumUInt(byte[] data)
+        {
+            uint result = 0xFFFFFFFF;
+            for (int i = 0; i < data.Length; i++)
+                result = ChecksumLookupTable[((ushort)result >> 8) ^ data[i]] ^ (result << 8);
+            return result;
+        }
     }
 }

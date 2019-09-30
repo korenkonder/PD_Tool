@@ -18,7 +18,7 @@ namespace KKdMainLib
         {
             Header Header = new Header { Format = Format.F2LE, Signature = stream.ReadInt32(),
                 DataSize = stream.ReadInt32(), Length = stream.ReadInt32(), Flags = stream.ReadInt32(),
-                ID = stream.ReadInt32(), SectionSize = stream.ReadInt32(),
+                Depth = stream.ReadInt32(), SectionSize = stream.ReadInt32(),
                 Mode = stream.ReadInt32() };
             stream.ReadInt32();
             if ((Header.Flags & 0x08000000) == 0x08000000) Header.Format = Format.F2BE;
@@ -39,21 +39,21 @@ namespace KKdMainLib
         public static void Write(this Stream stream, Header Header, bool Extended = false)
         {
             Header.Length = (Header.Format < Format.X && Extended) ? 0x40 : 0x20;
-            Header.Flags  = (Header.NotUseDataSizeAsSectionSize ? 0x10000000 : 0) |
-                            (Header.Format == Format.F2BE       ? 0x08000000 : 0);
+            Header.Flags = (!Header.NotUseDataSizeAsSectionSize ? 0x10000000 : 0) |
+                            (Header.Format == Format.F2BE ? 0x08000000 : 0);
 
             stream.Write(Header.Signature);
             stream.Write(Header.DataSize);
             stream.Write(Header.Length);
             stream.Write(Header.Flags);
-            stream.Write(Header.ID);
+            stream.Write(Header.Depth);
             stream.Write(Header.SectionSize);
             stream.Write(Header.Mode);
             stream.Write(0x00);
             if (Header.Length == 0x40)
             {
                 stream.Write(Header.Format < Format.MGF ? (int)((Header.SectionSignature ^
-                    (Header.DataSize * (long)Header.Signature)) - Header.ID + Header.SectionSize) : 0);
+                    (Header.DataSize * (long)Header.Signature)) - Header.Depth + Header.SectionSize) : 0);
                 stream.Write(0x00);
                 stream.Write(0x00L);
                 stream.Write(Header.InnerSignature);
@@ -63,7 +63,7 @@ namespace KKdMainLib
         }
 
         public static void WriteEOFC(this Stream stream, int ID = 0) =>
-            stream.Write(new Header { ID = ID, Length = 0x20, Signature = 0x43464F45 });
+            stream.Write(new Header { Depth = ID, Length = 0x20, Signature = 0x43464F45 });
     }
 
     public static class POFExtensions
@@ -71,12 +71,11 @@ namespace KKdMainLib
         public static void Write(this Stream stream, POF POF, bool ShiftX = false)
         {
             byte[] data = POF.Write(POF, ShiftX);
-            Header Header = new Header { ID = POF.ID, Format = Format.F2LE,
+            Header Header = new Header { Depth = POF.Depth, Format = Format.F2LE,
                 Length = 0x20, Signature = ShiftX ? 0x31464F50 : 0x30464F50 };
             Header.DataSize = Header.SectionSize = data.Length;
             stream.Write(Header);
             stream.Write(data);
-            if (POF.EOFC) stream.WriteEOFC(POF.ID);
         }
     }
 
@@ -85,12 +84,11 @@ namespace KKdMainLib
         public static void Write(this Stream stream, ENRSList ENRS)
         {
             byte[] data = ENRSList.Write(ENRS);
-            Header Header = new Header { ID = ENRS.ID,
+            Header Header = new Header { Depth = ENRS.Depth,
                 Format = Format.F2LE, Length = 0x20, Signature = 0x53524E45 };
             Header.DataSize = Header.SectionSize = data.Length;
             stream.Write(Header);
             stream.Write(data);
-            if (ENRS.EOFC) stream.WriteEOFC(ENRS.ID);
         }
     }
 
@@ -109,39 +107,30 @@ namespace KKdMainLib
         {
             Struct Struct = new Struct { Header = Header, DataOffset =
                 stream.Position, Data = stream.ReadBytes(Header.SectionSize) };
-            int ID = Header.ID;
+            int Depth = Header.Depth;
 
+            int LastSig = 0, Sig;
             long Length = stream.Length - stream.Position;
             long Position = 0;
             KKdList<Struct> SubStructs = KKdList<Struct>.New;
             while (Length > Position)
             {
                 Header = stream.ReadHeader(false);
-                Position += Header.Length + Header.DataSize;
-                if (Header.ID == ID && Header.Signature == 0x43464F45)
-                { Struct.EOFC = true; break; }
-                else if (Header.ID == 0 && ((Header.Signature & 0xF0FFFFFF) == 0x30464F50 ||
-                    Header.Signature == 0x53524E45 || Header.Signature == 0x43505854))
-                    SubStructs.Add(new Struct { Header = Header, DataOffset =
-                        stream.Position, Data = stream.ReadBytes(Header.SectionSize) });
-                else if (Header.ID <= ID)
-                { stream.LongPosition -= Header.Length; break; }
+                Sig = Header.Signature;
+                Position += Header.Length + Header.SectionSize;
+                if (Sig == 0x43464F45 && Header.Depth == Depth + 1) break;
+                else if (Header.Depth == 0 &&  (Sig == 0x53524E45 ||
+                    (Sig & 0xF0FFFFFF) == 0x30464F50 || Sig == 0x43505854))
+                {
+                    byte[] Data = stream.ReadBytes(Header.SectionSize);
+                    if (Sig == 0x53524E45) Struct.ENRS = ENRSList.Read(Data,                    Header.Depth);
+                    else                   Struct.POF  = POF     .Read(Data, Sig == 0x31464F50, Header.Depth);
+                }
+                else if (Header.Depth <= Depth) { stream.LongPosition -= Header.Length; break; }
                 else SubStructs.Add(stream.ReadStruct(Header));
+                LastSig = Sig;
             }
 
-            for (int i = 0; i < SubStructs.Capacity; i++)
-            {
-                string Sig = SubStructs[i].Header.ToString();
-                if (Sig == "ENRS" || Sig == "EOFC" || Sig == "POF0" || Sig == "POF1")
-                {
-                         if (Sig == "EOFC") Struct.EOFC = true;
-                    else if (Sig == "ENRS") Struct.ENRS = ENRSList.Read(SubStructs[i].Data,
-                        SubStructs[i].ID, SubStructs[i].EOFC);
-                    else                    Struct.POF  = POF     .Read(SubStructs[i].Data, Sig == "POF1",
-                        SubStructs[i].ID, SubStructs[i].EOFC);
-                    SubStructs.RemoveAt(i); SubStructs.Capacity--; i--;
-                }
-            }
             if (SubStructs.Capacity > 0) Struct.SubStructs = SubStructs.ToArray();
             return Struct;
         }
@@ -149,21 +138,23 @@ namespace KKdMainLib
         public static byte[] Write(this Struct Struct, bool ShiftX = false)
         {
             byte[] Data;
-            using (Stream stream = File.OpenWriter()) { stream.Write(Struct, ShiftX); Data = stream.ToArray(); }
+            using (Stream stream = File.OpenWriter()) { Struct.Update(ShiftX);
+                stream.Write(Struct, ShiftX); stream.WriteEOFC(); Data = stream.ToArray(); }
             return Data;
         }
 
         public static void Write(this Stream stream, Struct Struct, bool ShiftX = false)
         {
-            int HeaderPosition = stream.Position;
             stream.Write(Struct.Header);
-            stream.Write(Struct.Data);
+            stream.Write(Struct.Data  );
             if (Struct.HasPOF ) stream.Write(Struct.POF , ShiftX);
             if (Struct.HasENRS) stream.Write(Struct.ENRS);
             if (Struct.HasSubStructs)
+            {
                 for (int i = 0; i < Struct.SubStructs.Length; i++)
                     stream.Write(Struct.SubStructs[i], ShiftX);
-            if (Struct.EOFC) stream.WriteEOFC(Struct.ID);
+                stream.WriteEOFC(Struct.Depth + 1);
+            }
         }
     }
     

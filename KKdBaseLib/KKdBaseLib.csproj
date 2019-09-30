@@ -47,7 +47,8 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Format.cs" />
     <Compile Include="Half.cs" />
-    <Compile Include="IKF.cs" />
+    <Compile Include="Interfaces.cs" />
+    <Compile Include="KF.cs" />
     <Compile Include="KKdList.cs" />
     <Compile Include="MsgPack.cs" />
     <Compile Include="Pointer.cs" />

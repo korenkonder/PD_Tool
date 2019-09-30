@@ -349,23 +349,21 @@ namespace KKdMainLib.Aet
             AET = new AetHeader();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.ElementArray("Aet", out MsgPack Aet)) { MsgPack.Dispose(); return; }
-
-            if (Aet.Array != null)
-                if (Aet.Array.Length > 0)
+            MsgPack Aet;
+            if ((Aet = MsgPack["Aet", true]).NotNull)
+                if (Aet.Array != null && Aet.Array.Length > 0)
                 {
                     AET.Data = new Pointer<AetData>[Aet.Array.Length];
                     for (int i = 0; i < AET.Data.Length; i++)
                         MsgPackReader(Aet.Array[i], ref AET.Data[i]);
                 }
-
+            Aet.Dispose();
             MsgPack.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON)
         {
-            if (this.AET.Data == null) return;
-            if (this.AET.Data.Length == 0) return;
+            if (this.AET.Data == null || this.AET.Data.Length == 0) return;
 
             MsgPack AET = new MsgPack(this.AET.Data.Length, "Aet");
             for (int i = 0; i < this.AET.Data.Length; i++) AET[i] = MsgPackWriter(ref this.AET.Data[i]);
@@ -387,26 +385,25 @@ namespace KKdMainLib.Aet
             Aet.Width           = AET.ReadInt32("Width"          );
             Aet.Height          = AET.ReadInt32("Height"         );
 
-            if (AET.Element("Unknown", out Temp))
+            if ((Temp = AET["Unknown"]).NotNull)
                 Aet.Unknown.Count = Temp.ReadInt32();
-
-            if (AET.Element("Position", out Temp))
+            
+            if ((Temp = AET["Position"]).NotNull)
             {
                 Aet.Position.Offset = 1;
                 Aet.Position.Value.X.ReadMP(Temp, "X");
                 Aet.Position.Value.Y.ReadMP(Temp, "Y");
             }
-
-            if (AET.ElementArray("SpriteEntries", out Temp))
+            
+            if ((Temp = AET["SpriteEntries", true]).NotNull)
             {
                 Aet.SpriteEntries.Count = Temp.Array.Length;
                 for (i = 0; i < Aet.SpriteEntries.Count; i++)
                     Aet.SpriteEntries.Entries[i].ReadMP(Temp[i]);
             }
             else return;
-
-
-            if (AET.ElementArray("Layers", out Temp))
+            
+            if ((Temp = AET["Layers", true]).NotNull)
             {
                 Aet.Layers.Count = Temp.Array.Length + 1;
                 for (i = 0; i < Aet.Layers.Count - 1; i++)
@@ -415,13 +412,13 @@ namespace KKdMainLib.Aet
             else Aet.Layers.Count = 1;
 
             i = Aet.Layers.Count - 1;
-            if (AET.ElementArray("RootLayer", out Temp))
+            if ((Temp = AET["RootLayer", true]).NotNull)
             {
                 Aet.Layers.Entries[i].Count = Temp.Array.Length;
                 for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
                     Aet.Layers.Entries[i].Objects[i0].ReadMP(Temp[i0]);
             }
-            else if (AET.Element("RootLayer", out Temp))
+            else if ((Temp = AET["RootLayer"]).NotNull)
             {
                 Aet.Layers.Entries[i].Count = 1;
                 Aet.Layers.Entries[i].Objects[0].ReadMP(Temp);
@@ -429,6 +426,7 @@ namespace KKdMainLib.Aet
             else return;
 
             AetData.Offset = 0;
+            Temp.Dispose();
         }
         
         public MsgPack MsgPackWriter(ref Pointer<AetData> AetData)
@@ -475,19 +473,21 @@ namespace KKdMainLib.Aet
     {
         public static MsgPack ReadMP(this MsgPack msg, ref CountPointer<float> val, string Name)
         {
+            MsgPack Temp;
             val.Offset = 0;
             val.Entries = null;
-            if (msg.ContainsKey(Name))
+            if ((Temp = msg[Name, true]).NotNull)
             {
                 val.Count = 1;
-                val[0] = msg.ReadSingle(Name);
+                val[0] = Temp.ReadSingle();
             }
-            else if(msg.ElementArray(Name, out MsgPack Temp))
+            else if ((Temp = msg[Name]).NotNull)
             {
                 val.Count = Temp.Array.Length;
                 for (int i = 0; i < val.Count; i++)
                     val[i] = Temp[i].ReadSingle();
             }
+            Temp.Dispose();
             return msg;
         }
 
@@ -873,17 +873,19 @@ namespace KKdMainLib.Aet
 
         public static void ReadMP(this CountPointer<Marker> mark, MsgPack msg)
         {
-            if (msg.Element("Marker", out MsgPack Marker))
+            MsgPack Temp;
+            if ((Temp = msg["Marker"]).NotNull)
             {
                 mark.Count = 1;
-                mark.Entries[0].ReadMP(Marker);
+                mark.Entries[0].ReadMP(Temp);
             }
-            else if (msg.ElementArray("Markers", out MsgPack Markers))
+            else if ((Temp = msg["Markers", true]).NotNull)
             {
-                mark.Count = Markers.Array.Length;
+                mark.Count = Temp.Array.Length;
                 for (int i = 0; i < mark.Count; i++)
-                    mark.Entries[i].ReadMP(Markers[i]);
+                    mark.Entries[i].ReadMP(Temp[i]);
             }
+            Temp.Dispose();
         }
 
         public static void WritePointerString(this Stream IO,
@@ -928,17 +930,19 @@ namespace KKdMainLib.Aet
 
         public void ReadMP(MsgPack msg)
         {
-            if (msg.Element("Object", out MsgPack Object))
+            MsgPack Temp;
+            if ((Temp = msg["Object"]).NotNull)
             {
                 Count = 1;
-                Objects[0].ReadMP(Object);
+                Objects[0].ReadMP(Temp);
             }
-            else if (msg.ElementArray("Objects", out MsgPack Objects))
+            else if ((Temp = msg["Objects", true]).NotNull)
             {
-                Count = Objects.Array.Length;
+                Count = Temp.Array.Length;
                 for (int i0 = 0; i0 < Count; i0++)
-                    this.Objects[i0].ReadMP(Objects[i0]);
+                    Objects[i0].ReadMP(Temp[i0]);
             }
+            Temp.Dispose();
         }
 
         public MsgPack WriteMP(int Id, ref AetData Aet)
@@ -990,10 +994,13 @@ namespace KKdMainLib.Aet
             Unk0 = msg.ReadUInt8("Unk0");
             Unk1 = msg.ReadUInt8("Unk1");
             Unk2 = msg.ReadUInt8("Unk2");
-                 if (msg.Element("Pic", out MsgPack Pic)) { Type = ObjType.Pic; this.Pic.Value.ReadMP(Pic); }
-            else if (msg.Element("Aif", out MsgPack Aif)) { Type = ObjType.Aif; this.Aif.Value.ReadMP(Aif); }
-            else if (msg.Element("Eff", out MsgPack Eff)) { Type = ObjType.Eff; this.Eff.Value.ReadMP(Eff); }
+
+            MsgPack Temp;
+                 if ((Temp = msg["Pic"]).NotNull) { Type = ObjType.Pic; Pic.Value.ReadMP(Temp); }
+            else if ((Temp = msg["Aif"]).NotNull) { Type = ObjType.Aif; Aif.Value.ReadMP(Temp); }
+            else if ((Temp = msg["Eff"]).NotNull) { Type = ObjType.Eff; Eff.Value.ReadMP(Temp); }
             else Type = ObjType.Nop;
+            Temp.Dispose();
         }
 
         public MsgPack WriteMP(ref AetData Aet, string name = null)
@@ -1033,18 +1040,20 @@ namespace KKdMainLib.Aet
                 if (ParentObjectID != null)
                     this.ParentObjectID = ParentObjectID.Value;
 
-                if (msg.Element("Marker", out MsgPack Marker))
+                MsgPack Temp;
+                if ((Temp = msg["Marker"]).NotNull)
                 {
-                    this.Marker.Count = 1;
-                    this.Marker.Entries[0].ReadMP(Marker);
+                    Marker.Count = 1;
+                    Marker.Entries[0].ReadMP(Temp);
                 }
-                else if (msg.ElementArray("Markers", out MsgPack Markers))
+                if ((Temp = msg["Markers", true]).NotNull)
                 {
-                    this.Marker.Count = Markers.Array.Length;
-                    for (int i = 0; i < Markers.Array.Length; i++)
-                        this.Marker.Entries[i].ReadMP(Markers[i]);
+                    Marker.Count = Temp.Array.Length;
+                    for (int i = 0; i < Marker.Count; i++)
+                        Marker.Entries[i].ReadMP(Temp[i]);
                 }
-                else this.Marker.Entries = null;
+                else Marker.Entries = null;
+                Temp.Dispose();
 
                 Data.Value.ReadMP(msg);
 
@@ -1117,18 +1126,20 @@ namespace KKdMainLib.Aet
                 if (ParentObjectID != null)
                     this.ParentObjectID = ParentObjectID.Value;
 
-                if (msg.Element("Marker", out MsgPack Marker))
+                MsgPack Temp;
+                if ((Temp = msg["Marker"]).NotNull)
                 {
-                    this.Marker.Count = 1;
-                    this.Marker.Entries[0].ReadMP(Marker);
+                    Marker.Count = 1;
+                    Marker.Entries[0].ReadMP(Temp);
                 }
-                else if (msg.ElementArray("Markers", out MsgPack Markers))
+                else if ((Temp = msg["Markers", true]).NotNull)
                 {
-                    this.Marker.Count = Markers.Array.Length;
-                    for (int i = 0; i < Markers.Array.Length; i++)
-                        this.Marker.Entries[i].ReadMP(Markers[i]);
+                    Marker.Count = Temp.Array.Length;
+                    for (int i = 0; i < Marker.Count; i++)
+                        Marker.Entries[i].ReadMP(Temp[i]);
                 }
-                else this.Marker.Entries = null;
+                else Marker.Entries = null;
+                Temp.Dispose();
 
                 Data.Value.ReadMP(msg);
             }
@@ -1139,11 +1150,10 @@ namespace KKdMainLib.Aet
                 for (int i = 0; i < Aet.Layers.Count; i++)
                     if (Aet.Layers[i].Pointer == LayerID)
                     { Eff.Add("LayerID", i); break; }
-                if (ParentObjectID > 0)
-                    for (int i = 0; i < Aet.Layers.Count; i++)
-                        for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
-                            if (Aet.Layers[i][i1].Offset == ParentObjectID)
-                            { Eff.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
+                for (int i = 0; ParentObjectID > 0 && i < Aet.Layers.Count; i++)
+                    for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
+                        if (Aet.Layers[i][i1].Offset == ParentObjectID)
+                        { Eff.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
 
                 if (Marker.Count == 1)
                     Eff.Add(Marker[0].WriteMP("Marker"));
@@ -1232,25 +1242,29 @@ namespace KKdMainLib.Aet
 
         public void ReadMP(MsgPack msg)
         {
-            if (!msg.Element("AnimationData", out MsgPack Data)) return;
+            MsgPack Data;
+            if ((Data = msg["AnimationData"]).NotNull)
+            {
+                System.Enum.TryParse(Data.ReadString("BlendMode"), out Mode);
+                Unk0           = Data.ReadUInt8  ("Unk0");
+                UseTextureMask = Data.ReadBoolean("UseTextureMask");
+                Unk1           = Data.ReadUInt8  ("Unk1");
+                
+                  OriginX.ReadMP(Data,   "OriginX");
+                  OriginY.ReadMP(Data,   "OriginY");
+                PositionX.ReadMP(Data, "PositionX");
+                PositionY.ReadMP(Data, "PositionY");
+                Rotation .ReadMP(Data, "Rotation" );
+                   ScaleX.ReadMP(Data,    "ScaleX");
+                   ScaleY.ReadMP(Data,    "ScaleY");
+                Opacity  .ReadMP(Data, "Opacity"  );
 
-            System.Enum.TryParse(Data.ReadString("BlendMode"), out Mode);
-            Unk0           = Data.ReadUInt8  ("Unk0");
-            UseTextureMask = Data.ReadBoolean("UseTextureMask");
-            Unk1           = Data.ReadUInt8  ("Unk1");
-            
-              OriginX.ReadMP(Data,   "OriginX");
-              OriginY.ReadMP(Data,   "OriginY");
-            PositionX.ReadMP(Data, "PositionX");
-            PositionY.ReadMP(Data, "PositionY");
-            Rotation .ReadMP(Data, "Rotation" );
-               ScaleX.ReadMP(Data,    "ScaleX");
-               ScaleY.ReadMP(Data,    "ScaleY");
-            Opacity  .ReadMP(Data, "Opacity"  );
-
-            this._3D.Offset = -1;
-            if (Data.Element("3D", out MsgPack _3D))
-            { this._3D.Offset = 0; this._3D.Value.ReadMP(_3D); }
+                MsgPack Temp;
+                _3D.Offset = -1;
+                if ((Temp = Data["3D"]).NotNull) { _3D.Offset = 0; _3D.Value.ReadMP(Temp); }
+                Temp.Dispose();
+            }
+            Data.Dispose();
         }
 
         public MsgPack WriteMP()
@@ -1267,8 +1281,7 @@ namespace KKdMainLib.Aet
             AnimationData.Add(   ScaleX.WriteMP(   "ScaleX"));
             AnimationData.Add(   ScaleY.WriteMP(   "ScaleY"));
             AnimationData.Add(Opacity  .WriteMP("Opacity"  ));
-            if (_3D.Offset > 0)
-                AnimationData.Add(_3D.Value.WriteMP());
+            if (_3D.Offset > 0) AnimationData.Add(_3D.Value.WriteMP());
             return AnimationData;
         }
 
@@ -1293,21 +1306,23 @@ namespace KKdMainLib.Aet
 
         public void ReadMP(MsgPack msg, string name)
         {
+            MsgPack Temp;
             float? Value = msg.ReadNSingle(name);
-            if (Value != null) { Count = 1; this.Value = Value.Value; return; }
-            if (!msg.ElementArray(name, out MsgPack Temp)) return;
-            
-            Count = Temp.Array.Length;
-            if (Count == 0) return;
-            ArrValue      = new float[Count];
-            KeyFrame      = new float[Count];
-            Interpolation = new float[Count];
-            for (int i = 0; i < Count; i++)
+            if (Value != null) { Count = 1; this.Value = Value.Value; }
+            if ((Temp = msg[name, true]).NotNull && Temp.Array.Length > 1)
             {
-                KeyFrame     [i] = Temp[i].ReadSingle("KeyFrame"     );
-                ArrValue     [i] = Temp[i].ReadSingle("Value"        );
-                Interpolation[i] = Temp[i].ReadSingle("Interpolation");
+                Count = Temp.Array.Length;
+                ArrValue      = new float[Count];
+                KeyFrame      = new float[Count];
+                Interpolation = new float[Count];
+                for (int i = 0; i < Count; i++)
+                {
+                    KeyFrame     [i] = Temp[i].ReadSingle("KeyFrame"     );
+                    ArrValue     [i] = Temp[i].ReadSingle("Value"        );
+                    Interpolation[i] = Temp[i].ReadSingle("Interpolation");
+                }
             }
+            Temp.Dispose();
         }
 
         public MsgPack WriteMP(string name)
@@ -1337,19 +1352,21 @@ namespace KKdMainLib.Aet
             Height  = msg.ReadInt16 ("Height" );
             Frames  = msg.ReadSingle("Frames" );
 
-            if (msg.Element("Sprite", out MsgPack Sprite))
+            MsgPack Temp;
+            if ((Temp = msg["Sprite"]).NotNull)
             {
                 Sprites.Count = 1;
                 Sprites[0] = new Sprite() { Name = new Pointer<string>()
-                { Value = Sprite.ReadString("Name") }, ID = Sprite.ReadInt32("ID") };
+                { Value = Temp.ReadString("Name") }, ID = Temp.ReadInt32("ID") };
             }
-            else if (msg.ElementArray("Sprites", out MsgPack Sprites))
+            else if ((Temp = msg["Sprites", true]).NotNull)
             {
-                this.Sprites.Count = Sprites.Array.Length;
-                for (int i0 = 0; i0 < this.Sprites.Count; i0++)
-                    this.Sprites[i0] = new Sprite() { Name = new Pointer<string>()
-                        { Value = Sprites[i0].ReadString("Name") }, ID = Sprites[i0].ReadInt32("ID") };
+                Sprites.Count = Temp.Array.Length;
+                for (int i0 = 0; i0 < Sprites.Count; i0++)
+                    Sprites[i0] = new Sprite() { Name = new Pointer<string>()
+                        { Value = Temp[i0].ReadString("Name") }, ID = Temp[i0].ReadInt32("ID") };
             }
+            Temp.Dispose();
         }
 
         public MsgPack WriteMP(int Id)

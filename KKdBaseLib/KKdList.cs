@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace KKdBaseLib
 {
-    public struct KKdList<T> : System.IDisposable, IEnumerator, IEnumerable
+    public struct KKdList<T> : System.IDisposable, IEnumerator, IEnumerable, INull
     {
         public static KKdList<T> Null => new KKdList<T>();
-        public static KKdList<T> New  => new KKdList<T>() { Capacity = 0 };
-        public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { Capacity = Capacity };
+        public static KKdList<T> New  => new KKdList<T>() { Count = 0, Capacity = 0 };
+        public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { Count = 0, Capacity = Capacity };
 
         private int index;
         private T[] array;
@@ -30,16 +30,16 @@ namespace KKdBaseLib
         object IEnumerator.Current => Current;
 
         public T this[ int index]
-        {   get =>    array != null ? array[index] : default;
-            set { if (array != null)  array[index] =   value; } }
+        {   get =>    array != null && index > -1 ? array[index] : default;
+            set { if (array != null && index > -1)  array[index] =   value; } }
 
         public T this[uint index]
         {   get =>    array != null ? array[index] : default;
             set { if (array != null)  array[index] =   value; } }
 
         public bool MoveNext()
-        { if (index == (Count - 1)) { index = 0; return false; }
-          else                      { index++  ; return  true; } }
+        { if (index == Count - 1) { index = 0; return false; }
+          else                    { index++  ; return  true; } }
 
         public IEnumerator GetEnumerator() => this;
 
@@ -71,8 +71,9 @@ namespace KKdBaseLib
             if (IsNull) return;
             if (IndexEnd - IndexStart < 1) return;
 
-            for (int i = IndexStart; i < Count; i++)
-                array[i] = array[i + IndexEnd - IndexStart];
+            if (IndexEnd - IndexStart != Count)
+                for (int i = IndexStart; i < Count; i++)
+                    array[i] = array[i + IndexEnd - IndexStart];
             Count -= IndexEnd - IndexStart;
         }
 

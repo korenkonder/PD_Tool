@@ -6,7 +6,7 @@
         public int DataSize;
         public int Length;
         public int Flags;
-        public int ID;
+        public int Depth;
         public int SectionSize;
         public int Mode;
         public int InnerSignature;

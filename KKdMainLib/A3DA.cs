@@ -833,7 +833,7 @@ namespace KKdMainLib.A3DA
                             IO.Write(nameView + "parent=", Node.Parent);
                             IO.Write(Node.MT, nameView, A3DC, IsX, 0b01111);
                         }
-                        IO.Write(nameView + "length=", ObjectHRC.Node.Length);
+                        IO.Write(name + "node.length=", ObjectHRC.Node.Length);
                     }
 
                     if (ObjectHRC.Shadow != null)
@@ -1289,14 +1289,15 @@ namespace KKdMainLib.A3DA
         public void MsgPackReader(string file, bool JSON)
         {
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.Element("A3D", out MsgPack A3D)) { MsgPack.Dispose(); return; }
-            MsgPackReader(A3D);
+            MsgPack A3D = MsgPack["A3D"];
+            if (A3D.NotNull) MsgPackReader(A3D);
+            MsgPack.Dispose();
         }
 
         public void MsgPackReader(MsgPack A3D)
         {
-            MsgPack Temp = MsgPack.New;
-            if (A3D.Element("_", out Temp))
+            MsgPack temp = MsgPack.New, Temp = MsgPack.New;
+            if ((Temp = A3D["_"]).NotNull)
             {
                 Data._ = new _
                 {
@@ -1307,7 +1308,7 @@ namespace KKdMainLib.A3DA
                 };
             }
 
-            if (A3D.ElementArray("Ambient", out Temp))
+            if ((Temp = A3D["Ambient", true]).NotNull)
             {
                 Data.Ambient = new Ambient[Temp.Array.Length];
 
@@ -1320,7 +1321,7 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.Element("CameraAuxiliary", out Temp))
+            if ((Temp = A3D["CameraAuxiliary"]).NotNull)
                 Data.CameraAuxiliary = new CameraAuxiliary
                 {
                     AutoExposure = Temp.ReadKey("AutoExposure"),
@@ -1330,8 +1331,9 @@ namespace KKdMainLib.A3DA
                     Saturate     = Temp.ReadKey("Saturate"    ),
                 };
 
-            if (A3D.ElementArray("CameraRoot", out Temp))
+            if ((Temp = A3D["CameraRoot", true]).NotNull)
             {
+                MsgPack ViewPoint;
                 Data.CameraRoot = new CameraRoot[Temp.Array.Length];
                 for (i = 0; i < Data.CameraRoot.Length; i++)
                 {
@@ -1340,8 +1342,8 @@ namespace KKdMainLib.A3DA
                         MT       = Temp[i].ReadMT(),
                         Interest = Temp[i].ReadMT("Interest"),
                     };
-                    if (!Temp[i].Element("ViewPoint", out MsgPack ViewPoint)) continue;
 
+                    if ((ViewPoint = A3D["ViewPoint"]).IsNull) continue;
                     Data.CameraRoot[i].VP = new CameraRoot.ViewPoint
                     {
                         MT              = ViewPoint.ReadMT(),
@@ -1356,14 +1358,14 @@ namespace KKdMainLib.A3DA
                 }
             }
 
-            if (A3D.ElementArray("Chara", out Temp))
+            if ((Temp = A3D["Chara", true]).NotNull)
             {
                 Data.Chara = new ModelTransform[Temp.Array.Length];
                 for (i = 0; i < Data.Chara.Length; i++)
                     Data.Chara[i] = Temp[i].ReadMT();
             }
 
-            if (A3D.ElementArray("Curve", out Temp))
+            if ((Temp = A3D["Curve", true]).NotNull)
             {
                 Data.Curve = new Curve[Temp.Array.Length];
                 for (i = 0; i < Data.Curve.Length; i++)
@@ -1374,14 +1376,14 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.Element("DOF", out Temp))
+            if ((Temp = A3D["DOF"]).NotNull)
                 Data.DOF = new DOF
                 {
                     MT   = Temp.ReadMT(),
                     Name = Temp.ReadString("Name"),
                 };
 
-            if (A3D.ElementArray("Event", out Temp))
+            if ((Temp = A3D["Event", true]).NotNull)
             {
                 Data.Event = new Event[Temp.Array.Length];
                 for (i = 0; i < Data.Event.Length; i++)
@@ -1399,7 +1401,7 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.ElementArray("Fog", out Temp))
+            if ((Temp = A3D["Fog", true]).NotNull)
             {
                 Data.Fog = new Fog[Temp.Array.Length];
                 for (i = 0; i < Data.Fog.Length; i++)
@@ -1413,7 +1415,7 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.ElementArray("Light", out Temp))
+            if ((Temp = A3D["Light", true]).NotNull)
             {
                 Data.Light = new Light[Temp.Array.Length];
                 for (i = 0; i < Data.Light.Length; i++)
@@ -1431,7 +1433,7 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.ElementArray("MaterialList", out Temp))
+            if ((Temp = A3D["MaterialList", true]).NotNull)
             {
                 Data.MaterialList = new MaterialList[Temp.Array.Length];
                 for (i = 0; i < Data.MaterialList.Length; i++)
@@ -1445,7 +1447,7 @@ namespace KKdMainLib.A3DA
                     };
             }
 
-            if (A3D.ElementArray("MObjectHRC", out Temp))
+            if ((Temp = A3D["MObjectHRC", true]).NotNull)
             {
                 Data.MObjectHRC = new MObjectHRC[Temp.Array.Length];
                 for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
@@ -1456,56 +1458,56 @@ namespace KKdMainLib.A3DA
                         Name = Temp[i0].ReadString("Name"),
                     };
 
-                    if (Temp[i0].Element("JointOrient", out MsgPack JointOrient))
+                    if ((temp = Temp[i0]["JointOrient"]).NotNull)
                         Data.MObjectHRC[i0].JointOrient = new Vector3<double?>
                         {
-                            X = JointOrient.ReadDouble("X"),
-                            Y = JointOrient.ReadDouble("Y"),
-                            Z = JointOrient.ReadDouble("Z"),
+                            X = temp.ReadDouble("X"),
+                            Y = temp.ReadDouble("Y"),
+                            Z = temp.ReadDouble("Z"),
                         };
-
-                    if (Temp[i0].ElementArray("Instance", out MsgPack Instance))
+                    
+                    if ((temp = Temp[i0]["Instance", true]).NotNull)
                     {
-                        Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[Instance.Array.Length];
+                        Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[temp.Array.Length];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
                             Data.MObjectHRC[i0].Instances[i1] = new MObjectHRC.Instance
                             {
-                                MT = Instance[i1].ReadMT(),
-                                   Name = Instance[i1].ReadString(   "Name"),
-                                 Shadow = Instance[i1].ReadNInt32( "Shadow"),
-                                UIDName = Instance[i1].ReadString("UIDName"),
+                                     MT = temp[i1].ReadMT(),
+                                   Name = temp[i1].ReadString(   "Name"),
+                                 Shadow = temp[i1].ReadNInt32( "Shadow"),
+                                UIDName = temp[i1].ReadString("UIDName"),
                             };
                     }
-
-                    if (Temp[i0].ElementArray("Node", out MsgPack Node))
+                    
+                    if ((temp = Temp[i0]["Node", true]).NotNull)
                     {
-                        Data.MObjectHRC[i0].Node = new Node[Temp.Array.Length];
+                        Data.MObjectHRC[i0].Node = new Node[temp.Array.Length];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                             Data.MObjectHRC[i0].Node[i1] = new Node
                             {
-                                MT = Node[i1].ReadMT(),
-                                  Name = Node[i1].ReadString(  "Name"),
-                                Parent = Node[i1].ReadNInt32("Parent"),
+                                    MT = temp[i1].ReadMT(),
+                                  Name = temp[i1].ReadString(  "Name"),
+                                Parent = temp[i1].ReadNInt32("Parent"),
                             };
                     }
                 }
             }
 
-            if (A3D.ElementArray("MObjectHRCList", out Temp))
+            if ((Temp = A3D["MObjectHRCList", true]).NotNull)
             {
                 Data.MObjectHRCList = new string[Temp.Array.Length];
                 for (i = 0; i < Data.MObjectHRCList.Length; i++)
                     Data.MObjectHRCList[i] = Temp[i].ReadString();
             }
-
-            if (A3D.ElementArray("Motion", out Temp))
+            
+            if ((Temp = A3D["Motion", true]).NotNull)
             {
                 Data.Motion = new string[Temp.Array.Length];
                 for (i = 0; i < Data.Motion.Length; i++)
                     Data.Motion[i] = Temp[i].ReadString();
             }
 
-            if (A3D.ElementArray("Object", out Temp))
+            if ((Temp = A3D["Object", true]).NotNull)
             {
                 Data.Object = new Object[Temp.Array.Length];
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
@@ -1520,37 +1522,37 @@ namespace KKdMainLib.A3DA
                             UIDName = Temp[i0].ReadString(    "UIDName"),
                     };
 
-                    if (Temp[i0].ElementArray("TexturePattern", out MsgPack TexPat))
+                    if ((temp = Temp[i0]["TexturePattern", true]).NotNull)
                     {
-                        Data.Object[i0].TexPat = new Object.TexturePattern[TexPat.Array.Length];
+                        Data.Object[i0].TexPat = new Object.TexturePattern[temp.Array.Length];
                         for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
                             Data.Object[i0].TexPat[i1] = new Object.TexturePattern
                             {
-                                Name      = TexPat[i1].ReadString("Name"     ),
-                                Pat       = TexPat[i1].ReadString("Pat"      ),
-                                PatOffset = TexPat[i1].ReadNInt32("PatOffset"),
+                                Name      = temp[i1].ReadString("Name"     ),
+                                Pat       = temp[i1].ReadString("Pat"      ),
+                                PatOffset = temp[i1].ReadNInt32("PatOffset"),
                             };
                     }
 
-                    if (Temp[i0].ElementArray("TextureTransform", out MsgPack TexTrans))
+                    if ((temp = Temp[i0]["TextureTransform", true]).NotNull)
                     {
-                        Data.Object[i0].TexTrans = new Object.TextureTransform[TexTrans.Array.Length];
+                        Data.Object[i0].TexTrans = new Object.TextureTransform[temp.Array.Length];
                         for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                             Data.Object[i0].TexTrans[i1] = new Object.TextureTransform
                             {
-                                Name = TexTrans[i1].ReadString("Name"),
-                                Coverage       = TexTrans[i1].ReadKeyUV("Coverage"      ),
-                                Offset         = TexTrans[i1].ReadKeyUV("Offset"        ),
-                                Repeat         = TexTrans[i1].ReadKeyUV("Repeat"        ),
-                                   Rotate      = TexTrans[i1].ReadKey  (   "Rotate"     ),
-                                   RotateFrame = TexTrans[i1].ReadKey  (   "RotateFrame"),
-                                TranslateFrame = TexTrans[i1].ReadKeyUV("TranslateFrame"),
+                                Name           = temp[i1].ReadString("Name"),
+                                Coverage       = temp[i1].ReadKeyUV("Coverage"      ),
+                                Offset         = temp[i1].ReadKeyUV("Offset"        ),
+                                Repeat         = temp[i1].ReadKeyUV("Repeat"        ),
+                                   Rotate      = temp[i1].ReadKey  (   "Rotate"     ),
+                                   RotateFrame = temp[i1].ReadKey  (   "RotateFrame"),
+                                TranslateFrame = temp[i1].ReadKeyUV("TranslateFrame"),
                             };
                     }
                 }
             }
 
-            if (A3D.ElementArray("ObjectHRC", out Temp))
+            if ((Temp = A3D["ObjectHRC", true]).NotNull)
             {
                 Data.ObjectHRC = new ObjectHRC[Temp.Array.Length];
                 for (i0 = 0; i0 < Data.ObjectHRC.Length; i0++)
@@ -1562,43 +1564,43 @@ namespace KKdMainLib.A3DA
                         UIDName = Temp[i0].ReadString ("UIDName"),
                     };
 
-                    if (Temp[i0].Element("JointOrient", out MsgPack JointOrient))
+                    if ((temp = Temp[i0]["JointOrient"]).NotNull)
                         Data.ObjectHRC[i0].JointOrient = new Vector3<double?>
                         {
-                            X = JointOrient.ReadDouble("X"),
-                            Y = JointOrient.ReadDouble("Y"),
-                            Z = JointOrient.ReadDouble("Z"),
+                            X = temp.ReadDouble("X"),
+                            Y = temp.ReadDouble("Y"),
+                            Z = temp.ReadDouble("Z"),
                         };
 
-                    if (Temp[i0].ElementArray("Node", out MsgPack Node))
+                    if ((temp = Temp[i0]["Node", true]).NotNull)
                     {
-                        Data.ObjectHRC[i0].Node = new Node[Node.Array.Length];
+                        Data.ObjectHRC[i0].Node = new Node[temp.Array.Length];
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
                             Data.ObjectHRC[i0].Node[i1] = new Node
                             {
-                                    MT = Node[i1].ReadMT(),
-                                  Name = Node[i1].ReadString(  "Name"),
-                                Parent = Node[i1].ReadInt32 ("Parent"),
+                                    MT = temp[i1].ReadMT(),
+                                  Name = temp[i1].ReadString(  "Name"),
+                                Parent = temp[i1].ReadInt32 ("Parent"),
                             };
                     }
                 }
             }
 
-            if (A3D.ElementArray("ObjectHRCList", out Temp))
+            if ((Temp = A3D["ObjectHRCList", true]).NotNull)
             {
                 Data.ObjectHRCList = new string[Temp.Array.Length];
                 for (i = 0; i < Data.ObjectHRCList.Length; i++)
                     Data.ObjectHRCList[i] = Temp[i].ReadString();
             }
 
-            if (A3D.ElementArray("ObjectList", out Temp))
+            if ((Temp = A3D["ObjectList", true]).NotNull)
             {
                 Data.ObjectList = new string[Temp.Array.Length];
                 for (i = 0; i < Data.ObjectList.Length; i++)
                     Data.ObjectList[i] = Temp[i].ReadString();
             }
 
-            if (A3D.Element("PlayControl", out Temp))
+            if ((Temp = A3D["PlayControl"]).NotNull)
                 Data.PlayControl = new PlayControl
                 {
                     Begin  = Temp.ReadNDouble("Begin" ),
@@ -1608,14 +1610,14 @@ namespace KKdMainLib.A3DA
                     Size   = Temp.ReadNDouble("Size"  ),
                 };
 
-            if (A3D.ElementArray("Point", out Temp))
+            if ((Temp = A3D["Point", true]).NotNull)
             {
                 Data.Point = new ModelTransform[Temp.Array.Length];
                 for (i = 0; i < Data.Point.Length; i++)
                     Data.Point[i] = Temp[i].ReadMT();
             }
 
-            if (A3D.Element("PostProcess", out Temp))
+            if ((Temp = A3D["PostProcess"]).NotNull)
                 Data.PostProcess = new PostProcess
                 {
                     Ambient   = Temp.ReadRGBAKey("Ambient"  ),
@@ -1625,6 +1627,9 @@ namespace KKdMainLib.A3DA
                     LensShaft = Temp.ReadKey    ("LensShaft"),
                     Specular  = Temp.ReadRGBAKey("Specular" ),
                 };
+
+            temp.Dispose();
+            Temp.Dispose();
         }
 
         public void MsgPackWriter(string file, bool JSON) =>
@@ -2081,7 +2086,7 @@ namespace KKdMainLib.A3DA
                 {
                     SOi = SO[i];
                     KF = Key.Keys[SOi].Check();
-                    IO.Write(Temp + "key" + d + SOi + d + "data=", KF.Round(7).ToString());
+                    IO.Write(Temp + "key" + d + SOi + d + "data=", KF.ToString());
                     int Type = 0;
                          if (KF is KFT0<float, float>) Type = 0;
                     else if (KF is KFT1<float, float>) Type = 1;
@@ -2220,32 +2225,32 @@ namespace KKdMainLib.A3DA
         }
 
         public static ModelTransform ReadMT(this MsgPack k, string name) =>
-            k.Element(name, out MsgPack Name) ? Name.ReadMT() : default;
+            k[name].ReadMT();
 
         public static ModelTransform ReadMT(this MsgPack k) =>
             new ModelTransform { Rot   = k.ReadVec3("Rot"  ), Scale      = k.ReadVec3("Scale"     ),
                                  Trans = k.ReadVec3("Trans"), Visibility = k.ReadKey ("Visibility") };
 
         public static Vector4<Key> ReadRGBAKey(this MsgPack k, string name) =>
-            k.Element(name, out MsgPack Name) ? Name.ReadRGBAKey() : default;
+           k[name].ReadRGBAKey();
 
         public static Vector4<Key> ReadRGBAKey(this MsgPack k) =>
             new Vector4<Key> { X = k.ReadKey("R"), Y = k.ReadKey("G"), Z = k.ReadKey("B"), W = k.ReadKey("A") };
 
         public static Vector3<Key> ReadVec3(this MsgPack k, string name) =>
-            k.Element(name, out MsgPack Name) ? Name.ReadVec3() : default;
+          k[name].ReadVec3();
 
         public static Vector3<Key> ReadVec3(this MsgPack k) =>
             new Vector3<Key> { X = k.ReadKey("X"), Y = k.ReadKey("Y"), Z = k.ReadKey("Z") };
 
         public static Vector2<Key> ReadKeyUV(this MsgPack k, string name) =>
-            k.Element(name, out MsgPack Name) ? Name.ReadKeyUV() : default;
+            k[name].ReadKeyUV();
 
         public static Vector2<Key> ReadKeyUV(this MsgPack k) =>
             new Vector2<Key> { X = k.ReadKey("U"), Y = k.ReadKey("V") };
 
         public static Key ReadKey(this MsgPack k, string name) =>
-            k.Element(name, out MsgPack Name) ? Name.ReadKey() : default;
+            k[name].ReadKey();
 
         public static Key ReadKey(this MsgPack k)
         {
@@ -2259,7 +2264,8 @@ namespace KKdMainLib.A3DA
             else if (Key.Type < Key.Interpolation.Lerp) return Key;
 
             if (k.ReadBoolean("RawData")) Key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
-            if (!k.ElementArray("Trans", out MsgPack Trans)) return Key;
+            MsgPack Trans;
+            if ((Trans = k["Trans", true]).IsNull) return Key;
 
             Key.Length = Trans.Array.Length;
             Key.Keys = new KFT3<float, float>[Key.Length];

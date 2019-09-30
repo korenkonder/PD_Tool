@@ -167,16 +167,14 @@ namespace KKdMainLib
             MOT = null;
 
             MsgPack MsgPack = file.ReadMP(JSON);
-            if (!MsgPack.ElementArray("MOT", out MsgPack MOTS)) { MsgPack.Dispose(); return; }
-
-            if (MOTS.Array != null)
-                if (MOTS.Array.Length > 0)
-                {
-                    MOT = new MotHeader[MOTS.Array.Length];
-                    for (int i = 0; i < MOT.Length; i++)
-                        MsgPackReader(MOTS.Array[i], ref MOT[i]);
-                }
-
+            MsgPack MOTS;
+            if ((MOTS = MsgPack["MOT"]).NotNull)
+            {
+                MOT = new MotHeader[MOTS.Array.Length];
+                for (int i = 0; i < MOT.Length; i++)
+                    MsgPackReader(MOTS.Array[i], ref MOT[i]);
+            }
+            MOTS.Dispose();
             MsgPack.Dispose();
         }
 
@@ -195,7 +193,7 @@ namespace KKdMainLib
             Mot.HighBits   = MOT.ReadInt32("HighBits"  );
             Mot.FrameCount = MOT.ReadInt32("FrameCount");
 
-            if (!MOT.ElementArray("KeySets", out Temp)) return;
+            if ((Temp = MOT["KeySets", true]).IsNull) { Temp.Dispose(); return; }
 
             Mot.KeySet.Value = new KeySet[Temp.Array.Length];
             for (i0 = 0; i0 < Mot.KeySet.Value.Length; i0++)
@@ -235,14 +233,14 @@ namespace KKdMainLib
                     }
                 }
             }
-
-            if (MOT.ElementArray("BoneInfo", out Temp))
+            
+            if ((Temp = MOT["BoneInfo", true]).NotNull)
             {
                 Mot.BoneInfo.Value = new BoneInfo[Temp.Array.Length];
                 for (i = 0; i < Mot.BoneInfo.Value.Length; i++)
                     Mot.BoneInfo.Value[i].Id = Temp[i].ReadInt32();
             }
-            else return;
+            Temp.Dispose();
         }
 
         public MsgPack MsgPackWriter(ref MotHeader Mot)

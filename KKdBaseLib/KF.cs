@@ -1,19 +1,5 @@
 ﻿namespace KKdBaseLib
 {
-    public interface IKF<TKey, TVal>
-    {
-        TKey F { get; set; }
-
-        KFT0<TKey, TVal> ToT0();
-        KFT1<TKey, TVal> ToT1();
-        KFT2<TKey, TVal> ToT2();
-        KFT3<TKey, TVal> ToT3();
-
-        IKF<TKey, TVal> Check();
-        string ToString();
-        string ToString(bool Brackets);
-    }
-    
     public struct KFT0<TKey, TVal> : IKF<TKey, TVal>
     {
         public TKey F { get; set; }
@@ -121,9 +107,9 @@
         public KFT3<TKey, TVal> ToT3() => this;
 
         public IKF<TKey, TVal> Check() =>
-            T1.Equals(default(TVal)) && T2.Equals(default(TVal)) ?
-                (V.Equals(default(TVal)) ? (KFT0<TKey, TVal>)this : (IKF<TKey, TVal>)this) :
-                T1.Equals(T2) ? (KFT2<TKey, TVal>)this : (IKF<TKey, TVal>)this;
+            T1.Equals(default(TVal)) && T2.Equals(default(TVal)) ? (V.Equals(default(TVal)) ?
+            (IKF<TKey, TVal>)(KFT0<TKey, TVal>)this : (KFT1<TKey, TVal>)this) :
+            T1.Equals(T2) ?  (KFT2<TKey, TVal>)this : (IKF <TKey, TVal>)this;
 
         public override string ToString() => ToString(true);
         public string ToString(bool Brackets) =>

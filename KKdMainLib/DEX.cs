@@ -35,7 +35,7 @@ namespace KKdMainLib
 
             IO.Seek(DEXOffset, 0);
             for (int i0 = 0; i0 < Dex.Length; i0++)
-                Dex[i0] = new EXP { Main = new List<EXPElement>(), Eyes = new List<EXPElement>() };
+                Dex[i0] = new EXP { Main = KKdList<EXPElement>.New, Eyes = KKdList<EXPElement>.New };
 
             for (int i0 = 0; i0 < Dex.Length; i0++)
             {
@@ -176,26 +176,31 @@ namespace KKdMainLib
             Header = new Header();
 
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.ElementArray("Dex", out MsgPack Dex)) return 0;
-
-            this.Dex = new EXP[Dex.Array.Length];
-            for (i0 = 0; i0 < this.Dex.Length; i0++)
+            MsgPack Dex;
+            if ((Dex = MsgPack["Dex", true]).NotNull)
             {
-                this.Dex[i0] = new EXP { Name = Dex[i0].ReadString("Name") };
+                this.Dex = new EXP[Dex.Array.Length];
+                for (i0 = 0; i0 < this.Dex.Length; i0++)
+                {
+                    this.Dex[i0] = new EXP { Name = Dex[i0].ReadString("Name") };
 
-                if (Dex[i0].ElementArray("Main", out MsgPack Main))
-                {
-                    this.Dex[i0].Main = new List<EXPElement>();
-                    for (i1 = 0; i1 < Main.Array.Length; i1++)
-                        this.Dex[i0].Main.Add(EXPElement.Read(Main[i1]));
-                }
-                if (Dex[i0].ElementArray("Eyes", out MsgPack Eyes))
-                {
-                    this.Dex[i0].Eyes = new List<EXPElement>();
-                    for (i1 = 0; i1 < Eyes.Array.Length; i1++)
-                        this.Dex[i0].Eyes.Add(EXPElement.Read(Eyes[i1]));
+                    MsgPack Temp;
+                    if ((Temp = MsgPack["Main", true]).NotNull)
+                    {
+                        this.Dex[i0].Main = KKdList<EXPElement>.New;
+                        for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
+                            this.Dex[i0].Main.Add(EXPElement.Read(Temp[i1]));
+                    }
+                    if ((Temp = MsgPack["Eyes", true]).NotNull)
+                    {
+                        this.Dex[i0].Eyes = KKdList<EXPElement>.New;
+                        for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
+                            this.Dex[i0].Eyes.Add(EXPElement.Read(Temp[i1]));
+                    }
+                    Temp.Dispose();
                 }
             }
+            Dex.Dispose();
             MsgPack.Dispose();
             return 1;
         }
@@ -229,8 +234,8 @@ namespace KKdMainLib
             public int EyesOffset;
             public int NameOffset;
             public string Name;
-            public List<EXPElement> Main;
-            public List<EXPElement> Eyes;
+            public KKdList<EXPElement> Main;
+            public KKdList<EXPElement> Eyes;
 
             public override string ToString() => Name;
         }

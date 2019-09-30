@@ -38,14 +38,14 @@
         public static double DistanceSquared(Vector4 left, Vector4 right) =>
             (right.X - left.X) * (right.X - left.X) + (right.Y - left.Y) * (right.Y - left.Y) +
             (right.Z - left.Z) * (right.Z - left.Z) + (right.W - left.W) * (right.W - left.W);
-        public static double  Dot  (Vector4 left, Vector4 right) =>
-            (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
-        public static Vector4 Lerp (Vector4    a, Vector4     b,  double blend) =>
-            new Vector4 { X = blend   * (b.X - a.X) + a.X,
+        public static double Dot(Vector4 left, Vector4 right) =>
+            left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
+        public static Vector4 Lerp(Vector4 a, Vector4 b,  double blend) =>
+            new Vector4 { X = blend * (b.X - a.X) + a.X,
                           Y = blend   * (b.Y - a.Y) + a.Y,
                           Z = blend   * (b.Z - a.Z) + a.Z,
                           W = blend   * (b.W - a.W) + a.W };
-        public static Vector4 Lerp (Vector4    a, Vector4     b, Vector4 blend) =>
+        public static Vector4 Lerp(Vector4 a, Vector4 b, Vector4 blend) =>
             new Vector4 { X = blend.X * (b.X - a.X) + a.X,
                           Y = blend.Y * (b.Y - a.Y) + a.Y,
                           Z = blend.Z * (b.Z - a.Z) + a.Z,

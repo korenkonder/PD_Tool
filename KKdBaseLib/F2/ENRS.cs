@@ -1,25 +1,29 @@
 ﻿namespace KKdBaseLib.F2
 {
-    public unsafe struct ENRSList
+    public unsafe struct ENRSList : INull
     {
-        public int ID;
-        public bool EOFC;
+        public int Depth;
         public KKdList<ENRS> List;
+
+        public int Length => length();
 
         public bool  IsNull => List. IsNull;
         public bool NotNull => List.NotNull;
 
-        public static ENRSList Read(byte[] data, int ID = 0, bool EOFC = false)
+        public static ENRSList Read(byte[] data, int Depth = 0)
         {
+            if (data == null || data.Length < 0x10) return default;
             byte* ptr = data.GetPtr();
             int i, i0;
             int ENRSCount = ((int*)ptr)[1];
             KKdList<ENRS> List = KKdList<ENRS>.New;
             ptr += 0x10;
+            ENRS ENR;
+            ENRS.SubENRS Sub;
 
             for (i = 0; i < ENRSCount; i++)
             {
-                ENRS ENR;
+                ENR = default;
                 ENR.Offset = ReadENRSValue(ref ptr);
                 ENR.Count  = ReadENRSValue(ref ptr);
                 ENR.Size   = ReadENRSValue(ref ptr);
@@ -32,16 +36,17 @@
                 ENR.Sub = new KKdList<ENRS.SubENRS> { Capacity = ENR.Count };
                 for (i0 = 0; i0 < ENR.Count; i0++)
                 {
-                    ENRS.SubENRS Sub = ENR.Sub[0];
-                    Sub.Skip    = ReadENRSValue(ref ptr, out Sub.Type) + i0 > 0 ? ENR.Sub[i0 - 1].SizeSkip : 0;
+                    Sub = default;
+                    Sub.Skip    = ReadENRSValue(ref ptr, out Sub.Type);
                     Sub.Reverse = ReadENRSValue(ref ptr);
+                    if (i0 > 0) Sub.Skip += ENR.Sub[i0 - 1].SizeSkip;
                     ENR.Sub.Add(Sub);
 
                     if (ENR.Sub[i0].Type == ENRS.Type.Invalid) return default;
                 }
                 List.Add(ENR);
             }
-            return new ENRSList { EOFC = EOFC, ID = ID, List = List };
+            return new ENRSList { Depth = Depth, List = List };
         }
 
         public static byte[] Write(ENRSList ENRS)
@@ -53,20 +58,7 @@
             KKdList<ENRS> List = (System.Collections.Generic.List<ENRS>)ENRS.List;
             if (ENRS.IsNull || ENRS.List.Count < 1) return new byte[0x20];
 
-            int length = 0x10;
-            for (i = 0; i < ENRS.List.Count; i++)
-            {
-                length += 0x10;
-                ENRS ENR = ENRS.List[i];
-                if (ENR.Repeat > 0 && ENR.Sub.NotNull)
-                {
-                    ENR.Count = ENR.Sub.Count;
-                    length += 0x8 * ENR.Count;
-                }
-                else ENR.Repeat = 0;
-                ENRS.List[i] = ENR;
-            }
-            data = new byte[length];
+            data = new byte[ENRS.Length];
             ptr  = data.GetPtr();
             ((int*)ptr)[1] = ENRS.List.Count;
             ptr += 0x10;
@@ -85,27 +77,64 @@
                 {
                     if (ENR.Sub[i0].Type < ENRSList.ENRS.Type. WORD ||
                         ENR.Sub[i0].Type > ENRSList.ENRS.Type.QWORD)
-                        return GetFinalArray(data, ptr);
+                        return data;
 
-                    WriteENRSValue(ref ptr, i0 > 0 ? ENR.Sub[i0].Skip - ENR.Sub[i0 - 1].SizeSkip : ENR.Sub[i0].Skip, ENR.Sub[i0].Type);
+                    WriteENRSValue(ref ptr, i0 > 0 ? ENR.Sub[i0].Skip -
+                        ENR.Sub[i0 - 1].SizeSkip : ENR.Sub[i0].Skip, ENR.Sub[i0].Type);
                     WriteENRSValue(ref ptr, ENR.Sub[i0].Reverse);
                 }
                 
             }
-            return GetFinalArray(data, ptr);
+            return data;
         }
+
+        private int length()
+        {
+            int i, i0;
+            int length = 0x10;
+            for (i = 0; i < List.Count; i++)
+            {
+                ENRS ENR = List[i];
+                length += GetSize(i > 0 ? ENR.Offset - List[i - 1].Offset : ENR.Offset);
+                length += GetSize(ENR.Count );
+                length += GetSize(ENR.Size  );
+                length += GetSize(ENR.Repeat);
+
+                if (ENR.Repeat < 1) continue;
+
+                for (i0 = 0; i0 < ENR.Count; i0++)
+                {
+                    if (ENR.Sub[i0].Type < ENRS.Type. WORD ||
+                        ENR.Sub[i0].Type > ENRS.Type.QWORD) return length.Align(0x10);
+
+                    length += GetSizeType(i0 > 0 ? ENR.Sub[i0].Skip - ENR.Sub[i0 - 1].SizeSkip : ENR.Sub[i0].Skip);
+                    length += GetSize(ENR.Sub[i0].Reverse);
+                }
+            }
+            return length.Align(0x10);
+
+            int GetSizeType(int Val) => Val < 0x00000010 ? 1 : Val < 0x00001000 ? 2 : 4;
+            int GetSize    (int Val) => Val < 0x00000040 ? 1 : Val < 0x00004000 ? 2 : 4; 
+        }
+
+        /*private static KKdList<ENRS.SubENRS> Optimize(KKdList<ENRS.SubENRS> Sub)
+        {
+            if (Sub.IsNull || Sub.Count < 2) return Sub;
+
+            for (int i = 1; i < Sub.Capacity; i++)
+                if (Sub[i - 1].Skip == Sub[i].Skip - Sub[i - 1].Size && Sub[i - 1].Type == Sub[i].Type)
+                {
+                    ENRS.SubENRS SubENRS = Sub[i - 1];
+                    SubENRS.Reverse++;
+                    Sub[i - 1] = SubENRS;
+                    Sub.RemoveAt(i);
+                    Sub.Capacity--;
+                    i--;
+                }
+            return Sub;
+        }*/
 
         [System.ThreadStatic] private static ENRS.Value Value;
-
-        private static byte[] GetFinalArray(byte[] data, byte* ptr)
-        {
-            byte* Ptr = data.GetPtr();
-            long length = (long)ptr - (long)Ptr;
-            byte[] tempdata = new byte[length.Align(0x10)];
-            for (int i = 0; i < length; i++) tempdata[i] = data[i];
-            data = null;
-            return tempdata;
-        }
 
         private static int ReadENRSValue(ref byte* ptr, out ENRS.Type Type)
         {
@@ -217,6 +246,6 @@
         }
 
         public override string ToString() =>
-            $"ID: {ID}{(NotNull ? $"; ENRS Count: {List.Count}" : "")}{(EOFC ? "; Has EOFC" : "")}";
+            $"Depth: {Depth}{(NotNull ? $"; ENRS Count: {List.Count}" : "")}";
     }
 }

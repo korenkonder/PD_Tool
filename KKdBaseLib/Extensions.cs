@@ -92,98 +92,86 @@ namespace KKdBaseLib
         public static byte*  bufPtr = buf.GetPtr();
         
         public static byte[] Endian(this byte[] LE, byte Len)
-        { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
+        { CFUTRM(buf, ref bufPtr);
+                      for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
             for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; return LE; }
         
         public static byte[] Endian(this byte[] LE, byte Len, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
                 for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; } return LE; }
 
         public static  short Endian(this  short LE, bool IsBE)
-        { if (IsBE) { int TLE = 0; for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { int TLE = 0; for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 2; i++) { TLE |= bufPtr[i]; if (i < 1) TLE <<= 8; } LE = (short)TLE; } return LE; }
 
         public static ushort Endian(this ushort LE, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 2; i++) { LE |= bufPtr[i]; if (i < 1) LE <<= 8; } } return LE; }
 
         public static    int Endian(this    int LE, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
 
         public static   uint Endian(this   uint LE, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
 
         public static   long Endian(this   long LE, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
 
         public static  ulong Endian(this  ulong LE, bool IsBE)
-        { if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
+        { CFUTRM(buf, ref bufPtr);
+          if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
                 for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
         
         public static  sbyte CITSB(this    int c)
-        {                if (c >  0x0000007F) c =  0x0000007F;
-                    else if (c < -0x00000080) c = -0x00000080; return ( sbyte)c; }
+        {                return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
 
         public static   byte CITB (this    int c)
-        {                if (c >  0x000000FF) c =  0x000000FF;
-                    else if (c <  0x00000000) c =  0x00000000; return (  byte)c; }
+        {                return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static  short CITS (this    int c)
-        {                if (c >  0x00007FFF) c =  0x00007FFF;
-                    else if (c < -0x00008000) c = -0x00008000; return ( short)c; }
+        {                return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
 
         public static ushort CITUS(this    int c)
-        {                if (c >  0x0000FFFF) c =  0x0000FFFF;
-                    else if (c <  0x00000000) c =  0x00000000; return (ushort)c; }
+        {                return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static  sbyte CFTSB(this  float c)
-        { c = c.Round(); if (c >  0x0000007F) c =  0x0000007F;
-                    else if (c < -0x00000080) c = -0x00000080; return ( sbyte)c; }
+        { c = c.Round(); return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
 
         public static   byte CFTB (this  float c)
-        { c = c.Round(); if (c >  0x000000FF) c =  0x000000FF;
-                    else if (c <  0x00000000) c =  0x00000000; return (  byte)c; }
+        { c = c.Round(); return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static  short CFTS (this  float c)
-        { c = c.Round(); if (c >  0x00007FFF) c =  0x00007FFF;
-                    else if (c < -0x00008000) c = -0x00008000; return ( short)c; }
+        { c = c.Round(); return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
 
         public static ushort CFTUS(this  float c)
-        { c = c.Round(); if (c >  0x0000FFFF) c =  0x0000FFFF;
-                    else if (c <  0x00000000) c =  0x00000000; return (ushort)c; }
-
-        public static    int CFTI (this  float c)
-        { c = c.Round();                                       return (   int)c; }
-
-        public static   uint CFTUI(this  float c)
-        { c = c.Round();                                       return (  uint)c; }
+        { c = c.Round(); return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static  sbyte CFTSB(this double c)
-        { c = c.Round(); if (c >  0x0000007F) c =  0x0000007F;
-                    else if (c < -0x00000080) c = -0x00000080; return ( sbyte)c; }
+        { c = c.Round(); return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
 
         public static   byte CFTB (this double c)
-        { c = c.Round(); if (c >  0x000000FF) c =  0x000000FF;
-                    else if (c <  0x00000000) c =  0x00000000; return (  byte)c; }
+        { c = c.Round(); return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static  short CFTS (this double c)
-        { c = c.Round(); if (c >  0x00007FFF) c =  0x00007FFF;
-                    else if (c < -0x00008000) c = -0x00008000; return ( short)c; }
+        { c = c.Round(); return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
 
         public static ushort CFTUS(this double c)
-        { c = c.Round(); if (c >  0x0000FFFF) c =  0x0000FFFF;
-                    else if (c <  0x00000000) c =  0x00000000; return (ushort)c; }
+        { c = c.Round(); return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
 
         public static    int CFTI (this double c)
-        { c = c.Round(); if (c >  0x7FFFFFFF) c =  0x7FFFFFFF;
-                    else if (c < -0x80000000) c = -0x80000000; return (   int)c; }
+        { c = c.Round(); return (   int)(c > 0x7FFFFFFF ? 0x7FFFFFFF : c < -0x80000000 ? -0x80000000 : c); }
 
         public static   uint CFTUI(this double c)
-        { c = c.Round(); if (c >  0xFFFFFFFF) c =  0xFFFFFFFF;
-                    else if (c <  0x00000000) c =  0x00000000; return (  uint)c; }
+        { c = c.Round(); return (  uint)(c > 0xFFFFFFFF ? 0xFFFFFFFF : c <  0xFFFFFFFF ?  0x00000000 : c); }
 
         public static    int  ToInt32(this  float f) => *(  int*)&f;
         public static   uint ToUInt32(this  float f) => *( uint*)&f;
@@ -205,6 +193,17 @@ namespace KKdBaseLib
         public static  ulong* GetPtr(this  ulong[] array) { fixed ( ulong* tempPtr = array) return tempPtr; }
         public static  float* GetPtr(this  float[] array) { fixed ( float* tempPtr = array) return tempPtr; }
         public static double* GetPtr(this double[] array) { fixed (double* tempPtr = array) return tempPtr; }
+
+        public static IntPtr GetIntPtr(this  sbyte[] array) { fixed ( sbyte* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   byte[] array) { fixed (  byte* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  short[] array) { fixed ( short* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this ushort[] array) { fixed (ushort* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this    int[] array) { fixed (   int* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   uint[] array) { fixed (  uint* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   long[] array) { fixed (  long* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  ulong[] array) { fixed ( ulong* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  float[] array) { fixed ( float* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this double[] array) { fixed (double* tempPtr = array) return (IntPtr)tempPtr; }
 
         public static string ToString(this     int d, bool IsBE) =>
             BitConverter.GetBytes(d.Endian(IsBE)).ToASCII();
@@ -263,5 +262,12 @@ namespace KKdBaseLib
         { bool Val = ToSingle(s, out  float val); value = val; return Val; }
         public static   bool ToDouble(this string s, out double? value)
         { bool Val = ToDouble(s, out double val); value = val; return Val; }
+        
+        [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+        [System.Security.SecuritySafeCritical]
+        private static void CFUTRM(byte[] buf, ref byte* bufPtr) //CheckForUnableToReadMemory
+        { try { if (buf[0] != bufPtr[0] || bufPtr[1] != bufPtr[1] || bufPtr[2] != bufPtr[2] || buf[3] != bufPtr[3] ||
+                    buf[4] != bufPtr[4] || bufPtr[5] != bufPtr[5] || bufPtr[6] != bufPtr[6] || buf[7] != bufPtr[7])
+                    bufPtr = buf.GetPtr(); } catch (AccessViolationException) { bufPtr = buf.GetPtr(); } }
     }
 }

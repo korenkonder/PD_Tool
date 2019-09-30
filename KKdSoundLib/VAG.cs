@@ -109,29 +109,7 @@ namespace KKdSoundLib
 
                     VAG_1 = HEVAG1Ptr[PrNR]; VAG_2 = HEVAG2Ptr[PrNR];
                     tS1 = S1Ptr[c]; tS2 = S2Ptr[c];
-
-                    i = 0; i2 = 1;
-                    while (i < BS)
-                    {
-                        d0 = four_bitPtr[i];
-                        d1 = four_bitPtr[i2];
-                        if (d0 > 7) d0 -= 16;
-                        if (d1 > 7) d1 -= 16;
-                        d0 <<= (20 - ShF);
-                        d1 <<= (20 - ShF);
-
-                        g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
-                        tS2 = tS1; tS1 = g + d0;
-
-                        g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
-                        tS2 = tS1; tS1 = g + d1;
-
-                        temp_bufferPtr[i ] = tS2;
-                        temp_bufferPtr[i2] = tS1;
-                        i  += 2;
-                        i2 += 2;
-                    }
-
+                    DecodeVAG();
                     S1Ptr[c] = tS1; S2Ptr[c] = tS2;
 
                     for (i = 0, i2 = 1; i < BS; i += 2, i2 += 2)
@@ -146,6 +124,31 @@ namespace KKdSoundLib
             Success = true;
         }
 
+        private void DecodeVAG()
+        {
+            i = 0; i2 = 1;
+            while (i < BS)
+            {
+                d0 = four_bitPtr[i];
+                d1 = four_bitPtr[i2];
+                if (d0 > 7) d0 -= 16;
+                if (d1 > 7) d1 -= 16;
+                d0 <<= 20 - ShF;
+                d1 <<= 20 - ShF;
+
+                g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
+                tS2 = tS1; tS1 = g + d0;
+
+                g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
+                tS2 = tS1; tS1 = g + d1;
+
+                temp_bufferPtr[i ] = tS2;
+                temp_bufferPtr[i2] = tS1;
+                i  += 2;
+                i2 += 2;
+            }
+        }
+
         private void DecodeHEVAG()
         {
             i = 0; i2 = 1;
@@ -155,8 +158,8 @@ namespace KKdSoundLib
                 d1 = four_bitPtr[i2];
                 if (d0 > 7) d0 -= 16;
                 if (d1 > 7) d1 -= 16;
-                d0 <<= (20 - ShF);
-                d1 <<= (20 - ShF);
+                d0 <<= 20 - ShF;
+                d1 <<= 20 - ShF;
 
                 g = ((tS1 >> 8) * HEVAG_1 + (tS2 >> 8) * HEVAG_2 +
                      (tS3 >> 8) * HEVAG_3 + (tS4 >> 8) * HEVAG_4) >> 5;
@@ -197,7 +200,7 @@ namespace KKdSoundLib
             for (i1 = 0, i2 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
             {
                 Flag = VAGData.Flags[i1];
-                if (!IgnoreEndFlags && Flag == 5 || Flag == 7) break;
+                if (!IgnoreEndFlags && (Flag == 5 || Flag == 7)) break;
                 if (Flag < 8)
                     for (i = 0; i < BS; i++)
                         for (c = 0; c < ch; c++)
@@ -248,7 +251,7 @@ namespace KKdSoundLib
             for (i1 = 1, i2 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
             {
                 Flag = VAGData.Flags[i1];
-                if (!IgnoreEndFlags && Flag == 5 || Flag == 7) break;
+                if (!IgnoreEndFlags && (Flag == 5 || Flag == 7)) break;
                 else if (!IgnoreEndFlags && Flag == 6)
                 {
                     Header = new WAV.Header { Bytes = 4, Channels = ch, Format = 3, SampleRate =
@@ -476,7 +479,6 @@ namespace KKdSoundLib
             four_bit    = new int[BS];           four_bitPtr = four_bit   .GetPtr();
             data_buffer = new int[BS];        data_bufferPtr = data_buffer.GetPtr();
             temp_buffer = new int[BS];        temp_bufferPtr = temp_buffer.GetPtr();
-            buffer = new int[PrNRCount, BS];
 
             writer.Write(0x70474156);
             if (HEVAG) writer.WriteEndian(0x00020001, true);
@@ -581,65 +583,81 @@ namespace KKdSoundLib
         private int min, ShM, S1, S2, S3, S4, tS1, tS2, tS3, tS4, PrNRf;
         private int VAG_1, VAG_2, HEVAG_1, HEVAG_2, HEVAG_3, HEVAG_4;
         private int[] data_buffer, error, four_bit, max, S_1, S_2, S_3, S_4, temp_buffer;
-        private int[,] buffer;
         private int* data_bufferPtr, errorPtr, four_bitPtr, maxPtr, temp_bufferPtr;
-
+        
         private void Calc4BitsVAG()
         {
-            ShF = min = 134217728;
-            for (j = 0; j < 5; j++)
+            PrNRf = 0;
+            min   = 134217728;
+            for (j = 0; j < PrNRCount; j++)
             {
-                maxPtr[j] = 0;
-                S1 = S1Ptr[c]; S2 = S2Ptr[c];
-                VAG_1 = HEVAG1Ptr[j]; VAG_2 = HEVAG2Ptr[j];
-                for (i = 0; i < 28; i++)
+                PrNR = j;
+
+                Calc4Bits_VAG();
+
+                tS1 = S1Ptr[c]; tS2 = S2Ptr[c];
+                DecodeVAG();
+                i = 0;
+                errorPtr[j] = 0;
+                while (i < BS)
                 {
-                    g = data_bufferPtr[i];
-                    e = ((S1 >> 8) * VAG_1 + (S2 >> 8) * VAG_2) >> 5;
-                    e = g - e;
-                    if (e >  7864319) e =  7864319;
-                    if (e < -7864320) e = -7864320;
-                    buffer[j, i] = e;
+                    e = data_bufferPtr[i] - temp_bufferPtr[i];
                     if (e < 0) e = -e;
-                    if (e > maxPtr[j]) maxPtr[j] = e;
-                    S2 = S1; S1 = g;
+                    errorPtr[j] += e;
+                    i++;
                 }
 
-                if (maxPtr[j] < min) { PrNR = j; min = maxPtr[j]; }
+                if (errorPtr[j] < min) { PrNRf = j; min = errorPtr[j]; }
             }
-            
-            S1Ptr[c] = S1; S2Ptr[c] = S2;
+            PrNR = PrNRf;
 
-            ShF = 0;
-            ShM = 0x4000;
-            min >>= 8;
-            
-            while (ShF < 12)
+            Calc4Bits_VAG();
+            S1Ptr[c] =  S1; S2Ptr[c] =  S2;
+            S_1  [c] = tS1; S_2  [c] = tS2;
+        }
+
+        private void Calc4Bits_VAG()
+        {
+            S1 = S1Ptr[c]; S2 = S2Ptr[c];
+            VAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
+
+            i = 0;
+            maxPtr[PrNR] = 0;
+            while (i < BS)
             {
-                e = min + (ShM >> 3);
-                if ((ShM & e) == ShM)
-                    break;
-                ShF++;
-                ShM >>= 1;
+                g = data_bufferPtr[i];
+                e = ((S1 >> 8) * VAG_1 + (S2 >> 8) * VAG_2) >> 5;
+                e = g - e;
+                if (e >  7864319) e =  7864319;
+                if (e < -7864320) e = -7864320;
+                temp_bufferPtr[i] = e;
+                if (e < 0) e = -e;
+                if (e > maxPtr[PrNR]) maxPtr[PrNR] = e;
+                S2 = S1; S1 = g;
+                i++;
             }
 
-            S1 = S_1[c]; S2 = S_2[c];
-            for (i = 0; i < 28; i++)
+            for (ShF = 0, ShM = 0x400000; ShF < 15; ShF++, ShM >>= 1)
+            { e = maxPtr[PrNR] + (ShM >> 3); if ((ShM & e) == ShM) break; }
+
+            tS1 = S_1[c]; tS2 = S_2[c];
+            i = 0;
+            while (i < BS)
             {
-                g = buffer[PrNR, i];
-                e = ((S1 >> 8) * HEVAG1Ptr[PrNR] + (S2 >> 8) * HEVAG2Ptr[PrNR]) >> 5;
+                g = temp_bufferPtr[i];
+                e = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
                 e = g - e;
 
                 d1 = e << ShF;
-                d0 = (int)((uint)d1 + 0x80000) >> 20;
+                d0 = (d1 + 0x80000) >> 20;
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
                 four_bitPtr[i] = d0 & 0xF;
-                d0 <<= (20 - ShF);
+                d0 <<= 20 - ShF;
 
-                S2 = S1; S1 = d0 - e;
+                tS2 = tS1; tS1 = d0 - e;
+                i++;
             }
-            S_1[c] = S1; S_2[c] = S2;
         }
         
         private void Calc4BitsHEVAG()
@@ -713,7 +731,7 @@ namespace KKdSoundLib
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
                 four_bitPtr[i] = d0 & 0xF;
-                d0 <<= (20 - ShF);
+                d0 <<= 20 - ShF;
 
                 tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = d0 - e;
                 i++;

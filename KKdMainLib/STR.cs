@@ -149,7 +149,7 @@ namespace KKdMainLib
                 }
 
                 IO.UIntPosition = Offset;
-                POF.ID = 1;
+                POF.Depth = 1;
                 IO.Write(POF);
                 CurrentOffset = IO.UIntPosition;
                 IO.WriteEOFC();
@@ -169,18 +169,20 @@ namespace KKdMainLib
 
         public void MsgPackReader(string file, bool JSON)
         {
+            MsgPack Temp;
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            if (!MsgPack.Element("STR", out MsgPack STR)) return;
+            if ((Temp = MsgPack["STR"]).NotNull) return;
+
             Header = new Header();
-            System.Enum.TryParse(STR.ReadString("Format"), out Header.Format);
+            System.Enum.TryParse(Temp.ReadString("Format"), out Header.Format);
 
-            if (!STR.ElementArray("Strings", out MsgPack Strings)) return;
+            if ((Temp = MsgPack["Strings", true]).IsNull) return;
 
-            STRs = new String[Strings.Array.Length];
+            STRs = new String[Temp.Array.Length];
             for (int i = 0; i < STRs.Length; i++)
             {
-                STRs[i].ID        = Strings[i].ReadInt32 ("ID" );
-                STRs[i].Str.Value = Strings[i].ReadString("Str");
+                STRs[i].ID        = Temp[i].ReadInt32 ("ID" );
+                STRs[i].Str.Value = Temp[i].ReadString("Str");
                 if (STRs[i].Str.Value == null) STRs[i].Str.Value = "";
             }
 

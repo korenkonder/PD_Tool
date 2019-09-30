@@ -96,16 +96,18 @@ namespace KKdMainLib.DB
         {
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
-            if (MsgPack.Element("AuthDB", out MsgPack AuthDB))
+            MsgPack AuthDB;
+            if ((AuthDB = MsgPack["AuthDB"]).NotNull)
             {
-                if (AuthDB.ElementArray("Category", out MsgPack Temp))
+                MsgPack Temp;
+                if ((Temp = MsgPack["Category", true]).NotNull)
                 {
                     Category = new string[Temp.Array.Length];
                     for (int i = 0; i < Category.Length; i++)
                         Category[i] = Temp[i].ReadString();
                 }
 
-                if (AuthDB.ElementArray("UID", out Temp))
+                if ((Temp = MsgPack["UID", true]).NotNull)
                 {
                     _UID = new UID[Temp.Array.Length];
                     for (int i = 0; i < _UID.Length; i++)
@@ -116,7 +118,9 @@ namespace KKdMainLib.DB
                         _UID[i].Value    = Temp[i].ReadString("Value"   );
                     }
                 }
+                Temp.Dispose();
             }
+            AuthDB.Dispose();
             MsgPack.Dispose();
         }
 

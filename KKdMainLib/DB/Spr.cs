@@ -231,12 +231,14 @@ namespace KKdMainLib.DB
         {
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
 
-            if (MsgPack.ElementArray("SprDB", out MsgPack SprDB))
+            MsgPack SprDB;
+            if ((SprDB = MsgPack["SprDB", true]).NotNull)
             {
                 SpriteSets = new SpriteSet[SprDB.Array.Length];
                 for (int i = 0; i < SpriteSets.Length; i++)
                     SpriteSets[i].ReadMsgPack(SprDB[i]);
             }
+            SprDB.Dispose();
             MsgPack.Dispose();
         }
 
@@ -282,19 +284,21 @@ namespace KKdMainLib.DB
                 Name         = msg.ReadString ("Name"    );
                 NewId        = msg.ReadBoolean("NewId"   );
 
-                if (msg.ElementArray( "Sprites", out MsgPack  Sprites))
+                MsgPack Temp;
+                if ((Temp = msg["Sprites", true]).NotNull)
                 {
-                    this.Sprites = new SpriteTexture[Sprites.Array.Length];
-                    for (int i0 = 0; i0 < this.Sprites.Length; i0++)
-                        this.Sprites[i0].ReadMsgPack(Sprites[i0]);
+                    Sprites = new SpriteTexture[Temp.Array.Length];
+                    for (int i0 = 0; i0 < Sprites.Length; i0++)
+                        Sprites[i0].ReadMsgPack(Temp[i0]);
                 }
 
-                if (msg.ElementArray("Textures", out MsgPack Textures))
+                if ((Temp = msg["Textures", true]).NotNull)
                 {
-                    this.Textures = new SpriteTexture[Textures.Array.Length];
-                    for (int i0 = 0; i0 < this.Textures.Length; i0++)
-                        this.Textures[i0].ReadMsgPack(Textures[i0]);
+                    Textures = new SpriteTexture[Temp.Array.Length];
+                    for (int i0 = 0; i0 < Textures.Length; i0++)
+                        Textures[i0].ReadMsgPack(Temp[i0]);
                 }
+                Temp.Dispose();
             }
 
             public MsgPack WriteMsgPack()

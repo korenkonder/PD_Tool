@@ -33,6 +33,7 @@ namespace PD_Tool.Tools
                 format = Console.ReadLine();
             }
 
+            uint num2 = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             KKdMainLib.DataBank DB;
             string[] file_split;
             foreach (string file in FileNames)
@@ -52,11 +53,11 @@ namespace PD_Tool.Tools
                     DB.MsgPackWriter(filepath + file_split[0] + "_" + 
                         file_split[1] + "_" + file_split[2], JSON, format != "2");
                 }
-                else if (ext == ".mp" || ext == ".json" && !MP)
+                else if ((ext == ".mp" || ext == ".json") && !MP)
                 {
                     Console.Title = "DataBank Converter: " + filename;
                     DB.MsgPackReader(filepath, JSON);
-                    DB.     DBWriter(filepath);
+                    DB.     DBWriter(filepath, num2);
                 }
                 DB = null;
             }

@@ -2,17 +2,20 @@
 
 namespace KKdBaseLib
 {
-    public struct MsgPack : IDisposable, IEquatable<MsgPack>
+    public struct MsgPack : IDisposable, IEquatable<MsgPack>, INull
     {
         public string Name;
         public object Object;
         
-        public         MsgPack[] Array => Object is         MsgPack[] List ? List :    null;
-        public KKdList<MsgPack>   List => Object is KKdList<MsgPack>  List ? List : default;
+        public         MsgPack[] Array => Object is         MsgPack[] Array ? Array :    null;
+        public KKdList<MsgPack>   List => Object is KKdList<MsgPack>   List ?  List : default;
 
         public static MsgPack New => new MsgPack { Object = KKdList<MsgPack>.New };
         public static MsgPack NewReserve(int Capacity) =>
             new MsgPack { Object = KKdList<MsgPack>.NewReserve(Capacity) };
+
+        public bool  IsNull => Array == null && List. IsNull;
+        public bool NotNull => Array != null || List.NotNull;
 
         public MsgPack(            string Name = null)
         { Object = KKdList<MsgPack>.New; this.Name = Name; }
@@ -28,6 +31,14 @@ namespace KKdBaseLib
         public MsgPack this[int index]
         {   get =>    Object is MsgPack[] Array  ? Array[index] : default;
             set { if (Object is MsgPack[] Array) { Array[index] =   value; Object = Array; } } }
+
+        public MsgPack this[string key]
+        {   get =>    Object is KKdList<MsgPack> List  ? List[ElementIndex(key)] : default; }
+
+        public MsgPack this[string key, bool array]
+        {   get { if (!array) return this[key];
+                if (Object is KKdList<MsgPack> List) { MsgPack MsgPack = List[ElementIndex(key)];
+                    return MsgPack.Object is MsgPack[] ? MsgPack : default; } return default; } }
         
         public MsgPack Add(MsgPack obj)
         { if (Object is KKdList<MsgPack> List) { List.Add(obj); Object = List; } return this; }
@@ -122,122 +133,122 @@ namespace KKdBaseLib
 
         public   bool? ReadNBoolean(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is   bool Boolean) return         Boolean;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is   bool Boolean) return         Boolean;
             return null;
         }
         public  sbyte?    ReadNInt8(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return ( sbyte) UInt8 ;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return ( sbyte) UInt8 ;
             return null;
         }
         public   byte?   ReadNUInt8(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return (  byte)  Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return (  byte)  Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
             return null;
         }
         public  short?   ReadNInt16(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return           Int16;
-                else if (MsgPack.Object is ushort  UInt16) return ( short) UInt16;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return           Int16;
+            else if (MsgPack.Object is ushort  UInt16) return ( short) UInt16;
             return null;
         }
         public ushort?  ReadNUInt16(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return (ushort)  Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return (ushort)  Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return (ushort)  Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return (ushort)  Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
             return null;
         }
         public    int?   ReadNInt32(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return           Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return           Int32;
-                else if (MsgPack.Object is   uint  UInt32) return (   int) UInt32;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return           Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return           Int32;
+            else if (MsgPack.Object is   uint  UInt32) return (   int) UInt32;
             return null;
         }
         public   uint?  ReadNUInt32(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return (  uint)  Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return (  uint)  Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return (  uint)  Int32;
-                else if (MsgPack.Object is   uint  UInt32) return          UInt32;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return (  uint)  Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return (  uint)  Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return (  uint)  Int32;
+            else if (MsgPack.Object is   uint  UInt32) return          UInt32;
             return null;
         }
         public   long?   ReadNInt64(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return           Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return           Int32;
-                else if (MsgPack.Object is   uint  UInt32) return          UInt32;
-                else if (MsgPack.Object is   long   Int64) return           Int64;
-                else if (MsgPack.Object is  ulong  UInt64) return (  long) UInt64;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return           Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return           Int32;
+            else if (MsgPack.Object is   uint  UInt32) return          UInt32;
+            else if (MsgPack.Object is   long   Int64) return           Int64;
+            else if (MsgPack.Object is  ulong  UInt64) return (  long) UInt64;
             return null;
         }
         public  ulong?  ReadNUInt64(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return ( ulong)  Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return ( ulong)  Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return ( ulong)  Int32;
-                else if (MsgPack.Object is   uint  UInt32) return          UInt32;
-                else if (MsgPack.Object is   long   Int64) return ( ulong)  Int64;
-                else if (MsgPack.Object is  ulong  UInt64) return          UInt64;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return ( ulong)  Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return ( ulong)  Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return ( ulong)  Int32;
+            else if (MsgPack.Object is   uint  UInt32) return          UInt32;
+            else if (MsgPack.Object is   long   Int64) return ( ulong)  Int64;
+            else if (MsgPack.Object is  ulong  UInt64) return          UInt64;
             return null;
         }
         public  float?  ReadNSingle(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return           Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return           Int32;
-                else if (MsgPack.Object is   uint  UInt32) return          UInt32;
-                else if (MsgPack.Object is   long   Int64) return           Int64;
-                else if (MsgPack.Object is  float Float32) return         Float32;
-                else if (MsgPack.Object is double Float64) return ( float)Float64;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return           Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return           Int32;
+            else if (MsgPack.Object is   uint  UInt32) return          UInt32;
+            else if (MsgPack.Object is   long   Int64) return           Int64;
+            else if (MsgPack.Object is  float Float32) return         Float32;
+            else if (MsgPack.Object is double Float64) return ( float)Float64;
             return null;
         }
         public double?  ReadNDouble(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
-                else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
-                else if (MsgPack.Object is  short   Int16) return           Int16;
-                else if (MsgPack.Object is ushort  UInt16) return          UInt16;
-                else if (MsgPack.Object is    int   Int32) return           Int32;
-                else if (MsgPack.Object is   uint  UInt32) return          UInt32;
-                else if (MsgPack.Object is   long   Int64) return           Int64;
-                else if (MsgPack.Object is  float Float32) return         Float32;
-                else if (MsgPack.Object is double Float64) return         Float64;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is  sbyte   Int8 ) return           Int8 ;
+            else if (MsgPack.Object is   byte  UInt8 ) return          UInt8 ;
+            else if (MsgPack.Object is  short   Int16) return           Int16;
+            else if (MsgPack.Object is ushort  UInt16) return          UInt16;
+            else if (MsgPack.Object is    int   Int32) return           Int32;
+            else if (MsgPack.Object is   uint  UInt32) return          UInt32;
+            else if (MsgPack.Object is   long   Int64) return           Int64;
+            else if (MsgPack.Object is  float Float32) return         Float32;
+            else if (MsgPack.Object is double Float64) return         Float64;
             return null;
         }
         public string    ReadString(string Name)
         {
-            if (Element(Name, out MsgPack MsgPack))
-                     if (MsgPack.Object is string  String) return          String;
+            MsgPack MsgPack = this[Name];
+                 if (MsgPack.Object is string  String) return          String;
             return null;
         }
 
@@ -326,10 +337,10 @@ namespace KKdBaseLib
         public string    ReadString()
         {        if (Object is string  String) return          String; return null; }
 
-        public bool ElementArray(string Name, out MsgPack MsgPack) =>
-            Element(Name, out MsgPack) ? MsgPack.Array != null : false;
+        public bool ElementArray1(string Name, out MsgPack MsgPack) =>
+            Element1(Name, out MsgPack) ? MsgPack.Array != null : false;
 
-        public bool Element(string Name, out MsgPack MsgPack)
+        public bool Element1(string Name, out MsgPack MsgPack)
         {
             MsgPack = New;
             if (List.IsNull) return false;
@@ -339,15 +350,27 @@ namespace KKdBaseLib
             return false;
         }
 
-        public bool ContainsKey(string Name)
+        public MsgPack Element(string Name)
         {
-            if (List.IsNull) return false;
-            
-            for (int i = 0; i < List.Count ; i++)
-                if (List[i].Name == Name) return true;
-            return false;
+            if (List.IsNull) return default;
+
+            for (int i = 0; i < List.Count; i++)
+                if (List[i].Name == Name) return List[i];
+            return default;
         }
-        
+
+        public bool ContainsKey(string Name) => ElementIndex(Name) > -1;
+
+        public int ElementIndex(string Name)
+        {
+            if (List.IsNull) return -1;
+
+            for (int i = 0; i < List.Count; i++)
+                if (List[i].Name == Name) return i;
+            return -1;
+        }
+
+
         public struct Ext
         {
             public sbyte   Type;

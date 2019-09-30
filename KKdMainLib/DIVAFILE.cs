@@ -41,8 +41,8 @@ namespace KKdMainLib
             Stream IO = File.OpenReader(file);
             int FileLengthOrigin = IO.Length;
             int FileLength = FileLengthOrigin.Align(16);
+            byte[] In = IO.ToArray();
             IO.Close();
-            byte[] In = File.OpenReader(file).ToArray(true);
             byte[] Inalign = new byte[FileLength];
             for (int i = 0; i < In.Length; i++) Inalign[i] = In[i];
             In = null;

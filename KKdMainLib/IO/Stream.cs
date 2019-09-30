@@ -56,7 +56,7 @@ namespace KKdMainLib.IO
             ValRead = ValRead = BitWrite = 0;
             stream = output;
             Format = Format.NULL;
-            buf = new byte[128];
+            buf = new byte[0x100];
             ptr = buf.GetPtr();
             IsBE = isBE;
         }
@@ -73,8 +73,10 @@ namespace KKdMainLib.IO
         public long? Seek(long? offset, SeekOrigin origin)
         { if (offset == null) return null; return stream.Seek((long)offset, (MSIO.SeekOrigin)(int)origin); }
 
-        public void Dispose()
-        { CW(); if (stream != MSIO.Stream.Null) { stream.Flush(); stream.Dispose(); } }
+        public void Dispose() => Dispose(true);
+
+        protected virtual void Dispose(bool dispose)
+        { CW(); if (stream != MSIO.Stream.Null) { stream.Flush(); stream.Dispose(); } if (dispose) GC.SuppressFinalize(this); }
 
         public MSIO.Stream BaseStream
         { get { stream.Flush(); return stream; } set { stream = value; } }
@@ -125,18 +127,26 @@ namespace KKdMainLib.IO
         public  float ReadSingleEndian() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
         public double ReadDoubleEndian() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
 
-        public  short  ReadInt16Endian(bool IsBE) { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
-        public ushort ReadUInt16Endian(bool IsBE) { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
-        public    int  ReadInt32Endian(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
-        public   uint ReadUInt32Endian(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
-        public   long  ReadInt64Endian(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
-        public  ulong ReadUInt64Endian(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
-        public  float ReadSingleEndian(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
-        public double ReadDoubleEndian(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
+        public  short  ReadInt16Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
+        public ushort ReadUInt16Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
+        public    int  ReadInt32Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
+        public   uint ReadUInt32Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
+        public   long  ReadInt64Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
+        public  ulong ReadUInt64Endian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
+        public  float ReadSingleEndian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
+        public double ReadDoubleEndian(bool IsBE)
+        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
 
-        public void Write(byte[] Val                        ) => stream.Write(Val,      0, Val.Length);
-        public void Write(byte[] Val,             int Length) => stream.Write(Val,      0,     Length);
-        public void Write(byte[] Val, int Offset, int Length) => stream.Write(Val, Offset,     Length);
+        public void Write(byte[] Val                        ) => stream.Write(Val ?? new byte[0],      0, Val.Length);
+        public void Write(byte[] Val,             int Length) => stream.Write(Val ?? new byte[0],      0,     Length);
+        public void Write(byte[] Val, int Offset, int Length) => stream.Write(Val ?? new byte[0], Offset,     Length);
         public void Write(char[] val, bool UTF8 = true) => Write(UTF8 ? val.ToUTF8() : val.ToASCII());
 
         public void WriteByte(byte val) => stream.WriteByte(val);
@@ -291,12 +301,14 @@ namespace KKdMainLib.IO
         { CFUTRM(); if (BitWrite > 0) { stream.WriteByte((byte)ValWrite); ValWrite = 0; BitWrite = 0; } }
 
         public byte[] ToArray(bool Close)
-        { byte[] Data = ToArray(); if (Close) this.Close(); return Data; }
+        { byte[] Data = ToArray(); if (Close) Dispose(); return Data; }
 
         [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-        [System.Security.SecurityCritical]
+        [System.Security.SecuritySafeCritical]
         private void CFUTRM() //CheckForUnableToReadMemory
-        { ptr = buf.GetPtr(); }
+        { try { if (buf[0] != ptr[0] || buf[1] != ptr[1] || buf[2] != ptr[2] || buf[3] != ptr[3] ||
+                    buf[4] != ptr[4] || buf[5] != ptr[5] || buf[6] != ptr[6] || buf[7] != ptr[7])
+                    ptr = buf.GetPtr(); } catch (AccessViolationException) { ptr = buf.GetPtr(); } }
 
         public byte[] ToArray()
         {

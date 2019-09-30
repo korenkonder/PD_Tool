@@ -44,30 +44,28 @@ namespace KKdMainLib
             else if (file.Contains("PvList")) { pvList = null; Success = true; }
         }
 
-        public void DBWriter(string file)
+        public void DBWriter(string file, uint num2)
         {
             if (!Success) return;
 
             IO = File.OpenWriter();
             if (file.Contains("psrData"))
             {
-                if (psrDat != null || psrDat.Length > 0)
+                if (psrDat != null && psrDat.Length > 0)
                     for (i = 0; i < psrDat.Length; i++)
                         IO.Write(psrDat[i].ToString() + c);
             }
             else if (file.Contains("PvList"))
             {
-                if (pvList != null || pvList.Length > 0)
+                if (pvList != null && pvList.Length > 0)
                     for (i = 0; i < pvList.Length; i++)
                         IO.Write(UrlEncode(pvList[i].ToString() +
                             (i < pvList.Length ? c : "")));
+                else IO.Write("%2A%2A%2A");
             }
-            else IO.Write("%2A%2A%2A");
              
-
             byte[] data = IO.ToArray(true);
             ushort num = DCC.CalculateChecksum(data);
-            uint num2 = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
         }
 
@@ -79,25 +77,29 @@ namespace KKdMainLib
 
             if (file.Contains("psrData"))
             {
-                if (MsgPack.ElementArray("psrData", out MsgPack psrData))
+                MsgPack psrData;
+                if ((psrData = MsgPack["psrData", true]).NotNull)
                 {
                     psrDat = new psrData[psrData.Array.Length];
                     for (i = 0; i < psrDat.Length; i++)
                         psrDat[i].SetValue(psrData[i]);
                 }
-                else if (MsgPack.ContainsKey("psrData")) psrDat = null;
+                else if (MsgPack["psrData"].NotNull) psrDat = null;
                 Success = true;
+                psrData.Dispose();
             }
             else if (file.Contains("PvList"))
             {
-                if (MsgPack.ElementArray("PvList", out MsgPack PvList))
+                MsgPack PvList;
+                if ((PvList = MsgPack["PvList", true]).NotNull)
                 {
                     pvList = new PvList[PvList.Array.Length];
                     for (i = 0; i < pvList.Length; i++)
                         pvList[i].SetValue(PvList[i], compact);
                 }
-                else if (MsgPack.ContainsKey("PvList")) pvList = null;
+                else if (MsgPack["PvList"].NotNull) pvList = null;
                 Success = true;
+                PvList.Dispose();
             }
             
             MsgPack.Dispose();
@@ -156,9 +158,11 @@ namespace KKdMainLib
                 int? ID = msg.ReadNInt32("PV_ID");
                 if (ID != null) PV_ID = (int)ID;
                 else { ID = msg.ReadNInt32("ID"); if (ID != null) PV_ID = (int)ID; }
-                if (msg.Element("P1", out MsgPack P1)) p1.SetValue(P1);
-                if (msg.Element("P2", out MsgPack P2)) p2.SetValue(P2);
-                if (msg.Element("P3", out MsgPack P3)) p3.SetValue(P3);
+                MsgPack Temp;
+                if ((Temp = msg["P1", true]).NotNull) p1.SetValue(Temp);
+                if ((Temp = msg["P2", true]).NotNull) p2.SetValue(Temp);
+                if ((Temp = msg["P3", true]).NotNull) p3.SetValue(Temp);
+                Temp.Dispose();
             }
 
             public MsgPack WriteMP() =>
@@ -251,7 +255,6 @@ namespace KKdMainLib
 
             public void SetValue(MsgPack msg, bool Compact)
             {
-                MsgPack Temp = MsgPack.New;
                 this.Enable =  true;
                 this.Extra  = false;
 
@@ -270,10 +273,12 @@ namespace KKdMainLib
                       EndShow   .SetValue(msg.ReadNInt32(  "EndShow"   ),  true);
                     return;
                 }
-                if (msg.Element("AdvDemoStart", out Temp)) AdvDemoStart.SetValue(Temp,  true);
-                if (msg.Element("AdvDemoEnd"  , out Temp)) AdvDemoEnd  .SetValue(Temp, false);
-                if (msg.Element("StartShow"   , out Temp)) StartShow   .SetValue(Temp, false);
-                if (msg.Element(  "EndShow"   , out Temp))   EndShow   .SetValue(Temp,  true);
+                MsgPack Temp;
+                if ((Temp = msg["AdvDemoStart", true]).NotNull) AdvDemoStart.SetValue(Temp,  true);
+                if ((Temp = msg["AdvDemoEnd"  , true]).NotNull) AdvDemoEnd  .SetValue(Temp, false);
+                if ((Temp = msg["StartShow"   , true]).NotNull) StartShow   .SetValue(Temp, false);
+                if ((Temp = msg[  "EndShow"   , true]).NotNull)   EndShow   .SetValue(Temp,  true);
+                Temp.Dispose();
             }
 
             public MsgPack WriteMP(bool Compact)
@@ -284,14 +289,14 @@ namespace KKdMainLib
                 if ( Extra ) MsgPack.Add("Extra" , Extra );
                 if (Compact)
                 {
-                    if (AdvDemoStart.WriteLower) MsgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
+                    if (AdvDemoStart.WriteUpper) MsgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
                     if (AdvDemoEnd  .WriteLower) MsgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WriteInt());
                     if (StartShow   .WriteLower) MsgPack.Add("StartShow"   , StartShow   .WriteInt());
                     if (  EndShow   .WriteUpper) MsgPack.Add(  "EndShow"   ,   EndShow   .WriteInt());
                 }
                 else
                 {
-                    if (AdvDemoStart.WriteLower) MsgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
+                    if (AdvDemoStart.WriteUpper) MsgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
                     if (AdvDemoEnd  .WriteLower) MsgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
                     if (StartShow   .WriteLower) MsgPack.Add(StartShow   .WriteMP("StartShow"   ));
                     if (  EndShow   .WriteUpper) MsgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));

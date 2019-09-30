@@ -1,15 +1,17 @@
 ﻿namespace KKdBaseLib.F2
 {
-    public unsafe struct POF
+    public unsafe struct POF : INull
     {
-        public int ID;
-        public bool EOFC;
+        public int Depth;
         public KKdList<long> Offsets;
 
         public bool  IsNull => Offsets. IsNull;
         public bool NotNull => Offsets.NotNull;
 
-        public static POF Read(byte[] data, bool ShiftX, int ID = 0, bool EOFC = false)
+        public int Length  => length(false).Align(0x10);
+        public int LengthX => length( true).Align(0x10);
+
+        public static POF Read(byte[] data, bool ShiftX, int Depth = 0)
         {
             Value Val = 0;
             KKdList<long> Offsets = KKdList<long>.New;
@@ -31,33 +33,22 @@
                 Offset += V;
                 Offsets.Add(Offset << BitShift);
             }
-            return new POF { EOFC = EOFC, ID = ID, Offsets = Offsets };
+            return new POF { Depth = Depth, Offsets = Offsets };
         }
 
         public static byte[] Write(POF POF, bool ShiftX)
         {
             POF.Offsets.Sort();
-            int Length = 5;
             long Offset = 0;
             byte BitShift = (byte)(ShiftX ? 3 : 2);
-            int Max1 = 0x00FF >> BitShift;
-            int Max2 = 0xFFFF >> BitShift;
-            for (int i = 0; i < POF.Offsets.Count; i++)
-            {
-                Offset = POF.Offsets[i];
-                if (i > 0) { Offset -= POF.Offsets[i - 1]; if (Offset == 0) continue; }
+            int Max1 = 0x00100 >> BitShift;
+            int Max2 = 0x10000 >> BitShift;
 
-                Offset >>= BitShift;
-                     if (Offset <= Max1) Length += 1;
-                else if (Offset <= Max2) Length += 2;
-                else                     Length += 4;
-            }
-
-            byte[] data = new byte[Length.Align(0x10)];
+            byte[] data = new byte[POF.Length];
             byte* ptr = data.GetPtr();
 
             byte Val = 0;
-            *(int*)ptr = Length; ptr += 4;
+            *(int*)ptr = POF.length(ShiftX); ptr += 4;
             for (int i = 0; i < POF.Offsets.Count; i++)
             {
                 Offset = POF.Offsets[i];
@@ -65,16 +56,36 @@
 
                 Offset >>= BitShift;
                 Val = (byte)(Offset > Max2 ? Value.Int32 : Offset > Max1 ? Value.Int16 : Value.Int8);
-                     if (Offset <= Max1)   *ptr = (byte)(Val |  Offset       );
-                else if (Offset <= Max2) { *ptr = (byte)(Val | (Offset >>  8)); ptr++;
-                                           *ptr = (byte)        Offset        ; }
-                else                     { *ptr = (byte)(Val | (Offset >> 24)); ptr++;
-                                           *ptr = (byte)       (Offset >> 16) ; ptr++;
-                                           *ptr = (byte)       (Offset >>  8) ; ptr++; 
-                                           *ptr = (byte)        Offset        ; }
+                     if (Offset < Max1)   *ptr = (byte)(Val |  Offset       );
+                else if (Offset < Max2) { *ptr = (byte)(Val | (Offset >>  8)); ptr++;
+                                          *ptr = (byte)        Offset        ; }
+                else                    { *ptr = (byte)(Val | (Offset >> 24)); ptr++;
+                                          *ptr = (byte)       (Offset >> 16) ; ptr++;
+                                          *ptr = (byte)       (Offset >>  8) ; ptr++; 
+                                          *ptr = (byte)        Offset        ; }
                 ptr++;
             }
             return data;
+        }
+
+        private int length(bool ShiftX = false)
+        {
+            int length = 5;
+            long Offset = 0;
+            byte BitShift = (byte)(ShiftX ? 3 : 2);
+            int Max1 = 0x00100 >> BitShift;
+            int Max2 = 0x10000 >> BitShift;
+            for (int i = 0; i < Offsets.Count; i++)
+            {
+                Offset = Offsets[i];
+                if (i > 0) { Offset -= Offsets[i - 1]; if (Offset == 0) continue; }
+
+                Offset >>= BitShift;
+                     if (Offset < Max1) length += 1;
+                else if (Offset < Max2) length += 2;
+                else                    length += 4;
+            }
+            return length; 
         }
 
         public enum Value : byte
@@ -86,6 +97,6 @@
         }
 
         public override string ToString() =>
-            $"ID: {ID}{(NotNull ? $"; Offsets Count: {Offsets.Count}" : "")}{(EOFC ? "; Has EOFC" : "")}";
+            $"Depth: {Depth}{(NotNull ? $"; Offsets Count: {Offsets.Count}" : "")}";
     }
 }

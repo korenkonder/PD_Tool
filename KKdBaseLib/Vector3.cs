@@ -37,17 +37,17 @@
         public static double DistanceSquared(Vector3 left, Vector3 right) =>
             (right.X - left.X) * (right.X - left.X) + (right.Y - left.Y) *
             (right.Y - left.Y) + (right.Z - left.Z) * (right.Z - left.Z);
-        public static double  Dot  (Vector3 left, Vector3 right) =>
-            (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
+        public static double Dot(Vector3 left, Vector3 right) =>
+             left.X * right.X + left.Y * right.Y + left.Z * right.Z;
         public static Vector3 Cross(Vector3 left, Vector3 right) =>
-            new Vector3 { X = (left.Y * right.Z) - (left.Z * right.Y),
-                          Y = (left.Z * right.X) - (left.X * right.Z),
-                          Z = (left.X * right.Y) - (left.Y * right.X), };
-        public static Vector3 Lerp (Vector3    a, Vector3     b,  double blend) =>
+            new Vector3 { X = left.Y * right.Z - left.Z * right.Y,
+                          Y = left.Z * right.X - left.X * right.Z,
+                          Z = left.X * right.Y - left.Y * right.X, };
+        public static Vector3 Lerp(Vector3 a, Vector3 b,  double blend) =>
             new Vector3 { X = blend   * (b.X - a.X) + a.X,
                           Y = blend   * (b.Y - a.Y) + a.Y,
                           Z = blend   * (b.Z - a.Z) + a.Z };
-        public static Vector3 Lerp (Vector3    a, Vector3     b, Vector3 blend) =>
+        public static Vector3 Lerp(Vector3 a, Vector3 b, Vector3 blend) =>
             new Vector3 { X = blend.X * (b.X - a.X) + a.X,
                           Y = blend.Y * (b.Y - a.Y) + a.Y,
                           Z = blend.Z * (b.Z - a.Z) + a.Z };

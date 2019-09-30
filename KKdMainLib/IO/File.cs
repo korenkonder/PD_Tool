@@ -9,7 +9,8 @@ namespace KKdMainLib.IO
         public static Stream OpenWriter(           ) => new Stream(new MSIO.MemoryStream(    ));
 
         public static Stream OpenReader(string file, bool ReadAllAtOnce)
-        { Stream IO = OpenReader(file); if (ReadAllAtOnce) return OpenReader(IO.ToArray(true)); return IO; }
+        { Stream IO = OpenReader(file); if (ReadAllAtOnce) { byte[] data =
+                    IO.ToArray(); IO.Close(); return OpenReader(data); } return IO; }
         public static Stream OpenReader(string file)
         { Stream IO = new Stream(new MSIO.FileStream(file, MSIO.FileMode.Open, MSIO.FileAccess.ReadWrite,
               MSIO.FileShare.ReadWrite)) { File = file }; return IO; }

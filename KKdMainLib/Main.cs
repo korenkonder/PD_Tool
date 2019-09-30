@@ -8,20 +8,6 @@ namespace KKdMainLib
 {
     public static unsafe class Main
     {
-        public static void ConsoleDesign(string text, params string[] args)
-        {
-            text = string.Format(text, args);
-            string Text = "█                                                  █";
-            Text = Text.Remove(3) + text + Text.Remove(0, text.Length + 3);
-            Console.WriteLine(Text);
-        }
-
-        public static void ConsoleDesign(bool Fill)
-        {
-            if (Fill) Console.WriteLine("████████████████████████████████████████████████████");
-            else      Console.WriteLine("█                                                  █");
-        }
-
         public const string TimeFormatHHmmssfff = "{0:d2}:{1:d2}:{2:d2}.{3:d3}";
 
         public static void WriteTime(this TimeSpan time, bool WriteLine = false)
