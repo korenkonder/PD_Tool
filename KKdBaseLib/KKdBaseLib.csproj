@@ -22,8 +22,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
+    <LangVersion>8.0</LangVersion>
+    <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,14 +35,20 @@
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>true</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
+    <LangVersion>8.0</LangVersion>
+    <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="F2\ENRS.cs" />
     <Compile Include="F2\Header.cs" />
     <Compile Include="F2\POF.cs" />
     <Compile Include="F2\Struct.cs" />
+    <Compile Include="Interpolation\A3DAI.cs" />
+    <Compile Include="Interpolation\IInterpolation.cs" />
+    <Compile Include="Interpolation\PDI.cs" />
+    <Compile Include="A3DA.cs" />
+    <Compile Include="A3DAKey.cs" />
+    <Compile Include="Aet.cs" />
     <Compile Include="DCC.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Format.cs" />

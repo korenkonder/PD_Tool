@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdMainLib.A3DA;
 
 namespace KKdMainLib.DB
 {
@@ -21,13 +20,13 @@ namespace KKdMainLib.DB
             IO = File.OpenReader(file + ".bin");
 
             IO.Format = Format.F;
-            Signature = IO.ReadInt32();
+            Signature = IO.RI32();
             if (Signature != 0x44334123) return;
-            Signature = IO.ReadInt32();
+            Signature = IO.RI32();
             if (Signature != 0x5F5F5F41) return;
-            IO.ReadInt64();
+            IO.RI64();
 
-            string[] STRData = IO.ReadString(IO.Length - IO.Position).Replace("\r", "").Split('\n');
+            string[] STRData = IO.RS(IO.L - IO.P).Replace("\r", "").Split('\n');
             for (int i = 0; i < STRData.Length; i++)
             {
                 dataArray = STRData[i].Split('=');
@@ -55,23 +54,23 @@ namespace KKdMainLib.DB
                 }
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void BINWriter(string file)
         {
             IO = File.OpenWriter(file + ".bin", true);
 
-            IO.Write("#A3DA__________\n");
-            IO.Write("#", DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
+            IO.W("#A3DA__________\n");
+            IO.W("#", DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
                 System.Globalization.CultureInfo.InvariantCulture));
 
             if (Category != null)
             {
                 int[] SO = Category.Length.SortWriter();
                 for (int i = 0; i < Category.Length; i++)
-                    IO.Write("category." + SO[i] + ".value=", Category[SO[i]]);
-                IO.Write("category.length=", Category.Length);
+                    IO.W("category." + SO[i] + ".value=", Category[SO[i]]);
+                IO.W("category.length=", Category.Length);
             }
 
             if (_UID != null)
@@ -80,16 +79,16 @@ namespace KKdMainLib.DB
                 for (int i = 0; i < _UID.Length; i++)
                 {
                     if (_UID[SO[i]].Category != "")
-                        IO.Write("uid." + SO[i] + ".category=", _UID[SO[i]].Category);
-                        IO.Write("uid." + SO[i] + ".org_uid=" , _UID[SO[i]].OrgUid  );
-                        IO.Write("uid." + SO[i] + ".size="    , _UID[SO[i]].Size    );
+                        IO.W("uid." + SO[i] + ".category=", _UID[SO[i]].Category);
+                        IO.W("uid." + SO[i] + ".org_uid=" , _UID[SO[i]].OrgUid  );
+                        IO.W("uid." + SO[i] + ".size="    , _UID[SO[i]].Size    );
                     if (_UID[SO[i]].Value    != "")
-                        IO.Write("uid." + SO[i] + ".value="   , _UID[SO[i]].Value   );
+                        IO.W("uid." + SO[i] + ".value="   , _UID[SO[i]].Value   );
                 }
-                IO.Write("uid.length=", _UID.Length);
+                IO.W("uid.length=", _UID.Length);
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void MsgPackReader(string file, bool JSON)
@@ -104,7 +103,7 @@ namespace KKdMainLib.DB
                 {
                     Category = new string[Temp.Array.Length];
                     for (int i = 0; i < Category.Length; i++)
-                        Category[i] = Temp[i].ReadString();
+                        Category[i] = Temp[i].RS();
                 }
 
                 if ((Temp = MsgPack["UID", true]).NotNull)
@@ -112,10 +111,10 @@ namespace KKdMainLib.DB
                     _UID = new UID[Temp.Array.Length];
                     for (int i = 0; i < _UID.Length; i++)
                     {
-                        _UID[i].Category = Temp[i].ReadString("Category");
-                        _UID[i].OrgUid   = Temp[i].ReadNInt32("OrgUid"  );
-                        _UID[i].Size     = Temp[i].ReadNInt32("Size"    );
-                        _UID[i].Value    = Temp[i].ReadString("Value"   );
+                        _UID[i].Category = Temp[i].RS("Category");
+                        _UID[i].OrgUid   = Temp[i].RnI32("OrgUid"  );
+                        _UID[i].Size     = Temp[i].RnI32("Size"    );
+                        _UID[i].Value    = Temp[i].RS("Value"   );
                     }
                 }
                 Temp.Dispose();

@@ -73,6 +73,10 @@ namespace KKdMainLib
             Dict.FindValue(out string val, args.Split(Split)) ?  int.TryParse(val, out value) : false;
 
         public static bool FindValue(this Dictionary<string, object> Dict,
+            ref  float value, char Split, string args) =>
+            Dict.FindValue(out string val, args.Split(Split)) ?  val.ToSingle(     out value) : false;
+
+        public static bool FindValue(this Dictionary<string, object> Dict,
             ref double value, char Split, string args) =>
             Dict.FindValue(out string val, args.Split(Split)) ?  val.ToDouble(     out value) : false;
 
@@ -92,6 +96,11 @@ namespace KKdMainLib
                 return  int.TryParse(val, out value); value =     0; return false; }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
+            out  float  value, string   args)
+        { if (Dict.FindValue(out string val, args.Split('.'  )))
+                return       val.ToSingle(out value); value =     0; return false; }
+
+        public static bool FindValue(this Dictionary<string, object> Dict,
             out double  value, string   args)
         { if (Dict.FindValue(out string val, args.Split('.'  )))
                 return       val.ToDouble(out value); value =     0; return false; }
@@ -101,6 +110,11 @@ namespace KKdMainLib
         { if (Dict.FindValue(out string val, args.Split('.'  )))
             { bool Val =  int.TryParse(val, out int _value);
                 value = _value; return Val; }         value =  null; return false; }
+
+        public static bool FindValue(this Dictionary<string, object> Dict,
+            out  float? value, string   args)
+        { if (Dict.FindValue(out string val, args.Split('.'  )))
+                return       val.ToSingle(out value); value =  null; return false; }
 
         public static bool FindValue(this Dictionary<string, object> Dict,
             out double? value, string   args)

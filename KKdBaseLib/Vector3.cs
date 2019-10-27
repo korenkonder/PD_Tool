@@ -2,14 +2,14 @@
 {
     public struct Vector3
     {
-        public double X;
-        public double Y;
-        public double Z;
+        public float X;
+        public float Y;
+        public float Z;
 
-        public Vector3(double X, double Y, double Z)
+        public Vector3(float X, float Y, float Z)
         { this.X = X; this.Y = Y; this.Z = Z; }
 
-        public double Length => (X * X + Y * Y + Z * Z).Sqrt();
+        public float Length => (X * X + Y * Y + Z * Z).Sqrt();
         public Vector3 Normalized => this = Length == 0 ? new Vector3() : this / Length;
 
         public static Vector3 operator +(Vector3 left, Vector3 right)
@@ -18,13 +18,13 @@
         { left.X -= right.X; left.Y -= right.Y; left.Z -= right.Z; return left; }
         public static Vector3 operator -(Vector3 vec)
         { vec.X = -vec.X; vec.Y = -vec.Y; vec.Z = -vec.Z; return vec; }
-        public static Vector3 operator *(Vector3   vec,  double scale)
+        public static Vector3 operator *(Vector3   vec,   float scale)
         { vec.X *= scale  ; vec.Y *= scale  ; vec.Z *= scale  ; return vec; }
-        public static Vector3 operator *( double scale, Vector3   vec)
+        public static Vector3 operator *(  float scale, Vector3   vec)
         { vec.X *= scale  ; vec.Y *= scale  ; vec.Z *= scale  ; return vec; }
         public static Vector3 operator *(Vector3   vec, Vector3 scale)
         { vec.X *= scale.X; vec.Y *= scale.Y; vec.Z *= scale.Z; return vec; }
-        public static Vector3 operator /(Vector3   vec,  double scale)
+        public static Vector3 operator /(Vector3   vec,   float scale)
         { vec.X /= scale  ; vec.Y /= scale  ; vec.Z /= scale  ; return vec; }
         public static Vector3 operator /(Vector3   vec, Vector3 scale)
         { vec.X /= scale.X; vec.Y /= scale.Y; vec.Z /= scale.Z; return vec; }
@@ -43,7 +43,7 @@
             new Vector3 { X = left.Y * right.Z - left.Z * right.Y,
                           Y = left.Z * right.X - left.X * right.Z,
                           Z = left.X * right.Y - left.Y * right.X, };
-        public static Vector3 Lerp(Vector3 a, Vector3 b,  double blend) =>
+        public static Vector3 Lerp(Vector3 a, Vector3 b,   float blend) =>
             new Vector3 { X = blend   * (b.X - a.X) + a.X,
                           Y = blend   * (b.Y - a.Y) + a.Y,
                           Z = blend   * (b.Z - a.Z) + a.Z };
@@ -71,7 +71,7 @@
         public bool Equals(Vector3 other) =>
             X == other.X && Y == other.Y && Z == other.Z;
 
-        public override string ToString() => $"{X},{Y},{Z}";
-        public string ToString(int d) => $"{X.Round(d)},{Y.Round(d)},{Z.Round(d)}";
+        public override string ToString() => $"({X}; {Y}, {Z})";
+        public string ToString(int d) => $"({X.Round(d)}; {Y.Round(d)}, {Z.Round(d)})";
     }
 }

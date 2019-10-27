@@ -53,15 +53,15 @@ namespace KKdMainLib
             {
                 if (psrDat != null && psrDat.Length > 0)
                     for (i = 0; i < psrDat.Length; i++)
-                        IO.Write(psrDat[i].ToString() + c);
+                        IO.W(psrDat[i].ToString() + c);
             }
             else if (file.Contains("PvList"))
             {
                 if (pvList != null && pvList.Length > 0)
                     for (i = 0; i < pvList.Length; i++)
-                        IO.Write(UrlEncode(pvList[i].ToString() +
+                        IO.W(UrlEncode(pvList[i].ToString() +
                             (i < pvList.Length ? c : "")));
-                else IO.Write("%2A%2A%2A");
+                else IO.W("%2A%2A%2A");
             }
              
             byte[] data = IO.ToArray(true);
@@ -73,7 +73,7 @@ namespace KKdMainLib
         {
             Success = false;
             MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            bool compact = MsgPack.ReadBoolean("Compact");
+            bool compact = MsgPack.RB("Compact");
 
             if (file.Contains("psrData"))
             {
@@ -155,9 +155,9 @@ namespace KKdMainLib
 
             public void SetValue(MsgPack msg)
             {
-                int? ID = msg.ReadNInt32("PV_ID");
+                int? ID = msg.RnI32("PV_ID");
                 if (ID != null) PV_ID = (int)ID;
-                else { ID = msg.ReadNInt32("ID"); if (ID != null) PV_ID = (int)ID; }
+                else { ID = msg.RnI32("ID"); if (ID != null) PV_ID = (int)ID; }
                 MsgPack Temp;
                 if ((Temp = msg["P1", true]).NotNull) p1.SetValue(Temp);
                 if ((Temp = msg["P2", true]).NotNull) p2.SetValue(Temp);
@@ -207,15 +207,15 @@ namespace KKdMainLib
 
             public void SetValue(MsgPack msg)
             {
-                 Diff  = (Difficulty)msg.ReadInt32("Diff");
-                Score0 = msg.ReadInt32 ("Score");
-                 Name0 = msg.ReadString( "Name");
+                 Diff  = (Difficulty)msg.RI32("Diff");
+                Score0 = msg.RI32 ("Score");
+                 Name0 = msg.RS( "Name");
                 if (Name0 == null)
                 {
-                    Score0 = msg.ReadInt32 ("Score0");
-                    Score1 = msg.ReadInt32 ("Score1");
-                     Name0 = msg.ReadString( "Name0");
-                     Name1 = msg.ReadString( "Name1");
+                    Score0 = msg.RI32("Score0");
+                    Score1 = msg.RI32("Score1");
+                     Name0 = msg.RS  ( "Name0");
+                     Name1 = msg.RS  ( "Name1");
                 }
                 else Name1 = null;
             }
@@ -258,19 +258,19 @@ namespace KKdMainLib
                 this.Enable =  true;
                 this.Extra  = false;
 
-                int? ID = msg.ReadNInt32("PV_ID");
+                int? ID = msg.RnI32("PV_ID");
                 if (ID != null) PV_ID = (int)ID;
-                else { ID = msg.ReadNInt32("ID"); if (ID != null) PV_ID = (int)ID; }
-                bool? Enable = msg.ReadNBoolean("Enable");
-                bool? Extra  = msg.ReadNBoolean("Extra");
+                else { ID = msg.RnI32("ID"); if (ID != null) PV_ID = (int)ID; }
+                bool? Enable = msg.RnB("Enable");
+                bool? Extra  = msg.RnB("Extra");
                 if (Enable != null) this.Enable = (bool)Enable;
                 if (Extra  != null) this.Extra  = (bool)Extra ;
                 if (Compact)
                 {
-                    AdvDemoStart.SetValue(msg.ReadNInt32("AdvDemoStart"),  true);
-                    AdvDemoEnd  .SetValue(msg.ReadNInt32("AdvDemoEnd"  ), false);
-                    StartShow   .SetValue(msg.ReadNInt32("StartShow"   ), false);
-                      EndShow   .SetValue(msg.ReadNInt32(  "EndShow"   ),  true);
+                    AdvDemoStart.SetValue(msg.RnI32("AdvDemoStart"),  true);
+                    AdvDemoEnd  .SetValue(msg.RnI32("AdvDemoEnd"  ), false);
+                    StartShow   .SetValue(msg.RnI32("StartShow"   ), false);
+                      EndShow   .SetValue(msg.RnI32(  "EndShow"   ),  true);
                     return;
                 }
                 MsgPack Temp;
@@ -356,9 +356,9 @@ namespace KKdMainLib
             {
                 if (!SetDefaultUpper) SetDefaultLower();
                 else             this.SetDefaultUpper();
-                int?  Year = msg.ReadNInt32( "Year");
-                int? Month = msg.ReadNInt32("Month");
-                int?   Day = msg.ReadNInt32(  "Day");
+                int?  Year = msg.RnI32( "Year");
+                int? Month = msg.RnI32("Month");
+                int?   Day = msg.RnI32(  "Day");
                 if ( Year != null)  year =  Year.Value;
                 if (Month != null) month = Month.Value;
                 if (  Day != null)   day =   Day.Value;

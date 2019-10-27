@@ -39,7 +39,7 @@ namespace KKdBaseLib
             0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0,
         };
 
-        public static ushort CalculateChecksum(byte[] data)
+        public static ushort CalculateChecksum(this byte[] data)
         {
             ushort result = 0xFFFF;
             for (int i = 0; i < data.Length; i++)
@@ -47,11 +47,19 @@ namespace KKdBaseLib
             return result;
         }
 
-        public static uint CalculateChecksumUInt(byte[] data)
+        public static uint CalculateChecksumUInt(this byte[] data)
         {
             uint result = 0xFFFFFFFF;
             for (int i = 0; i < data.Length; i++)
-                result = ChecksumLookupTable[((ushort)result >> 8) ^ data[i]] ^ (result << 8);
+                result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
+            return result;
+        }
+
+        public static ulong CalculateChecksumULong(this byte[] data)
+        {
+            ulong result = 0xFFFFFFFFFFFFFFFF;
+            for (int i = 0; i < data.Length; i++)
+                result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }
     }

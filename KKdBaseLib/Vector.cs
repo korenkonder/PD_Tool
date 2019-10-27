@@ -11,7 +11,7 @@
         public bool  IsNull => X == null && Y == null;
         public bool NotNull => X != null || Y != null;
 
-        public override string ToString() => "X: " + X + "; Y: " + Y;
+        public override string ToString() => $"({X}; {Y})";
     }
     
     public struct Vector3<T> : INull
@@ -26,7 +26,7 @@
         public bool  IsNull => X == null && Y == null && Z == null;
         public bool NotNull => X != null || Y != null || Z != null;
 
-        public override string ToString() => "X: " + X + "; Y: " + Y + "; Z: " + Z;
+        public override string ToString() => $"({X}; {Y}; {Z})";
     }
 
     public struct Vector4<T> : INull
@@ -42,6 +42,6 @@
         public bool  IsNull => X == null && Y == null && Z == null && W == null;
         public bool NotNull => X != null || Y != null || Z != null || W != null;
 
-        public override string ToString() => "X: " + X + "; Y: " + Y + "; Z: " + Z + "; W: " + W;
+        public override string ToString() => $"({X}; {Y}; {Z}; {W})";
     }
 }

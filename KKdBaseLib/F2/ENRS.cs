@@ -113,8 +113,8 @@
             }
             return length.Align(0x10);
 
-            int GetSizeType(int Val) => Val < 0x00000010 ? 1 : Val < 0x00001000 ? 2 : 4;
-            int GetSize    (int Val) => Val < 0x00000040 ? 1 : Val < 0x00004000 ? 2 : 4; 
+            static int GetSizeType(int Val) => Val < 0x00000010 ? 1 : Val < 0x00001000 ? 2 : 4;
+            static int GetSize    (int Val) => Val < 0x00000040 ? 1 : Val < 0x00004000 ? 2 : 4; 
         }
 
         /*private static KKdList<ENRS.SubENRS> Optimize(KKdList<ENRS.SubENRS> Sub)

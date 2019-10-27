@@ -10,14 +10,14 @@ namespace KKdMainLib.IO
 
         public static Stream OpenReader(string file, bool ReadAllAtOnce)
         { Stream IO = OpenReader(file); if (ReadAllAtOnce) { byte[] data =
-                    IO.ToArray(); IO.Close(); return OpenReader(data); } return IO; }
+                    IO.ToArray(); IO.Dispose(); return OpenReader(data); } return IO; }
         public static Stream OpenReader(string file)
         { Stream IO = new Stream(new MSIO.FileStream(file, MSIO.FileMode.Open, MSIO.FileAccess.ReadWrite,
               MSIO.FileShare.ReadWrite)) { File = file }; return IO; }
         public static Stream OpenWriter(string file, bool SetLength0)
-        { Stream IO = OpenWriter(file); if (SetLength0) IO.SetLength(0); return IO; }
+        { Stream IO = OpenWriter(file); if (SetLength0) IO.SL(0); return IO; }
         public static Stream OpenWriter(string file, int SetLength)
-        { Stream IO = OpenWriter(file); IO.SetLength(SetLength); return IO; }
+        { Stream IO = OpenWriter(file); IO.SL(SetLength); return IO; }
         public static Stream OpenWriter(string file)
         { Stream IO = new Stream(new MSIO.FileStream(file,
             MSIO.FileMode.OpenOrCreate, MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite)) { File = file };
@@ -26,27 +26,28 @@ namespace KKdMainLib.IO
             MSIO.File.SetLastAccessTimeUtc(file, DateTime.UtcNow); return IO; }
 
         public static   byte[] ReadAllBytes(string file, int length, int offset)
-        { Stream IO = OpenReader(file); byte[] Data = IO.ReadBytes(length, offset); IO.Close(); return Data; }
+        { byte[] Data; using (Stream IO = OpenReader(file)) Data = IO.RBy(length, offset); return Data; }
 
         public static   byte[] ReadAllBytes(string file)
-        { Stream IO = OpenReader(file); byte[] Data = IO.ReadBytes(IO.Length); IO.Close(); return Data; }
+        { byte[] Data; using (Stream IO = OpenReader(file)) Data = IO.RBy(IO.L); return Data; }
 
         public static string   ReadAllText (string file)
-        { Stream IO = OpenReader(file); string Data = IO.ReadStringUTF8(IO.Length); IO.Close(); return Data; }
+        { string Data; using (Stream IO = OpenReader(file)) Data = IO.RSUTF8(IO.L);
+            return Data.Replace(((char)0xFEFF).ToString(), ""); }
 
         public static string[] ReadAllLines(string file)
-        { Stream IO = OpenReader(file); string Data = IO.ReadStringUTF8(IO.Length); IO.Close();
-            return Data.Replace("\r", "").Split('\n'); }
+        { string Data; using (Stream IO = OpenReader(file)) Data = IO.RSUTF8(IO.L);
+            return Data.Replace(((char)0xFEFF).ToString(), "").Replace("\r", "").Split('\n'); }
 
         public static void WriteAllBytes(string file,   byte[] data)
-        { Stream IO = OpenWriter(file, true); IO.Write(data); IO.Close(); }
+        { using (Stream IO = OpenWriter(file, true)) IO.W(data); }
 
         public static void WriteAllText (string file, string   data)
-        { Stream IO = OpenWriter(file, true); IO.Write(data); IO.Close(); }
+        { using (Stream IO = OpenWriter(file, true)) IO.W(data); }
 
         public static void WriteAllLines(string file, string[] data)
-        { Stream IO = OpenWriter(file, true); for (int i = 0; i < data.Length; i++)
-                IO.Write(data[i] + "\r\n"); IO.Close(); }
+        { using (Stream IO = OpenWriter(file, true)) for (int i = 0; i < data.Length; i++)
+                    IO.W(data[i] + "\r\n"); }
 
         public static bool Exists(string file) => MSIO.File.Exists(file);
         public static void Delete(string file) => MSIO.File.Delete(file);

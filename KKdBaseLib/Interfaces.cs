@@ -1,15 +1,13 @@
 ﻿namespace KKdBaseLib
 {
-    public interface IKF<TKey, TVal>
+    public interface IKF
     {
-        TKey F { get; set; }
+        KFT0 ToT0();
+        KFT1 ToT1();
+        KFT2 ToT2();
+        KFT3 ToT3();
 
-        KFT0<TKey, TVal> ToT0();
-        KFT1<TKey, TVal> ToT1();
-        KFT2<TKey, TVal> ToT2();
-        KFT3<TKey, TVal> ToT3();
-
-        IKF<TKey, TVal> Check();
+        IKF Check();
         string ToString();
         string ToString(bool Brackets);
     }

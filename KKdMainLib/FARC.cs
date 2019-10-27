@@ -44,23 +44,23 @@ namespace KKdMainLib
 
             Stream reader = File.OpenReader(FilePath);
             DirectoryPath = Path.GetFullPath(FilePath).Replace(Path.GetExtension(FilePath), "");
-            Signature = (Farc)reader.ReadInt32Endian(true);
+            Signature = (Farc)reader.RI32E(true);
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
-            { reader.Close(); return false; }
+            { reader.Dispose(); return false; }
 
-            int HeaderLength = reader.ReadInt32Endian(true);
+            int HeaderLength = reader.RI32E(true);
             if (Signature == Farc.FARC)
             {
-                FARCType = (Type)reader.ReadInt32Endian(true);
-                reader.ReadInt32();
+                FARCType = (Type)reader.RI32E(true);
+                reader.RI32();
 
-                int FARCMode = reader.ReadInt32Endian(true);
+                int FARCMode = reader.RI32E(true);
                 FT  = FARCMode == 0x10;
                 CBC = FARCMode != 0x10 && FARCMode != 0x40;
 
                 if (CBC && FARCType.HasFlag(Type.ECB))
                 {
-                    reader.Close();
+                    reader.Dispose();
                     byte[] Header = new byte[HeaderLength - 0x08];
                     MSIO.FileStream stream = new MSIO.FileStream(FilePath, MSIO.FileMode.Open,
                        MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite) { Position = 0x10 };
@@ -72,44 +72,44 @@ namespace KKdMainLib
                     Header = SkipData(Header, 0x10);
                     reader = File.OpenReader(Header);
 
-                    FARCMode = reader.ReadInt32Endian(true);
+                    FARCMode = reader.RI32E(true);
                     FT = FARCMode == 0x10;
                 }
             }
 
             if (Signature == Farc.FARC)
-                if (reader.ReadInt32Endian(true) == 1)
-                    Files = new FARCFile[reader.ReadInt32Endian(true)];
-            reader.ReadInt32();
+                if (reader.RI32E(true) == 1)
+                    Files = new FARCFile[reader.RI32E(true)];
+            reader.RI32();
 
             if (Files == null)
             {
                 int Count = 0;
-                long Position = reader.LongPosition;
-                while (reader.LongPosition < HeaderLength)
+                long Position = reader.I64P;
+                while (reader.I64P < HeaderLength)
                 {
-                    reader.NullTerminated();
-                    reader.ReadInt32();
-                    if (Signature != Farc.FArc      ) reader.ReadInt32();
-                    reader.ReadInt32();
-                    if (Signature == Farc.FARC && FT) reader.ReadInt32();
+                    reader.NT();
+                    reader.RI32();
+                    if (Signature != Farc.FArc      ) reader.RI32();
+                    reader.RI32();
+                    if (Signature == Farc.FARC && FT) reader.RI32();
                     Count++;
                 }
-                reader.LongPosition = Position;
+                reader.I64P = Position;
                 Files = new FARCFile[Count];
             }
 
             for (int i = 0; i < Files.Length; i++)
             {
-                Files[i].Name = reader.NullTerminatedUTF8();
-                Files[i].Offset = reader.ReadInt32Endian(true);
-                if (Signature != Farc.FArc) Files[i].SizeComp = reader.ReadInt32Endian(true);
-                Files[i].SizeUnc = reader.ReadInt32Endian(true);
+                Files[i].Name = reader.NTUTF8();
+                Files[i].Offset = reader.RI32E(true);
+                if (Signature != Farc.FArc) Files[i].SizeComp = reader.RI32E(true);
+                Files[i].SizeUnc = reader.RI32E(true);
                 if (Signature == Farc.FARC && FT)
-                    Files[i].Type = (Type)reader.ReadInt32Endian(true);
+                    Files[i].Type = (Type)reader.RI32E(true);
             }
 
-            reader.Close();
+            reader.Dispose();
             return true;
         }
 
@@ -224,48 +224,48 @@ namespace KKdMainLib
             }
 
             Stream writer = File.OpenWriter(DirectoryPath + ".farc", true);
-            writer.WriteEndian((int)Signature, true);
+            writer.WE((int)Signature, true);
 
             using (Stream HeaderWriter = File.OpenWriter())
             {
-                     if (Signature == Farc.FArc) HeaderWriter.WriteEndian(0x20, true);
-                else if (Signature == Farc.FArC) HeaderWriter.WriteEndian(0x10, true);
+                     if (Signature == Farc.FArc) HeaderWriter.WE(0x20, true);
+                else if (Signature == Farc.FArC) HeaderWriter.WE(0x10, true);
                 else if (Signature == Farc.FARC)
                 {
-                    HeaderWriter.WriteEndian((int)FARCType, true);
-                    HeaderWriter.Write      (0x00);
-                    HeaderWriter.WriteEndian(0x40, true);
-                    HeaderWriter.Write      (0x00);
+                    HeaderWriter.WE((int)FARCType, true);
+                    HeaderWriter.W      (0x00);
+                    HeaderWriter.WE(0x40, true);
+                    HeaderWriter.W      (0x00);
                 }
                 int HeaderPartLength = Signature == Farc.FArc ? 0x09 : 0x0D;
                 for (int i = 0; i < Files.Length; i++)
-                    HeaderWriter.Length += Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
-                writer.WriteEndian(HeaderWriter.Length, true);
-                writer.Write(HeaderWriter.ToArray(true));
+                    HeaderWriter.L += Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
+                writer.WE(HeaderWriter.L, true);
+                writer.W(HeaderWriter.ToArray(true));
             }
 
-            int Align = writer.Position.Align(0x10) - writer.Position;
+            int Align = writer.P.Align(0x10) - writer.P;
             for (int i1 = 0; i1 < Align; i1++)
-                writer.WriteByte((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
+                writer.W((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
 
             for (int i = 0; i < Files.Length; i++)
                 CompressStuff(i, ref Files, ref writer);
 
-            writer.Position = Signature == Farc.FARC ? 0x1C : 0x0C;
+            writer.P = Signature == Farc.FARC ? 0x1C : 0x0C;
             for (int i = 0; i < Files.Length; i++)
             {
-                writer.Write(Path.GetFileName(Files[i].Name) + "\0");
-                writer.WriteEndian(Files[i].Offset, true);
+                writer.W(Path.GetFileName(Files[i].Name) + "\0");
+                writer.WE(Files[i].Offset, true);
                 if (Signature != Farc.FArc)
-                    writer.WriteEndian(Files[i].SizeComp, true);
-                writer.WriteEndian(Files[i].SizeUnc, true);
+                    writer.WE(Files[i].SizeComp, true);
+                writer.WE(Files[i].SizeUnc, true);
             }
-            writer.Close();
+            writer.Dispose();
         }
 
         private void CompressStuff(int i, ref FARCFile[] Files, ref Stream writer)
         {
-            Files[i].Offset = writer.Position;
+            Files[i].Offset = writer.P;
             Files[i].SizeUnc = Files[i].Data.Length;
             Files[i].Type = Type.None;
 
@@ -290,14 +290,14 @@ namespace KKdMainLib
                 Files[i].Data = Encrypt(Data, false);
             }
 
-            writer.Write(Files[i].Data);
+            writer.W(Files[i].Data);
             Files[i].Data = null;
 
             if (Signature != Farc.FARC)
             {
-                int Align = writer.Position.Align(0x20) - writer.Position;
+                int Align = writer.P.Align(0x20) - writer.P;
                 for (int i1 = 0; i1 < Align; i1++)
-                    writer.WriteByte((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
+                    writer.W((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
             }
         }
 

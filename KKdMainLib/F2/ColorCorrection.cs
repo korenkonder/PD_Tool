@@ -17,12 +17,12 @@ namespace KKdMainLib.F2
             IO = File.OpenReader(file + ".cct", true);
             Header = IO.ReadHeader();
             if (Header.Signature != 0x54524343 || Header.InnerSignature != 0x3) return;
-            IO.Position -= 0x4;
+            IO.P -= 0x4;
 
-            CCTs = IO.ReadCountPointerEndian<CCT>();
-            if (CCTs.Count < 1) { IO.Close(); CCTs.Count = -1; return; }
+            CCTs = IO.RCPE<CCT>();
+            if (CCTs.C < 1) { IO.C(); CCTs.C = -1; return; }
 
-            if (CCTs.Count > 0 && CCTs.Offset == 0) { IO.Close(); CCTs.Count = -1; return; }
+            if (CCTs.C > 0 && CCTs.O == 0) { IO.C(); CCTs.C = -1; return; }
             /*{
                 IO.Format = Header.Format = Format.X;
                 IO.Offset = Header.Length;
@@ -30,32 +30,32 @@ namespace KKdMainLib.F2
                 CCTs = IO.ReadCountPointerX<CCT>();
             }*/
 
-            IO.Position = CCTs.Offset;
-            for (i = 0; i < CCTs.Count; i++)
+            IO.P = CCTs.O;
+            for (i = 0; i < CCTs.C; i++)
             {
-                ref CCT CCT = ref CCTs.Entries[i];
-                IO.ReadInt32Endian();
-                CCT.Hue        = IO.ReadSingleEndian();
-                CCT.Saturation = IO.ReadSingleEndian();
-                CCT.Lightness  = IO.ReadSingleEndian();
-                CCT.Exposure   = IO.ReadSingleEndian();
-                CCT.Gamma.X    = IO.ReadSingleEndian();
-                CCT.Gamma.Y    = IO.ReadSingleEndian();
-                CCT.Gamma.Z    = IO.ReadSingleEndian();
-                CCT.Contrast   = IO.ReadSingleEndian();
+                ref CCT CCT = ref CCTs.E[i];
+                IO.RI32E();
+                CCT.Hue        = IO.RF32E();
+                CCT.Saturation = IO.RF32E();
+                CCT.Lightness  = IO.RF32E();
+                CCT.Exposure   = IO.RF32E();
+                CCT.Gamma.X    = IO.RF32E();
+                CCT.Gamma.Y    = IO.RF32E();
+                CCT.Gamma.Z    = IO.RF32E();
+                CCT.Contrast   = IO.RF32E();
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void TXTWriter(string file)
         {
-            if (CCTs.Count < 1) return;
+            if (CCTs.C < 1) return;
 
             IO = File.OpenWriter();
-            IO.WriteShiftJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
-            for (i = 0; i < CCTs.Count; i++)
-                IO.Write(i + "," + CCTs[i] + "\n");
+            IO.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
+            for (i = 0; i < CCTs.C; i++)
+                IO.W(i + "," + CCTs[i] + "\n");
             File.WriteAllBytes(file + "_cc.txt", IO.ToArray(true));
         }
 

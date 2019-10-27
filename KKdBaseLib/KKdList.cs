@@ -30,12 +30,12 @@ namespace KKdBaseLib
         object IEnumerator.Current => Current;
 
         public T this[ int index]
-        {   get =>    array != null && index > -1 ? array[index] : default;
-            set { if (array != null && index > -1)  array[index] =   value; } }
+        {   get =>    array != null && index > -1 && index < array.Length ? array[index] : default;
+            set { if (array != null && index > -1 && index < array.Length)  array[index] =   value; } }
 
         public T this[uint index]
-        {   get =>    array != null ? array[index] : default;
-            set { if (array != null)  array[index] =   value; } }
+        {   get =>    array != null && index < array.Length ? array[index] : default;
+            set { if (array != null && index < array.Length)  array[index] =   value; } }
 
         public bool MoveNext()
         { if (index == Count - 1) { index = 0; return false; }

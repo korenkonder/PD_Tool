@@ -17,19 +17,19 @@ namespace KKdMainLib.DB
         {
             IO = File.OpenReader(file + ".bin");
 
-            int spriteSetsLength = IO.ReadInt32();
-            int spriteSetsOffset = IO.ReadInt32();
-            int spritesLength    = IO.ReadInt32();
-            int spritesOffset    = IO.ReadInt32();
+            int spriteSetsLength = IO.RI32();
+            int spriteSetsOffset = IO.RI32();
+            int spritesLength    = IO.RI32();
+            int spritesOffset    = IO.RI32();
 
-            IO.Position = spriteSetsOffset;
+            IO.P = spriteSetsOffset;
             SpriteSets = new SpriteSet[spriteSetsLength];
             for (i = 0; i < spriteSetsLength; i++)
             {
-                SpriteSets[i].Id       = IO.ReadInt32();
-                SpriteSets[i].Name     = IO.ReadStringAtOffset();
-                SpriteSets[i].FileName = IO.ReadStringAtOffset();
-                IO.ReadInt32();
+                SpriteSets[i].Id       = IO.RI32();
+                SpriteSets[i].Name     = IO.RSaO();
+                SpriteSets[i].FileName = IO.RSaO();
+                IO.RI32();
             }
 
             int setIndex;
@@ -38,11 +38,11 @@ namespace KKdMainLib.DB
             int[] SprCount = new int[spriteSetsLength];
             int[] TexCount = new int[spriteSetsLength];
 
-            IO.Position = spritesOffset;
+            IO.P = spritesOffset;
             for (i = 0; i < spritesLength; i++)
             {
-                IO.LongPosition += 10;
-                setIndex = IO.ReadInt16();
+                IO.I64P += 10;
+                setIndex = IO.RI16();
                 IsTexture = (setIndex & 0x1000) == 0x1000;
                 setIndex &= 0xFFF;
 
@@ -59,13 +59,13 @@ namespace KKdMainLib.DB
                 TexCount[i] = 0;
             }
 
-            IO.Position = spritesOffset;
+            IO.P = spritesOffset;
             for (i = 0; i < spritesLength; i++)
             {
-                st.Id    = IO.ReadInt32();
-                st.Name  = IO.ReadStringAtOffset();
-                IO.ReadInt16();
-                setIndex = IO.ReadInt16();
+                st.Id    = IO.RI32();
+                st.Name  = IO.RSaO();
+                IO.RI16();
+                setIndex = IO.RI16();
                 IsTexture = (setIndex & 0x1000) == 0x1000;
                 setIndex &= 0xFFF;
                 
@@ -73,7 +73,7 @@ namespace KKdMainLib.DB
                 else           { SpriteSets[setIndex]. Sprites[SprCount[setIndex]] = st; SprCount[setIndex]++; }
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void BINWriter(string file)
@@ -164,67 +164,67 @@ namespace KKdMainLib.DB
             i1 = i1.Align(0x20) + 0x20;
 
             IO = File.OpenWriter(file + ".bin", true);
-            IO.Write(i2);
-            IO.Write(i1);
-            IO.Write(i0);
-            IO.Write(0x20);
-            IO.Write(0x9066906690669066);
-            IO.Write(0x9066906690669066);
+            IO.W(i2);
+            IO.W(i1);
+            IO.W(i0);
+            IO.W(0x20);
+            IO.W(0x9066906690669066);
+            IO.W(0x9066906690669066);
 
-            IO.Position = (i1 + i2 * 0x10).Align(0x20);
+            IO.P = (i1 + i2 * 0x10).Align(0x20);
             for (i = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
                 for (i0 = 0; i0 < SpriteSets[i].Textures.Length; i0++)
-                { SpriteSets[i].Textures[i0].NameOffset = IO.Position;
-                    IO.Write(SpriteSets[i].Textures[i0].Name + "\0"); }
+                { SpriteSets[i].Textures[i0].NameOffset = IO.P;
+                    IO.W(SpriteSets[i].Textures[i0].Name + "\0"); }
 
                 for (i0 = 0; i0 < SpriteSets[i]. Sprites.Length; i0++)
-                { SpriteSets[i]. Sprites[i0].NameOffset = IO.Position;
-                    IO.Write(SpriteSets[i]. Sprites[i0].Name + "\0"); }
+                { SpriteSets[i]. Sprites[i0].NameOffset = IO.P;
+                    IO.W(SpriteSets[i]. Sprites[i0].Name + "\0"); }
             }
 
             for (i = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
-                SpriteSets[i].    NameOffset = IO.Position; IO.Write(SpriteSets[i].    Name + "\0");
-                SpriteSets[i].FileNameOffset = IO.Position; IO.Write(SpriteSets[i].FileName + "\0");
+                SpriteSets[i].    NameOffset = IO.P; IO.W(SpriteSets[i].    Name + "\0");
+                SpriteSets[i].FileNameOffset = IO.P; IO.W(SpriteSets[i].FileName + "\0");
             }
             
-            IO.Align(0x08, true);
-            IO.Position = 0x20;
+            IO.A(0x08, true);
+            IO.P = 0x20;
             for (i = 0, i2 = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
                 
                 for (i0 = 0; i0 < SpriteSets[i].Textures.Length; i0++)
                 {
-                    IO.Write(SpriteSets[i].Textures[i0].Id        );
-                    IO.Write(SpriteSets[i].Textures[i0].NameOffset);
-                    IO.Write((ushort)               i0  );
-                    IO.Write((ushort)(0x1000 | (i - i2)));
+                    IO.W(SpriteSets[i].Textures[i0].Id        );
+                    IO.W(SpriteSets[i].Textures[i0].NameOffset);
+                    IO.W((ushort)               i0  );
+                    IO.W((ushort)(0x1000 | (i - i2)));
                 }
                 
                 for (i0 = 0; i0 < SpriteSets[i]. Sprites.Length; i0++)
                 {
-                    IO.Write(SpriteSets[i]. Sprites[i0].Id        );
-                    IO.Write(SpriteSets[i]. Sprites[i0].NameOffset);
-                    IO.Write((ushort)     i0 );
-                    IO.Write((ushort)(i - i2));
+                    IO.W(SpriteSets[i]. Sprites[i0].Id        );
+                    IO.W(SpriteSets[i]. Sprites[i0].NameOffset);
+                    IO.W((ushort)     i0 );
+                    IO.W((ushort)(i - i2));
                 }
             }
-            IO.Align(0x20);
+            IO.A(0x20);
             for (i = 0, i2 = 0; i < SpriteSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
 
-                IO.Write(SpriteSets[i].Id            );
-                IO.Write(SpriteSets[i].    NameOffset);
-                IO.Write(SpriteSets[i].FileNameOffset);
-                IO.Write(i - i2);
+                IO.W(SpriteSets[i].Id            );
+                IO.W(SpriteSets[i].    NameOffset);
+                IO.W(SpriteSets[i].FileNameOffset);
+                IO.W(i - i2);
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void MsgPackReader(string file, bool JSON = false)
@@ -260,7 +260,7 @@ namespace KKdMainLib.DB
             public string Name;
 
             public void ReadMsgPack(MsgPack msg)
-            { Id = msg.ReadNInt32("Id"); Name = msg.ReadString("Name"); }
+            { Id = msg.RnI32("Id"); Name = msg.RS("Name"); }
 
             public MsgPack WriteMsgPack() =>
                 MsgPack.New.Add("Id", Id).Add("Name", Name);
@@ -279,10 +279,10 @@ namespace KKdMainLib.DB
             
             public void ReadMsgPack(MsgPack msg)
             {
-                FileName     = msg.ReadString ("FileName");
-                Id           = msg.ReadNInt32 (   "Id"   );
-                Name         = msg.ReadString ("Name"    );
-                NewId        = msg.ReadBoolean("NewId"   );
+                FileName     = msg.RS   ("FileName");
+                Id           = msg.RnI32(   "Id"   );
+                Name         = msg.RS   ("Name"    );
+                NewId        = msg.RB   ("NewId"   );
 
                 MsgPack Temp;
                 if ((Temp = msg["Sprites", true]).NotNull)

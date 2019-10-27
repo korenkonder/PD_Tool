@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using KKdBaseLib;
 using MSIO = System.IO;
 
@@ -23,23 +22,20 @@ namespace KKdMainLib.IO
         public bool IsBE = false;
         public bool IsX  = false;
 
-        public  int     Offset { get => ( int)LongOffset; set => LongOffset = value; }
-        public uint UIntOffset { get => (uint)LongOffset; set => LongOffset = value; }
-        public long LongOffset;
+        public  int    O { get => ( int)I64O; set => I64O = value; }
+        public uint U32O { get => (uint)I64O; set => I64O = value; }
+        public long I64O;
 
-        public  int       Length { get => ( int)stream.Length -     Offset;
-            set => stream.SetLength(value +     Offset); }
-        public uint   UIntLength { get => (uint)stream.Length - UIntOffset;
-            set => stream.SetLength(value + UIntOffset); }
-        public long   LongLength { get =>       stream.Length - LongOffset;
-            set => stream.SetLength(value + LongOffset); }
+        public  int    L { get => ( int)stream.Length -    O; set => stream.SetLength(value +    O); }
+        public uint U32L { get => (uint)stream.Length - U32O; set => stream.SetLength(value + U32O); }
+        public long I64L { get =>       stream.Length - I64O; set => stream.SetLength(value + I64O); }
 
-        public  int     Position
-        { get => ( int)stream.Position -     Offset; set => stream.Position = value +     Offset; }
-        public uint UIntPosition
-        { get => (uint)stream.Position - UIntOffset; set => stream.Position = value + UIntOffset; }
-        public long LongPosition
-        { get =>       stream.Position - LongOffset; set => stream.Position = value + LongOffset; }
+        public  int    P
+        { get => ( int)stream.Position -    O; set => stream.Position = value +     O; }
+        public uint U32P
+        { get => (uint)stream.Position - U32O; set => stream.Position = value + U32O; }
+        public long I64P
+        { get =>       stream.Position - I64O; set => stream.Position = value + I64O; }
 
         public bool CanRead    => stream.CanRead;
         public bool CanSeek    => stream.CanSeek;
@@ -51,7 +47,7 @@ namespace KKdMainLib.IO
         public Stream(MSIO.Stream output = null, bool isBE = false)
         {
             if (output == null) output = MSIO.Stream.Null;
-            LongOffset = 0;
+            I64O = 0;
             BitRead = 8;
             ValRead = ValRead = BitWrite = 0;
             stream = output;
@@ -61,162 +57,142 @@ namespace KKdMainLib.IO
             IsBE = isBE;
         }
 
-        public void Close() => Dispose();
+        public void C() => D(true);
 
-        public void Flush() => stream.Flush();
+        public void F() => stream.Flush();
 
-        public void SetLength(long length = 0) => stream.SetLength(length);
+        public void SL(long length = 0) => stream.SetLength(length);
 
-        public long Seek(long offset, SeekOrigin origin = 0) =>
+        public long S(long offset, SeekOrigin origin = 0) =>
             stream.Seek(offset, (MSIO.SeekOrigin)(int)origin);
         
-        public long? Seek(long? offset, SeekOrigin origin)
+        public long? S(long? offset, SeekOrigin origin)
         { if (offset == null) return null; return stream.Seek((long)offset, (MSIO.SeekOrigin)(int)origin); }
 
-        public void Dispose() => Dispose(true);
+        private bool disposed = false;
+        public void D() => D(true);
+        public void Dispose() => D(true);
 
-        protected virtual void Dispose(bool dispose)
-        { CW(); if (stream != MSIO.Stream.Null) { stream.Flush(); stream.Dispose(); } if (dispose) GC.SuppressFinalize(this); }
+        protected virtual void D(bool dispose)
+        { CW(); if (stream != MSIO.Stream.Null && !disposed) { disposed = true; stream.Flush();
+                stream.Dispose(); } if (dispose) GC.SuppressFinalize(this); }
 
-        public MSIO.Stream BaseStream
+        public MSIO.Stream BS
         { get { stream.Flush(); return stream; } set { stream = value; } }
 
-        public void Align(long Align)
+        public void A(long Align)
         {
-            long Al = Align - Position % Align;
-            if (Position % Align != 0)
-                stream.Seek(Position + Offset + Al, 0);
+            long Al = Align - P % Align;
+            if (P % Align != 0) stream.Seek(P + O + Al, 0);
         }
 
-        public void Align(long Align, bool SetLength)
+        public void A(long Align, bool SetLength)
         {
-            if (SetLength) stream.SetLength(Position + Offset);
-            long Al = Align - Position % Align;
-            if (Position % Align != 0) stream.Seek(Position + Offset + Al, 0);
-            if (SetLength) stream.SetLength(Position + Offset);
+            if (SetLength) stream.SetLength(P + O);
+            long Al = Align - P % Align;
+            if (P % Align != 0) stream.Seek(P + O + Al, 0);
+            if (SetLength) stream.SetLength(P + O);
         }
 
-        public void Align(long Align, bool SetLength0, bool SetLength1)
+        public void A(long Align, bool SetLength0, bool SetLength1)
         {
-            if (SetLength0) stream.SetLength(Position + Offset);
-            long Al = Align - Position % Align;
-            if (Position % Align != 0) stream.Seek(Position + Al, 0);
-            if (SetLength1) stream.SetLength(Position + Offset);
+            if (SetLength0) stream.SetLength(P + O);
+            long Al = Align - P % Align;
+            if (P % Align != 0) stream.Seek(P + Al, 0);
+            if (SetLength1) stream.SetLength(P + O);
         }
 
-        public   bool ReadBoolean() =>         stream.ReadByte() != 0;
-        public  sbyte   ReadSByte() => ( sbyte)stream.ReadByte();
-        public   byte    ReadByte() => (  byte)stream.ReadByte();
-        public  sbyte    ReadInt8() => ( sbyte)stream.ReadByte();
-        public   byte   ReadUInt8() => (  byte)stream.ReadByte();
-        public  short   ReadInt16() { CR(); stream.Read(buf, 0, 2); return *( short*)ptr; }
-        public ushort  ReadUInt16() { CR(); stream.Read(buf, 0, 2); return *(ushort*)ptr; }
-        public    int   ReadInt32() { CR(); stream.Read(buf, 0, 4); return *(   int*)ptr; }
-        public   uint  ReadUInt32() { CR(); stream.Read(buf, 0, 4); return *(  uint*)ptr; }
-        public   long   ReadInt64() { CR(); stream.Read(buf, 0, 8); return *(  long*)ptr; }
-        public  ulong  ReadUInt64() { CR(); stream.Read(buf, 0, 8); return *( ulong*)ptr; }
-        public  float  ReadSingle() { CR(); stream.Read(buf, 0, 4); return *( float*)ptr; }
-        public double  ReadDouble() { CR(); stream.Read(buf, 0, 8); return *(double*)ptr; }
+        public   bool RBo () =>        stream.ReadByte() != 0;
+        public  sbyte RI8 () => (sbyte)stream.ReadByte();
+        public   byte RU8 () => ( byte)stream.ReadByte();
+        public  short RI16() { CR(); stream.Read(buf, 0, 2); return *( short*)ptr; }
+        public ushort RU16() { CR(); stream.Read(buf, 0, 2); return *(ushort*)ptr; }
+        public    int RI32() { CR(); stream.Read(buf, 0, 4); return *(   int*)ptr; }
+        public   uint RU32() { CR(); stream.Read(buf, 0, 4); return *(  uint*)ptr; }
+        public   long RI64() { CR(); stream.Read(buf, 0, 8); return *(  long*)ptr; }
+        public  ulong RU64() { CR(); stream.Read(buf, 0, 8); return *( ulong*)ptr; }
+        public  float RF32() { CR(); stream.Read(buf, 0, 4); return *( float*)ptr; }
+        public double RF64() { CR(); stream.Read(buf, 0, 8); return *(double*)ptr; }
         
-        public  short  ReadInt16Endian() { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
-        public ushort ReadUInt16Endian() { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
-        public    int  ReadInt32Endian() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
-        public   uint ReadUInt32Endian() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
-        public   long  ReadInt64Endian() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
-        public  ulong ReadUInt64Endian() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
-        public  float ReadSingleEndian() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
-        public double ReadDoubleEndian() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
+        public  short RI16E() { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
+        public ushort RU16E() { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
+        public    int RI32E() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
+        public   uint RU32E() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
+        public   long RI64E() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
+        public  ulong RU64E() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
+        public  float RF32E() { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
+        public double RF64E() { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
 
-        public  short  ReadInt16Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
-        public ushort ReadUInt16Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
-        public    int  ReadInt32Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
-        public   uint ReadUInt32Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
-        public   long  ReadInt64Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
-        public  ulong ReadUInt64Endian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
-        public  float ReadSingleEndian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
-        public double ReadDoubleEndian(bool IsBE)
-        { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
+        public  short RI16E(bool IsBE) { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *( short*)ptr; }
+        public ushort RU16E(bool IsBE) { CR(); stream.Read(buf, 0, 2); buf.Endian(2, IsBE); return *(ushort*)ptr; }
+        public    int RI32E(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(   int*)ptr; }
+        public   uint RU32E(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *(  uint*)ptr; }
+        public   long RI64E(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(  long*)ptr; }
+        public  ulong RU64E(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *( ulong*)ptr; }
+        public  float RF32E(bool IsBE) { CR(); stream.Read(buf, 0, 4); buf.Endian(4, IsBE); return *( float*)ptr; }
+        public double RF64E(bool IsBE) { CR(); stream.Read(buf, 0, 8); buf.Endian(8, IsBE); return *(double*)ptr; }
 
-        public void Write(byte[] Val                        ) => stream.Write(Val ?? new byte[0],      0, Val.Length);
-        public void Write(byte[] Val,             int Length) => stream.Write(Val ?? new byte[0],      0,     Length);
-        public void Write(byte[] Val, int Offset, int Length) => stream.Write(Val ?? new byte[0], Offset,     Length);
-        public void Write(char[] val, bool UTF8 = true) => Write(UTF8 ? val.ToUTF8() : val.ToASCII());
+        public void W(byte[] Val                        ) => stream.Write(Val ?? new byte[0],      0, Val.Length);
+        public void W(byte[] Val,             int Length) => stream.Write(Val ?? new byte[0],      0,     Length);
+        public void W(byte[] Val, int Offset, int Length) => stream.Write(Val ?? new byte[0], Offset,     Length);
+        public void W(char[] val, bool UTF8 = true) => W(UTF8 ? val.ToUTF8() : val.ToASCII());
 
-        public void WriteByte(byte val) => stream.WriteByte(val);
+        public void W(  bool val) => stream.WriteByte((byte)(val ? 1 : 0));
+        public void W( sbyte val) => stream.WriteByte((byte) val);
+        public void W(  byte val) => stream.WriteByte(       val);
+        public void W( short val) { CW(); *( short*)ptr = val; stream.Write(buf, 0, 2); }
+        public void W(ushort val) { CW(); *(ushort*)ptr = val; stream.Write(buf, 0, 2); }
+        public void W(   int val) { CW(); *(   int*)ptr = val; stream.Write(buf, 0, 4); }
+        public void W(  uint val) { CW(); *(  uint*)ptr = val; stream.Write(buf, 0, 4); }
+        public void W(  long val) { CW(); *(  long*)ptr = val; stream.Write(buf, 0, 8); }
+        public void W( ulong val) { CW(); *( ulong*)ptr = val; stream.Write(buf, 0, 8); }
+        public void W( float val) { CW(); *( float*)ptr = val; stream.Write(buf, 0, 4); }
+        public void W(double val) { CW(); *(double*)ptr = val; stream.Write(buf, 0, 8); }
 
-        public void Write(  bool val) => stream.WriteByte((byte)(val ? 1 : 0));
-        public void Write( sbyte val) => stream.WriteByte((byte) val);
-        public void Write(  byte val) => stream.WriteByte(       val);
-        public void Write( short val) { CW(); *( short*)ptr = val; stream.Write(buf, 0, 2); }
-        public void Write(ushort val) { CW(); *(ushort*)ptr = val; stream.Write(buf, 0, 2); }
-        public void Write(   int val) { CW(); *(   int*)ptr = val; stream.Write(buf, 0, 4); }
-        public void Write(  uint val) { CW(); *(  uint*)ptr = val; stream.Write(buf, 0, 4); }
-        public void Write(  long val) { CW(); *(  long*)ptr = val; stream.Write(buf, 0, 8); }
-        public void Write( ulong val) { CW(); *( ulong*)ptr = val; stream.Write(buf, 0, 8); }
-        public void Write( float val) { CW(); *( float*)ptr = val; stream.Write(buf, 0, 4); }
-        public void Write(double val) { CW(); *(double*)ptr = val; stream.Write(buf, 0, 8); }
+        public void W( sbyte? val) => W(val ?? default);
+        public void W(  byte? val) => W(val ?? default);
+        public void W( short? val) => W(val ?? default);
+        public void W(ushort? val) => W(val ?? default);
+        public void W(   int? val) => W(val ?? default);
+        public void W(  uint? val) => W(val ?? default);
+        public void W(  long? val) => W(val ?? default);
+        public void W( ulong? val) => W(val ?? default);
+        public void W( float? val) => W(val ?? default);
+        public void W(double? val) => W(val ?? default);
 
-        public void Write( sbyte? val) => Write(val.GetValueOrDefault());
-        public void Write(  byte? val) => Write(val.GetValueOrDefault());
-        public void Write( short? val) => Write(val.GetValueOrDefault());
-        public void Write(ushort? val) => Write(val.GetValueOrDefault());
-        public void Write(   int? val) => Write(val.GetValueOrDefault());
-        public void Write(  uint? val) => Write(val.GetValueOrDefault());
-        public void Write(  long? val) => Write(val.GetValueOrDefault());
-        public void Write( ulong? val) => Write(val.GetValueOrDefault());
-        public void Write( float? val) => Write(val.GetValueOrDefault());
-        public void Write(double? val) => Write(val.GetValueOrDefault());
-
-        public void Write(  char val, bool UTF8 = true) =>
-            Write(UTF8 ? val.ToString().ToUTF8() : val.ToString().ToASCII());
-        public void Write(string val, bool UTF8 = true) =>
-            Write(UTF8 ? val           .ToUTF8() : val           .ToASCII());
+        public void W(  char val, bool UTF8 = true) => W(UTF8 ? val.ToString().ToUTF8() : val.ToString().ToASCII());
+        public void W(string val, bool UTF8 = true) => W(UTF8 ? val           .ToUTF8() : val           .ToASCII());
         
-        public void WriteEndian( short val) { CW(); *( short*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
-        public void WriteEndian(ushort val) { CW(); *(ushort*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
-        public void WriteEndian(   int val) { CW(); *(   int*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(  uint val) { CW(); *(  uint*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(  long val) { CW(); *(  long*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
-        public void WriteEndian( ulong val) { CW(); *( ulong*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
-        public void WriteEndian( float val) { CW(); *( float*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(double val) { CW(); *(double*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( short val) { CW(); *( short*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
+        public void WE(ushort val) { CW(); *(ushort*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
+        public void WE(   int val) { CW(); *(   int*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(  uint val) { CW(); *(  uint*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(  long val) { CW(); *(  long*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( ulong val) { CW(); *( ulong*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( float val) { CW(); *( float*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(double val) { CW(); *(double*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
 
-        public void WriteEndian( short val, bool IsBE)
-        { CW(); *( short*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
-        public void WriteEndian(ushort val, bool IsBE)
-        { CW(); *(ushort*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
-        public void WriteEndian(   int val, bool IsBE)
-        { CW(); *(   int*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(  uint val, bool IsBE)
-        { CW(); *(  uint*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(  long val, bool IsBE)
-        { CW(); *(  long*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
-        public void WriteEndian( ulong val, bool IsBE)
-        { CW(); *( ulong*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
-        public void WriteEndian( float val, bool IsBE)
-        { CW(); *( float*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
-        public void WriteEndian(double val, bool IsBE)
-        { CW(); *(double*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( short val, bool IsBE) { CW(); *( short*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
+        public void WE(ushort val, bool IsBE) { CW(); *(ushort*)ptr = val; buf.Endian(2, IsBE); stream.Write(buf, 0, 2); }
+        public void WE(   int val, bool IsBE) { CW(); *(   int*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(  uint val, bool IsBE) { CW(); *(  uint*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(  long val, bool IsBE) { CW(); *(  long*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( ulong val, bool IsBE) { CW(); *( ulong*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
+        public void WE( float val, bool IsBE) { CW(); *( float*)ptr = val; buf.Endian(4, IsBE); stream.Write(buf, 0, 4); }
+        public void WE(double val, bool IsBE) { CW(); *(double*)ptr = val; buf.Endian(8, IsBE); stream.Write(buf, 0, 8); }
         
 
-        public Half ReadHalf      (         ) { ushort a = ReadUInt16      (    ); return (Half)a; }
-        public Half ReadHalfEndian(         ) { ushort a = ReadUInt16Endian(    ); return (Half)a; }
-        public Half ReadHalfEndian(bool IsBE) { ushort a = ReadUInt16Endian(IsBE); return (Half)a; }
+        public Half RF16 (         ) { ushort a = RU16 (    ); return (Half)a; }
+        public Half RF16E(         ) { ushort a = RU16E(    ); return (Half)a; }
+        public Half RF16E(bool IsBE) { ushort a = RU16E(IsBE); return (Half)a; }
 
-        public void Write      (  Half val           ) => Write      ( (ushort ) val      );
-        public void WriteEndian(  Half val           ) => WriteEndian( (ushort ) val      );
-        public void WriteEndian(  Half val, bool IsBE) => WriteEndian( (ushort ) val, IsBE);
+        public void W (Half val           ) => W ((ushort)val      );
+        public void WE(Half val           ) => WE((ushort)val      );
+        public void WE(Half val, bool IsBE) => WE((ushort)val, IsBE);
         
-        public char ReadChar(bool UTF8 = true) => UTF8 ? ReadCharUTF8() : (char)stream.ReadByte();
+        public char RC(bool UTF8 = true) => UTF8 ? RCUTF8() : (char)stream.ReadByte();
 
-        public char ReadCharUTF8()
+        public char RCUTF8()
         {
             byte t;
             int T;
@@ -237,34 +213,34 @@ namespace KKdMainLib.IO
             return (char)val;
         }
 
-        public string ReadString(long Length, bool UTF8 = true) =>
-            UTF8 ? ReadStringUTF8(Length) : ReadStringASCII(Length);
+        public string RS(long Length, bool UTF8 = true) =>
+            UTF8 ? RSUTF8(Length) : RSASCII(Length);
 
-        public string ReadStringUTF8 (long Length) => ReadBytes(Length).ToUTF8 ();
-        public string ReadStringASCII(long Length) => ReadBytes(Length).ToASCII();
+        public string RSUTF8 (long Length) => RBy(Length).ToUTF8 ();
+        public string RSASCII(long Length) => RBy(Length).ToASCII();
         
         
-        public string ReadString(long? Length, bool UTF8 = true) =>
-            UTF8 ? ReadStringUTF8(Length) : ReadStringASCII(Length);
+        public string RS(long? Length, bool UTF8 = true) =>
+            UTF8 ? RSUTF8(Length) : RSASCII(Length);
 
-        public string ReadStringUTF8 (long? Length) => ReadBytes(Length).ToUTF8 ();
-        public string ReadStringASCII(long? Length) => ReadBytes(Length).ToASCII();
+        public string RSUTF8 (long? Length) => RBy(Length).ToUTF8 ();
+        public string RSASCII(long? Length) => RBy(Length).ToASCII();
         
-        public byte[] ReadBytes(long Length, int Offset = -1)
+        public byte[] RBy(long Length, int Offset = -1)
         { byte[] Buf = new byte[Length]; if (Offset > -1) stream.Position = Offset;
             stream.Read(Buf, 0, (int)Length); return Buf; }
         
-        public void ReadBytes(long Length, byte[] Buf, long Offset = -1)
+        public void RBy(long Length, byte[] Buf, long Offset = -1)
         { if (Offset > -1) stream.Position = Offset; stream.Read(Buf, 0, (int)Length); }
 
-        public byte[] ReadBytes(long? Length, int Offset = -1)
-        { if (Length == null) return new byte[0]; else return ReadBytes((long)Length, Offset); }
+        public byte[] RBy(long? Length, int Offset = -1)
+        { if (Length == null) return new byte[0]; else return RBy((long)Length, Offset); }
 
-        public void ReadBytes(long  Length, byte Bits, byte[] Buf, long Offset = -1)
+        public void RBy(long  Length, byte Bits, byte[] Buf, long Offset = -1)
         { if (Offset > -1) stream.Seek(Offset, 0);
-                 if (Bits > 0 && Bits < 8) for (i = 0; i < Length; i++) Buf[i] = ReadBits(Bits); }
+                 if (Bits > 0 && Bits < 8) for (i = 0; i < Length; i++) Buf[i] = RBi(Bits); }
            
-        public byte ReadBits(byte Bits)
+        public byte RBi(byte Bits)
         {
             BitRead += Bits;
             TempBitRead = 8 - BitRead;
@@ -277,9 +253,9 @@ namespace KKdMainLib.IO
             return (byte)((ValRead >> TempBitRead) & ((1 << Bits) - 1));
         }
 
-        public byte ReadHalfByte() => ReadBits(4);
+        public byte RHB() => RBi(4);
         
-        public void Write(int val, byte Bits)
+        public void W(int val, byte Bits)
         {
             val &= (1 << Bits) - 1;
             BitWrite += Bits;
@@ -313,7 +289,7 @@ namespace KKdMainLib.IO
         public byte[] ToArray()
         {
             long Position = stream.Position;
-            byte[] Data = ReadBytes(stream.Length, 0);
+            byte[] Data = RBy(stream.Length, 0);
             stream.Position = Position;
             return Data;
         }

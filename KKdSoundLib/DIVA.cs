@@ -17,20 +17,20 @@ namespace KKdSoundLib
             Data = new DIVAFile();
             Stream reader = File.OpenReader(file + ".diva");
 
-            if (reader.ReadString(0x04) != "DIVA") { reader.Close(); return; }
+            if (reader.RS(0x04) != "DIVA") { reader.C(); return; }
 
-            reader.ReadInt32();
-            Data.Size = reader.ReadUInt32();
-            Data.SampleRate = reader.ReadUInt32();
-            Data.SamplesCount = reader.ReadUInt32();
-            reader.ReadInt64();
-            Data.Channels = reader.ReadUInt16();
-            reader.ReadUInt16();
-            Data.Name = reader.ReadString(0x20);
+            reader.RI32();
+            Data.Size = reader.RU32();
+            Data.SampleRate = reader.RU32();
+            Data.SamplesCount = reader.RU32();
+            reader.RI64();
+            Data.Channels = reader.RU16();
+            reader.RU16();
+            Data.Name = reader.RS(0x20);
 
             Stream writer = File.OpenWriter();
             if (!ToArray) writer = File.OpenWriter(file + ".wav", true);
-            writer.LongPosition = 0x2C;
+            writer.I64P = 0x2C;
 
             byte value = 0;
             int[] current = new int[Data.Channels];
@@ -45,19 +45,19 @@ namespace KKdSoundLib
             for (i = 0; i < Data.SamplesCount; i++)
                 for (c = 0; c < Data.Channels; c++)
                 {
-                    value = reader.ReadHalfByte();
+                    value = reader.RHB();
                     IMADecoder(value, ref currentPtr[c], ref currentclampPtr[c], ref stepindexPtr[c]);
                     f = (float)(currentPtr[c] / 32768.0);
-                    writer.Write(f);
+                    writer.W(f);
                 }
 
             WAV.Header Header = new WAV.Header { Bytes = 4, Channels = Data.Channels, Format = 3,
                 SampleRate = Data.SampleRate, Size = Data.SamplesCount * Data.Channels * 4 };
-            writer.Write(Header, 0);
+            writer.W(Header, 0);
             if (ToArray) Data.Data = writer.ToArray();
-            writer.Close();
+            writer.C();
 
-            reader.Close();
+            reader.C();
         }
 
         public void DIVAWriter(string file)
@@ -68,12 +68,12 @@ namespace KKdSoundLib
 
             Data = new DIVAFile();
             WAV.Header Header = reader.ReadWAVHeader();
-            if (!Header.IsSupported) { reader.Close(); return; }
+            if (!Header.IsSupported) { reader.C(); return; }
 
             Stream writer = File.OpenWriter(file + ".diva", true);
             Data.Channels = Header.Channels;
             Data.SampleRate = Header.SampleRate;
-            writer.LongPosition = 0x40;
+            writer.I64P = 0x40;
 
             byte value = 0;
             int[] sample = new int[Data.Channels];
@@ -90,24 +90,24 @@ namespace KKdSoundLib
             for (i = 0; i < Data.SamplesCount; i++)
                 for (c = 0; c < Header.Channels; c++)
                 {
-                    samplePtr[c] = (reader.ReadWAVSample(Header.Bytes, Header.Format) * 0x8000).CFTI();
+                    samplePtr[c] = (reader.RS(Header.Bytes, Header.Format) * 0x8000).CFTI();
                     value = IMAEncoder(samplePtr[c], ref currentPtr[c],
                         ref currentclampPtr[c], ref stepindexPtr[c]);
-                    writer.Write(value, 4);
+                    writer.W(value, 4);
                 }
             writer.CW();
 
-            writer.LongPosition = 0x00;
-            writer.Write("DIVA");
-            writer.Write(0x00);
-            writer.Write((Data.SamplesCount * Data.Channels).Align(2, 2));
-            writer.Write(Data.SampleRate);
-            writer.Write(Data.SamplesCount);
-            writer.Write(0x00);
-            writer.Write(0x00);
-            writer.Write(Data.Channels);
-            writer.Close();
-            reader.Close();
+            writer.I64P = 0x00;
+            writer.W("DIVA");
+            writer.W(0x00);
+            writer.W((Data.SamplesCount * Data.Channels).Align(2, 2));
+            writer.W(Data.SampleRate);
+            writer.W(Data.SamplesCount);
+            writer.W(0x00);
+            writer.W(0x00);
+            writer.W(Data.Channels);
+            writer.C();
+            reader.C();
         }
 
         private void IMADecoder(byte value, ref int current, ref int currentclamp, ref sbyte stepindex)

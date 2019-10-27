@@ -19,14 +19,14 @@ namespace KKdMainLib.F2
             if (Header.Signature != 0x4354494C || Header.InnerSignature != 0x2 ||
                 Header.SectionSignature != 0x2) return;
 
-            LITs = IO.ReadCountPointerEndian<CountPointer<LIT>>();
-            if (LITs.Count < 1) { IO.Close(); LITs.Count = -1; return; }
+            LITs = IO.RCPE<CountPointer<LIT>>();
+            if (LITs.C < 1) { IO.C(); LITs.C = -1; return; }
 
-            IO.Position = LITs.Offset;
-            for (i = 0; i < LITs.Count; i++)
+            IO.P = LITs.O;
+            for (i = 0; i < LITs.C; i++)
             {
-                LITs[i] = IO.ReadCountPointerX<LIT>();
-                if ((LITs[i].Count > 0 || LITs[i].Offset == 0) && !IO.IsX) { IO.Close(); LITs.Count = -1; return; }
+                LITs[i] = IO.RCPX<LIT>();
+                if ((LITs[i].C > 0 || LITs[i].O == 0) && !IO.IsX) { IO.C(); LITs.C = -1; return; }
                 /*{
                     IO.Format = Header.Format = Format.X;
                     IO.Offset = Header.Length;
@@ -36,52 +36,52 @@ namespace KKdMainLib.F2
                 if (IO.IsX) IO.ReadInt64();*/
             }
 
-            for (i = 0; i < LITs.Count; i++)
+            for (i = 0; i < LITs.C; i++)
             {
-                IO.Position = LITs[i].Offset;
-                for (i0 = 0; i0 < LITs[i].Count; i0++)
+                IO.P = LITs[i].O;
+                for (i0 = 0; i0 < LITs[i].C; i0++)
                 {
-                    ref LIT LIT = ref LITs.Entries[i].Entries[i0];
-                    LIT.Id    = (Id   )IO.ReadInt32Endian();
-                    LIT.Flags = (Flags)IO.ReadInt32Endian();
-                    LIT.Type  = (Type )IO.ReadInt32Endian();
-                    if (IO.IsX) { IO.ReadInt64(); IO.ReadInt64(); IO.ReadInt64(); }
-                    LIT.Ambient  .X = IO.ReadSingleEndian();
-                    LIT.Ambient  .Y = IO.ReadSingleEndian();
-                    LIT.Ambient  .Z = IO.ReadSingleEndian();
-                    LIT.Ambient  .W = IO.ReadSingleEndian();
-                    LIT.Diffuse  .X = IO.ReadSingleEndian();
-                    LIT.Diffuse  .Y = IO.ReadSingleEndian();
-                    LIT.Diffuse  .Z = IO.ReadSingleEndian();
-                    LIT.Diffuse  .W = IO.ReadSingleEndian();
-                    LIT.Specular .X = IO.ReadSingleEndian();
-                    LIT.Specular .Y = IO.ReadSingleEndian();
-                    LIT.Specular .Z = IO.ReadSingleEndian();
-                    LIT.Specular .W = IO.ReadSingleEndian();
-                    LIT.Position .X = IO.ReadSingleEndian();
-                    LIT.Position .Y = IO.ReadSingleEndian();
-                    LIT.Position .Z = IO.ReadSingleEndian();
-                    LIT.ToneCurve.X = IO.ReadSingleEndian();
-                    LIT.ToneCurve.Y = IO.ReadSingleEndian();
-                    LIT.ToneCurve.Z = IO.ReadSingleEndian();
-                    if (IO.IsX) { IO.ReadInt64(); IO.ReadInt64(); IO.ReadInt64();
-                                  IO.ReadInt64(); IO.ReadInt64(); IO.ReadInt32(); }
+                    ref LIT LIT = ref LITs.E[i].E[i0];
+                    LIT.Id    = (Id   )IO.RI32E();
+                    LIT.Flags = (Flags)IO.RI32E();
+                    LIT.Type  = (Type )IO.RI32E();
+                    if (IO.IsX) { IO.RI64(); IO.RI64(); IO.RI64(); }
+                    LIT.Ambient  .X = IO.RF32E();
+                    LIT.Ambient  .Y = IO.RF32E();
+                    LIT.Ambient  .Z = IO.RF32E();
+                    LIT.Ambient  .W = IO.RF32E();
+                    LIT.Diffuse  .X = IO.RF32E();
+                    LIT.Diffuse  .Y = IO.RF32E();
+                    LIT.Diffuse  .Z = IO.RF32E();
+                    LIT.Diffuse  .W = IO.RF32E();
+                    LIT.Specular .X = IO.RF32E();
+                    LIT.Specular .Y = IO.RF32E();
+                    LIT.Specular .Z = IO.RF32E();
+                    LIT.Specular .W = IO.RF32E();
+                    LIT.Position .X = IO.RF32E();
+                    LIT.Position .Y = IO.RF32E();
+                    LIT.Position .Z = IO.RF32E();
+                    LIT.ToneCurve.X = IO.RF32E();
+                    LIT.ToneCurve.Y = IO.RF32E();
+                    LIT.ToneCurve.Z = IO.RF32E();
+                    if (IO.IsX) { IO.RI64(); IO.RI64(); IO.RI64();
+                                  IO.RI64(); IO.RI64(); IO.RI32(); }
                 }
             }
-            IO.Close();
+            IO.C();
         }
 
         public void TXTWriter(string file)
         {
             i = 0;
-            if (LITs.Count < 1) return;
+            if (LITs.C < 1) return;
 
             IO = File.OpenWriter();
-            IO.WriteShiftJIS("Type,AmbientR,AmbientG,AmbientB,DiffuseR,DiffuseG,DiffuseB,SpecularR,SpecularG," +
+            IO.WPSSJIS("Type,AmbientR,AmbientG,AmbientB,DiffuseR,DiffuseG,DiffuseB,SpecularR,SpecularG," +
                 "SpecularB,SpecularA,PosX,PosY,PosZ,ToneCurveBegin,ToneCurveEnd,ToneCurveBlendRate," +
                 (file.EndsWith("_chara") ? "コメント" : "ID") + "\n");
-            for (i0 = 0; i0 < LITs[i].Count; i0++)
-                IO.Write(LITs[i][i0] + "," + i + "\n");
+            for (i0 = 0; i0 < LITs[i].C; i0++)
+                IO.W(LITs[i][i0] + "," + i + "\n");
             File.WriteAllBytes(file + "_light.txt", IO.ToArray(true));
         }
 
