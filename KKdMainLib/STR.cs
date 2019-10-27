@@ -23,68 +23,68 @@ namespace KKdMainLib
 
             Header = new Header();
             IO.Format = Format.F;
-            Header.Signature = IO.ReadInt32();
+            Header.Signature = IO.RI32();
             if (Header.Signature == 0x41525453)
             {
                 Header = IO.ReadHeader(true, false);
                 POF.Offsets = KKdList<long>.New;
                 
-                long Count = IO.ReadInt32Endian();
-                Offset = IO.ReadInt32Endian();
+                long Count = IO.RI32E();
+                Offset = IO.RI32E();
                 
                 if (Offset == 0)
                 {
                     Offset = Count;
-                    OffsetX = IO.ReadInt64();
-                    Count   = IO.ReadInt64();
-                    IO.Offset = Header.Length;
+                    OffsetX = IO.RI64();
+                    Count   = IO.RI64();
+                    IO.O = Header.Length;
                     IO.Format = Format.X;
-                    IO.LongOffset += Offset;
-                    IO.Position = 0;
+                    IO.I64O += Offset;
+                    IO.P = 0;
                 }
-                else IO.Position = Header.Length + 0x40;
+                else IO.P = Header.Length + 0x40;
 
                 STRs = new String[Count];
                 for (int i = 0; i < Count; i++)
                 {
-                    STRs[i].Str.Offset = IO.ReadInt32Endian();
-                    STRs[i].ID         = IO.ReadInt32Endian();
+                    STRs[i].Str.O = IO.RI32E();
+                    STRs[i].ID         = IO.RI32E();
                 }
 
                 if (IO.IsX)
                 {
-                    IO.LongOffset = Header.Length + OffsetX;
+                    IO.I64O = Header.Length + OffsetX;
                     for (int i = 0; i < Count; i++)
-                        STRs[i].Str.Value = IO.ReadStringAtOffset(STRs[i].Str.Offset);
+                        STRs[i].Str.V = IO.RSaO(STRs[i].Str.O);
                 }
                 else
                 {
-                    IO.Offset = 0;
+                    IO.O = 0;
                     for (int i = 0; i < Count; i++)
-                        STRs[i].Str.Value = STRs[i].Str.Offset > 0 ?
-                            IO.ReadStringAtOffset(STRs[i].Str.Offset) : null;
+                        STRs[i].Str.V = STRs[i].Str.O > 0 ?
+                            IO.RSaO(STRs[i].Str.O) : null;
                 }
             }
             else
             {
-                IO.Position -= 4;
+                IO.P -= 4;
                 int Count = 0;
-                for (int a = 0, i = 0; IO.Position > 0 && IO.Position < IO.Length; i++, Count++)
+                for (int a = 0, i = 0; IO.P > 0 && IO.P < IO.L; i++, Count++)
                 {
-                    a = IO.ReadInt32();
+                    a = IO.RI32();
                     if (a == 0) break;
                 }
                 STRs = new String[Count];
 
                 for (int i = 0; i < Count; i++)
                 {
-                    IO.LongPosition = STRs[i].Str.Offset;
+                    IO.I64P = STRs[i].Str.O;
                     STRs[i].ID = i;
-                    STRs[i].Str.Value = IO.NullTerminatedUTF8();
+                    STRs[i].Str.V = IO.NTUTF8();
                 }
             }
 
-            IO.Close();
+            IO.C();
             return 1;
         }
 
@@ -101,70 +101,70 @@ namespace KKdMainLib
             long Count = STRs.LongLength;
             if (IO.Format > Format.FT)
             {
-                IO.Position = 0x40;
-                IO.WriteX(Count, ref POF);
-                IO.WriteX(0x80);
-                IO.Position = 0x80;
-                for (int i = 0; i < Count; i++) IO.Write(0x00L);
-                IO.Align(0x10);
+                IO.P = 0x40;
+                IO.WX(Count, ref POF);
+                IO.WX(0x80);
+                IO.P = 0x80;
+                for (int i = 0; i < Count; i++) IO.W(0x00L);
+                IO.A(0x10);
             }
             else
             {
-                for (int i = 0; i < Count; i++) IO.Write(0x00);
-                IO.Align(0x20);
+                for (int i = 0; i < Count; i++) IO.W(0x00);
+                IO.A(0x20);
             }
 
             KKdList<string> UsedSTR = KKdList<string>.New;
             KKdList<int> UsedSTRPos = KKdList<int>.New;
             int[] STRPos = new int[Count];
 
-            UsedSTRPos.Add(IO.Position);
+            UsedSTRPos.Add(IO.P);
             UsedSTR.Add("");
-            IO.WriteByte(0);
+            IO.W(0);
             for (int i = 0; i < Count; i++)
             {
-                if (!UsedSTR.Contains(STRs[i].Str.Value))
+                if (!UsedSTR.Contains(STRs[i].Str.V))
                 {
-                    STRPos[i] = IO.Position;
+                    STRPos[i] = IO.P;
                     UsedSTRPos.Add(STRPos[i]);
-                    UsedSTR.Add(STRs[i].Str.Value);
-                    IO.Write(STRs[i].Str.Value);
-                    IO.WriteByte(0);
+                    UsedSTR.Add(STRs[i].Str.V);
+                    IO.W(STRs[i].Str.V);
+                    IO.W(0);
                 }
                 else
                     for (int i2 = 0; i2 < Count; i2++)
-                        if (UsedSTR[i2] == STRs[i].Str.Value) { STRPos[i] = UsedSTRPos[i2]; break; }
+                        if (UsedSTR[i2] == STRs[i].Str.V) { STRPos[i] = UsedSTRPos[i2]; break; }
             }
 
             if (IO.Format > Format.FT)
             {
-                IO.Align(0x10);
-                Offset = IO.UIntPosition;
-                IO.Position = 0x80;
+                IO.A(0x10);
+                Offset = IO.U32P;
+                IO.P = 0x80;
                 for (int i = 0; i < Count; i++)
                 {
-                    POF.Offsets.Add(IO.Position);
-                    IO.WriteEndian(STRPos[i]);
-                    IO.WriteEndian(STRs[i].ID);
+                    POF.Offsets.Add(IO.P);
+                    IO.WE(STRPos[i]);
+                    IO.WE(STRs[i].ID);
                 }
 
-                IO.UIntPosition = Offset;
+                IO.U32P = Offset;
                 POF.Depth = 1;
-                IO.Write(POF);
-                CurrentOffset = IO.UIntPosition;
-                IO.WriteEOFC();
+                IO.W(POF);
+                CurrentOffset = IO.U32P;
+                IO.WEOFC();
                 Header.DataSize = (int)(CurrentOffset - 0x40);
                 Header.Signature = 0x41525453;
                 Header.SectionSize = (int)(Offset - 0x40);
-                IO.Position = 0;
-                IO.Write(Header, true);
+                IO.P = 0;
+                IO.W(Header, true);
             }
             else
             {
-                IO.Position = 0;
-                for (int i = 0; i < Count; i++) IO.Write(STRPos[i]);
+                IO.P = 0;
+                for (int i = 0; i < Count; i++) IO.W(STRPos[i]);
             }
-            IO.Close();
+            IO.C();
         }
 
         public void MsgPackReader(string file, bool JSON)
@@ -174,16 +174,16 @@ namespace KKdMainLib
             if ((Temp = MsgPack["STR"]).NotNull) return;
 
             Header = new Header();
-            System.Enum.TryParse(Temp.ReadString("Format"), out Header.Format);
+            System.Enum.TryParse(Temp.RS("Format"), out Header.Format);
 
             if ((Temp = MsgPack["Strings", true]).IsNull) return;
 
             STRs = new String[Temp.Array.Length];
             for (int i = 0; i < STRs.Length; i++)
             {
-                STRs[i].ID        = Temp[i].ReadInt32 ("ID" );
-                STRs[i].Str.Value = Temp[i].ReadString("Str");
-                if (STRs[i].Str.Value == null) STRs[i].Str.Value = "";
+                STRs[i].ID        = Temp[i].RI32 ("ID" );
+                STRs[i].Str.V = Temp[i].RS("Str");
+                if (STRs[i].Str.V == null) STRs[i].Str.V = "";
             }
 
             MsgPack.Dispose();
@@ -197,9 +197,9 @@ namespace KKdMainLib
             for (int i = 0; i < STRs.Length; i++)
             {
                 Strings[i] = MsgPack.New.Add("ID", STRs[i].ID);
-                if (STRs[i].Str.Value != null)
-                    if (STRs[i].Str.Value != "")
-                        Strings[i] = Strings[i].Add("Str", STRs[i].Str.Value);
+                if (STRs[i].Str.V != null)
+                    if (STRs[i].Str.V != "")
+                        Strings[i] = Strings[i].Add("Str", STRs[i].Str.V);
             }
             STR_.Add(Strings);
 
@@ -211,8 +211,8 @@ namespace KKdMainLib
             public int ID;
             public Pointer<string> Str;
 
-            public override string ToString() => "ID: " + ID + (Str.Value != null || 
-                Str.Value != "" ? ("; Str: " + Str.Value) : "");
+            public override string ToString() => "ID: " + ID + (Str.V != null || 
+                Str.V != "" ? ("; Str: " + Str.V) : "");
         }
     }
 }

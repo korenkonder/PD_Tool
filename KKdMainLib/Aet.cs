@@ -1,6 +1,7 @@
-﻿//Original: AetSet.bt Version: 2.0 by samyuu
+﻿//Original: AetSet.bt Version: 3.4 by samyuu
 
 using KKdBaseLib;
+using KKdBaseLib.Aet;
 using KKdMainLib.IO;
 
 namespace KKdMainLib.Aet
@@ -8,13 +9,11 @@ namespace KKdMainLib.Aet
     public class Aet
     {
         public Aet()
-        { AET = new AetHeader(); i = i0 = 0; IO = null; }
+        { AET = new AetHeader(); IO = null; }
 
         public AetHeader AET;
-
-        private int i, i0, i1;
         private Stream IO;
-
+        private int i, i0, i1, i2;
         private const string x00 = "\0";
 
         public void AETReader(string file)
@@ -22,326 +21,642 @@ namespace KKdMainLib.Aet
             AET = new AetHeader();
             IO = File.OpenReader(file + ".bin", true);
 
-            i = 0;
+            int i = 0;
             int Pos = -1;
-            while (true) { Pos = IO.ReadInt32(); if (Pos != 0 && Pos < IO.Length) i++; else break; }
+            while (true) { Pos = IO.RI32(); if (Pos != 0 && Pos < IO.L) i++; else break; }
 
-            IO.Position = 0;
+            IO.P = 0;
             AET.Data = new Pointer<AetData>[i];
-            for (int i = 0; i < AET.Data.Length; i++) AET.Data[i] = IO.ReadPointer<AetData>();
-            for (int i = 0; i < AET.Data.Length; i++) AETReader(ref AET.Data[i]);
+            for (i = 0; i < AET.Data.Length; i++) AET.Data[i] = IO.RP<AetData>();
+            for (i = 0; i < AET.Data.Length; i++) AETReader(ref AET.Data[i]);
 
-            IO.Close();
+            IO.C();
         }
 
         public void AETWriter(string file)
         {
-            if (AET.Data == null) return;
-            if (AET.Data.Length == 0) return;
+            if (AET.Data == null || AET.Data.Length == 0) return;
+            //IO = File.OpenWriter();
             IO = File.OpenWriter(file + ".bin", true);
 
             for (int i = 0; i < AET.Data.Length; i++)
             {
-                IO.Position = IO.Length + 0x20;
+                IO.P = IO.L + 0x20;
                 AETWriter(ref AET.Data[i]);
             }
 
-            IO.Position = 0;
-            for (int i = 0; i < AET.Data.Length; i++) IO.Write(AET.Data[i].Offset);
-            IO.Close();
+            IO.P = 0;
+            for (int i = 0; i < AET.Data.Length; i++)
+                if (AET.Data[i].O > 0) IO.W(AET.Data[i].O);
+            //byte[] data = IO.ToArray(true);
+
+            //IO.W(data);
+            IO.C();
+            //data = null;
         }
 
-        public void AETReader(ref Pointer<AetData> AET)
+        private void AETReader(ref Pointer<AetData> AET)
         {
-            IO.Position = AET.Offset;
-            ref AetData Aet = ref AET.Value;
+            IO.P = AET.O;
+            ref AetData aet = ref AET.V;
 
-            Aet.Name = IO.ReadPointerString();
-            Aet.Unk       = IO.ReadSingle();
-            Aet.Duration  = IO.ReadSingle();
-            Aet.FrameRate = IO.ReadSingle();
-            Aet.BackgroundColor = IO.ReadInt32();
-            Aet.Width           = IO.ReadInt32();
-            Aet.Height          = IO.ReadInt32();
-            Aet.Position = IO.ReadPointer<Vector2<KeyFrameEntry>>();
-            Aet.Layers        = IO.ReadCountPointer<   AetLayer>();
-            Aet.SpriteEntries = IO.ReadCountPointer<SpriteEntry>();
-            Aet.Unknown = IO.ReadCountPointer<int>();
+            aet.Name = IO.RPS();
+            aet.StartFrame    = IO.RF32();
+            aet.FrameDuration = IO.RF32();
+            aet.FrameRate     = IO.RF32();
+            aet.BackColor = IO.RU32();
+            aet.Width     = IO.RU32();
+            aet.Height    = IO.RU32();
+            aet.Position  = IO.RP<Vector2<CountPointer<KFT2>>>();
+            aet.Layers    = IO.ReadCountPointer<AetLayer >();
+            aet.Regions   = IO.ReadCountPointer<AetRegion>();
+            aet.Sounds    = IO.ReadCountPointer<AetSound >();
 
-            if (Aet.Position.Offset > 0)
+            if (aet.Position.O > 0)
             {
-                IO.Position = Aet.Position.Offset;
-                Aet.Position.Value.X.Offset = IO.ReadInt32();
-                Aet.Position.Value.Y.Offset = IO.ReadInt32();
-                IO.ReadKeyFrameEntry(ref Aet.Position.Value.X);
-                IO.ReadKeyFrameEntry(ref Aet.Position.Value.Y);
+                IO.P = aet.Position.O;
+                aet.Position.V.X.O = IO.RI32();
+                aet.Position.V.Y.O = IO.RI32();
+                RKF(ref aet.Position.V.X);
+                RKF(ref aet.Position.V.Y);
             }
 
-            IO.Position = Aet.Layers.Offset;
-            for (i = 0; i < Aet.Layers.Count; i++)
-                Aet.Layers[i] = new AetLayer() { Pointer = IO.Position,
-                    Count = IO.ReadInt32(), Offset = IO.ReadInt32()};
-
-            for (i = 0, i1 = 0; i < Aet.Layers.Count; i++)
+            if (aet.Sounds.O > 0)
             {
-                IO.Position = Aet.Layers[i].Offset;
-                for (i0 = 0; i0 < Aet.Layers[i].Count; i0++, i1++)
+                IO.P = aet.Sounds.O;
+                for (i = 0; i < aet.Sounds.C; i++)
                 {
-                    Aet.Layers[i].Objects[i0] = IO.ReadAetObject();
-                    Aet.Layers[i].Objects[i0].ID = i1;
+                    ref AetSound aif = ref aet.Sounds.E[i];
+                    aif.Offset = IO.P;
+                    aif.Unk0 = IO.RU32();
+                    aif.Unk1 = IO.RU32();
+                    aif.Unk2 = IO.RU32();
+                    aif.Unk3 = IO.RU32();
                 }
             }
 
-            IO.Position = Aet.SpriteEntries.Offset;
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
-                Aet.SpriteEntries[i] = new SpriteEntry
-                { Offset = IO.Position, Unknown = IO.ReadInt32(), Width = IO.ReadInt16(),
-                    Height = IO.ReadInt16(), Frames = IO.ReadSingle(), Sprites = IO.ReadCountPointer<Sprite>() };
+            IO.P = aet.Layers.O;
+            for (i = 0; i < aet.Layers.C; i++)
+                aet.Layers[i] = new AetLayer() { Pointer = IO.P, C = IO.RI32(), O = IO.RI32()};
 
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
+            i1 = 0;
+            RAL(ref aet.Layers.E[aet.Layers.C - 1]);
+            for (i = 0; i < aet.Layers.C - 1; i++)
+                RAL(ref aet.Layers.E[i]);
+
+            IO.P = aet.Regions.O;
+            for (i = 0; i < aet.Regions.C; i++)
+                aet.Regions[i] = new AetRegion { Offset = IO.P, Color = IO.RU32(), Width = IO.RU16(),
+                    Height = IO.RU16(), Frames = IO.RF32(), Sprites = IO.ReadCountPointer<Sprite>() };
+
+            for (i = 0; i < aet.Regions.C; i++)
             {
-                IO.Position = Aet.SpriteEntries[i].Sprites.Offset;
-                for (i0 = 0; i0 < Aet.SpriteEntries[i].Sprites.Count; i0++)
-                    Aet.SpriteEntries.Entries[i].Sprites[i0] =
-                        new Sprite { Name = IO.ReadPointerString(), ID = IO.ReadInt32() };
+                IO.P = aet.Regions[i].Sprites.O;
+                for (i0 = 0; i0 < aet.Regions[i].Sprites.C; i0++)
+                    aet.Regions.E[i].Sprites[i0] = new Sprite { Name = IO.RPS(), ID = IO.RU32() };
+            }
+            
+            for (i = 0; i < aet.Layers.C; i++)
+            {
+                for (i0 = 0; i0 < aet.Layers[i].C; i0++)
+                {
+                    ref AetObject obj = ref aet.Layers[i].E[i0];
+                    int DataID = obj.DataID;
+                    if (DataID > 0)
+                    {
+                        if (obj.Type == AetObject.AetObjType.Pic)
+                        {
+                            for (i1 = 0; i1 < aet.Regions.C; i1++)
+                                if (aet.Regions[i1].Offset == DataID) { obj.DataID = i1; break; }
+                        }
+                        else if (obj.Type == AetObject.AetObjType.Aif)
+                        {
+                            for (i1 = 0; i1 < aet.Sounds.C; i1++)
+                                     if (aet.Sounds[i1].Offset       == DataID) { obj.DataID = i1 * 4    ; break; }
+                                else if (aet.Sounds[i1].Offset + 0x4 == DataID) { obj.DataID = i1 * 4 + 1; break; }
+                                else if (aet.Sounds[i1].Offset + 0x8 == DataID) { obj.DataID = i1 * 4 + 2; break; }
+                                else if (aet.Sounds[i1].Offset + 0xC == DataID) { obj.DataID = i1 * 4 + 3; break; }
+                        }
+                        else if (obj.Type == AetObject.AetObjType.Eff)
+                        {
+                            for (i1 = 0; i1 < aet.Layers.C; i1++)
+                                if (aet.Layers[i1].Pointer == DataID) { obj.DataID = i1; break; }
+                        }
+                    }
+                    if (DataID == obj.DataID) obj.DataID = -1;
+
+                    int ParentObjectID = obj.ParentObjectID;
+                    if (ParentObjectID > 0)
+                        for (i1 = 0; i1 < aet.Layers.C; i1++)
+                        {
+                            for (i2 = 0; i2 < aet.Layers[i1].C; i2++)
+                                if (aet.Layers[i1].E[i2].Offset == ParentObjectID)
+                                { obj.ParentObjectID = aet.Layers[i1].E[i2].ID; break; }
+                            if (ParentObjectID != obj.ParentObjectID) break;
+                        }
+                    if (ParentObjectID == obj.ParentObjectID) obj.ParentObjectID = -1;
+                }
             }
         }
 
-        public void AETWriter(ref Pointer<AetData> AET)
+        private void AETWriter(ref Pointer<AetData> AET)
         {
-            ref AetData Aet = ref AET.Value;
-
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
+            ref AetData aet = ref AET.V;
+            
+            for (i = 0; i < aet.Regions.C; i++)
             {
-                ref SpriteEntry SprEnt = ref Aet.SpriteEntries.Entries[i];
-                if (SprEnt.Sprites.Count == 0) { SprEnt.Sprites.Offset = 0; continue; }
-                if (SprEnt.Sprites.Count > 1) IO.Align(0x20);
-                SprEnt.Sprites.Offset = IO.Position;
-                for (i0 = 0; i0 < SprEnt.Sprites.Count; i0++)
-                    IO.Write(0L);
+                ref AetRegion region = ref aet.Regions.E[i];
+                if (region.Sprites.C == 0) { region.Sprites.O = 0; continue; }
+                if (region.Sprites.C > 1) IO.A(0x20);
+                region.Sprites.O = IO.P;
+                for (i0 = 0; i0 < region.Sprites.C; i0++) IO.W(0L);
             }
 
-            IO.Align(0x20);
-            Aet.SpriteEntries.Offset = IO.Position;
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
+            IO.A(0x20);
+            aet.Regions.O = IO.P;
+            for (i = 0; i < aet.Regions.C; i++)
             {
-                ref SpriteEntry SprEnt = ref Aet.SpriteEntries.Entries[i];
-                SprEnt.Offset = IO.Position;
-                IO.Write(SprEnt.Unknown);
-                IO.Write(SprEnt.Width);
-                IO.Write(SprEnt.Height);
-                IO.Write(SprEnt.Frames);
-                IO.Write(SprEnt.Sprites.Count);
-                IO.Write(SprEnt.Sprites.Offset);
+                ref AetRegion region = ref aet.Regions.E[i];
+                region.Offset = IO.P;
+                IO.W(region.Color);
+                IO.W(region.Width);
+                IO.W(region.Height);
+                IO.W(region.Frames);
+                IO.W(region.Sprites);
             }
 
-            IO.Align(0x20);
-            Aet.Layers.Offset = IO.Position;
-            for (i = 0; i < Aet.Layers.Count; i++)
+            IO.A(0x20);
+            aet.Layers.O = IO.P;
+            for (i = 0; i < aet.Layers.C; i++)
             {
-                Aet.Layers.Entries[i].Offset = IO.Position;
-                IO.Write(0L);
+                aet.Layers.E[i].O = IO.P;
+                IO.W(0L);
             }
 
-            KKdList<int> NullValPointers = KKdList<int>.New;
-            for (i = 0; i < Aet.Layers.Count; i++)
+            for (i = 0; i < aet.Layers.C; i++)
             {
-                if (Aet.Layers.Entries[i].Count < 1) continue;
+                if (aet.Layers.E[i].C < 1) continue;
 
-                for (i0 = 0; i0 < Aet.Layers.Entries[i].Count; i0++)
-                    IO.Write(ref Aet.Layers.Entries[i].Objects[i0], ref NullValPointers);
+                for (i0 = 0; i0 < aet.Layers.E[i].C; i0++)
+                {
+                    ref AetObject obj = ref aet.Layers.E[i].E[i0];
+                    ref AnimationData data = ref obj.Data.V;
+                    ref AnimationData.ThirdDimension _3D = ref data._3D.V;
+                    ref AetObject.AetObjExtraData extraData = ref obj.ExtraData.V;
+                    if (obj.Marker.C > 0)
+                    {
+                        if (obj.Marker.C > 3) IO.A(0x20);
+                        obj.Marker.O = IO.P;
+                        for (i1 = 0; i1 < obj.Marker.C; i1++)
+                            IO.W(0L);
+                    }
 
-                IO.Align(0x20);
-                Aet.Layers.Entries[i].Objects[0].Offset = IO.Position;
-                for (i0 = 0; i0 < Aet.Layers.Entries[i].Count; i0++)
-                    IO.Write(ref Aet.Layers.Entries[i].Objects[i0]);
+                    if (obj.Data.V._3D.O > 0)
+                    {
+                        W(ref _3D.Unk1      );
+                        W(ref _3D.Unk2      );
+                        W(ref _3D.RotReturnX);
+                        W(ref _3D.RotReturnY);
+                        W(ref _3D.RotReturnZ);
+                        W(ref _3D. RotationX);
+                        W(ref _3D. RotationY);
+                        W(ref _3D.    ScaleZ);
+                    }
+
+                    if (obj.Data.O > 0)
+                    {
+                         W(ref data.  OriginX);
+                         W(ref data.  OriginY);
+                         W(ref data.PositionX);
+                         W(ref data.PositionY);
+                         W(ref data.Rotation );
+                         W(ref data.   ScaleX);
+                         W(ref data.   ScaleY);
+                         W(ref data.Opacity  );
+                    }
+                    
+                    if (obj.Data.V._3D.O > 0)
+                    {
+                        IO.A(0x20);
+                        data._3D.O = IO.P;
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                    }
+            
+                    if (obj.ExtraData.O > 0)
+                    {
+                        W(ref extraData.Unk0);
+                        W(ref extraData.Unk1);
+                        W(ref extraData.Unk2);
+                        W(ref extraData.Unk3);
+                    }
+
+                    if (obj.Data.O > 0)
+                    {
+                        IO.A(0x20);
+                        obj.Data.O = IO.P;
+
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                    }
+            
+                    if (obj.ExtraData.O > 0)
+                    {
+                        IO.A(0x20);
+                        obj.ExtraData.O = IO.P;
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                        IO.W(0L);
+                    }
+                }
+
+                IO.A(0x20);
+                aet.Layers.E[i].E[0].Offset = IO.P;
+                for (i0 = 0; i0 < aet.Layers.E[i].C; i0++)
+                {
+                    ref AetObject obj = ref aet.Layers.E[i].E[i0];
+                    obj.Offset = IO.P;
+                    IO.W(0L);
+                    IO.W(0L);
+                    IO.W(0L);
+                    IO.W(0L);
+                    IO.W(0L);
+                    IO.W(0L);
+                }
             }
 
-            if (Aet.Position.Offset > 0)
+            if (aet.Position.O > 0)
             {
-                IO.Align(0x10);
-                int Flags = 0;
-                Flags |= IO.Write(ref Aet.Position.Value.X) ? 0b10 : 0;
-                Flags |= IO.Write(ref Aet.Position.Value.Y) ? 0b01 : 0;
+                ref Vector2<CountPointer<KFT2>> pos = ref aet.Position.V;
+                IO.A(0x10);
+                W(ref pos.X);
+                W(ref pos.Y);
 
-                IO.Align(0x20);
-                Aet.Position.Offset = IO.Position;
-                IO.Write(Aet.Position.Value.X.Count );
-                if ((Flags & 0b10) == 0b10) NullValPointers.Add(IO.Position);
-                IO.Write(Aet.Position.Value.X.Offset);
-                IO.Write(Aet.Position.Value.X.Count );
-                if ((Flags & 0b01) == 0b01) NullValPointers.Add(IO.Position);
-                IO.Write(Aet.Position.Value.Y.Offset);
+                IO.A(0x20);
+                aet.Position.O = IO.P;
+                IO.W(pos.X);
+                IO.W(pos.Y);
 
-                IO.Write(ref Aet.Position.Value.X);
-                IO.Write(ref Aet.Position.Value.Y);
+                W(ref pos.X);
+                W(ref pos.Y);
             }
-            else Aet.Position.Offset = 0;
 
-            IO.Align(0x20);
-            AET.Offset = IO.Position;
-            IO.Write(0L);
-            IO.Write(Aet.Duration);
-            IO.Write(Aet.FrameRate);
-            IO.Write(Aet.BackgroundColor);
-            IO.Write(Aet.Width);
-            IO.Write(Aet.Height);
-            IO.Write(Aet.Position.Offset);
-            IO.Write(0L);
-            IO.Write(0L);
-            IO.Write(0L);
-            IO.Write(0L);
+            IO.A(0x20);
+            AET.O = IO.P;
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
+            IO.W(0L);
 
-            IO.Align(0x10);
+            IO.A(0x10);
             {
                 System.Collections.Generic.Dictionary<string, int> UsedValues =
                     new System.Collections.Generic.Dictionary<string, int>();
 
-                for (i = 0; i < Aet.SpriteEntries.Count; i++)
+                for (i = 0; i < aet.Regions.C; i++)
                 {
-                    ref SpriteEntry SprEnt = ref Aet.SpriteEntries.Entries[i];
-                    for (i0 = 0; i0 < SprEnt.Sprites.Count; i0++)
-                        IO.WritePointerString(ref UsedValues, ref SprEnt.Sprites.Entries[i0].Name);
+                    ref AetRegion region = ref aet.Regions.E[i];
+                    for (i0 = 0; i0 < region.Sprites.C; i0++)
+                        WPS(ref UsedValues, ref region.Sprites.E[i0].Name);
                 }
 
                 //IO.Align(0x4);
-                for (i = 0; i < Aet.Layers.Count; i++)
-                    for (i0 = 0; i0 < Aet.Layers.Entries[i].Count; i0++)
+                for (i = 0; i < aet.Layers.C; i++)
+                    for (i0 = 0; i0 < aet.Layers.E[i].C; i0++)
                     {
-                        ref AetObject Obj = ref Aet.Layers.Entries[i].Objects[i0];
-                             if (Obj.Type == AetObject.ObjType.Pic)
-                            for (i1 = 0; i1 < Obj.Pic.Value.Marker.Count; i1++)
-                                IO.WritePointerString(ref UsedValues, ref Obj.Pic.Value.Marker.Entries[i1].Name);
-                        else if (Obj.Type == AetObject.ObjType.Eff)
-                            for (i1 = 0; i1 < Obj.Eff.Value.Marker.Count; i1++)
-                                IO.WritePointerString(ref UsedValues, ref Obj.Eff.Value.Marker.Entries[i1].Name);
+                        ref AetObject obj = ref aet.Layers.E[i].E[i0];
+                        for (i1 = 0; i1 < obj.Marker.C; i1++)
+                            WPS(ref UsedValues, ref obj.Marker.E[i1].Name);
 
-                        IO.WritePointerString(ref UsedValues, ref Obj.Name);
+                        WPS(ref UsedValues, ref obj.Name);
                     }
 
                 //IO.Align(0x4);
-                Aet.Name.Offset = IO.Position;
-                IO.Write(Aet.Name.Value + x00);
+                aet.Name.O = IO.P;
+                IO.W(aet.Name.V + x00);
+                IO.SL(IO.P);
             }
 
-            if (Aet.Unknown.Count > 0)
+            aet.Sounds.O = 0;
+            if (aet.Sounds.C > 0)
             {
-                IO.Align(0x10);
-                Aet.Unknown.Offset = IO.Position;
-                for (i = 0; i < Aet.Unknown.Count * 10; i++) IO.Write(0L);
-            }
-
-            IO.Align(0x10);
-            int ReturnPosition = IO.Position;
-            for (i = 0; i < NullValPointers.Count; i++) IO.Write(0);
-
-            IO.Align(0x10, true);
-
-            for (i = 0; i < NullValPointers.Count; i++)
-            {
-                IO.Position = NullValPointers[i];
-                IO.Write(ReturnPosition + (i << 2));
-            }
-
-            for (i = 0; i < Aet.Layers.Count; i++)
-                for (i0 = 0; i0 < Aet.Layers.Entries[i].Count; i0++)
+                IO.A(0x10);
+                aet.Sounds.O = IO.P;
+                for (i = 0; i < aet.Sounds.C; i++)
                 {
-                    ref AetObject Obj = ref Aet.Layers.Entries[i].Objects[i0];
-                    if (Obj.Type == AetObject.ObjType.Pic)
+                    aet.Sounds.E[i].Offset = IO.P;
+                    IO.W(aet.Sounds[i].Unk0);
+                    IO.W(aet.Sounds[i].Unk1);
+                    IO.W(aet.Sounds[i].Unk2);
+                    IO.W(aet.Sounds[i].Unk3);
+                }
+            }
+
+            IO.A(0x10);
+            int ReturnPos = IO.P;
+            int nvp = 0;
+
+            IO.F();
+
+            for (i = 0; i < aet.Layers.C; i++)
+            {
+                if (aet.Layers.E[i].C < 1) continue;
+
+                for (i0 = 0; i0 < aet.Layers.E[i].C; i0++)
+                {
+                    ref AetObject obj = ref aet.Layers.E[i].E[i0];
+                    ref AnimationData data = ref obj.Data.V;
+                    ref AnimationData.ThirdDimension _3D = ref data._3D.V;
+                    ref AetObject.AetObjExtraData extraData = ref obj.ExtraData.V;
+                    
+                    if (obj.Data.V._3D.O > 0)
                     {
-                        IO.Position = Obj.Pic.Offset;
-                        IO.Write(Aet.SpriteEntries[Obj.Pic.Value.SpriteEntryID].Offset);
-                        if (Obj.Pic.Value.ParentObjectID > -1)
-                        {
-                            bool Found = false;
-                            for (int I = 0; I < Aet.Layers.Count; I++)
-                                for (int I0 = 0; I0 < Aet.Layers.Entries[I].Count; I0++)
-                                    if (Aet.Layers[I][I0].ID == Obj.Pic.Value.ParentObjectID)
-                                    {
-                                        Found = true;
-                                        IO.Write(Aet.Layers.Entries[I].Objects[I0].Offset);
-                                        break;
-                                    }
-                            if (!Found) IO.Write(0);
-                        }
-                        else IO.Write(0);
-                        IO.Write(Obj.Eff.Value.Marker.Count);
-                        IO.Write(Obj.Eff.Value.Marker.Offset);
-                        ref CountPointer<Marker> Marker = ref Obj.Pic.Value.Marker;
-                        IO.Position = Marker.Offset;
-                        for (i1 = 0; i1 < Marker.Count; i1++)
-                        {
-                            IO.Write(Marker[i1].Frame);
-                            IO.Write(Marker[i1].Name.Offset);
-                        }
-                    }
-                    else if (Obj.Type == AetObject.ObjType.Eff)
-                    {
-                        IO.Position = Obj.Eff.Offset;
-                        IO.Write(Aet.Layers[Obj.Eff.Value.LayerID].Offset);
-                        if (Obj.Eff.Value.ParentObjectID > -1)
-                        {
-                            bool Found = false;
-                            for (int I = 0; I < Aet.Layers.Count; I++)
-                                for (int I0 = 0; I0 < Aet.Layers.Entries[I].Count; I0++)
-                                    if (Aet.Layers[I][I0].ID == Obj.Eff.Value.ParentObjectID)
-                                    {
-                                        Found = true;
-                                        IO.Write(Aet.Layers.Entries[I].Objects[I0].Offset);
-                                        break;
-                                    }
-                            if (!Found) IO.Write(0);
-                        }
-                        else IO.Write(0);
-                        IO.Write(Obj.Eff.Value.Marker.Count);
-                        IO.Write(Obj.Eff.Value.Marker.Offset);
-                        ref CountPointer<Marker> Marker = ref Obj.Eff.Value.Marker;
-                        IO.Position = Marker.Offset;
-                        for (i1 = 0; i1 < Marker.Count; i1++)
-                        {
-                            IO.Write(Marker[i1].Frame);
-                            IO.Write(Marker[i1].Name.Offset);
-                        }
+                        IO.P = data._3D.O;
+                        W(ref _3D.Unk1      );
+                        W(ref _3D.Unk2      );
+                        W(ref _3D.RotReturnX);
+                        W(ref _3D.RotReturnY);
+                        W(ref _3D.RotReturnZ);
+                        W(ref _3D. RotationX);
+                        W(ref _3D. RotationY);
+                        W(ref _3D.    ScaleZ);
                     }
 
-                    IO.Position = Obj.Offset;
-                    IO.Write(Obj.Name.Offset);
-                }
+                    if (obj.Data.O > 0)
+                    {
+                        IO.P = obj.Data.O;
+                        IO.W((byte) data.Mode);
+                        IO.W((byte)0);
+                        IO.W((byte)(data.UseTextureMask ? 1 : 0));
+                        IO.W((byte)0);
+
+                        W(ref data.  OriginX);
+                        W(ref data.  OriginY);
+                        W(ref data.PositionX);
+                        W(ref data.PositionY);
+                        W(ref data.Rotation );
+                        W(ref data.   ScaleX);
+                        W(ref data.   ScaleY);
+                        W(ref data.Opacity  );
+                        IO.W(data._3D.O);
+                    }
             
+                    if (obj.ExtraData.O > 0)
+                    {
+                        IO.P = obj.ExtraData.O;
+                        W(ref extraData.Unk0);
+                        W(ref extraData.Unk1);
+                        W(ref extraData.Unk2);
+                        W(ref extraData.Unk3);
+                    }
 
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
-            {
-                ref SpriteEntry SprEnt = ref Aet.SpriteEntries.Entries[i];
-                if (SprEnt.Sprites.Count == 0) continue;
-                IO.Position = SprEnt.Sprites.Offset;
-                for (i0 = 0; i0 < SprEnt.Sprites.Count; i0++)
-                {
-                    IO.Write(SprEnt.Sprites[i0].Name.Offset);
-                    IO.Write(SprEnt.Sprites[i0].ID);
+                    void W(ref CountPointer<KFT2> keys)
+                    {
+                        if (keys.C < 1) IO.W(0L);
+                        else { if (keys.C > 0 && keys.O == 0) { keys.O = ReturnPos + (nvp << 2); nvp++; } IO.W(keys); }
+                        
+                    }
                 }
             }
 
-            IO.Position = Aet.Layers.Offset;
-            for (i = 0; i < Aet.Layers.Count; i++)
-            {
-                if (Aet.Layers[i].Count > 0)
+            IO.P = ReturnPos;
+            for (i = 0; i < nvp; i++)
+                IO.W(0);
+            IO.A(0x10, true);
+
+            IO.F();
+
+            for (i = 0; i < aet.Layers.C; i++)
+                for (i0 = 0; i0 < aet.Layers.E[i].C; i0++)
                 {
-                    IO.Write(Aet.Layers[i].Count);
-                    IO.Write(Aet.Layers[i].Objects[0].Offset);
+                    ref AetObject obj = ref aet.Layers.E[i].E[i0];
+
+                    IO.P = obj.Offset;
+                    IO.W(obj.Name.O);
+                    IO.W(obj.LoopStart);
+                    IO.W(obj.LoopEnd);
+                    IO.W(obj.StartFrame);
+                    IO.W(obj.PlaybackSpeed);
+                    IO.W((ushort)obj.Flags);
+                    IO.W(obj.Pad);
+                    IO.W((byte)obj.Type);
+                         if (obj.Type == AetObject.AetObjType.Pic)
+                        IO.W(aet.Regions[obj.DataID    ].Offset);
+                    else if (obj.Type == AetObject.AetObjType.Aif)
+                        IO.W(aet.Sounds [obj.DataID / 4].Offset + obj.DataID % 4 * 4);
+                    else if (obj.Type == AetObject.AetObjType.Eff)
+                        IO.W(aet.Layers [obj.DataID    ].O);
+                    else
+                        IO.W(0x00);
+
+                    if (obj.ParentObjectID > -1)
+                    {
+                        bool Found = false;
+                        for (i1 = 0; i1 < aet.Layers.C; i1++)
+                            for (i2 = 0; i2 < aet.Layers.E[i1].C; i2++)
+                                if (aet.Layers[i1].E[i2].ID == obj.ParentObjectID)
+                                { Found = true; IO.W(aet.Layers.E[i1].E[i2].Offset); break; }
+                        if (!Found) IO.W(0);
+                    }
+                    else IO.W(0);
+                    IO.W(obj.Marker);
+                    IO.W(obj.Data.O);
+                    IO.W(obj.ExtraData.O);
+
+                    ref CountPointer<Marker> Marker = ref obj.Marker;
+                    IO.P = Marker.O;
+                    for (i1 = 0; i1 < Marker.C; i1++)
+                    {
+                        IO.W(Marker[i1].Frame);
+                        IO.W(Marker[i1].Name.O);
+                    }
                 }
-                else IO.Write(0L);
+
+            IO.F();
+
+            for (i = 0; i < aet.Regions.C; i++)
+            {
+                ref AetRegion region = ref aet.Regions.E[i];
+                if (region.Sprites.C == 0) continue;
+                IO.P = region.Sprites.O;
+                for (i0 = 0; i0 < region.Sprites.C; i0++)
+                {
+                    IO.W(region.Sprites[i0].Name.O);
+                    IO.W(region.Sprites[i0].ID);
+                }
             }
 
-            IO.Position = AET.Offset;
-            IO.Write(Aet.Name.Offset);
-            IO.Position = AET.Offset + 0x20;
-            IO.Write(Aet.Layers.Count );
-            IO.Write(Aet.Layers.Offset);
-            IO.Write(Aet.SpriteEntries.Count );
-            IO.Write(Aet.SpriteEntries.Offset);
-            if (Aet.Unknown.Count > 0)
-            { IO.Write(Aet.Unknown.Count); IO.Write(Aet.Unknown.Offset); }
-            else IO.Write(0L);
+            IO.P = aet.Layers.O;
+            for (i = 0; i < aet.Layers.C; i++)
+            {
+                if (aet.Layers[i].C > 0)
+                {
+                    IO.W(aet.Layers[i].C);
+                    IO.W(aet.Layers[i].E[0].Offset);
+                }
+                else IO.W(0L);
+            }
+
+            IO.P = AET.O;
+            IO.W(aet.Name.O);
+            IO.W(aet.StartFrame);
+            IO.W(aet.FrameDuration);
+            IO.W(aet.FrameRate);
+            IO.W(aet.BackColor);
+            IO.W(aet.Width);
+            IO.W(aet.Height);
+            IO.W(aet.Position.O);
+            IO.W(aet. Layers);
+            IO.W(aet.Regions);
+            IO.W(aet. Sounds);
+            IO.W(0L);
+        }
+
+        private void RAL(ref AetLayer layer)
+        {
+            for (i0 = 0; i0 < layer.C; i0++, i1++)
+            {
+                layer.E[i0].ID = i1;
+                ref AetObject obj = ref layer.E[i0];
+                IO.P = obj.Offset = layer.O + i0 * 0x30;
+                obj.Name = IO.RPS();
+                obj.LoopStart     = IO.RF32();
+                obj.LoopEnd       = IO.RF32();
+                obj.StartFrame    = IO.RF32();
+                obj.PlaybackSpeed = IO.RF32();
+                obj.Flags = (AetObject.AetObjFlags)IO.RU16();
+                obj.Pad  = IO.RU8();
+                obj.Type = (AetObject.AetObjType)IO.RU8();
+                obj.        DataID = IO.RI32();
+                obj.ParentObjectID = IO.RI32();
+                obj.Marker = IO.ReadCountPointer<Marker>();
+                obj.Data = IO.RP<AnimationData>();
+                obj.ExtraData = IO.RP<AetObject.AetObjExtraData>();
+                
+                if (obj.Data.O > 0)
+                {
+                    ref AnimationData data = ref obj.Data.V;
+                    IO.P = obj.Data.O;
+                    data.Mode = (AnimationData.BlendMode)IO.RU8();
+                    IO.RU8();
+                    data.UseTextureMask = IO.RBo();
+                    IO.RU8();
+                    data.  OriginX = IO.ReadCountPointer<KFT2>();
+                    data.  OriginY = IO.ReadCountPointer<KFT2>();
+                    data.PositionX = IO.ReadCountPointer<KFT2>();
+                    data.PositionY = IO.ReadCountPointer<KFT2>();
+                    data.Rotation  = IO.ReadCountPointer<KFT2>();
+                    data.   ScaleX = IO.ReadCountPointer<KFT2>();
+                    data.   ScaleY = IO.ReadCountPointer<KFT2>();
+                    data.Opacity   = IO.ReadCountPointer<KFT2>();
+                    data._3D = IO.RP<AnimationData.ThirdDimension>();
+                    
+                    RKF(ref data.  OriginX);
+                    RKF(ref data.  OriginY);
+                    RKF(ref data.PositionX);
+                    RKF(ref data.PositionY);
+                    RKF(ref data.Rotation );
+                    RKF(ref data.   ScaleX);
+                    RKF(ref data.   ScaleY);
+                    RKF(ref data.Opacity  );
+                    
+                    if (data._3D.O > 0)
+                    {
+                        ref AnimationData.ThirdDimension _3D = ref data._3D.V;
+                        IO.P = data._3D.O;
+                        _3D.Unk1       = IO.ReadCountPointer<KFT2>();
+                        _3D.Unk2       = IO.ReadCountPointer<KFT2>();
+                        _3D.RotReturnX = IO.ReadCountPointer<KFT2>();
+                        _3D.RotReturnY = IO.ReadCountPointer<KFT2>();
+                        _3D.RotReturnZ = IO.ReadCountPointer<KFT2>();
+                        _3D. RotationX = IO.ReadCountPointer<KFT2>();
+                        _3D. RotationY = IO.ReadCountPointer<KFT2>();
+                        _3D.    ScaleZ = IO.ReadCountPointer<KFT2>();
+                        
+                        RKF(ref _3D.Unk1      );
+                        RKF(ref _3D.Unk2      );
+                        RKF(ref _3D.RotReturnX);
+                        RKF(ref _3D.RotReturnY);
+                        RKF(ref _3D.RotReturnZ);
+                        RKF(ref _3D. RotationX);
+                        RKF(ref _3D. RotationY);
+                        RKF(ref _3D.    ScaleZ);
+                    }
+                }
+                    
+                if (obj.ExtraData.O > 0)
+                {
+                    ref AetObject.AetObjExtraData extraData = ref obj.ExtraData.V;
+                    IO.P = obj.ExtraData.O;
+                    extraData.Unk0 = IO.ReadCountPointer<KFT2>();
+                    extraData.Unk1 = IO.ReadCountPointer<KFT2>();
+                    extraData.Unk2 = IO.ReadCountPointer<KFT2>();
+                    extraData.Unk3 = IO.ReadCountPointer<KFT2>();
+                    
+                    RKF(ref extraData.Unk0);
+                    RKF(ref extraData.Unk1);
+                    RKF(ref extraData.Unk2);
+                    RKF(ref extraData.Unk3);
+                }
+                    
+                IO.P = obj.Marker.O;
+                for (i2 = 0; i2 < obj.Marker.C; i2++)
+                    obj.Marker[i2] = new Marker() { Frame = IO.RF32(), Name = IO.RPSSJIS() };
+            }
+        }
+
+        private void RKF(ref CountPointer<KFT2> keys)
+        {
+            if (keys.C  < 1) return;
+            IO.P = keys.O;
+            if (keys.C == 1) { keys.E[0].V = IO.RF32(); return; }
+
+            keys.E = new KFT2[keys.C];
+            for (uint i = 0; i < keys.C; i++) keys.E[i].F = IO.RF32();
+            for (uint i = 0; i < keys.C; i++)
+            { keys.E[i].V = IO.RF32();        keys.E[i].T = IO.RF32(); }
+        }
+
+        private void W(ref CountPointer<KFT2> keys)
+        {
+            keys.O = 0;
+            if (keys.C < 1) return;
+            if (keys.C == 1)
+            {
+                if (keys.E[0].V != 0) { keys.O = IO.P; IO.W(keys.E[0].V); }
+                return;
+            }
+
+            if (keys.C > 2) IO.A(0x20);
+            keys.O = IO.P;
+
+            for (uint i = 0; i < keys.C; i++) IO.W(keys.E[i].F);
+            for (uint i = 0; i < keys.C; i++)
+            { IO.W(keys.E[i].V);              IO.W(keys.E[i].T); }
+        }
+
+        private void WPS(ref System.Collections.Generic.Dictionary<string, int> Dict, ref Pointer<string> Str)
+        {
+            if (Dict.ContainsKey(Str.V)) Str.O = Dict[Str.V];
+            else { Str.O = IO.P; Dict.Add(Str.V, Str.O); IO.WPSSJIS(Str.V + "\0"); }
         }
 
         public void MsgPackReader(string file, bool JSON)
@@ -366,1043 +681,339 @@ namespace KKdMainLib.Aet
             if (this.AET.Data == null || this.AET.Data.Length == 0) return;
 
             MsgPack AET = new MsgPack(this.AET.Data.Length, "Aet");
-            for (int i = 0; i < this.AET.Data.Length; i++) AET[i] = MsgPackWriter(ref this.AET.Data[i]);
+            for (int i = 0; i < this.AET.Data.Length; i++)
+                AET[i] = MsgPackWriter(ref this.AET.Data[i]);
             AET.WriteAfterAll(true, file, JSON);
         }
 
         public void MsgPackReader(MsgPack AET, ref Pointer<AetData> AetData)
         {
-            MsgPack Temp = MsgPack.New;
+            int i, i0;
+            AetData = default;
+            ref AetData aet = ref AetData.V;
 
-            AetData.Offset = -1;
-            ref AetData Aet = ref AetData.Value;
+            aet.Name.V        = AET.RS  ("Name"         );
+            aet.StartFrame    = AET.RF32("StartFrame"   );
+            aet.FrameDuration = AET.RF32("FrameDuration");
+            aet.FrameRate     = AET.RF32("FrameRate"    );
+            aet.BackColor     = AET.RU32("BackColor"    );
+            aet.Width         = AET.RU32("Width"        );
+            aet.Height        = AET.RU32("Height"       );
 
-            Aet.Name.Value = AET.ReadString("Name"     );
-            Aet.Unk        = AET.ReadSingle("Unk"      );
-            Aet.Duration   = AET.ReadSingle("Duration" );
-            Aet.FrameRate  = AET.ReadSingle("FrameRate");
-            Aet.BackgroundColor = AET.ReadInt32("BackgroundColor");
-            Aet.Width           = AET.ReadInt32("Width"          );
-            Aet.Height          = AET.ReadInt32("Height"         );
-
-            if ((Temp = AET["Unknown"]).NotNull)
-                Aet.Unknown.Count = Temp.ReadInt32();
-            
-            if ((Temp = AET["Position"]).NotNull)
+            MsgPack temp;
+            if ((temp = AET["Position"]).NotNull)
             {
-                Aet.Position.Offset = 1;
-                Aet.Position.Value.X.ReadMP(Temp, "X");
-                Aet.Position.Value.Y.ReadMP(Temp, "Y");
+                aet.Position.O = 1;
+                aet.Position.V.X = RKF(temp, "X");
+                aet.Position.V.Y = RKF(temp, "Y");
             }
             
-            if ((Temp = AET["SpriteEntries", true]).NotNull)
+            if ((temp = AET["Sound", true]).NotNull)
             {
-                Aet.SpriteEntries.Count = Temp.Array.Length;
-                for (i = 0; i < Aet.SpriteEntries.Count; i++)
-                    Aet.SpriteEntries.Entries[i].ReadMP(Temp[i]);
+                aet.Sounds.C = temp.Array.Length;
+                for (i = 0; i < aet.Sounds.C; i++)
+                    aet.Sounds.E[i] = new AetSound
+                    { Unk0 = temp[i].RU32("Unk0"), Unk1 = temp[i].RU32("Unk1"),
+                      Unk2 = temp[i].RU32("Unk2"), Unk3 = temp[i].RU32("Unk3") };
             }
-            else return;
             
-            if ((Temp = AET["Layers", true]).NotNull)
+            if ((temp = AET["Region", true]).NotNull)
             {
-                Aet.Layers.Count = Temp.Array.Length + 1;
-                for (i = 0; i < Aet.Layers.Count - 1; i++)
-                    Aet.Layers.Entries[i].ReadMP(Temp[i]);
-            }
-            else Aet.Layers.Count = 1;
+                aet.Regions.C = temp.Array.Length;
+                for (i = 0; i < aet.Regions.C; i++)
+                {
+                    ref AetRegion region = ref aet.Regions.E[i];
+                    region = default;
+                    region.Color  = temp[i].RU32("Color" );
+                    region.Width  = temp[i].RU16("Width" );
+                    region.Height = temp[i].RU16("Height");
+                    region.Frames = temp[i].RF32("Frames");
 
-            i = Aet.Layers.Count - 1;
-            if ((Temp = AET["RootLayer", true]).NotNull)
-            {
-                Aet.Layers.Entries[i].Count = Temp.Array.Length;
-                for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
-                    Aet.Layers.Entries[i].Objects[i0].ReadMP(Temp[i0]);
+                    MsgPack sprite;
+                    if ((sprite = temp[i]["Sprite", true]).NotNull)
+                    {
+                        region.Sprites.C = sprite.Array.Length;
+                        for (i0 = 0; i0 < region.Sprites.C; i0++)
+                            region.Sprites[i0] = new Sprite() { Name = new Pointer<string>()
+                                { V = sprite[i0].RS("Name") }, ID = sprite[i0].RU32("ID") };
+                    }
+                    sprite.Dispose();
+                }
             }
-            else if ((Temp = AET["RootLayer"]).NotNull)
+            
+            if ((temp = AET["Layer", true]).NotNull)
             {
-                Aet.Layers.Entries[i].Count = 1;
-                Aet.Layers.Entries[i].Objects[0].ReadMP(Temp);
+                aet.Layers.C = temp.Array.Length + 1;
+                for (i = 0; i < aet.Layers.C - 1; i++)
+                {
+                    ref AetLayer layer = ref aet.Layers.E[i];
+                    layer = default;
+                    MsgPack @object;
+                    if ((@object = temp[i]["Object", true]).NotNull)
+                    {
+                        layer.C = @object.Array.Length;
+                        for (i0 = 0; i0 < layer.C; i0++)
+                            RAO(ref layer.E[i0], @object[i0]);
+                    }
+                    @object.Dispose();
+                }
             }
-            else return;
+            else aet.Layers.C = 1;
 
-            AetData.Offset = 0;
-            Temp.Dispose();
+            if ((temp = AET["RootLayer", true]).NotNull)
+            {
+                i = aet.Layers.C - 1;
+                aet.Layers.E[i].C = temp.Array.Length;
+                for (i0 = 0; i0 < aet.Layers[i].C; i0++)
+                    RAO(ref aet.Layers.E[i].E[i0], temp[i0]);
+            }
+            temp.Dispose();
         }
         
         public MsgPack MsgPackWriter(ref Pointer<AetData> AetData)
         {
-            if (AetData.Offset <= 0) return MsgPack.New;
-            ref AetData Aet = ref AetData.Value;
+            int i, i0;
+            if (AetData.O <= 0) return MsgPack.Null;
+            ref AetData aet = ref AetData.V;
 
-            MsgPack AET = MsgPack.New.Add("Name", Aet.Name.Value).Add("Duration", Aet.Duration).
-                Add("FrameRate", Aet.FrameRate).Add("BackgroundColor", Aet.BackgroundColor).
-                Add("Width", Aet.Width).Add("Height", Aet.Height).Add("Unk", Aet.Unk);
-            if (Aet.Unknown.Count > 0)
-                AET.Add("Unknown", Aet.Unknown.Count);
+            MsgPack AET = MsgPack.New.Add("Name", aet.Name.V).Add("StartFrame", aet.StartFrame)
+                .Add("FrameDuration", aet.FrameDuration).Add("FrameRate", aet.FrameRate)
+                .Add("BackColor", aet.BackColor).Add("Width", aet.Width).Add("Height", aet.Height);
 
-            if (Aet.Position.Offset > 0)
-                AET.Add(new MsgPack("Position").Add(Aet.Position.Value.X.WriteMP("X"))
-                                               .Add(Aet.Position.Value.Y.WriteMP("Y")));
 
-            i = Aet.Layers.Count - 1;
-            if (Aet.Layers[i].Count == 1)
-                AET.Add(Aet.Layers[i][0].WriteMP(ref Aet, "RootLayer"));
-            if (Aet.Layers[i].Count > 1)
+            if (aet.Position.O > 0)
+                AET.Add(new MsgPack("Position").Add(WMP(ref aet.Position.V.X, "X"))
+                                               .Add(WMP(ref aet.Position.V.Y, "Y")));
+
+
+            i = aet.Layers.C - 1;
+            MsgPack rootLayer = new MsgPack(aet.Layers[i].C, "RootLayer");
+            for (i0 = 0; i0 < aet.Layers[i].C; i0++)
+                rootLayer[i0] = WMP(ref aet.Layers[i].E[i0]);
+            AET.Add(rootLayer);
+
+            if (aet.Layers[i].C > 1)
             {
-                MsgPack RootLayer = new MsgPack(Aet.Layers[i].Count, "RootLayer");
-                for (i0 = 0; i0 < Aet.Layers[i].Count; i0++)
-                    RootLayer[i0] = Aet.Layers[i][i0].WriteMP(ref Aet);
-                AET.Add(RootLayer);
-
-                MsgPack Layers = new MsgPack(Aet.Layers.Count - 1, "Layers");
-                for (i = 0; i < Aet.Layers.Count - 1; i++)
-                    Layers[i] = Aet.Layers[i].WriteMP(i, ref Aet);
-                AET.Add(Layers);
+                MsgPack layers = new MsgPack(aet.Layers.C - 1, "Layer");
+                for (i = 0; i < aet.Layers.C - 1; i++)
+                {
+                    ref AetLayer layer = ref aet.Layers.E[i];
+                    MsgPack Object = MsgPack.New.Add("ID", i);
+                    if (layer.C > 0) 
+                    {
+                        MsgPack objects = new MsgPack(layer.C, "Object");
+                        for (i0 = 0; i0 < layer.C; i0++)
+                            objects[i0] = WMP(ref layer.E[i0]);
+                        Object.Add(objects);
+                    }
+                    layers[i] = Object;
+                }
+                AET.Add(layers);
             }
 
-            MsgPack SpriteEntries = new MsgPack(Aet.SpriteEntries.Count, "SpriteEntries");
-            for (i = 0; i < Aet.SpriteEntries.Count; i++)
-                SpriteEntries[i] = Aet.SpriteEntries[i].WriteMP(i);
-            AET.Add(SpriteEntries);
+            MsgPack regions = new MsgPack(aet.Regions.C, "Region");
+            for (i = 0; i < aet.Regions.C; i++)
+            {
+                ref AetRegion region = ref aet.Regions.E[i];
+                MsgPack entry = MsgPack.New.Add("ID", i).Add("Width", region.Width)
+                    .Add("Height", region.Height).Add("Color", region.Color);
+
+                if (region.Sprites.C > 0)
+                {
+                    entry.Add("Frames", region.Frames);
+                    MsgPack Sprites = new MsgPack(region.Sprites.C, "Sprite");
+                    for (i0 = 0; i0 < region.Sprites.C; i0++)
+                        Sprites[i0] = MsgPack.New.Add("Name",
+                            region.Sprites[i0].Name.V).Add("ID", region.Sprites[i0].ID);
+                    entry.Add(Sprites);
+                }
+                regions[i] = entry;
+            }
+            AET.Add(regions);
+
+            MsgPack sounds = new MsgPack(aet.Sounds.C, "Sound");
+            for (i = 0; i < aet.Sounds.C; i++)
+                sounds[i] = MsgPack.New.Add("ID", i).Add("Unk0", aet.Sounds[i].Unk0).Add("Unk1",
+                    aet.Sounds[i].Unk1).Add("Unk2", aet.Sounds[i].Unk2).Add("Unk3", aet.Sounds[i].Unk3);
+            AET.Add(sounds);
 
             return AET;
         }
-    }
-    
-    public static class AetExt
-    {
-        public static MsgPack ReadMP(this MsgPack msg, ref CountPointer<float> val, string Name)
+
+        private AetObject RAO(ref AetObject Obj, MsgPack msg)
         {
-            MsgPack Temp;
-            val.Offset = 0;
-            val.Entries = null;
-            if ((Temp = msg[Name, true]).NotNull)
-            {
-                val.Count = 1;
-                val[0] = Temp.ReadSingle();
-            }
-            else if ((Temp = msg[Name]).NotNull)
-            {
-                val.Count = Temp.Array.Length;
-                for (int i = 0; i < val.Count; i++)
-                    val[i] = Temp[i].ReadSingle();
-            }
-            Temp.Dispose();
-            return msg;
-        }
-
-        public static MsgPack Add(this MsgPack MsgPack, string Name, CountPointer<float> val)
-        {
-            if (val.Count == 1) return MsgPack.Add(new MsgPack(Name, val[0]));
-            else if (val.Count > 1)
-            {
-                MsgPack Val = new MsgPack(val.Count, Name);
-                for (int i = 0; i < val.Count; i++) Val[i] = val[i];
-                return MsgPack.Add(Val);
-            }
-            return MsgPack;
-        }
-
-        public static AetObject ReadAetObject(this Stream IO)
-        {
-            AetObject Anim = new AetObject() { Offset = IO.Position };
-            Anim.Name = IO.ReadPointerString();
-            Anim.StartTime0    = IO.ReadSingle();
-            Anim.LoopDuration  = IO.ReadSingle();
-            Anim.StartTime1    = IO.ReadSingle();
-            Anim.PlaybackSpeed = IO.ReadSingle();
-            Anim.Unk0 = IO.ReadByte();
-            Anim.Unk1 = IO.ReadByte();
-            Anim.Unk2 = IO.ReadByte();
-            Anim.Type = (AetObject.ObjType)IO.ReadByte();
-                 if (Anim.Type == AetObject.ObjType.Pic)
-            {
-                Anim.Pic = new Pointer<AetObject.Picture> { Offset = IO.Position,
-                    Value = new AetObject.Picture
-                    {
-                        SpriteEntryID = IO.ReadInt32(),
-                        ParentObjectID = IO.ReadInt32(),
-                        Marker = IO.ReadCountPointer<Marker>()
-                    }
-                };
-                ref AetObject.Picture Pic = ref Anim.Pic.Value;
-                Pic.Data.Offset = IO.ReadInt32();
-                IO.ReadAnimData(ref Pic.Data);
-
-                IO.Position = Pic.Marker.Offset;
-                for (int i = 0; i < Pic.Marker.Count; i++)
-                    Pic.Marker[i] = new Marker()
-                    { Frame = IO.ReadSingle(), Name = IO.ReadPointerStringShiftJIS() };
-            }
-            else if (Anim.Type == AetObject.ObjType.Aif)
-            {
-                Anim.Aif = new Pointer<AetObject.Audio> { Offset = IO.Position,
-                    Value = new AetObject.Audio
-                    {
-                        Value = IO.ReadPointer<int>(),
-                        Zero0 = IO.ReadInt32(),
-                        Zero1 = IO.ReadInt32(),
-                        Zero2 = IO.ReadInt32(),
-                        Zero3 = IO.ReadInt32(),
-                        Pointer = IO.ReadInt32(),
-                    }
-                };
-
-                ref AetObject.Audio Aif = ref Anim.Aif.Value; 
-
-                IO.Position = Aif.Value.Offset;
-                Aif.Value.Value = IO.ReadInt32();
-
-                IO.Position = Aif.Pointer;
-                Aif.Unk0 = IO.ReadCountPointer<float>();
-                Aif.Unk1 = IO.ReadCountPointer<float>();
-                Aif.Unk2 = IO.ReadCountPointer<float>();
-                Aif.Unk3 = IO.ReadCountPointer<float>();
-
-                IO.Position = Aif.Unk0.Offset;
-                for (int i = 0; i < Aif.Unk0.Count; i++) Aif.Unk0[i] = IO.ReadSingle();
-                IO.Position = Aif.Unk1.Offset;
-                for (int i = 0; i < Aif.Unk1.Count; i++) Aif.Unk1[i] = IO.ReadSingle();
-                IO.Position = Aif.Unk2.Offset;
-                for (int i = 0; i < Aif.Unk2.Count; i++) Aif.Unk2[i] = IO.ReadSingle();
-                IO.Position = Aif.Unk3.Offset;
-                for (int i = 0; i < Aif.Unk3.Count; i++) Aif.Unk3[i] = IO.ReadSingle();
-            }
-            else if (Anim.Type == AetObject.ObjType.Eff)
-            {
-                Anim.Eff = new Pointer<AetObject.Effect> { Offset = IO.Position,
-                    Value = new AetObject.Effect
-                    {
-                        LayerID = IO.ReadInt32(),
-                        ParentObjectID = IO.ReadInt32(),
-                        Marker = IO.ReadCountPointer<Marker>()
-                    }
-                };
-                ref AetObject.Effect Eff = ref Anim.Eff.Value;
-                Eff.Data.Offset = IO.ReadInt32();
-                IO.Position = Eff.Marker.Offset;
-                for (int i = 0; i < Eff.Marker.Count; i++)
-                    Eff.Marker[i] = new Marker()
-                    { Frame = IO.ReadSingle(), Name = IO.ReadPointerStringShiftJIS() };
-                IO.ReadAnimData(ref Eff.Data);
-            }
-            IO.Position = Anim.Offset + 0x30;
-            return Anim;
-        }
-        
-        public static void Write(this Stream IO, ref AetObject Anim, ref KKdList<int> NullValPointers)
-        {
-                 if (Anim.Type == AetObject.ObjType.Pic)
-            {
-                ref AetObject.Picture Pic = ref Anim.Pic.Value;
-                if (Pic.Marker.Count > 0)
-                {
-                    Pic.Marker.Offset = IO.Position;
-                    for (int i = 0; i < Pic.Marker.Count; i++) IO.Write(0L);
-                }
-                IO.Write(ref Pic.Data, ref NullValPointers);
-            }
-            else if (Anim.Type == AetObject.ObjType.Aif)
-            {
-                ref AetObject.Audio Aif = ref Anim.Aif.Value;
-                if (Aif.Unk0.Count > 0) { Aif.Unk0.Offset = IO.Position;
-                    for (int i = 0; i < Aif.Unk0.Count; i++) IO.Write(Aif.Unk0[i]); }
-                if (Aif.Unk1.Count > 0) { Aif.Unk1.Offset = IO.Position;
-                    for (int i = 0; i < Aif.Unk1.Count; i++) IO.Write(Aif.Unk1[i]); }
-                if (Aif.Unk2.Count > 0) { Aif.Unk2.Offset = IO.Position;
-                    for (int i = 0; i < Aif.Unk2.Count; i++) IO.Write(Aif.Unk2[i]); }
-                if (Aif.Unk3.Count > 0) { Aif.Unk3.Offset = IO.Position;
-                    for (int i = 0; i < Aif.Unk3.Count; i++) IO.Write(Aif.Unk3[i]); }
-
-                IO.Align(0x10);
-                Aif.Value.Offset = IO.Position;
-                IO.Write(Aif.Value.Value);
-
-                IO.Align(0x10);
-                Aif.Pointer = IO.Position;
-                if (Aif.Unk0.Count > 0) { IO.Write(Aif.Unk0.Count); IO.Write(Aif.Unk0.Offset); } else IO.Write(0L);
-                if (Aif.Unk1.Count > 0) { IO.Write(Aif.Unk1.Count); IO.Write(Aif.Unk1.Offset); } else IO.Write(0L);
-                if (Aif.Unk2.Count > 0) { IO.Write(Aif.Unk2.Count); IO.Write(Aif.Unk2.Offset); } else IO.Write(0L);
-                if (Aif.Unk3.Count > 0) { IO.Write(Aif.Unk3.Count); IO.Write(Aif.Unk3.Offset); } else IO.Write(0L);
-            }
-            else if (Anim.Type == AetObject.ObjType.Eff)
-            {
-                ref AetObject.Effect Eff = ref Anim.Eff.Value;
-                if (Eff.Marker.Count > 0)
-                {
-                    Eff.Marker.Offset = IO.Position;
-                    for (int i = 0; i < Eff.Marker.Count; i++) IO.Write(0L);
-                }
-                IO.Write(ref Eff.Data, ref NullValPointers);
-            }
-        }
-
-        public static void Write(this Stream IO, ref AetObject Anim)
-        {
-            Anim.Offset = IO.Position;
-            IO.Write(0);
-            IO.Write(Anim.StartTime0   );
-            IO.Write(Anim.LoopDuration );
-            IO.Write(Anim.StartTime1   );
-            IO.Write(Anim.PlaybackSpeed);
-            IO.Write(Anim.Unk0);
-            IO.Write(Anim.Unk1);
-            IO.Write(Anim.Unk2);
-            IO.Write((byte)Anim.Type);
-                 if (Anim.Type == AetObject.ObjType.Pic)
-            {
-                Anim.Pic.Offset = IO.Position;
-                IO.Write(0L);
-                if (Anim.Pic.Value.Marker.Count > 0)
-                {
-                    IO.Write(Anim.Pic.Value.Marker.Count );
-                    IO.Write(Anim.Pic.Value.Marker.Offset);
-                }
-                else IO.Write(0L);
-                IO.Write(Anim.Pic.Value.Data  .Offset);
-                IO.Write(0);
-            }
-            else if (Anim.Type == AetObject.ObjType.Aif)
-            {
-                Anim.Aif.Offset = IO.Position;
-                IO.Write(Anim.Aif.Value.Value.Offset);
-                IO.Write(0L);
-                IO.Write(0L);
-                IO.Write(Anim.Aif.Value.Pointer);
-            }
-            else if (Anim.Type == AetObject.ObjType.Eff)
-            {
-                Anim.Eff.Offset = IO.Position;
-                IO.Write(0L);
-                if (Anim.Eff.Value.Marker.Count > 0)
-                {
-                    IO.Write(Anim.Eff.Value.Marker.Count );
-                    IO.Write(Anim.Eff.Value.Marker.Offset);
-                }
-                else IO.Write(0L);
-                IO.Write(Anim.Eff.Value.Data.Offset);
-                IO.Write(0);
-            }
-            else { IO.Write(0L); IO.Write(0L); IO.Write(0L); }
-        }
-
-        public static void ReadAnimData(this Stream IO, ref Pointer<AnimationData> Anim)
-        {
-            ref AnimationData Data = ref Anim.Value;
-            IO.Position = Anim.Offset;
-            Data.Mode = (AnimationData.BlendMode)IO.ReadByte();
-            Data.Unk0           = IO.ReadByte();
-            Data.UseTextureMask = IO.ReadBoolean();
-            Data.Unk1           = IO.ReadByte();
-            Data.  OriginX = IO.ReadKeyFrameEntry();
-            Data.  OriginY = IO.ReadKeyFrameEntry();
-            Data.PositionX = IO.ReadKeyFrameEntry();
-            Data.PositionY = IO.ReadKeyFrameEntry();
-            Data.Rotation  = IO.ReadKeyFrameEntry();
-            Data.   ScaleX = IO.ReadKeyFrameEntry();
-            Data.   ScaleY = IO.ReadKeyFrameEntry();
-            Data.Opacity   = IO.ReadKeyFrameEntry();
-            Data._3D = IO.ReadPointer<AnimationData3D>();
-
-            IO.ReadKeyFrameEntry(ref Data.  OriginX);
-            IO.ReadKeyFrameEntry(ref Data.  OriginY);
-            IO.ReadKeyFrameEntry(ref Data.PositionX);
-            IO.ReadKeyFrameEntry(ref Data.PositionY);
-            IO.ReadKeyFrameEntry(ref Data.Rotation );
-            IO.ReadKeyFrameEntry(ref Data.   ScaleX);
-            IO.ReadKeyFrameEntry(ref Data.   ScaleY);
-            IO.ReadKeyFrameEntry(ref Data.Opacity  );
-
-            if (Data._3D.Offset > 0)
-            {
-                IO.Position = Data._3D.Offset;
-                Data._3D.Value.Unk1       = IO.ReadKeyFrameEntry();
-                Data._3D.Value.Unk2       = IO.ReadKeyFrameEntry();
-                Data._3D.Value.RotReturnX = IO.ReadKeyFrameEntry();
-                Data._3D.Value.RotReturnY = IO.ReadKeyFrameEntry();
-                Data._3D.Value.RotReturnZ = IO.ReadKeyFrameEntry();
-                Data._3D.Value. RotationX = IO.ReadKeyFrameEntry();
-                Data._3D.Value. RotationY = IO.ReadKeyFrameEntry();
-                Data._3D.Value.    ScaleZ = IO.ReadKeyFrameEntry();
-
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.Unk1      );
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.Unk2      );
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnX);
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnY);
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.RotReturnZ);
-                IO.ReadKeyFrameEntry(ref Data._3D.Value. RotationX);
-                IO.ReadKeyFrameEntry(ref Data._3D.Value. RotationY);
-                IO.ReadKeyFrameEntry(ref Data._3D.Value.    ScaleZ);
-            }
-        }
-
-        public static void Write(this Stream IO, ref Pointer<AnimationData> Anim, ref KKdList<int> NullValPointers)
-        {
-            ref AnimationData Data = ref Anim.Value;
-
-            int SubFlags = 0;
-            if (Data._3D.Offset > -1)
-            {
-                SubFlags |= IO.Write(ref Data._3D.Value.Unk1      ) ? 0b10000000 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value.Unk2      ) ? 0b01000000 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnX) ? 0b00100000 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnY) ? 0b00010000 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value.RotReturnZ) ? 0b00001000 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value. RotationX) ? 0b00000100 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value. RotationY) ? 0b00000010 : 0;
-                SubFlags |= IO.Write(ref Data._3D.Value.    ScaleZ) ? 0b00000001 : 0;
-            }
-
-            int Flags = 0;
-            Flags |= IO.Write(ref Data.  OriginX) ? 0b10000000 : 0;
-            Flags |= IO.Write(ref Data.  OriginY) ? 0b01000000 : 0;
-            Flags |= IO.Write(ref Data.PositionX) ? 0b00100000 : 0;
-            Flags |= IO.Write(ref Data.PositionY) ? 0b00010000 : 0;
-            Flags |= IO.Write(ref Data.Rotation ) ? 0b00001000 : 0;
-            Flags |= IO.Write(ref Data.   ScaleX) ? 0b00000100 : 0;
-            Flags |= IO.Write(ref Data.   ScaleY) ? 0b00000010 : 0;
-            Flags |= IO.Write(ref Data.Opacity  ) ? 0b00000001 : 0;
-
-            if (Data._3D.Offset > -1)
-            {
-                IO.Align(0x20);
-                Data._3D.Offset = IO.Position;
-                IO.Write(ref Data._3D.Value, ref NullValPointers, SubFlags);
-            }
-
-            IO.Align(0x20);
-            Anim.Offset = IO.Position;
-            IO.WriteByte((byte) Data.Mode);
-            IO.WriteByte(       Data.Unk0);
-            IO.WriteByte((byte)(Data.UseTextureMask ? 1 : 0));
-            IO.WriteByte(       Data.Unk1);
-
-            IO.Write(ref Data, ref NullValPointers, Flags);
-            IO.Write(Data._3D.Offset > -1 ? Data._3D.Offset : 0);
-        }
-
-        public static void Write(this Stream IO, ref AnimationData Data,
-            ref KKdList<int> NullValPointers, int Flags)
-        {
-            IO.Write(Data.  OriginX.Count );
-            if ((Flags & 0b10000000) == 0b10000000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.  OriginX.Offset);
-            IO.Write(Data.  OriginY.Count );
-            if ((Flags & 0b01000000) == 0b01000000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.  OriginY.Offset);
-            IO.Write(Data.PositionX.Count );
-            if ((Flags & 0b00100000) == 0b00100000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.PositionX.Offset);
-            IO.Write(Data.PositionY.Count );
-            if ((Flags & 0b00010000) == 0b00010000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.PositionY.Offset);
-            IO.Write(Data.Rotation .Count );
-            if ((Flags & 0b00001000) == 0b00001000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.Rotation .Offset);
-            IO.Write(Data.   ScaleX.Count );
-            if ((Flags & 0b00000100) == 0b00000100) NullValPointers.Add(IO.Position);
-            IO.Write(Data.   ScaleX.Offset);
-            IO.Write(Data.   ScaleY.Count );
-            if ((Flags & 0b00000010) == 0b00000010) NullValPointers.Add(IO.Position);
-            IO.Write(Data.   ScaleY.Offset);
-            IO.Write(Data.Opacity  .Count );
-            if ((Flags & 0b00000001) == 0b00000001) NullValPointers.Add(IO.Position);
-            IO.Write(Data.Opacity  .Offset);
-        }
-
-        public static void Write(this Stream IO, ref AnimationData3D Data,
-            ref KKdList<int> NullValPointers, int Flags)
-        {
-            IO.Write(Data.Unk1      .Count );
-            if ((Flags & 0b10000000) == 0b10000000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.Unk1      .Offset);
-            IO.Write(Data.Unk2      .Count );
-            if ((Flags & 0b01000000) == 0b01000000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.Unk2      .Offset);
-            IO.Write(Data.RotReturnX.Count );
-            if ((Flags & 0b00100000) == 0b00100000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.RotReturnX.Offset);
-            IO.Write(Data.RotReturnY.Count );
-            if ((Flags & 0b00010000) == 0b00010000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.RotReturnY.Offset);
-            IO.Write(Data.RotReturnZ.Count );
-            if ((Flags & 0b00001000) == 0b00001000) NullValPointers.Add(IO.Position);
-            IO.Write(Data.RotReturnZ.Offset);
-            IO.Write(Data. RotationX.Count );
-            if ((Flags & 0b00000100) == 0b00000100) NullValPointers.Add(IO.Position);
-            IO.Write(Data. RotationX.Offset);
-            IO.Write(Data. RotationY.Count );
-            if ((Flags & 0b00000010) == 0b00000010) NullValPointers.Add(IO.Position);
-            IO.Write(Data. RotationY.Offset);
-            IO.Write(Data.    ScaleZ.Count );
-            if ((Flags & 0b00000001) == 0b00000001) NullValPointers.Add(IO.Position);
-            IO.Write(Data.    ScaleZ.Offset);
-        }
-
-        public static KeyFrameEntry ReadKeyFrameEntry(this Stream IO) =>
-            new KeyFrameEntry { Count = IO.ReadInt32(), Offset = IO.ReadInt32() };
-
-        public static void ReadKeyFrameEntry(this Stream IO, ref KeyFrameEntry entry)
-        {
-            if (entry.Count  < 1) return;
-            IO.Position = entry.Offset;
-            if (entry.Count == 1) { entry.Value = IO.ReadSingle(); return; }
-
-            entry.Interpolation = new float[entry.Count];
-            entry.KeyFrame      = new float[entry.Count];
-            entry.ArrValue      = new float[entry.Count];
-            for (int i = 0; i < entry.Count; i++)  entry.KeyFrame     [i] = IO.ReadSingle();
-            for (int i = 0; i < entry.Count; i++)
-            { entry.ArrValue[i] = IO.ReadSingle(); entry.Interpolation[i] = IO.ReadSingle(); }
-        }
-
-        public static bool Write(this Stream IO, ref KeyFrameEntry entry)
-        {
-            if (entry.Count == 0) return false;
-
-            if (entry.Count > 2) IO.Align(0x20);
-            entry.Offset = IO.Position;
-            if (entry.Count == 1) if (entry.Value == 0) return  true;
-                      else { IO.Write(entry.Value);     return false; }
-
-            for (int i = 0; i < entry.Count; i++) IO.Write(entry.KeyFrame     [i]);
-            for (int i = 0; i < entry.Count; i++)
-            { IO.Write(entry.ArrValue[i]);        IO.Write(entry.Interpolation[i]); }
-            return false;
-        }
-
-        public static void ReadMP(this CountPointer<Marker> mark, MsgPack msg)
-        {
-            MsgPack Temp;
-            if ((Temp = msg["Marker"]).NotNull)
-            {
-                mark.Count = 1;
-                mark.Entries[0].ReadMP(Temp);
-            }
-            else if ((Temp = msg["Markers", true]).NotNull)
-            {
-                mark.Count = Temp.Array.Length;
-                for (int i = 0; i < mark.Count; i++)
-                    mark.Entries[i].ReadMP(Temp[i]);
-            }
-            Temp.Dispose();
-        }
-
-        public static void WritePointerString(this Stream IO,
-            ref System.Collections.Generic.Dictionary<string, int> Dict, ref Pointer<string> Str)
-        {
-            if (Dict.ContainsKey(Str.Value)) Str.Offset = Dict[Str.Value];
-            else
-            { Str.Offset = IO.Position; Dict.Add(Str.Value, Str.Offset); IO.WriteShiftJIS(Str.Value + "\0"); }
-        }
-    }
-
-    public struct AetHeader
-    {
-        public Pointer<AetData>[] Data;
-    }
-
-    public struct AetData
-    {
-        public Pointer<string> Name;
-        public float Unk;
-        public float Duration;
-        public float FrameRate;
-        public int BackgroundColor;
-        public int Width;
-        public int Height;
-        public Pointer<Vector2<KeyFrameEntry>> Position;
-        public CountPointer<   AetLayer> Layers;
-        public CountPointer<SpriteEntry> SpriteEntries;
-        public CountPointer<int> Unknown;
-    }
-
-    public struct AetLayer
-    {
-        public int Pointer;
-        public int Count
-        {
-            get => Objects != null ? Objects.Length : 0;
-            set => Objects = new AetObject[value];
-        }
-        public int Offset;
-        public AetObject[] Objects;
-
-        public void ReadMP(MsgPack msg)
-        {
-            MsgPack Temp;
-            if ((Temp = msg["Object"]).NotNull)
-            {
-                Count = 1;
-                Objects[0].ReadMP(Temp);
-            }
-            else if ((Temp = msg["Objects", true]).NotNull)
-            {
-                Count = Temp.Array.Length;
-                for (int i0 = 0; i0 < Count; i0++)
-                    Objects[i0].ReadMP(Temp[i0]);
-            }
-            Temp.Dispose();
-        }
-
-        public MsgPack WriteMP(int Id, ref AetData Aet)
-        {
-            if (Count < 1)
-                return MsgPack.New.Add("ID", Id);
-            else if (Count == 1)
-                return MsgPack.New.Add("ID", Id).Add(this.Objects[0].WriteMP(ref Aet, "Object"));
-            MsgPack Objects = new MsgPack(Count, "Objects");
-            for (int i = 0; i < Count; i++)
-                Objects[i] = this.Objects[i].WriteMP(ref Aet);
-            return MsgPack.New.Add("ID", Id).Add(Objects);
-        }
-
-        public AetObject this[int index]
-        {
-            get =>    Count > 0  ? Objects[index] : default;
-            set { if (Count > 0) { Objects[index] =   value; } }
-        }
-        
-        public override string ToString() => "Count: " + Count;
-    }
-
-    public struct AetObject
-    {
-        public int ID;
-        public int Offset;
-        public Pointer<string> Name;
-        public float StartTime0;
-        public float LoopDuration;
-        public float StartTime1;
-        public float PlaybackSpeed;
-        public byte Unk0;
-        public byte Unk1;
-        public byte Unk2;
-        public ObjType Type;
-        public Pointer<Picture> Pic;
-        public Pointer<Audio  > Aif;
-        public Pointer<Effect > Eff;
-
-        public void ReadMP(MsgPack msg)
-        {
-            ID            = msg.ReadInt32 ("ID"           );
-            Name.Value    = msg.ReadString("Name"         );
-            StartTime0    = msg.ReadSingle("StartTime0"   );
-            LoopDuration  = msg.ReadSingle("LoopDuration" );
-            StartTime1    = msg.ReadSingle("StartTime1"   );
-            PlaybackSpeed = msg.ReadSingle("PlaybackSpeed");
-            Unk0 = msg.ReadUInt8("Unk0");
-            Unk1 = msg.ReadUInt8("Unk1");
-            Unk2 = msg.ReadUInt8("Unk2");
-
-            MsgPack Temp;
-                 if ((Temp = msg["Pic"]).NotNull) { Type = ObjType.Pic; Pic.Value.ReadMP(Temp); }
-            else if ((Temp = msg["Aif"]).NotNull) { Type = ObjType.Aif; Aif.Value.ReadMP(Temp); }
-            else if ((Temp = msg["Eff"]).NotNull) { Type = ObjType.Eff; Eff.Value.ReadMP(Temp); }
-            else Type = ObjType.Nop;
-            Temp.Dispose();
-        }
-
-        public MsgPack WriteMP(ref AetData Aet, string name = null)
-        {
-            MsgPack AetObject = new MsgPack(name).Add("ID", ID).Add("Name", Name.Value)
-                .Add("StartTime0", StartTime0).Add("LoopDuration", LoopDuration)
-                .Add("StartTime1", StartTime1).Add("PlaybackSpeed", PlaybackSpeed)
-                .Add("Unk0", Unk0).Add("Unk1", Unk1).Add("Unk2", Unk2);
-
-                 if (Type == ObjType.Pic) AetObject.Add(Pic.Value.WriteMP(ref Aet));
-            else if (Type == ObjType.Aif) AetObject.Add(Aif.Value.WriteMP());
-            else if (Type == ObjType.Eff) AetObject.Add(Eff.Value.WriteMP(ref Aet));
-            return AetObject;
-        }
-
-        public enum ObjType : byte
-        {
-            Nop = 0,
-            Pic = 1,
-            Aif = 2,
-            Eff = 3,
-        }
-
-        public struct Picture
-        {
-            public int SpriteEntryID;
-            public int ParentObjectID;
-            public CountPointer<Marker> Marker;
-            public Pointer<AnimationData> Data;
-
-            public Picture ReadMP(MsgPack msg)
-            {
-                SpriteEntryID = msg.ReadInt32("SpriteEntryID");
-
-                this.ParentObjectID = -1;
-                int? ParentObjectID = msg.ReadNInt32("ParentObjectID");
-                if (ParentObjectID != null)
-                    this.ParentObjectID = ParentObjectID.Value;
-
-                MsgPack Temp;
-                if ((Temp = msg["Marker"]).NotNull)
-                {
-                    Marker.Count = 1;
-                    Marker.Entries[0].ReadMP(Temp);
-                }
-                if ((Temp = msg["Markers", true]).NotNull)
-                {
-                    Marker.Count = Temp.Array.Length;
-                    for (int i = 0; i < Marker.Count; i++)
-                        Marker.Entries[i].ReadMP(Temp[i]);
-                }
-                else Marker.Entries = null;
-                Temp.Dispose();
-
-                Data.Value.ReadMP(msg);
-
-                return this;
-            }
-
-            public MsgPack WriteMP(ref AetData Aet)
-            {
-                MsgPack Pic = new MsgPack("Pic");
-                for (int i = 0; i < Aet.SpriteEntries.Count; i++)
-                    if (Aet.SpriteEntries[i].Offset == SpriteEntryID)
-                    { Pic.Add("SpriteEntryID", i); break; }
-
-                if (ParentObjectID > 0)
-                    for (int i = 0; i < Aet.Layers.Count; i++)
-                        for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
-                            if (Aet.Layers[i][i1].Offset == ParentObjectID)
-                            { Pic.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
-
-                if (Marker.Count == 1)
-                    Pic.Add(Marker.Entries[0].WriteMP("Marker"));
-                else if (Marker.Count > 1)
-                {
-                    MsgPack Markers = new MsgPack(Marker.Count, "Markers");
-                    for (int i = 0; i < Marker.Count; i++)
-                        Markers[i] = Marker.Entries[i].WriteMP();
-                    Pic.Add(Markers);
-                }
-
-                Pic.Add(Data.Value.WriteMP());
-                return Pic;
-            }
-        }
-
-        public struct Audio
-        {
-            public Pointer<int> Value;
-            public int Zero0;
-            public int Zero1;
-            public int Zero2;
-            public int Zero3;
-            public int Pointer;
-            public CountPointer<float> Unk0;
-            public CountPointer<float> Unk1;
-            public CountPointer<float> Unk2;
-            public CountPointer<float> Unk3;
-
-            public void ReadMP(MsgPack msg) =>
-                Value.Value = msg.ReadMP(ref Unk0, "Unk0").ReadMP(ref Unk1, "Unk1")
-                   .ReadMP(ref Unk2, "Unk2").ReadMP(ref Unk3, "Unk3").ReadInt32("Value");
-
-            public MsgPack WriteMP() =>
-                new MsgPack("Aif").Add("Value", Value.Value).Add("Unk0", Unk0)
-                .Add("Unk1", Unk0).Add("Unk2", Unk2).Add("Unk3", Unk3);
-        }
-
-        public struct Effect
-        {
-            public int LayerID;
-            public int ParentObjectID;
-            public CountPointer<Marker> Marker;
-            public Pointer<AnimationData> Data;
-
-            public void ReadMP(MsgPack msg)
-            {
-                LayerID = msg.ReadInt32("LayerID");
-
-                this.ParentObjectID = -1;
-                int? ParentObjectID = msg.ReadNInt32("ParentObjectID");
-                if (ParentObjectID != null)
-                    this.ParentObjectID = ParentObjectID.Value;
-
-                MsgPack Temp;
-                if ((Temp = msg["Marker"]).NotNull)
-                {
-                    Marker.Count = 1;
-                    Marker.Entries[0].ReadMP(Temp);
-                }
-                else if ((Temp = msg["Markers", true]).NotNull)
-                {
-                    Marker.Count = Temp.Array.Length;
-                    for (int i = 0; i < Marker.Count; i++)
-                        Marker.Entries[i].ReadMP(Temp[i]);
-                }
-                else Marker.Entries = null;
-                Temp.Dispose();
-
-                Data.Value.ReadMP(msg);
-            }
-
-            public MsgPack WriteMP(ref AetData Aet)
-            {
-                MsgPack Eff = new MsgPack("Eff");
-                for (int i = 0; i < Aet.Layers.Count; i++)
-                    if (Aet.Layers[i].Pointer == LayerID)
-                    { Eff.Add("LayerID", i); break; }
-                for (int i = 0; ParentObjectID > 0 && i < Aet.Layers.Count; i++)
-                    for (int i1 = 0; i1 < Aet.Layers[i].Count; i1++)
-                        if (Aet.Layers[i][i1].Offset == ParentObjectID)
-                        { Eff.Add("ParentObjectID", Aet.Layers[i][i1].ID); break; }
-
-                if (Marker.Count == 1)
-                    Eff.Add(Marker[0].WriteMP("Marker"));
-                else if (Marker.Count > 1)
-                {
-                    MsgPack Markers = new MsgPack(Marker.Count, "Markers");
-                    for (int i = 0; i < Marker.Count; i++)
-                        Markers[i] = Marker[i].WriteMP();
-                    Eff.Add(Markers);
-                }
-
-                Eff.Add(Data.Value.WriteMP());
-
-                return Eff;
-            }
-        }
-
-        public override string ToString() => Name.Value;
-    }
-    
-    public struct Marker
-    {
-        public float Frame;
-        public Pointer<string> Name;
-
-        public void ReadMP(MsgPack mp)
-        { Frame = mp.ReadSingle("Frame"); Name.Value = mp.ReadString("Name"); }
-
-        public MsgPack WriteMP(string name = null) =>
-            new MsgPack(name).Add("Frame", Frame).Add("Name", Name.Value);
-    }
-
-    public struct AnimationData3D
-    {
-        public KeyFrameEntry Unk1      ;
-        public KeyFrameEntry Unk2      ;
-        public KeyFrameEntry RotReturnX;
-        public KeyFrameEntry RotReturnY;
-        public KeyFrameEntry RotReturnZ;
-        public KeyFrameEntry  RotationX;
-        public KeyFrameEntry  RotationY;
-        public KeyFrameEntry     ScaleZ;
-
-        public void ReadMP(MsgPack msg)
-        {
-            Unk1      .ReadMP(msg, "Unk1"      );
-            Unk2      .ReadMP(msg, "Unk2"      );
-            RotReturnX.ReadMP(msg, "RotReturnX");
-            RotReturnY.ReadMP(msg, "RotReturnY");
-            RotReturnZ.ReadMP(msg, "RotReturnZ");
-             RotationX.ReadMP(msg,  "RotationX");
-             RotationY.ReadMP(msg,  "RotationY");
-                ScaleZ.ReadMP(msg,     "ScaleZ");
-        }
-
-        public MsgPack WriteMP()
-        {
-            MsgPack _3D = new MsgPack("3D");
-            _3D.Add(Unk1      .WriteMP("Unk1"      ));
-            _3D.Add(Unk2      .WriteMP("Unk2"      ));
-            _3D.Add(RotReturnX.WriteMP("RotReturnX"));
-            _3D.Add(RotReturnY.WriteMP("RotReturnY"));
-            _3D.Add(RotReturnZ.WriteMP("RotReturnZ"));
-            _3D.Add( RotationX.WriteMP( "RotationX"));
-            _3D.Add( RotationY.WriteMP( "RotationY"));
-            _3D.Add(    ScaleZ.WriteMP(    "ScaleZ"));
-            return _3D;
-        }
-    }
-
-    public struct AnimationData
-    {
-        public BlendMode Mode;
-        public byte Unk0;
-        public bool UseTextureMask;
-        public byte Unk1;
-        public KeyFrameEntry   OriginX;
-        public KeyFrameEntry   OriginY;
-        public KeyFrameEntry PositionX;
-        public KeyFrameEntry PositionY;
-        public KeyFrameEntry Rotation;
-        public KeyFrameEntry    ScaleX;
-        public KeyFrameEntry    ScaleY;
-        public KeyFrameEntry Opacity;
-        public Pointer<AnimationData3D> _3D;
-
-        public void ReadMP(MsgPack msg)
-        {
-            MsgPack Data;
-            if ((Data = msg["AnimationData"]).NotNull)
-            {
-                System.Enum.TryParse(Data.ReadString("BlendMode"), out Mode);
-                Unk0           = Data.ReadUInt8  ("Unk0");
-                UseTextureMask = Data.ReadBoolean("UseTextureMask");
-                Unk1           = Data.ReadUInt8  ("Unk1");
+            uint i;
+            Obj = default;
+            Obj.ID            = msg.RI32("ID"          );
+            Obj.Name.V        = msg.RS  ("Name"        );
+            Obj.LoopStart     = msg.RF32("LoopStart"   );
+            Obj.LoopEnd       = msg.RF32("LoopEnd"     );
+            Obj.StartFrame    = msg.RF32("StartFrame"  );
+            Obj.PlaybackSpeed = msg.RF32("PlaybackSpeed");
+            Obj.Flags = (AetObject.AetObjFlags)msg.RU16("Flags");
+            Obj.Pad = msg.RU8("Pad");
+            System.Enum.TryParse(msg.RS("Type"), out Obj.Type);
+            Obj.        DataID = msg.RnI32(        "DataID") ?? -1;
+            Obj.ParentObjectID = msg.RnI32("ParentObjectID") ?? -1;
                 
-                  OriginX.ReadMP(Data,   "OriginX");
-                  OriginY.ReadMP(Data,   "OriginY");
-                PositionX.ReadMP(Data, "PositionX");
-                PositionY.ReadMP(Data, "PositionY");
-                Rotation .ReadMP(Data, "Rotation" );
-                   ScaleX.ReadMP(Data,    "ScaleX");
-                   ScaleY.ReadMP(Data,    "ScaleY");
-                Opacity  .ReadMP(Data, "Opacity"  );
-
-                MsgPack Temp;
-                _3D.Offset = -1;
-                if ((Temp = Data["3D"]).NotNull) { _3D.Offset = 0; _3D.Value.ReadMP(Temp); }
-                Temp.Dispose();
-            }
-            Data.Dispose();
-        }
-
-        public MsgPack WriteMP()
-        {
-            MsgPack AnimationData = new MsgPack("AnimationData")
-                .Add("BlendMode", Mode.ToString()).Add("Unk0", Unk0)
-                .Add("UseTextureMask", UseTextureMask) .Add("Unk1", Unk1);
-
-            AnimationData.Add(  OriginX.WriteMP(  "OriginX"));
-            AnimationData.Add(  OriginY.WriteMP(  "OriginY"));
-            AnimationData.Add(PositionX.WriteMP("PositionX"));
-            AnimationData.Add(PositionY.WriteMP("PositionY"));
-            AnimationData.Add(Rotation .WriteMP("Rotation" ));
-            AnimationData.Add(   ScaleX.WriteMP(   "ScaleX"));
-            AnimationData.Add(   ScaleY.WriteMP(   "ScaleY"));
-            AnimationData.Add(Opacity  .WriteMP("Opacity"  ));
-            if (_3D.Offset > 0) AnimationData.Add(_3D.Value.WriteMP());
-            return AnimationData;
-        }
-
-        public enum BlendMode : byte
-        {
-            Alpha                    = 3,
-            Additive                 = 5,
-            DstColorZero             = 6,
-            SrcAlphaOneMinusSrcColor = 7,
-            Transparent              = 8,
-        }
-    }
-
-    public struct KeyFrameEntry
-    {
-        public int Count;
-        public int Offset;
-        public float Value;
-        public float[] ArrValue;
-        public float[] KeyFrame;
-        public float[] Interpolation;
-
-        public void ReadMP(MsgPack msg, string name)
-        {
-            MsgPack Temp;
-            float? Value = msg.ReadNSingle(name);
-            if (Value != null) { Count = 1; this.Value = Value.Value; }
-            if ((Temp = msg[name, true]).NotNull && Temp.Array.Length > 1)
+            MsgPack temp;
+            if ((temp = msg["Markers", true]).NotNull)
             {
-                Count = Temp.Array.Length;
-                ArrValue      = new float[Count];
-                KeyFrame      = new float[Count];
-                Interpolation = new float[Count];
-                for (int i = 0; i < Count; i++)
+                Obj.Marker.C = temp.Array.Length;
+                for (i = 0; i < Obj.Marker.C; i++)
                 {
-                    KeyFrame     [i] = Temp[i].ReadSingle("KeyFrame"     );
-                    ArrValue     [i] = Temp[i].ReadSingle("Value"        );
-                    Interpolation[i] = Temp[i].ReadSingle("Interpolation");
+                    Obj.Marker.E[i].Frame   = temp[i].RF32("Frame");
+                    Obj.Marker.E[i]. Name.V = temp[i].RS  ( "Name");
                 }
             }
-            Temp.Dispose();
+
+            if ((temp = msg["AnimationData"]).NotNull)
+            {
+                Obj.Data.O = 1;
+                ref AnimationData data = ref Obj.Data.V;
+                System.Enum.TryParse(temp.RS("BlendMode"), out data.Mode);
+                data.UseTextureMask = temp.RB("UseTextureMask");
+                
+                data.  OriginX = RKF(temp,   "OriginX");
+                data.  OriginY = RKF(temp,   "OriginY");
+                data.PositionX = RKF(temp, "PositionX");
+                data.PositionY = RKF(temp, "PositionY");
+                data.Rotation  = RKF(temp, "Rotation" );
+                data.   ScaleX = RKF(temp,    "ScaleX");
+                data.   ScaleY = RKF(temp,    "ScaleY");
+                data.Opacity   = RKF(temp, "Opacity"  );
+
+                MsgPack _3D;
+                if ((_3D = temp["3D"]).NotNull)
+                {
+                    data._3D.O = 1;
+                    ref AnimationData.ThirdDimension data3D = ref data._3D.V;
+                    data3D.Unk1       = RKF(_3D, "Unk1"      );
+                    data3D.Unk2       = RKF(_3D, "Unk2"      );
+                    data3D.RotReturnX = RKF(_3D, "RotReturnX");
+                    data3D.RotReturnY = RKF(_3D, "RotReturnY");
+                    data3D.RotReturnZ = RKF(_3D, "RotReturnZ");
+                    data3D. RotationX = RKF(_3D,  "RotationX");
+                    data3D. RotationY = RKF(_3D,  "RotationY");
+                    data3D.    ScaleZ = RKF(_3D,     "ScaleZ");
+                }
+                _3D.Dispose();
+            }
+
+            if ((temp = msg["ExtraData"]).NotNull)
+            {
+                Obj.ExtraData.O = 1;
+                ref AetObject.AetObjExtraData data = ref Obj.ExtraData.V;
+                data.Unk0 = RKF(temp, "Unk0");
+                data.Unk1 = RKF(temp, "Unk1");
+                data.Unk2 = RKF(temp, "Unk2");
+                data.Unk3 = RKF(temp, "Unk3");
+            }
+            temp.Dispose();
+            return Obj;
         }
 
-        public MsgPack WriteMP(string name)
+        private CountPointer<KFT2> RKF(MsgPack msg, string name)
         {
-            if (Count  < 1) return MsgPack.Null;
-            if (Count == 1) return new MsgPack(name, Value);
-            MsgPack KFE = new MsgPack(Count, name);
-            for (int i = 0; i < Count; i++) KFE[i] = MsgPack.New.Add("KeyFrame", KeyFrame[i])
-                    .Add("Value", ArrValue[i]).Add("Interpolation", Interpolation[i]);
+            CountPointer<KFT2> kf = default;
+            MsgPack temp;
+            float? Value = msg.RnF32(name);
+            if (Value != null) { kf.C = 1; kf.E[0].V = Value.Value; }
+            if ((temp = msg[name, true]).NotNull && temp.Array.Length > 1)
+            {
+                kf.E = new KFT2[temp.Array.Length];
+                for (int i = 0; i < kf.E.Length; i++)
+                {
+                         if (temp[i].Array == null ||
+                             temp[i].Array.Length == 0) continue;
+                    else if (temp[i].Array.Length == 1)
+                        kf.E[i] = new KFT2(temp[i][0].RF32());
+                    else if (temp[i].Array.Length == 2)
+                        kf.E[i] = new KFT2(temp[i][0].RF32(), temp[i][1].RF32());
+                    else if (temp[i].Array.Length == 3)
+                        kf.E[i] = new KFT2(temp[i][0].RF32(), temp[i][1].RF32(), temp[i][2].RF32());
+                }
+            }
+            temp.Dispose();
+            return kf;
+        }
+
+        private MsgPack WMP(ref AetObject obj, string name = null)
+        {
+            int i;
+            MsgPack @object = new MsgPack(name).Add("ID", obj.ID).Add("Name", obj.Name.V)
+                .Add("LoopStart", obj.LoopStart).Add("LoopEnd", obj.LoopEnd)
+                .Add("StartFrame", obj.StartFrame).Add("PlaybackSpeed", obj.PlaybackSpeed)
+                .Add("Flags", (ushort)obj.Flags).Add("Pad", obj.Pad).Add("Type", obj.Type.ToString());
+
+            if (obj.        DataID > -1) @object.Add(        "DataID", obj.        DataID);
+            if (obj.ParentObjectID > -1) @object.Add("ParentObjectID", obj.ParentObjectID);
+
+            if (obj.Marker.C > 0)
+            {
+                MsgPack markers = new MsgPack(obj.Marker.C, "Markers");
+                for (i = 0; i < obj.Marker.C; i++)
+                    markers[i] = MsgPack.New.Add("Frame", obj.Marker[i].Frame)
+                                            .Add("Name", obj.Marker[i].Name.V);
+                @object.Add(markers);
+            }
+
+            if (obj.Data.O > 0)
+            {
+                ref AnimationData data = ref obj.Data.V;
+                MsgPack animationData = new MsgPack("AnimationData").Add("BlendMode",
+                    data.Mode.ToString()).Add("UseTextureMask", data.UseTextureMask);
+
+                animationData.Add(WMP(ref data.OriginX, "OriginX"));
+                animationData.Add(WMP(ref data.OriginY, "OriginY"));
+                animationData.Add(WMP(ref data.PositionX, "PositionX"));
+                animationData.Add(WMP(ref data.PositionY, "PositionY"));
+                animationData.Add(WMP(ref data.Rotation, "Rotation"));
+                animationData.Add(WMP(ref data.ScaleX, "ScaleX"));
+                animationData.Add(WMP(ref data.ScaleY, "ScaleY"));
+                animationData.Add(WMP(ref data.Opacity, "Opacity"));
+                if (data._3D.O > 0)
+                {
+                    ref AnimationData.ThirdDimension data3D = ref data._3D.V;
+                    MsgPack _3D = new MsgPack("3D");
+                    _3D.Add(WMP(ref data3D.Unk1, "Unk1"));
+                    _3D.Add(WMP(ref data3D.Unk2, "Unk2"));
+                    _3D.Add(WMP(ref data3D.RotReturnX, "RotReturnX"));
+                    _3D.Add(WMP(ref data3D.RotReturnY, "RotReturnY"));
+                    _3D.Add(WMP(ref data3D.RotReturnZ, "RotReturnZ"));
+                    _3D.Add(WMP(ref data3D.RotationX, "RotationX"));
+                    _3D.Add(WMP(ref data3D.RotationY, "RotationY"));
+                    _3D.Add(WMP(ref data3D.ScaleZ, "ScaleZ"));
+                    animationData.Add(_3D);
+                }
+                @object.Add(animationData);
+            }
+            if (obj.ExtraData.O > 0)
+            {
+                ref AetObject.AetObjExtraData data = ref obj.ExtraData.V;
+                MsgPack extraData = new MsgPack("ExtraData");
+                extraData.Add(WMP(ref data.Unk0, "Unk0"));
+                extraData.Add(WMP(ref data.Unk1, "Unk1"));
+                extraData.Add(WMP(ref data.Unk2, "Unk2"));
+                extraData.Add(WMP(ref data.Unk3, "Unk3"));
+                @object.Add(extraData);
+            }
+            return @object;
+        }
+
+        private MsgPack WMP(ref CountPointer<KFT2> kf, string name)
+        {
+            if (kf.C <  1) return     MsgPack.Null;
+            if (kf.C == 1) return new MsgPack(name, kf.E[0].V);
+            MsgPack KFE = new MsgPack(kf.C, name);
+            for (int i = 0; i < kf.E.Length; i++)
+            {
+                IKF KF = kf.E[i].Check();
+                     if (KF is KFT0 KFT0) KFE[i] = new MsgPack(null, new MsgPack[] { KFT0.F });
+                else if (KF is KFT1 KFT1) KFE[i] = new MsgPack(null, new MsgPack[] { KFT1.F, KFT1.V });
+                else if (KF is KFT2 KFT2) KFE[i] = new MsgPack(null, new MsgPack[] { KFT2.F, KFT2.V, KFT2.T });
+            }
             return KFE;
         }
-    }
-
-    public struct SpriteEntry
-    {
-        public int Offset;
-        public int Unknown;
-        public short Width;
-        public short Height;
-        public float Frames;
-        public CountPointer<Sprite> Sprites;
-
-        public void ReadMP(MsgPack msg)
-        {
-            Unknown = msg.ReadInt32 ("Unknown");
-            Width   = msg.ReadInt16 ("Width"  );
-            Height  = msg.ReadInt16 ("Height" );
-            Frames  = msg.ReadSingle("Frames" );
-
-            MsgPack Temp;
-            if ((Temp = msg["Sprite"]).NotNull)
-            {
-                Sprites.Count = 1;
-                Sprites[0] = new Sprite() { Name = new Pointer<string>()
-                { Value = Temp.ReadString("Name") }, ID = Temp.ReadInt32("ID") };
-            }
-            else if ((Temp = msg["Sprites", true]).NotNull)
-            {
-                Sprites.Count = Temp.Array.Length;
-                for (int i0 = 0; i0 < Sprites.Count; i0++)
-                    Sprites[i0] = new Sprite() { Name = new Pointer<string>()
-                        { Value = Temp[i0].ReadString("Name") }, ID = Temp[i0].ReadInt32("ID") };
-            }
-            Temp.Dispose();
-        }
-
-        public MsgPack WriteMP(int Id)
-        {
-            MsgPack SpriteEntry = MsgPack.New.Add("ID", Id)
-                .Add("Width", Width).Add("Height", Height).Add("Unknown", Unknown);
-
-            if (Sprites.Count > 0) SpriteEntry.Add("Frames", Frames);
-
-            if (Sprites.Count == 1)
-                SpriteEntry.Add(new MsgPack("Sprite").Add("Name",
-                    Sprites[0].Name.Value).Add("ID", Sprites[0].ID));
-            else if (Sprites.Count > 1)
-            {
-                MsgPack Sprites = new MsgPack(this.Sprites.Count, "Sprites");
-                for (int i0 = 0; i0 < this.Sprites.Count; i0++)
-                    Sprites[i0] = MsgPack.New.Add("Name", 
-                        this.Sprites[i0].Name.Value).Add("ID", this.Sprites[i0].ID);
-                SpriteEntry.Add(Sprites);
-            }
-
-            return SpriteEntry;
-        }
-    }
-
-    public struct Sprite
-    {
-        public Pointer<string> Name;
-        public int ID;
-
-        public MsgPack WriteMP(int Id, string name = null) =>
-            new MsgPack(name).Add("ID", Id).Add("Name", Name.Value).Add("SprDB_ID", ID);
-
-        public int? ReadMP(MsgPack mp)
-        { ID = mp.ReadInt32("SprDB_ID"); Name.Value = mp.ReadString("Name"); return mp.ReadNInt32("ID"); }
-
-        public override string ToString() => "ID: " + ID + "; Name: " + Name;
     }
 }

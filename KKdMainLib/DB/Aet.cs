@@ -17,31 +17,31 @@ namespace KKdMainLib.DB
         {
             IO = File.OpenReader(file + ".bin");
 
-            int aetSetsLength = IO.ReadInt32();
-            int aetSetsOffset = IO.ReadInt32();
-            int aetsLength    = IO.ReadInt32();
-            int aetsOffset    = IO.ReadInt32();
+            int aetSetsLength = IO.RI32();
+            int aetSetsOffset = IO.RI32();
+            int aetsLength    = IO.RI32();
+            int aetsOffset    = IO.RI32();
 
-            IO.Position = aetSetsOffset;
+            IO.P = aetSetsOffset;
             AetSets = new AetSet[aetSetsLength];
             for (i = 0; i < aetSetsLength; i++)
             {
-                AetSets[i].Id          = IO.ReadInt32();
-                AetSets[i].Name        = IO.ReadStringAtOffset();
-                AetSets[i].FileName    = IO.ReadStringAtOffset();
-                IO.ReadInt32();
-                AetSets[i].SpriteSetId = IO.ReadInt32();
+                AetSets[i].Id          = IO.RI32();
+                AetSets[i].Name        = IO.RSaO();
+                AetSets[i].FileName    = IO.RSaO();
+                IO.RI32();
+                AetSets[i].SpriteSetId = IO.RI32();
             }
 
             int setIndex;
             AET aet = new AET();
             int[] AetCount = new int[aetSetsLength];
 
-            IO.Position = aetsOffset;
+            IO.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                IO.LongPosition += 10;
-                setIndex = IO.ReadInt16();
+                IO.I64P += 10;
+                setIndex = IO.RI16();
                 AetCount[setIndex]++;
             }
 
@@ -51,18 +51,18 @@ namespace KKdMainLib.DB
                 AetCount[i] = 0;
             }
 
-            IO.Position = aetsOffset;
+            IO.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                aet.Id    = IO.ReadInt32();
-                aet.Name  = IO.ReadStringAtOffset();
-                IO.ReadInt16();
-                setIndex  = IO.ReadInt16();
+                aet.Id    = IO.RI32();
+                aet.Name  = IO.RSaO();
+                IO.RI16();
+                setIndex  = IO.RI16();
 
                 AetSets[setIndex].Aets[AetCount[setIndex]] = aet; AetCount[setIndex]++;
             }
 
-            IO.Close();
+            IO.C();
         }
 
 
@@ -138,54 +138,54 @@ namespace KKdMainLib.DB
             i1 = i1.Align(0x20) + 0x20;
 
             IO = File.OpenWriter(file + ".bin", true);
-            IO.Write(i2);
-            IO.Write(i1);
-            IO.Write(i0);
-            IO.Write(0x20);
-            IO.Write(0x9066906690669066);
-            IO.Write(0x9066906690669066);
+            IO.W(i2);
+            IO.W(i1);
+            IO.W(i0);
+            IO.W(0x20);
+            IO.W(0x9066906690669066);
+            IO.W(0x9066906690669066);
 
-            IO.Position = (i1 + i2 * 0x14).Align(0x20);
+            IO.P = (i1 + i2 * 0x14).Align(0x20);
             for (i = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
-                AetSets[i].    NameOffset = IO.Position; IO.Write(AetSets[i].    Name + "\0");
-                AetSets[i].FileNameOffset = IO.Position; IO.Write(AetSets[i].FileName + "\0");
+                AetSets[i].    NameOffset = IO.P; IO.W(AetSets[i].    Name + "\0");
+                AetSets[i].FileNameOffset = IO.P; IO.W(AetSets[i].FileName + "\0");
             }
 
             for (i = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
-                { AetSets[i].Aets[i0].NameOffset = IO.Position; IO.Write(AetSets[i].Aets[i0].Name + "\0"); }
+                { AetSets[i].Aets[i0].NameOffset = IO.P; IO.W(AetSets[i].Aets[i0].Name + "\0"); }
             }
-            IO.Align(0x08, true);
+            IO.A(0x08, true);
             
-            IO.Position = 0x20;
+            IO.P = 0x20;
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
                 
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
                 {
-                    IO.Write(AetSets[i].Aets[i0].Id        );
-                    IO.Write(AetSets[i].Aets[i0].NameOffset);
-                    IO.Write((ushort)     i0 );
-                    IO.Write((ushort)(i - i2));
+                    IO.W(AetSets[i].Aets[i0].Id        );
+                    IO.W(AetSets[i].Aets[i0].NameOffset);
+                    IO.W((ushort)     i0 );
+                    IO.W((ushort)(i - i2));
                 }
             }
-            IO.Align(0x20);
+            IO.A(0x20);
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
 
-                IO.Write(AetSets[i].Id            );
-                IO.Write(AetSets[i].    NameOffset);
-                IO.Write(AetSets[i].FileNameOffset);
-                IO.Write(i - i2);
-                IO.Write(AetSets[i].SpriteSetId   );
+                IO.W(AetSets[i].Id            );
+                IO.W(AetSets[i].    NameOffset);
+                IO.W(AetSets[i].FileNameOffset);
+                IO.W(i - i2);
+                IO.W(AetSets[i].SpriteSetId   );
             }
-            IO.Close();
+            IO.C();
         }
 
         public void MsgPackReader(string file, bool JSON)
@@ -223,7 +223,7 @@ namespace KKdMainLib.DB
             public string Name;
 
             public void ReadMsgPack(MsgPack msg)
-            { Id = msg.ReadNUInt16("Id"); Name  = msg.ReadString("Name"); }
+            { Id = msg.RnU16("Id"); Name  = msg.RS("Name"); }
             
             public MsgPack WriteMsgPack() =>
                 MsgPack.New.Add("Id", Id).Add("Name", Name);
@@ -242,11 +242,11 @@ namespace KKdMainLib.DB
             
             public void ReadMsgPack(MsgPack msg)
             {
-                FileName    = msg.ReadString ("FileName"   );
-                Id          = msg.ReadNUInt16(         "Id");
-                Name        = msg.ReadString (    "Name"   );
-                NewId       = msg.ReadBoolean("NewId"      );
-                SpriteSetId = msg.ReadNUInt16("SpriteSetId");
+                FileName    = msg.RS ("FileName"   );
+                Id          = msg.RnU16(         "Id");
+                Name        = msg.RS (    "Name"   );
+                NewId       = msg.RB("NewId"      );
+                SpriteSetId = msg.RnU16("SpriteSetId");
 
                 MsgPack Temp;
                 if ((Temp = msg["Aets", true]).NotNull)

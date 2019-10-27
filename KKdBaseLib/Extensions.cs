@@ -220,32 +220,32 @@ namespace KKdBaseLib
         private static readonly string NumberDecimalSeparator =
              System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
 
-        public static string ToString(this   bool? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this   bool? d) => (d ?? default).ToString();
         public static string ToString(this   bool  d) => d.ToString().ToLower();
-        public static string ToString(this  sbyte? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this  sbyte? d) => (d ?? default).ToString();
         public static string ToString(this  sbyte  d) => d.ToString();
-        public static string ToString(this   byte? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this   byte? d) => (d ?? default).ToString();
         public static string ToString(this   byte  d) => d.ToString();
-        public static string ToString(this  short? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this  short? d) => (d ?? default).ToString();
         public static string ToString(this  short  d) => d.ToString();
-        public static string ToString(this ushort? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this ushort? d) => (d ?? default).ToString();
         public static string ToString(this ushort  d) => d.ToString();
-        public static string ToString(this    int? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this    int? d) => (d ?? default).ToString();
         public static string ToString(this    int  d) => d.ToString();
-        public static string ToString(this   uint? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this   uint? d) => (d ?? default).ToString();
         public static string ToString(this   uint  d) => d.ToString();
-        public static string ToString(this   long? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this   long? d) => (d ?? default).ToString();
         public static string ToString(this   long  d) => d.ToString();
-        public static string ToString(this  ulong? d) => d.GetValueOrDefault().ToString();
+        public static string ToString(this  ulong? d) => (d ?? default).ToString();
         public static string ToString(this  ulong  d) => d.ToString();
-        public static string ToString(this  float? d, byte round) => d.GetValueOrDefault().ToString(round);
-        public static string ToString(this  float? d)             => d.GetValueOrDefault().ToString();
+        public static string ToString(this  float? d, byte round) => (d ?? default).ToString(round);
+        public static string ToString(this  float? d)             => (d ?? default).ToString();
         public static string ToString(this  float  d, byte round) =>
             Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
         public static string ToString(this  float  d) =>
                        d        .ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this double? d, byte round) => d.GetValueOrDefault().ToString(round);
-        public static string ToString(this double? d)             => d.GetValueOrDefault().ToString();
+        public static string ToString(this double? d, byte round) => (d ?? default).ToString(round);
+        public static string ToString(this double? d)             => (d ?? default).ToString();
         public static string ToString(this double  d, byte round) => 
             Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
         public static string ToString(this double  d) =>

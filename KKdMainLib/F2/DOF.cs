@@ -17,12 +17,12 @@ namespace KKdMainLib.F2
             IO = File.OpenReader(file + ".dft", true);
             Header = IO.ReadHeader();
             if (Header.Signature != 0x54464F44 || Header.InnerSignature != 0x3) return;
-            IO.Position -= 0x4;
+            IO.P -= 0x4;
 
-            DFTs = IO.ReadCountPointerEndian<DFT>();
-            if (DFTs.Count < 1) { IO.Close(); DFTs.Count = -1; return; }
+            DFTs = IO.RCPE<DFT>();
+            if (DFTs.C < 1) { IO.C(); DFTs.C = -1; return; }
 
-            if (DFTs.Count > 0 && DFTs.Offset == 0) { IO.Close(); DFTs.Count = -1; return; }
+            if (DFTs.C > 0 && DFTs.O == 0) { IO.C(); DFTs.C = -1; return; }
             /*{
                 IO.Format = Header.Format = Format.X;
                 IO.Offset = Header.Length;
@@ -30,30 +30,30 @@ namespace KKdMainLib.F2
                 DFTs = IO.ReadCountPointerX<DFT>();
             }*/
 
-            IO.Position = DFTs.Offset;
-            for (i = 0; i < DFTs.Count; i++)
+            IO.P = DFTs.O;
+            for (i = 0; i < DFTs.C; i++)
             {
-                ref DFT DFT = ref DFTs.Entries[i];
-                IO.ReadInt32Endian();
-                DFT.  Focus      = IO.ReadSingleEndian();
-                DFT.  FocusRange = IO.ReadSingleEndian();
-                DFT.FuzzingRange = IO.ReadSingleEndian();
-                DFT.Ratio        = IO.ReadSingleEndian();
-                DFT.Quality      = IO.ReadSingleEndian();
-                if (IO.IsX) IO.ReadInt32();
+                ref DFT DFT = ref DFTs.E[i];
+                IO.RI32E();
+                DFT.  Focus      = IO.RF32E();
+                DFT.  FocusRange = IO.RF32E();
+                DFT.FuzzingRange = IO.RF32E();
+                DFT.Ratio        = IO.RF32E();
+                DFT.Quality      = IO.RF32E();
+                if (IO.IsX) IO.RI32();
             }
 
-            IO.Close();
+            IO.C();
         }
 
         public void TXTWriter(string file)
         {
-            if (DFTs.Count < 1) return;
+            if (DFTs.C < 1) return;
 
             IO = File.OpenWriter();
-            IO.WriteShiftJIS("ID,Focus,FocusRange,FuzzingRange,Ratio,Quality\n");
-            for (i = 0; i < DFTs.Count; i++)
-                IO.Write(i + "," + DFTs[i] + "\n");
+            IO.WPSSJIS("ID,Focus,FocusRange,FuzzingRange,Ratio,Quality\n");
+            for (i = 0; i < DFTs.C; i++)
+                IO.W(i + "," + DFTs[i] + "\n");
             File.WriteAllBytes(file + "_dof.txt", IO.ToArray(true));
         }
 

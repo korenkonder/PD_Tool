@@ -22,8 +22,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
+    <LangVersion>8.0</LangVersion>
+    <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,8 +35,8 @@
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>true</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE1006</NoWarn>
+    <LangVersion>8.0</LangVersion>
+    <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DB\Aet.cs" />

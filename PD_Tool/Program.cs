@@ -29,9 +29,8 @@ namespace PD_Tool
                 else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc") new KKdFARC(arg).UnPack(true);
                 else if (File.Exists(arg))
                 {
-                    reader = File.OpenReader(arg);
-                    header = reader.ReadInt64();
-                    reader.Close();
+                    using (reader = File.OpenReader(arg))
+                        header = reader.RI64();
                     if (header == 0x454C494641564944) KKdMainLib.DIVAFILE.Decrypt(arg);
                 }
             }

@@ -1,7 +1,7 @@
 ﻿using System;
 using KKdBaseLib;
 using KKdMainLib.IO;
-using KKdA3DA = KKdMainLib.A3DA.A3DA;
+using KKdA3DA = KKdMainLib.A3DA;
 using KKdFARC = KKdMainLib.FARC;
 
 namespace PD_Tool.Tools
@@ -77,7 +77,7 @@ namespace PD_Tool.Tools
                                 A = new KKdA3DA();
                                 A.MsgPackReader(A3DA);
                                 A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
-                                A.Data.Format = Format;
+                                A.Head.Format = Format;
                                 FARC.Files[i].Data = (format != "1" && format != "3") ? A.A3DCWriter() : A.A3DAWriter();
                             }
                         }
@@ -92,7 +92,7 @@ namespace PD_Tool.Tools
                 {
                     A.MsgPackReader(filepath, ext == ".json");
                     A.Data._.CompressF16 = Format > Format.FT ? Format == Format.MGF ? 2 : 1 : 0;
-                    A.Data.Format = Format;
+                    A.Head.Format = Format;
 
                     File.WriteAllBytes(filepath + ".a3da", (format != "1" &&
                         format != "3") ? A.A3DCWriter() : A.A3DAWriter());
