@@ -9,7 +9,8 @@
 
         IKF Check();
         string ToString();
-        string ToString(bool Brackets);
+        string ToString(int round, bool brackets);
+        string ToString(bool brackets, int round);
     }
 
     public interface INull

@@ -5,17 +5,17 @@ namespace KKdMainLib.IO
 {
     public static class Extensions
     {
-        public static string NTASCII(this Stream stream, byte End = 0) =>
-            stream.NT(End).ToASCII();
-        public static string NTUTF8 (this Stream stream, byte End = 0) =>
-            stream.NT(End).ToUTF8 ();
-        public static byte[] NT     (this Stream stream, byte End = 0)
+        public static string NTASCII(this Stream stream, byte end = 0) =>
+            stream.NT(end).ToASCII();
+        public static string NTUTF8 (this Stream stream, byte end = 0) =>
+            stream.NT(end).ToUTF8 ();
+        public static byte[] NT     (this Stream stream, byte end = 0)
         {
             KKdList<byte> s = KKdList<byte>.New;
             while (stream.I64P < stream.I64L)
             {
                 byte a = stream.RU8();
-                if (a == End) break;
+                if (a == end) break;
                 else s.Add(a);
             }
             return s.ToArray();
@@ -37,37 +37,37 @@ namespace KKdMainLib.IO
             return stream;
         }
 
-		public static bool A(this Stream stream, byte next)
+		public static bool As(this Stream stream, byte next)
 		{ if (stream.PB() == next) { stream.PB(); return true; } else return false; }
-		public static bool A(this Stream stream, byte[] next)
+		public static bool As(this Stream stream, byte[] next)
 		{
             for (var i = 0; i < next.Length; i++)
-                if (!A(stream, next[i])) return false;
+                if (!As(stream, next[i])) return false;
             return true;
 		}
         
-		public static bool AASCII(this Stream stream, char next)
+		public static bool AsASCII(this Stream stream, char next)
 		{ if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
-		public static bool AASCII(this Stream stream, string next)
+		public static bool AsASCII(this Stream stream, string next)
 		{
             for (var i = 0; i < next.Length; i++)
-                if (!stream.AASCII(next[i])) return false;
+                if (!stream.AsASCII(next[i])) return false;
             return true;
 		}
 
-		public static bool A(this Stream stream, char next)
+		public static bool As(this Stream stream, char next)
 		{ if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
-		public static bool a(this Stream stream, string next)
+		public static bool As(this Stream stream, string next)
 		{
             for (var i = 0; i < next.Length; i++)
-                if (!A(stream, next[i])) return false;
+                if (!As(stream, next[i])) return false;
             return true;
 		}
 
         public static long RIX(this Stream stream           ) => stream.IsX ?
-            stream.RI64() : stream.RU32E(    );
-        public static long RIX(this Stream stream, bool IsBE) => stream.IsX ?
-            stream.RI64() : stream.RU32E(IsBE);
+            stream.RI64() : stream.RU32E(  );
+        public static long RIX(this Stream stream, bool isBE) => stream.IsX ?
+            stream.RI64() : stream.RU32E(isBE);
 
         public static void WX(this Stream stream, long val, ref POF POF)
         {   if (stream.IsX) stream.W (     val);

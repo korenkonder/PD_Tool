@@ -6,42 +6,42 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib.DB
 {
-    public class Aet
+    public class Aet : System.IDisposable
     {
-        public AetSet[] AetSets;
-
-        private Stream IO;
         private int i, i0, i1, i2;
+        private Stream _IO;
+
+        public AetSet[] AetSets;
 
         public void BINReader(string file)
         {
-            IO = File.OpenReader(file + ".bin");
+            _IO = File.OpenReader(file + ".bin");
 
-            int aetSetsLength = IO.RI32();
-            int aetSetsOffset = IO.RI32();
-            int aetsLength    = IO.RI32();
-            int aetsOffset    = IO.RI32();
+            int aetSetsLength = _IO.RI32();
+            int aetSetsOffset = _IO.RI32();
+            int aetsLength    = _IO.RI32();
+            int aetsOffset    = _IO.RI32();
 
-            IO.P = aetSetsOffset;
+            _IO.P = aetSetsOffset;
             AetSets = new AetSet[aetSetsLength];
             for (i = 0; i < aetSetsLength; i++)
             {
-                AetSets[i].Id          = IO.RI32();
-                AetSets[i].Name        = IO.RSaO();
-                AetSets[i].FileName    = IO.RSaO();
-                IO.RI32();
-                AetSets[i].SpriteSetId = IO.RI32();
+                AetSets[i].Id          = _IO.RI32();
+                AetSets[i].Name        = _IO.RSaO();
+                AetSets[i].FileName    = _IO.RSaO();
+                _IO.RI32();
+                AetSets[i].SpriteSetId = _IO.RI32();
             }
 
             int setIndex;
             AET aet = new AET();
             int[] AetCount = new int[aetSetsLength];
 
-            IO.P = aetsOffset;
+            _IO.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                IO.I64P += 10;
-                setIndex = IO.RI16();
+                _IO.I64P += 10;
+                setIndex = _IO.RI16();
                 AetCount[setIndex]++;
             }
 
@@ -51,18 +51,18 @@ namespace KKdMainLib.DB
                 AetCount[i] = 0;
             }
 
-            IO.P = aetsOffset;
+            _IO.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                aet.Id    = IO.RI32();
-                aet.Name  = IO.RSaO();
-                IO.RI16();
-                setIndex  = IO.RI16();
+                aet.Id    = _IO.RI32();
+                aet.Name  = _IO.RSaO();
+                _IO.RI16();
+                setIndex  = _IO.RI16();
 
                 AetSets[setIndex].Aets[AetCount[setIndex]] = aet; AetCount[setIndex]++;
             }
 
-            IO.C();
+            _IO.C();
         }
 
 
@@ -135,62 +135,62 @@ namespace KKdMainLib.DB
                 if (!NotAdd.Contains(i)) { i0 += AetSets[i].Aets.Length; i2++; }
             
             i1 = i0 * 12;
-            i1 = i1.Align(0x20) + 0x20;
+            i1 = i1.A(0x20) + 0x20;
 
-            IO = File.OpenWriter(file + ".bin", true);
-            IO.W(i2);
-            IO.W(i1);
-            IO.W(i0);
-            IO.W(0x20);
-            IO.W(0x9066906690669066);
-            IO.W(0x9066906690669066);
+            _IO = File.OpenWriter(file + ".bin", true);
+            _IO.W(i2);
+            _IO.W(i1);
+            _IO.W(i0);
+            _IO.W(0x20);
+            _IO.W(0x9066906690669066);
+            _IO.W(0x9066906690669066);
 
-            IO.P = (i1 + i2 * 0x14).Align(0x20);
+            _IO.P = (i1 + i2 * 0x14).A(0x20);
             for (i = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
-                AetSets[i].    NameOffset = IO.P; IO.W(AetSets[i].    Name + "\0");
-                AetSets[i].FileNameOffset = IO.P; IO.W(AetSets[i].FileName + "\0");
+                AetSets[i].    NameOffset = _IO.P; _IO.W(AetSets[i].    Name + "\0");
+                AetSets[i].FileNameOffset = _IO.P; _IO.W(AetSets[i].FileName + "\0");
             }
 
             for (i = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) continue;
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
-                { AetSets[i].Aets[i0].NameOffset = IO.P; IO.W(AetSets[i].Aets[i0].Name + "\0"); }
+                { AetSets[i].Aets[i0].NameOffset = _IO.P; _IO.W(AetSets[i].Aets[i0].Name + "\0"); }
             }
-            IO.A(0x08, true);
+            _IO.A(0x08, true);
             
-            IO.P = 0x20;
+            _IO.P = 0x20;
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
                 
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
                 {
-                    IO.W(AetSets[i].Aets[i0].Id        );
-                    IO.W(AetSets[i].Aets[i0].NameOffset);
-                    IO.W((ushort)     i0 );
-                    IO.W((ushort)(i - i2));
+                    _IO.W(AetSets[i].Aets[i0].Id        );
+                    _IO.W(AetSets[i].Aets[i0].NameOffset);
+                    _IO.W((ushort)     i0 );
+                    _IO.W((ushort)(i - i2));
                 }
             }
-            IO.A(0x20);
+            _IO.A(0x20);
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
 
-                IO.W(AetSets[i].Id            );
-                IO.W(AetSets[i].    NameOffset);
-                IO.W(AetSets[i].FileNameOffset);
-                IO.W(i - i2);
-                IO.W(AetSets[i].SpriteSetId   );
+                _IO.W(AetSets[i].Id            );
+                _IO.W(AetSets[i].    NameOffset);
+                _IO.W(AetSets[i].FileNameOffset);
+                _IO.W(i - i2);
+                _IO.W(AetSets[i].SpriteSetId   );
             }
-            IO.C();
+            _IO.C();
         }
 
-        public void MsgPackReader(string file, bool JSON)
+        public void MsgPackReader(string file, bool json)
         {
-            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
+            MsgPack MsgPack = file.ReadMPAllAtOnce(json);
 
             MsgPack Temp = default;
             if ((Temp = MsgPack["AetDB", true]).NotNull)
@@ -204,7 +204,7 @@ namespace KKdMainLib.DB
         }
 
 
-        public void MsgPackWriter(string file, bool JSON)
+        public void MsgPackWriter(string file, bool json)
         {
             if (AetSets        == null) return;
             if (AetSets.Length ==    0) return;
@@ -213,8 +213,12 @@ namespace KKdMainLib.DB
             for (i = 0; i < AetSets.Length; i++)
                 AetDB[i] = AetSets[i].WriteMsgPack();
 
-            AetDB.Write(true, file, JSON);
+            AetDB.Write(true, file, json);
         }
+
+        private bool disposed = false;
+        public void Dispose()
+        { if (!disposed) { if (_IO != null) _IO.D(); AetSets = null; disposed = true; } }
 
         public struct AET
         {

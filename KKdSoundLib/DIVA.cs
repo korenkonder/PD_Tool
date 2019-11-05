@@ -50,6 +50,7 @@ namespace KKdSoundLib
                     f = (float)(currentPtr[c] / 32768.0);
                     writer.W(f);
                 }
+            reader.CR();
 
             WAV.Header Header = new WAV.Header { Bytes = 4, Channels = Data.Channels, Format = 3,
                 SampleRate = Data.SampleRate, Size = Data.SamplesCount * Data.Channels * 4 };
@@ -100,7 +101,7 @@ namespace KKdSoundLib
             writer.I64P = 0x00;
             writer.W("DIVA");
             writer.W(0x00);
-            writer.W((Data.SamplesCount * Data.Channels).Align(2, 2));
+            writer.W((Data.SamplesCount * Data.Channels).A(2, 2));
             writer.W(Data.SampleRate);
             writer.W(Data.SamplesCount);
             writer.W(0x00);

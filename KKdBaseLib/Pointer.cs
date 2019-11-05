@@ -5,7 +5,7 @@
         public int O;
         public T V;
 
-        public override string ToString() => Extensions.ToString(V);
+        public override string ToString() => Extensions.ToS(V);
 
         public Pointer(T value)
         { O = 0; V = value; }

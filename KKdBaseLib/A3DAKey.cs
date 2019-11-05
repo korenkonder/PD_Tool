@@ -1,4 +1,6 @@
-﻿namespace KKdBaseLib
+﻿using KKdBaseLib.A3DA;
+
+namespace KKdBaseLib
 {
     public struct A3DAKey
     {
@@ -22,21 +24,5 @@
         public int Unk44;
 
         public KFT3[] Keys;
-
-        public enum KeyType : int
-        {
-            Null    = 0,
-            Value   = 1,
-            Lerp    = 2,
-            Hermite = 3,
-            Hold    = 4,
-        }
-
-        public enum EPType : int
-        {
-            EP_1 = 1,
-            EP_2 = 2,
-            EP_3 = 3,
-        }
     }
 }

@@ -5,148 +5,155 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib.DB
 {
-    public class Auth
+    public class Auth : IDisposable
     {
-        public    int  Signature { get; private set; }
-        public string[] Category { get; private set; }
-        public    UID[]     _UID { get; private set; }
-        public Stream         IO { get; private set; }
+        private int i;
+        private Stream _IO;
+
+        public string[] Category;
+        public UID[] UIDs;
 
         public void BINReader(string file)
         {
-            Dictionary<string, object> Dict = new Dictionary<string, object>();
+            Dictionary<string, object> dict = new Dictionary<string, object>();
             string[] dataArray;
 
-            IO = File.OpenReader(file + ".bin");
+            _IO = File.OpenReader(file + ".bin");
 
-            IO.Format = Format.F;
-            Signature = IO.RI32();
-            if (Signature != 0x44334123) return;
-            Signature = IO.RI32();
-            if (Signature != 0x5F5F5F41) return;
-            IO.RI64();
+            _IO.Format = Format.F;
+            int signature = _IO.RI32();
+            if (signature != 0x44334123) return;
+            signature = _IO.RI32();
+            if (signature != 0x5F5F5F41) return;
+            _IO.RI64();
 
-            string[] STRData = IO.RS(IO.L - IO.P).Replace("\r", "").Split('\n');
-            for (int i = 0; i < STRData.Length; i++)
+            string[] strData = _IO.RS(_IO.L - _IO.P).Replace("\r", "").Split('\n');
+            for (i = 0; i < strData.Length; i++)
             {
-                dataArray = STRData[i].Split('=');
+                dataArray = strData[i].Split('=');
                 if (dataArray.Length == 2)
-                    Dict.GetDictionary(dataArray[0], dataArray[1]);
+                    dict.GetDictionary(dataArray[0], dataArray[1]);
             }
 
-            if (Dict.FindValue(out string value, "category.length"))
+            if (dict.FindValue(out string value, "category.length"))
             {
                 Category = new string[int.Parse(value)];
-                for (int i0 = 0; i0 < Category.Length; i0++)
-                    if (Dict.FindValue(out value, "category." + i0 + ".value"))
-                        Category[i0] = value;
+                for (i = 0; i < Category.Length; i++)
+                    if (dict.FindValue(out value, "category." + i + ".value"))
+                        Category[i] = value;
             }
 
-            if (Dict.FindValue(out value, "uid.length"))
+            if (dict.FindValue(out value, "uid.length"))
             {
-                _UID = new UID[int.Parse(value)];
-                for (int i0 = 0; i0 < _UID.Length; i0++)
+                UIDs = new UID[int.Parse(value)];
+                for (i = 0; i < UIDs.Length; i++)
                 {
-                    Dict.FindValue(out _UID[i0].Category, "uid." + i0 + ".category");
-                    Dict.FindValue(out _UID[i0].OrgUid  , "uid." + i0 + ".org_uid" );
-                    Dict.FindValue(out _UID[i0].Size    , "uid." + i0 + ".size"    );
-                    Dict.FindValue(out _UID[i0].Value   , "uid." + i0 + ".value"   );
+                    dict.FindValue(out UIDs[i].Category, "uid." + i + ".category");
+                    dict.FindValue(out UIDs[i].OrgUid  , "uid." + i + ".org_uid" );
+                    dict.FindValue(out UIDs[i].Size    , "uid." + i + ".size"    );
+                    dict.FindValue(out UIDs[i].Value   , "uid." + i + ".value"   );
                 }
             }
 
-            IO.C();
+            _IO.C();
         }
 
         public void BINWriter(string file)
         {
-            IO = File.OpenWriter(file + ".bin", true);
+            _IO = File.OpenWriter(file + ".bin", true);
 
-            IO.W("#A3DA__________\n");
-            IO.W("#", DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
-                System.Globalization.CultureInfo.InvariantCulture));
+            _IO.W("#A3DA__________\n");
+            _IO.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
+                System.Globalization.CultureInfo.InvariantCulture) + "\n");
 
             if (Category != null)
             {
-                int[] SO = Category.Length.SortWriter();
-                for (int i = 0; i < Category.Length; i++)
-                    IO.W("category." + SO[i] + ".value=", Category[SO[i]]);
-                IO.W("category.length=", Category.Length);
+                int[] so = Category.Length.SortWriter();
+                for (i = 0; i < Category.Length; i++)
+                    _IO.W($"category.{so[i]}.value={ Category[so[i]]}\n");
+                _IO.W($"category.length={Category.Length}\n");
             }
 
-            if (_UID != null)
+            if (UIDs != null)
             {
-                int[] SO = _UID.Length.SortWriter();
-                for (int i = 0; i < _UID.Length; i++)
+                int[] so = UIDs.Length.SortWriter();
+                for (i = 0; i < UIDs.Length; i++)
                 {
-                    if (_UID[SO[i]].Category != "")
-                        IO.W("uid." + SO[i] + ".category=", _UID[SO[i]].Category);
-                        IO.W("uid." + SO[i] + ".org_uid=" , _UID[SO[i]].OrgUid  );
-                        IO.W("uid." + SO[i] + ".size="    , _UID[SO[i]].Size    );
-                    if (_UID[SO[i]].Value    != "")
-                        IO.W("uid." + SO[i] + ".value="   , _UID[SO[i]].Value   );
+                    if (UIDs[so[i]].Category != null && UIDs[so[i]].Category != "")
+                        _IO.W($"uid.{so[i]}.category=" + UIDs[so[i]].Category + "\n");
+                    if (UIDs[so[i]].OrgUid   != null)
+                        _IO.W($"uid.{so[i]}.org_uid="  + UIDs[so[i]].OrgUid   + "\n");
+                    if (UIDs[so[i]].Size     != null)
+                        _IO.W($"uid.{so[i]}.size="     + UIDs[so[i]].Size     + "\n");
+                    if (UIDs[so[i]].Value    != null && UIDs[so[i]].Value    != "")
+                        _IO.W($"uid.{so[i]}.value="    + UIDs[so[i]].Value    + "\n");
                 }
-                IO.W("uid.length=", _UID.Length);
+                _IO.W($"uid.length={UIDs.Length}\n");
             }
 
-            IO.C();
+            _IO.C();
         }
 
-        public void MsgPackReader(string file, bool JSON)
+        public void MsgPackReader(string file, bool json)
         {
-            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
+            MsgPack msgPack = file.ReadMPAllAtOnce(json);
 
-            MsgPack AuthDB;
-            if ((AuthDB = MsgPack["AuthDB"]).NotNull)
+            MsgPack authDB;
+            if ((authDB = msgPack["AuthDB"]).NotNull)
             {
-                MsgPack Temp;
-                if ((Temp = MsgPack["Category", true]).NotNull)
+                MsgPack temp;
+                if ((temp = authDB["Category", true]).NotNull)
                 {
-                    Category = new string[Temp.Array.Length];
+                    Category = new string[temp.Array.Length];
                     for (int i = 0; i < Category.Length; i++)
-                        Category[i] = Temp[i].RS();
+                        Category[i] = temp[i].RS();
                 }
 
-                if ((Temp = MsgPack["UID", true]).NotNull)
+                if ((temp = authDB["UID", true]).NotNull)
                 {
-                    _UID = new UID[Temp.Array.Length];
-                    for (int i = 0; i < _UID.Length; i++)
+                    UIDs = new UID[temp.Array.Length];
+                    for (int i = 0; i < UIDs.Length; i++)
                     {
-                        _UID[i].Category = Temp[i].RS("Category");
-                        _UID[i].OrgUid   = Temp[i].RnI32("OrgUid"  );
-                        _UID[i].Size     = Temp[i].RnI32("Size"    );
-                        _UID[i].Value    = Temp[i].RS("Value"   );
+                        UIDs[i].Category = temp[i].RS   ("Category");
+                        UIDs[i].OrgUid   = temp[i].RnI32("OrgUid"  );
+                        UIDs[i].Size     = temp[i].RnI32("Size"    );
+                        UIDs[i].Value    = temp[i].RS   ("Value"   );
                     }
                 }
-                Temp.Dispose();
+                temp.Dispose();
             }
-            AuthDB.Dispose();
-            MsgPack.Dispose();
+            authDB.Dispose();
+            msgPack.Dispose();
         }
 
-        public void MsgPackWriter(string file, bool JSON)
+        public void MsgPackWriter(string file, bool json)
         {
-            MsgPack AuthDB = new MsgPack("AuthDB");            
+            MsgPack authDB = new MsgPack("AuthDB");            
             if (Category != null)
             {
-                MsgPack Category = new MsgPack(this.Category.Length, "Category");
-                for (int i = 0; i < this.Category.Length; i++)
-                    Category[i] = (MsgPack)this.Category[i];
-                AuthDB.Add(Category);
+                MsgPack category = new MsgPack(Category.Length, "Category");
+                for (int i = 0; i < Category.Length; i++)
+                    category[i] = (MsgPack)Category[i];
+                authDB.Add(category);
             }
 
-            if (_UID != null)
+            if (UIDs != null)
             {
-                MsgPack UID = new MsgPack(_UID.Length, "UID");
-                for (int i = 0; i < _UID.Length; i++)
-                    UID[i] = MsgPack.New.Add("Category", _UID[i].Category)
-                                        .Add("OrgUid"  , _UID[i].OrgUid  )
-                                        .Add("Size"    , _UID[i].Size    )
-                                        .Add("Value"   , _UID[i].Value   );
-                AuthDB.Add(UID);
+                MsgPack uid = new MsgPack(UIDs.Length, "UID");
+                for (int i = 0; i < UIDs.Length; i++)
+                    uid[i] = MsgPack.New.Add("Category", UIDs[i].Category)
+                                        .Add("OrgUid"  , UIDs[i].OrgUid  )
+                                        .Add("Size"    , UIDs[i].Size    )
+                                        .Add("Value"   , UIDs[i].Value   );
+                authDB.Add(uid);
             }
 
-            AuthDB.Write(true, file, JSON);
+            authDB.Write(true, file, json);
         }
+
+        private bool disposed = false;
+        public void Dispose()
+        { if (!disposed) { if (_IO != null) _IO.D(); Category = null; UIDs = null; disposed = true; } }
 
         public struct UID
         {

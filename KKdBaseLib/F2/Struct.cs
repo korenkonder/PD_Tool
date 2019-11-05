@@ -24,16 +24,16 @@
             $"{(HasSubStructs ? $"; SubStructs: {SubStructs.Length}" : "")}" +
             $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}";
 
-        private int length(bool ShiftX = false)
+        private int length(bool shiftX = false)
         {
             int length = Data != null ? Data.Length : 0;
-            if (HasPOF ) length += 0x20 + (ShiftX ? POF.LengthX : POF.Length);
+            if (HasPOF ) length += 0x20 + (shiftX ? POF.LengthX : POF.Length);
             if (HasENRS) length += 0x20 + ENRS.Length;
 
             if (HasSubStructs)
             {
                 for (int i = 0; i < SubStructs.Length; i++)
-                    length += (ShiftX ? SubStructs[i].LengthX : SubStructs[i].Length) + SubStructs[i].Header.Length;
+                    length += (shiftX ? SubStructs[i].LengthX : SubStructs[i].Length) + SubStructs[i].Header.Length;
                 length += 0x20;
             }
             return length; 

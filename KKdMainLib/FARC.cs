@@ -14,7 +14,7 @@ namespace KKdMainLib
         public FARC(string File, bool IsDirectory = false)
         { if (IsDirectory) DirectoryPath = File; else FilePath = File; NewFARC(); }
 
-        private void NewFARC() { Files = null; Signature = Farc.FArC; CBC = FT = false; }
+        private void NewFARC() { Files = null; Signature = Farc.FArC; cbc = ft = false; }
 
         public FARCFile[] Files = null;
         public Type FARCType;
@@ -22,20 +22,20 @@ namespace KKdMainLib
         public string FilePath, DirectoryPath;
         public bool HasFiles => Files == null ? false : Files.Length > 0;
 
-        private bool CBC, FT;
+        private bool cbc, ft;
 
-        private readonly byte[] Key = Text.ToASCII("project_diva.bin");
+        private readonly byte[] key = Text.ToASCII("project_diva.bin");
 
-        private readonly byte[] KeyFT = { 0x13, 0x72, 0xD5, 0x7B, 0x6E, 0x9E,
+        private readonly byte[] keyFT = { 0x13, 0x72, 0xD5, 0x7B, 0x6E, 0x9E,
             0x31, 0xEB, 0xA2, 0x39, 0xB8, 0x3C, 0x15, 0x57, 0xC6, 0xBB };
 
-        AesManaged GetAes(bool isFT, byte[] iv) =>
-            new AesManaged { KeySize = 128, Key = isFT ? KeyFT : Key,
+        private AesManaged GetAes(bool isFT, byte[] iv) =>
+            new AesManaged { KeySize = 128, Key = isFT ? keyFT : key,
                 BlockSize = 128, Mode = isFT ? CipherMode.CBC : CipherMode.ECB,
                 Padding = PaddingMode.Zeros, IV = iv ?? new byte[16] };
         
-        public void UnPack(bool SaveToDisk = true)
-        { if (HeaderReader()) { FileReader(); if (SaveToDisk) this.SaveToDisk(); } }
+        public void UnPack(bool saveToDisk = true)
+        { if (HeaderReader()) { FileReader(); if (saveToDisk) this.SaveToDisk(); } }
 
         public bool HeaderReader()
         {
@@ -48,32 +48,32 @@ namespace KKdMainLib
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
             { reader.Dispose(); return false; }
 
-            int HeaderLength = reader.RI32E(true);
+            int headerLength = reader.RI32E(true);
             if (Signature == Farc.FARC)
             {
                 FARCType = (Type)reader.RI32E(true);
                 reader.RI32();
 
-                int FARCMode = reader.RI32E(true);
-                FT  = FARCMode == 0x10;
-                CBC = FARCMode != 0x10 && FARCMode != 0x40;
+                int farcMode = reader.RI32E(true);
+                ft  = farcMode == 0x10;
+                cbc = farcMode != 0x10 && farcMode != 0x40;
 
-                if (CBC && FARCType.HasFlag(Type.ECB))
+                if (cbc && FARCType.HasFlag(Type.ECB))
                 {
                     reader.Dispose();
-                    byte[] Header = new byte[HeaderLength - 0x08];
+                    byte[] header = new byte[headerLength - 0x08];
                     MSIO.FileStream stream = new MSIO.FileStream(FilePath, MSIO.FileMode.Open,
                        MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite) { Position = 0x10 };
 
                     using (AesManaged aes = GetAes(true, null))
                     using (CryptoStream cryptoStream = new CryptoStream(stream,
                         aes.CreateDecryptor(), CryptoStreamMode.Read))
-                        cryptoStream.Read(Header, 0x00, HeaderLength - 0x08);
-                    Header = SkipData(Header, 0x10);
-                    reader = File.OpenReader(Header);
+                        cryptoStream.Read(header, 0x00, headerLength - 0x08);
+                    header = SkipData(header, 0x10);
+                    reader = File.OpenReader(header);
 
-                    FARCMode = reader.RI32E(true);
-                    FT = FARCMode == 0x10;
+                    farcMode = reader.RI32E(true);
+                    ft = farcMode == 0x10;
                 }
             }
 
@@ -86,13 +86,13 @@ namespace KKdMainLib
             {
                 int Count = 0;
                 long Position = reader.I64P;
-                while (reader.I64P < HeaderLength)
+                while (reader.I64P < headerLength)
                 {
                     reader.NT();
                     reader.RI32();
                     if (Signature != Farc.FArc      ) reader.RI32();
                     reader.RI32();
-                    if (Signature == Farc.FARC && FT) reader.RI32();
+                    if (Signature == Farc.FARC && ft) reader.RI32();
                     Count++;
                 }
                 reader.I64P = Position;
@@ -105,7 +105,7 @@ namespace KKdMainLib
                 Files[i].Offset = reader.RI32E(true);
                 if (Signature != Farc.FArc) Files[i].SizeComp = reader.RI32E(true);
                 Files[i].SizeUnc = reader.RI32E(true);
-                if (Signature == Farc.FARC && FT)
+                if (Signature == Farc.FARC && ft)
                     Files[i].Type = (Type)reader.RI32E(true);
             }
 
@@ -115,6 +115,14 @@ namespace KKdMainLib
 
         private void FileReader()
         { for (int i = 0; i < Files.Length; i++) FileReader(i); }
+
+        public byte[] FileReader(string file)
+        {
+            if (!HasFiles) return null;
+            for (int i = 0; i < Files.Length; i++)
+                if (Files[i].Name.ToLower() == file.ToLower()) return FileReader(i);
+            return null;
+        }
 
         public byte[] FileReader(int i)
         {
@@ -135,16 +143,16 @@ namespace KKdMainLib
             }
 
             int FileSize = FARCType.HasFlag(Type.ECB) || Files[i].Type.HasFlag(Type.ECB) ?
-                Files[i].SizeComp.Align(0x10) : Files[i].SizeComp;
+                Files[i].SizeComp.A(0x10) : Files[i].SizeComp;
             MSIO.FileStream stream = new MSIO.FileStream(FilePath, MSIO.FileMode.Open,
                 MSIO.FileAccess.ReadWrite, MSIO.FileShare.ReadWrite);
             stream.Seek(Files[i].Offset, 0);
             Files[i].Data = new byte[FileSize];
 
-            bool Encrypted = false;
+            bool encrypted = false;
             if (FARCType.HasFlag(Type.ECB))
             {
-                if ((FT && Files[i].Type.HasFlag(Type.ECB)) || CBC)
+                if ((ft && Files[i].Type.HasFlag(Type.ECB)) || cbc)
                 {
                     using (AesManaged aes = GetAes(true, null))
                     using (CryptoStream cryptoStream = new CryptoStream(stream,
@@ -157,23 +165,23 @@ namespace KKdMainLib
                     using (CryptoStream cryptoStream = new CryptoStream(stream,
                         aes.CreateDecryptor(), CryptoStreamMode.Read))
                         cryptoStream.Read(Files[i].Data, 0, FileSize);
-                Encrypted = true;
+                encrypted = true;
             }
 
-            bool Compressed = false;
-            if (((FT && Files[i].Type.HasFlag(Type.GZip)) ||
+            bool compressed = false;
+            if (((ft && Files[i].Type.HasFlag(Type.GZip)) ||
                 FARCType.HasFlag(Type.GZip)) && Files[i].SizeUnc > 0)
             {
-                GZipStream gZipStream = new GZipStream(Encrypted ? new MSIO.MemoryStream(Files[i].Data) :
+                GZipStream gZipStream = new GZipStream(encrypted ? new MSIO.MemoryStream(Files[i].Data) :
                     (MSIO.Stream)stream, CompressionMode.Decompress);
                 byte[] Temp = new byte[Files[i].SizeUnc];
                 gZipStream.Read(Temp, 0, Files[i].SizeUnc);
                 Files[i].Data = Temp;
                 gZipStream.Dispose();
-                Compressed = true;
+                compressed = true;
             }
 
-            if (!Encrypted && !Compressed)
+            if (!encrypted && !compressed)
             {
                 Files[i].Data = new byte[Files[i].SizeUnc];
                 stream.Read(Files[i].Data, 0, Files[i].SizeUnc);
@@ -195,14 +203,14 @@ namespace KKdMainLib
             }
         }
 
-        private byte[] SkipData(byte[] Data, int Skip)
+        private byte[] SkipData(byte[] data, int skip)
         {
-            byte[] SkipData = new byte[Data.Length - Skip];
-            for (int i = 0; i < Data.Length - Skip; i++) SkipData[i] = Data[i + Skip];
-            return SkipData;
+            byte[] skipData = new byte[data.Length - skip];
+            System.Array.Copy(data, skip, skipData, 0, data.Length - skip);
+            return skipData;
         }
 
-        public void Pack(Farc Signature = Farc.FArC)
+        public void Pack(Farc signature = Farc.FArC)
         {
             NewFARC();
             string[] files = Directory.GetFiles(DirectoryPath);
@@ -210,7 +218,7 @@ namespace KKdMainLib
             for (int i = 0; i < files.Length; i++)
                 Files[i] = new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) };
             files = null;
-            this.Signature = Signature;
+            Signature = signature;
             Save();
         }
 
@@ -226,30 +234,30 @@ namespace KKdMainLib
             Stream writer = File.OpenWriter(DirectoryPath + ".farc", true);
             writer.WE((int)Signature, true);
 
-            using (Stream HeaderWriter = File.OpenWriter())
+            using (Stream headerWriter = File.OpenWriter())
             {
-                     if (Signature == Farc.FArc) HeaderWriter.WE(0x20, true);
-                else if (Signature == Farc.FArC) HeaderWriter.WE(0x10, true);
+                     if (Signature == Farc.FArc) headerWriter.WE(0x20, true);
+                else if (Signature == Farc.FArC) headerWriter.WE(0x10, true);
                 else if (Signature == Farc.FARC)
                 {
-                    HeaderWriter.WE((int)FARCType, true);
-                    HeaderWriter.W      (0x00);
-                    HeaderWriter.WE(0x40, true);
-                    HeaderWriter.W      (0x00);
+                    headerWriter.WE((int)FARCType, true);
+                    headerWriter.W      (0x00);
+                    headerWriter.WE(0x40, true);
+                    headerWriter.W      (0x00);
                 }
                 int HeaderPartLength = Signature == Farc.FArc ? 0x09 : 0x0D;
                 for (int i = 0; i < Files.Length; i++)
-                    HeaderWriter.L += Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
-                writer.WE(HeaderWriter.L, true);
-                writer.W(HeaderWriter.ToArray(true));
+                    headerWriter.L += Path.GetFileName(Files[i].Name).Length + HeaderPartLength;
+                writer.WE(headerWriter.L, true);
+                writer.W(headerWriter.ToArray(true));
             }
 
-            int Align = writer.P.Align(0x10) - writer.P;
-            for (int i1 = 0; i1 < Align; i1++)
+            int align = writer.P.A(0x10) - writer.P;
+            for (int i1 = 0; i1 < align; i1++)
                 writer.W((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
 
             for (int i = 0; i < Files.Length; i++)
-                CompressStuff(i, ref Files, ref writer);
+                CompressStuff(i, ref writer);
 
             writer.P = Signature == Farc.FARC ? 0x1C : 0x0C;
             for (int i = 0; i < Files.Length; i++)
@@ -263,7 +271,7 @@ namespace KKdMainLib
             writer.Dispose();
         }
 
-        private void CompressStuff(int i, ref FARCFile[] Files, ref Stream writer)
+        private void CompressStuff(int i, ref Stream writer)
         {
             Files[i].Offset = writer.P;
             Files[i].SizeUnc = Files[i].Data.Length;
@@ -282,7 +290,7 @@ namespace KKdMainLib
 
             if (Signature == Farc.FARC && FARCType.HasFlag(Type.ECB))
             {
-                int AlignData = Files[i].Data.Length.Align(0x40);
+                int AlignData = Files[i].Data.Length.A(0x40);
                 byte[] Data = new byte[AlignData];
                 for (int i1 = 0; i1 < AlignData           ; i1++) Data[i1] = 0x78;
                 for (int i1 = 0; i1 < Files[i].Data.Length; i1++) Data[i1] = Files[i].Data[i1];
@@ -295,19 +303,19 @@ namespace KKdMainLib
 
             if (Signature != Farc.FARC)
             {
-                int Align = writer.P.Align(0x20) - writer.P;
+                int Align = writer.P.A(0x20) - writer.P;
                 for (int i1 = 0; i1 < Align; i1++)
                     writer.W((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
             }
         }
 
-        private byte[] Encrypt(byte[] Data, bool isFT)
+        private byte[] Encrypt(byte[] data, bool isFT)
         {
             MSIO.MemoryStream stream = new MSIO.MemoryStream();
             using (AesManaged aes = GetAes(isFT, null))
             using (CryptoStream cryptoStream = new CryptoStream(stream,
                 aes.CreateEncryptor(), CryptoStreamMode.Write))
-                cryptoStream.Write(Data, 0, Data.Length);
+                cryptoStream.Write(data, 0, data.Length);
             return stream.ToArray();
         }
 

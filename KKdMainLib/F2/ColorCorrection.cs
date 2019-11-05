@@ -4,60 +4,65 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib.F2
 {
-    public struct ColorCorrection
+    public struct ColorCorrection : System.IDisposable
     {
-        public CountPointer<CCT> CCTs;
-        private Stream IO;
-        private Header Header;
         private int i;
+        private Stream _IO;
+        private Header header;
+
+        public CountPointer<CCT> CCTs;
 
         public void CCTReader(string file)
         {
             CCTs = default;
-            IO = File.OpenReader(file + ".cct", true);
-            Header = IO.ReadHeader();
-            if (Header.Signature != 0x54524343 || Header.InnerSignature != 0x3) return;
-            IO.P -= 0x4;
+            _IO = File.OpenReader(file + ".cct", true);
+            header = _IO.ReadHeader();
+            if (header.Signature != 0x54524343 || header.InnerSignature != 0x3) return;
+            _IO.P -= 0x4;
 
-            CCTs = IO.RCPE<CCT>();
-            if (CCTs.C < 1) { IO.C(); CCTs.C = -1; return; }
+            CCTs = _IO.RCPE<CCT>();
+            if (CCTs.C < 1) { _IO.C(); CCTs.C = -1; return; }
 
-            if (CCTs.C > 0 && CCTs.O == 0) { IO.C(); CCTs.C = -1; return; }
+            if (CCTs.C > 0 && CCTs.O == 0) { _IO.C(); CCTs.C = -1; return; }
             /*{
-                IO.Format = Header.Format = Format.X;
-                IO.Offset = Header.Length;
-                IO.Position = CCTs.Offset;
-                CCTs = IO.ReadCountPointerX<CCT>();
+                _IO.Format = Header.Format = Format.X;
+                _IO.Offset = Header.Length;
+                _IO.Position = CCTs.Offset;
+                CCTs = _IO.ReadCountPointerX<CCT>();
             }*/
 
-            IO.P = CCTs.O;
+            _IO.P = CCTs.O;
             for (i = 0; i < CCTs.C; i++)
             {
-                ref CCT CCT = ref CCTs.E[i];
-                IO.RI32E();
-                CCT.Hue        = IO.RF32E();
-                CCT.Saturation = IO.RF32E();
-                CCT.Lightness  = IO.RF32E();
-                CCT.Exposure   = IO.RF32E();
-                CCT.Gamma.X    = IO.RF32E();
-                CCT.Gamma.Y    = IO.RF32E();
-                CCT.Gamma.Z    = IO.RF32E();
-                CCT.Contrast   = IO.RF32E();
+                ref CCT cct = ref CCTs.E[i];
+                _IO.RI32E();
+                cct.Hue        = _IO.RF32E();
+                cct.Saturation = _IO.RF32E();
+                cct.Lightness  = _IO.RF32E();
+                cct.Exposure   = _IO.RF32E();
+                cct.Gamma.X    = _IO.RF32E();
+                cct.Gamma.Y    = _IO.RF32E();
+                cct.Gamma.Z    = _IO.RF32E();
+                cct.Contrast   = _IO.RF32E();
             }
 
-            IO.C();
+            _IO.C();
         }
 
         public void TXTWriter(string file)
         {
             if (CCTs.C < 1) return;
 
-            IO = File.OpenWriter();
-            IO.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
+            _IO = File.OpenWriter();
+            _IO.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
             for (i = 0; i < CCTs.C; i++)
-                IO.W(i + "," + CCTs[i] + "\n");
-            File.WriteAllBytes(file + "_cc.txt", IO.ToArray(true));
+                _IO.W(i + "," + CCTs[i] + "\n");
+            File.WriteAllBytes(file + "_cc.txt", _IO.ToArray(true));
         }
+
+        private bool disposed;
+        public void Dispose()
+        { if (!disposed) { if (_IO != null) _IO.Dispose(); CCTs = default; header = default; disposed = true; } }
 
         public struct CCT
         {
@@ -68,12 +73,12 @@ namespace KKdMainLib.F2
             public Vector3 Gamma;
             public float Contrast;
 
-            public override string ToString() => Hue       .ToString(6) + "," +
-                                                 Saturation.ToString(6) + "," +
-                                                 Lightness .ToString(6) + "," +
-                                                 Exposure  .ToString(6) + "," +
+            public override string ToString() => Hue       .ToS(6) + "," +
+                                                 Saturation.ToS(6) + "," +
+                                                 Lightness .ToS(6) + "," +
+                                                 Exposure  .ToS(6) + "," +
                                                  Gamma     .ToString(6) + "," +
-                                                 Contrast  .ToString(6);
+                                                 Contrast  .ToS(6);
         }
     }
 }

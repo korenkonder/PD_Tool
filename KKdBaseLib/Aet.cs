@@ -9,49 +9,49 @@
     {
         public Pointer<string> Name;
         public float StartFrame;
-        public float FrameDuration;
+        public float EndFrame;
         public float FrameRate;
         public uint BackColor;
         public uint Width;
         public uint Height;
-        public Pointer<Vector2<CountPointer<KFT2>>> Position;
-        public CountPointer<AetLayer > Layers ;
-        public CountPointer<AetRegion> Regions;
-        public CountPointer<AetSound > Sounds ;
+        public Pointer<Vector2<CountPointer<KFT2>>> Camera;
+        public CountPointer<AetComposition > Compositions ;
+        public CountPointer<AetSurface> Surfaces;
+        public CountPointer<AetSoundEffect > SoundEffects ;
     }
 
-    public struct AetLayer
+    public struct AetComposition
     {
         public int P;
         public int C { get => E != null ? E.Length : 0;
-                       set => E = value > -1 ? new AetObject[value] : null; }
+                       set => E = value > -1 ? new AetLayer[value] : null; }
 
         public int O;
-        public AetObject[] E;
+        public AetLayer[] E;
         
         public override string ToString() => "Count: " + C;
     }
 
 
-    public struct AetObject
+    public struct AetLayer
     {
         public int ID;
         public int Offset;
         public Pointer<string> Name;
-        public float LoopStart;
-        public float LoopEnd;
         public float StartFrame;
+        public float EndFrame;
+        public float StartOffset;
         public float PlaybackSpeed;
-        public AetObjFlags Flags;
+        public AetLayerFlags Flags;
         public byte Pad;
-        public AetObjType Type;
+        public AetLayerType Type;
         public int DataID;
-        public int ParentObjectID;
-        public CountPointer<Marker> Marker;
+        public int ParentLayer;
+        public CountPointer<AetMarker> Marker;
         public Pointer<AnimationData> Data;
-        public Pointer<AetObjExtraData> ExtraData;
+        public Pointer<AudioData> ExtraData;
 
-        public enum AetObjFlags : ushort
+        public enum AetLayerFlags : ushort
         {
             Visible      = 0b0000000000000001,
             Audible      = 0b0000000000000010,
@@ -71,7 +71,7 @@
             Unk15        = 0b1000000000000000,
         }
 
-        public enum AetObjType : byte
+        public enum AetLayerType : byte
         {
             Nop = 0,
             Pic = 1,
@@ -79,20 +79,12 @@
             Eff = 3,
         }
 
-        public struct AetObjExtraData
-        {
-            public CountPointer<KFT2> Unk0;
-            public CountPointer<KFT2> Unk1;
-            public CountPointer<KFT2> Unk2;
-            public CountPointer<KFT2> Unk3;
-        }
-
         public override string ToString() => $"ID: {ID}; Name: {Name.V}; Type: {Type}" +
             (        DataID > -1 ? $"; Data ID: "    + $"{        DataID}" : "") +
-            (ParentObjectID > -1 ? $"; Parent Object ID: {ParentObjectID}" : "");
+            (ParentLayer > -1 ? $"; Parent Object ID: {ParentLayer}" : "");
     }
     
-    public struct Marker
+    public struct AetMarker
     {
         public float Frame;
         public Pointer<string> Name;
@@ -112,7 +104,7 @@
         public CountPointer<KFT2>    ScaleX;
         public CountPointer<KFT2>    ScaleY;
         public CountPointer<KFT2> Opacity;
-        public Pointer<ThirdDimension> _3D;
+        public Pointer<Perspective> Persp;
 
         public enum BlendMode : byte
         {
@@ -123,7 +115,7 @@
             Transparent              = 8,
         }
         
-        public struct ThirdDimension
+        public struct Perspective
         {
             public CountPointer<KFT2> Unk1      ;
             public CountPointer<KFT2> Unk2      ;
@@ -136,19 +128,27 @@
         }
     }
 
-    public struct AetRegion
+    public struct AudioData
+    {
+        public CountPointer<KFT2> Data0;
+        public CountPointer<KFT2> Data1;
+        public CountPointer<KFT2> Data2;
+        public CountPointer<KFT2> Data3;
+    }
+
+    public struct AetSurface
     {
         public int O;
         public uint Color;
         public ushort Width;
         public ushort Height;
         public float Frames;
-        public CountPointer<Sprite> Sprites;
+        public CountPointer<AetSpriteIdentifier> Sprites;
 
         public override string ToString() => $"Width: {Width}; Height: {Height}; Color: {Color.ToString("X2")}";
     }
 
-    public struct Sprite
+    public struct AetSpriteIdentifier
     {
         public Pointer<string> Name;
         public uint ID;
@@ -156,7 +156,7 @@
         public override string ToString() => $"ID: {ID}; Name: {Name}";
     }
 
-    public struct AetSound
+    public struct AetSoundEffect
     {
         public int O;
         public uint Unk;

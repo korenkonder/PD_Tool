@@ -7,7 +7,7 @@ namespace KKdMainLib.IO
 {
     public struct JSON : System.IDisposable
     {
-        public JSON(Stream IO) => _IO = IO;
+        public JSON(Stream _IO) => this._IO = _IO;
 
         private Stream _IO;
 
@@ -40,7 +40,7 @@ namespace KKdMainLib.IO
         
 		private string RS()
 		{
-			if (!Extensions.A(_IO, '"')) return null;
+			if (!Extensions.As(_IO, '"')) return null;
             char c;
             string s = "";
 			while (true)
@@ -82,8 +82,8 @@ namespace KKdMainLib.IO
 
         private KKdList<MsgPack> RO()
         {
-            KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
-            if (!Extensions.A(_IO, '{')) return KKdList<MsgPack>.Null;
+            KKdList<MsgPack> obj = KKdList<MsgPack>.New;
+            if (!Extensions.As(_IO, '{')) return KKdList<MsgPack>.Null;
 			if (_IO.SW().PCUTF8() == '}')
             { _IO.RCUTF8(); return KKdList<MsgPack>.Null; }
 
@@ -94,10 +94,10 @@ namespace KKdMainLib.IO
                 _IO.SW();
 
                 key = RS();
-                if (!Extensions.A(_IO.SW(), ':'))
+                if (!Extensions.As(_IO.SW(), ':'))
                     return KKdList<MsgPack>.Null;
 
-                Obj.Add(ReadValue(key));
+                obj.Add(ReadValue(key));
                 c = _IO.SW().PCUTF8();
                 
                      if (c == '}') { _IO.RCUTF8();    break; }
@@ -105,27 +105,27 @@ namespace KKdMainLib.IO
                 else return KKdList<MsgPack>.Null;
             }
 
-            return Obj;
+            return obj;
 		}
         
         private MsgPack[] RA()
         {
-            KKdList<MsgPack> Obj = KKdList<MsgPack>.New;
-            if (!Extensions.A(_IO, '[')) return null;
+            KKdList<MsgPack> obj = KKdList<MsgPack>.New;
+            if (!Extensions.As(_IO, '[')) return null;
             if (_IO.SW().PCUTF8() == ']')
             { _IO.RCUTF8(); return null; }
 
             char c;
             while (true)
             {
-                Obj.Add(ReadValue(null));
+                obj.Add(ReadValue(null));
                 c = _IO.SW().PCUTF8();
 
                      if (c == ']') { _IO.RCUTF8();    break; }
                 else if (c == ',') { _IO.RCUTF8(); continue; }
                 else return null;
             }
-            return Obj.ToArray();
+            return obj.ToArray();
 		}
 
 		private object RF()
@@ -156,82 +156,82 @@ namespace KKdMainLib.IO
                 if (c == '+' || c == '-') s += _IO.RCUTF8();
                 s += ReadDigits();
 			}
-            double d = s.ToDouble();
+            double d = s.ToF64();
             return (float)d == d ? (float)d : d;
         }
 
 		private bool RBo()
         {
             char c = _IO.PCUTF8();
-                 if (c == 't' && _IO.a( "true")) return  true;
-            else if (c == 'f' && _IO.a("false")) return false;
+                 if (c == 't' && _IO.As( "true")) return  true;
+            else if (c == 'f' && _IO.As("false")) return false;
             return false;
         }
 
-		private object RN() { _IO.a("null"); return null; }
+		private object RN() { _IO.As("null"); return null; }
 
         private string ReadDigits()
         { string s = ""; while (char.IsDigit(_IO.SW().
             PCUTF8())) s += _IO.RCUTF8(); return s; }
 
-        public JSON W(MsgPack MsgPack, string End = "\n", string TabChar = "  ") =>
-            W(MsgPack, End, TabChar, "", true);
+        public JSON W(MsgPack msgPack, string end = "\n", string tabChar = "  ") =>
+            W(msgPack, end, tabChar, "", true);
 
-        public JSON W(MsgPack MsgPack, bool Style = false) =>
-                W(MsgPack, "\n", "  ", "", Style);
+        public JSON W(MsgPack msgPack, bool style = false) =>
+                W(msgPack, "\n", "  ", "", style);
 
-        private JSON W(MsgPack MsgPack, string End, string TabChar, string Tab, bool Style, bool IsArray = false)
+        private JSON W(MsgPack msgPack, string end, string tabChar, string tab, bool style, bool isArray = false)
         {
-            string OldTab = Tab;
-            Tab += TabChar;
-            if (MsgPack.Name   != null && !IsArray) _IO.W("\"" + MsgPack.Name + "\":" + (Style ? " " : ""));
-            if (MsgPack.Object == null) { WN(); return this; }
+            string oldTab = tab;
+            tab += tabChar;
+            if (msgPack.Name   != null && !isArray) _IO.W("\"" + msgPack.Name + "\":" + (style ? " " : ""));
+            if (msgPack.Object == null) { WN(); return this; }
 
-            if (MsgPack.List.NotNull)
+            if (msgPack.List.NotNull)
             {
                 WM();
-                if (Style) _IO.W(End);
-                if (MsgPack.List.Count > 1)
-                    for (int i = 0; i < MsgPack.List.Count; i++)
+                if (style) _IO.W(end);
+                if (msgPack.List.Count > 1)
+                    for (int i = 0; i < msgPack.List.Count; i++)
                     {
-                        if (Style) _IO.W(Tab);
-                        W(MsgPack.List[i], End, TabChar, Tab, Style);
-                        if (i + 1 < MsgPack.List.Count) _IO.W(',');
-                        if (Style) _IO.W(End);
+                        if (style) _IO.W(tab);
+                        W(msgPack.List[i], end, tabChar, tab, style);
+                        if (i + 1 < msgPack.List.Count) _IO.W(',');
+                        if (style) _IO.W(end);
                     }
-                else if (MsgPack.List.Count == 1)
+                else if (msgPack.List.Count == 1)
                 {
-                    if (Style) _IO.W(Tab);
-                    W(MsgPack.List[0], End, TabChar, Tab, Style);
-                    if (Style) _IO.W(End);
+                    if (style) _IO.W(tab);
+                    W(msgPack.List[0], end, tabChar, tab, style);
+                    if (style) _IO.W(end);
                 }
-                if (Style) _IO.W(OldTab);
+                if (style) _IO.W(oldTab);
                 WM(true);
             }
-            else if (MsgPack.Array != null)
+            else if (msgPack.Array != null)
             {
                 WA();
-                if (Style) _IO.W(End);
-                if (MsgPack.Array.Length > 1)
-                    for (int i = 0; i < MsgPack.Array.Length; i++)
+                if (style) _IO.W(end);
+                if (msgPack.Array.Length > 1)
+                    for (int i = 0; i < msgPack.Array.Length; i++)
                     {
-                        if (Style) _IO.W(Tab);
-                        W(MsgPack.Array[i], End, TabChar, Tab, Style, true);
-                        if (i + 1 < MsgPack.Array.Length) _IO.W(',');
-                        if (Style) _IO.W(End);
+                        if (style) _IO.W(tab);
+                        W(msgPack.Array[i], end, tabChar, tab, style, true);
+                        if (i + 1 < msgPack.Array.Length) _IO.W(',');
+                        if (style) _IO.W(end);
                     }
-                else if (MsgPack.Array.Length == 1)
+                else if (msgPack.Array.Length == 1)
                 {
-                    if (Style) _IO.W(Tab);
-                    W(MsgPack.Array[0], End, TabChar, Tab, Style, true);
-                    if (Style) _IO.W(End);
+                    if (style) _IO.W(tab);
+                    W(msgPack.Array[0], end, tabChar, tab, style, true);
+                    if (style) _IO.W(end);
                 }
-                if (Style) _IO.W(OldTab);
+                if (style) _IO.W(oldTab);
                 WA(true);
             }
-            else if (MsgPack.Object is MsgPack msg) W(msg, End, TabChar, Tab, Style);
-            else if (MsgPack.Object is  string str) W(str);
-            else _IO.W(BaseExtensions.ToString(MsgPack.Object));
+            else if (msgPack.Object is MsgPack msg) W(msg, end, tabChar, tab, style);
+            else if (msgPack.Object is  string str) W(str);
+            else _IO.W(BaseExtensions.ToS(msgPack.Object));
 
             return this;
         }

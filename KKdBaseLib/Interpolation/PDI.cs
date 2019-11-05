@@ -2,36 +2,36 @@
 {
     public struct PDI : IInterpolation //Project DIVA Interpolation
     {
-        private KFT2[] Array;
+        private KFT2[] array;
 
-        private float F;
-        private float Last;
-        private float DeltaFrame;
-        private float IF;
-        private float RF;
-        private float LastTime;
+        private float f;
+        private float last;
+        private float deltaFrame;
+        private float @if;
+        private float rf;
+        private float lastTime;
 
         private KFT2 firstKey;
         private KFT2 lastKey;
 
         public float InterpolationFramerate
-        { get => IF; set { IF = value; DeltaFrame = IF / RF; } }
+        { get => @if; set { @if = value; deltaFrame = @if / rf; } }
         public float RequestedFramerate
-        { get => RF; set { RF = value; DeltaFrame = IF / RF; } }
+        { get => rf; set { rf = value; deltaFrame = @if / rf; } }
 
-        public float Frame => F;
-        public float Value => Last;
-        public bool  IsNull => Array == null ?  true : Array.Length < 1;
-        public bool NotNull => Array == null ? false : Array.Length > 0;
+        public float Frame => f;
+        public float Value => last;
+        public bool  IsNull => array == null ?  true : array.Length < 1;
+        public bool NotNull => array == null ? false : array.Length > 0;
         
-        public PDI(KFT2[] Array, bool Loop, float InterpolationFramerate = 60, float RequestedFramerate = 60)
+        public PDI(KFT2[] Array, float InterpolationFramerate = 60, float RequestedFramerate = 60)
         {
-            LastTime = 0;
-            this.Array = Array; F = -1; DeltaFrame = Last = RF = IF = 0;
-            IF = InterpolationFramerate;
+            lastTime = 0;
+            this.array = Array; f = -1; deltaFrame = last = rf = @if = 0;
+            @if = InterpolationFramerate;
             firstKey = lastKey = default;
             this.RequestedFramerate = RequestedFramerate;
-            F = -DeltaFrame;
+            f = -deltaFrame;
             ResetFrameCount();
 
             if (Array != null && Array.Length > 0)
@@ -43,42 +43,42 @@
 
         public float SetTime(float time)
         {
-            if (Array == null || Array.Length < 1) return 0;
+            if (array == null || array.Length < 1) return 0;
 
-            LastTime = time;
-            F = time * IF;
-            Last = Interpolate(F);
-            return Last;
+            lastTime = time;
+            f = time * @if;
+            last = Interpolate(f);
+            return last;
         }
 
         public float SetFrame(float frame)
         {
-            if (Array == null || Array.Length < 1) return 0;
+            if (array == null || array.Length < 1) return 0;
 
-            LastTime = frame / RF;
-            F = frame * DeltaFrame;
-            Last = Interpolate(F);
-            return Last;
+            lastTime = frame / rf;
+            f = frame * deltaFrame;
+            last = Interpolate(f);
+            return last;
         }
 
         public float NextFrame(float time)
         {
-            if (Array == null || Array.Length < 1) return 0;
+            if (array == null || array.Length < 1) return 0;
 
-            LastTime += time;
-            F = LastTime * IF;
-            Last = Interpolate(F);
-            return Last;
+            lastTime += time;
+            f = lastTime * @if;
+            last = Interpolate(f);
+            return last;
         }
 
         public float NextFrame()
         {
-            if (Array == null || Array.Length < 1) return 0;
+            if (array == null || array.Length < 1) return 0;
 
-            F += DeltaFrame;
-            LastTime = F / IF;
-            Last = Interpolate(F);
-            return Last;
+            f += deltaFrame;
+            lastTime = f / @if;
+            last = Interpolate(f);
+            return last;
         }
 
         private float Interpolate(float frame)
@@ -86,9 +86,9 @@
             float f = (int)frame;
 
             int data = 0;
-            int length = Array.Length;
+            int length = array.Length;
             while (length > 0)
-                if (f <= Array[data + (length >> 1)].F)
+                if (f <= array[data + (length >> 1)].F)
                     length >>= 1;
                 else
                 {
@@ -99,23 +99,25 @@
 
             if (data == 0)
                 return firstKey.V;
-            else if (data >= Array.Length)
+            else if (data >= array.Length)
                 return  lastKey.V;
 
-            KFT2 c = Array[data - 1];
-            KFT2 n = Array[data];
+            KFT2 c = array[data - 1];
+            KFT2 n = array[data];
             float result = c.F == n.F ? c.V : n.V;
             if (frame < n.F)
             {
 
-                float t = (F - c.F) / (n.F - c.F);
+                float t = (this.f - c.F) / (n.F - c.F);
                 float t_1 = t - 1;
                 result = (t_1 * 2 - 1) * (c.V - n.V) * t * t +
-                    (t_1 * c.T + t * n.T) * t_1 * (F - c.F) + c.V;
+                    (t_1 * c.T + t * n.T) * t_1 * (this.f - c.F) + c.V;
             }
             return result;
         }
 
-        public void ResetFrameCount() => F = -DeltaFrame;
+        public void ResetFrameCount() => f = -deltaFrame;
+
+        public override string ToString() => $"Frame: {f}, Value: {last}";
     }
 }

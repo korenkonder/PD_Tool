@@ -7,7 +7,7 @@
         public string[] ObjectHRCList;
         public string[] MObjectHRCList;
         public _ _;
-        public DOF DOF;
+        public DOF? DOF;
         public Fog[] Fog;
         public Curve[] Curve;
         public Event[] Event;
@@ -18,11 +18,11 @@
         public CameraRoot[] CameraRoot;
         public MObjectHRC[] MObjectHRC;
         public PlayControl PlayControl;
-        public PostProcess PostProcess;
+        public PostProcess? PostProcess;
         public MaterialList[] MaterialList;
         public ModelTransform[] Chara;
         public ModelTransform[] Point;
-        public CameraAuxiliary CameraAuxiliary;
+        public CameraAuxiliary? CameraAuxiliary;
     }
 
     public struct _
@@ -74,7 +74,7 @@
         public Key CV;
     }
 
-    public class DOF
+    public struct DOF
     {
         public string Name;
         public ModelTransform MT;
@@ -101,6 +101,22 @@
         public Key Density;
         public Vector4<Key> Diffuse;
     }
+    
+    public enum KeyType : int
+    {
+        Null    = 0,
+        Value   = 1,
+        Lerp    = 2,
+        Hermite = 3,
+        Hold    = 4,
+    }
+    
+    public enum EPType : int
+    {
+        EP_1 = 1,
+        EP_2 = 2,
+        EP_3 = 3,
+    }
 
     public struct Key
     {
@@ -122,34 +138,20 @@
             public string[] ValueList;
         }
 
-        public enum KeyType : int
-        {
-            Null    = 0,
-            Value   = 1,
-            Lerp    = 2,
-            Hermite = 3,
-            Hold    = 4,
-        }
+        public static Vector3<A3DAKey> ToA3DAKey(Vector3<Key> k) =>
+            new Vector3<A3DAKey> { X = (A3DAKey)k.X, Y = (A3DAKey)k.Y, Z = (A3DAKey)k.Z };
+        public static Vector3<Key> ToKey(Vector3<A3DAKey> k) =>
+            new Vector3<Key> { X = (Key)k.X, Y = (Key)k.Y, Z = (Key)k.Z };
 
-        public enum EPType : int
-        {
-            EP_1 = 1,
-            EP_2 = 2,
-            EP_3 = 3,
-        }
-
-        public static Vector3<A3DAKey> ToA3DAKey(Vector3<Key> k) => new Vector3<A3DAKey> { X = k.X, Y = k.Y, Z = k.Z };
-        public static Vector3<Key> ToKey(Vector3<A3DAKey> k) => new Vector3<Key> { X = k.X, Y = k.Y, Z = k.Z };
-
-        public static implicit operator Key(A3DAKey k)
+        public static explicit operator Key(A3DAKey k)
         {
             Key key = default;
-            key.EPTypePost = (EPType)(int)k.EPTypePost;
-            key.EPTypePre = (EPType)(int)k.EPTypePre;
+            key.EPTypePost = k.EPTypePost;
+            key.EPTypePre = k.EPTypePre;
             key.Max = k.MaxFrames;
             if (k.Length > 1)
             {
-                key.Type = (KeyType)(int)k.Type;
+                key.Type = k.Type;
                 key.Length = k.Length;
                 key.Keys = k.Keys;
             }
@@ -161,15 +163,15 @@
             return key;
         }
 
-        public static implicit operator A3DAKey(Key k)
+        public static explicit operator A3DAKey(Key k)
         {
             A3DAKey key = default;
-            key.EPTypePost = (A3DAKey.EPType)(int)k.EPTypePost;
-            key.EPTypePre = (A3DAKey.EPType)(int)k.EPTypePre;
+            key.EPTypePost = k.EPTypePost;
+            key.EPTypePre = k.EPTypePre;
             key.MaxFrames = k.Max ?? 0;
-            if (k.Length > 1)
+            if (k.Type != null && k.Length > 1)
             {
-                key.Type = (A3DAKey.KeyType)(int)k.Type;
+                key.Type = k.Type.Value;
                 key.Length = k.Length;
                 key.Keys = k.Keys;
                 key.FDBSaE = k.Keys[k.Length - 1].F - k.Keys[0].F;
@@ -179,9 +181,9 @@
             {
                 key.Length = 1;
                 key.Keys = new KFT3[1];
-                if (key.Length == 1)
+                if (k.Length == 1)
                 {
-                    key.Type = A3DAKey.KeyType.Value;
+                    key.Type = KeyType.Value;
                     key.Keys[0].V = k.Value ?? 0;
                 }
             }
@@ -293,7 +295,7 @@
         public float? Size;
     }
 
-    public class PostProcess
+    public struct PostProcess
     {
         public Key LensFlare;
         public Key LensGhost;

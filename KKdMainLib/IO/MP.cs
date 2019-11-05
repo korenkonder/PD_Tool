@@ -4,7 +4,7 @@ namespace KKdMainLib.IO
 {
     public struct MP : System.IDisposable
     {
-        public MP(Stream IO) => _IO = IO;
+        public MP(Stream _IO) => this._IO = _IO;
 
         private Stream _IO;
 
@@ -12,164 +12,164 @@ namespace KKdMainLib.IO
 
         public byte[] ToArray(bool Close = false) => _IO.ToArray(Close);
 
-        public MsgPack Read(bool Array = false)
+        public MsgPack Read(bool array = false)
         {
-            MsgPack MsgPack = MsgPack.New;
-            byte Unk = _IO.RU8();
-            if (!Array) { MsgPack.Name = RS((Types)Unk); Unk = _IO.RU8(); }
-            Types Type = (Types)Unk;
+            MsgPack msgPack = MsgPack.New;
+            byte unk = _IO.RU8();
+            if (!array) { msgPack.Name = RS((Types)unk); unk = _IO.RU8(); }
+            Types type = (Types)unk;
 
-            if (Type >= Types.FixMap && Type <= Types.FixMapMax)
+            if (type >= Types.FixMap && type <= Types.FixMapMax)
             {
-                MsgPack.Object = KKdList<MsgPack>.New;
-                for (int i = 0; i < Unk - (byte)Types.FixMap; i++) MsgPack.Add( Read(false));
+                msgPack.Object = KKdList<MsgPack>.New;
+                for (int i = 0; i < unk - (byte)Types.FixMap; i++) msgPack.Add( Read(false));
             }
-            else if (Type >= Types.FixArr && Type <= Types.FixArrMax)
+            else if (type >= Types.FixArr && type <= Types.FixArrMax)
             {
-                MsgPack.Object = new MsgPack[Unk - (byte)Types.FixArr];
-                for (int i = 0; i < Unk - (byte)Types.FixArr; i++) MsgPack[i] = Read( true);
+                msgPack.Object = new MsgPack[unk - (byte)Types.FixArr];
+                for (int i = 0; i < unk - (byte)Types.FixArr; i++) msgPack[i] = Read( true);
             }
-            else if (Type >= Types.FixStr && Type <= Types.FixStrMax) MsgPack.Object = RS(Type);
-            else if (Type >= Types.PosInt && Type <= Types.PosIntMax) MsgPack.Object =        Unk;
-            else if (Type >= Types.NegInt && Type <= Types.NegIntMax) MsgPack.Object = (sbyte)Unk;
+            else if (type >= Types.FixStr && type <= Types.FixStrMax) msgPack.Object = RS(type);
+            else if (type >= Types.PosInt && type <= Types.PosIntMax) msgPack.Object =        unk;
+            else if (type >= Types.NegInt && type <= Types.NegIntMax) msgPack.Object = (sbyte)unk;
             else
                 while (true)
                 {
-                    if (RN (ref MsgPack, ref Type)) break;
-                    if (RBy(ref MsgPack, ref Type)) break;
-                    if (RM (ref MsgPack, ref Type)) break;
-                    if (RE (ref MsgPack, ref Type)) break;
-                    if (RS (ref MsgPack, ref Type)) break;
-                    if (RBo(ref MsgPack, ref Type)) break;
-                    if (RA (ref MsgPack, ref Type)) break;
-                    if (RI (ref MsgPack, ref Type)) break;
-                    if (RU (ref MsgPack, ref Type)) break;
-                    if (RF (ref MsgPack, ref Type)) break;
+                    if (RN (ref msgPack, ref type)) break;
+                    if (RBy(ref msgPack, ref type)) break;
+                    if (RM (ref msgPack, ref type)) break;
+                    if (RE (ref msgPack, ref type)) break;
+                    if (RS (ref msgPack, ref type)) break;
+                    if (RBo(ref msgPack, ref type)) break;
+                    if (RA (ref msgPack, ref type)) break;
+                    if (RI (ref msgPack, ref type)) break;
+                    if (RU (ref msgPack, ref type)) break;
+                    if (RF (ref msgPack, ref type)) break;
                     break;
                 }
-            return MsgPack;
+            return msgPack;
         }
 
-        private bool RI(ref MsgPack MsgPack, ref Types Type)
+        private bool RI(ref MsgPack msgPack, ref Types type)
         {
-                 if (Type == Types.Int8 ) MsgPack.Object = _IO.RI8();
-            else if (Type == Types.Int16) MsgPack.Object = _IO.RI16E(true);
-            else if (Type == Types.Int32) MsgPack.Object = _IO.RI32E(true);
-            else if (Type == Types.Int64) MsgPack.Object = _IO.RI64E(true);
+                 if (type == Types.Int8 ) msgPack.Object = _IO.RI8();
+            else if (type == Types.Int16) msgPack.Object = _IO.RI16E(true);
+            else if (type == Types.Int32) msgPack.Object = _IO.RI32E(true);
+            else if (type == Types.Int64) msgPack.Object = _IO.RI64E(true);
             else return false;
             return true;
         }
 
-        private bool RU(ref MsgPack MsgPack, ref Types Type)
+        private bool RU(ref MsgPack msgPack, ref Types type)
         {
-                 if (Type == Types.UInt8 ) MsgPack.Object = _IO.RU8();
-            else if (Type == Types.UInt16) MsgPack.Object = _IO.RU16E(true);
-            else if (Type == Types.UInt32) MsgPack.Object = _IO.RU32E(true);
-            else if (Type == Types.UInt64) MsgPack.Object = _IO.RU64E(true);
+                 if (type == Types.UInt8 ) msgPack.Object = _IO.RU8();
+            else if (type == Types.UInt16) msgPack.Object = _IO.RU16E(true);
+            else if (type == Types.UInt32) msgPack.Object = _IO.RU32E(true);
+            else if (type == Types.UInt64) msgPack.Object = _IO.RU64E(true);
             else return false;
             return true;
         }
 
-        private bool RF(ref MsgPack MsgPack, ref Types Type)
+        private bool RF(ref MsgPack msgPack, ref Types type)
         {
-                 if (Type == Types.Float32) MsgPack.Object = _IO.RF32E(true);
-            else if (Type == Types.Float64) MsgPack.Object = _IO.RF64E(true);
+                 if (type == Types.Float32) msgPack.Object = _IO.RF32E(true);
+            else if (type == Types.Float64) msgPack.Object = _IO.RF64E(true);
             else return false;
             return true;
         }
 
-        private bool RBo(ref MsgPack MsgPack, ref Types Type)
+        private bool RBo(ref MsgPack msgPack, ref Types type)
         {
-                 if (Type == Types.False) MsgPack.Object = false;
-            else if (Type == Types.True ) MsgPack.Object = true ;
+                 if (type == Types.False) msgPack.Object = false;
+            else if (type == Types.True ) msgPack.Object = true ;
             else return false;
             return true;
         }
 
-        private bool RBy(ref MsgPack MsgPack, ref Types Type)
+        private bool RBy(ref MsgPack msgPack, ref Types type)
         {
             int Length = 0;
-                 if (Type == Types.Bin8 ) Length = _IO.RU8();
-            else if (Type == Types.Bin16) Length = _IO.RI16E(true);
-            else if (Type == Types.Bin32) Length = _IO.RI32E(true);
+                 if (type == Types.Bin8 ) Length = _IO.RU8();
+            else if (type == Types.Bin16) Length = _IO.RI16E(true);
+            else if (type == Types.Bin32) Length = _IO.RI32E(true);
             else return false;
-            MsgPack.Object = _IO.RBy(Length);
+            msgPack.Object = _IO.RBy(Length);
             return true;
         }
         
-        private bool RS(ref MsgPack MsgPack, ref Types Type)
+        private bool RS(ref MsgPack msgPack, ref Types type)
         {
-            string val = RS(Type);
-            if (val != null) MsgPack.Object = val;
+            string val = RS(type);
+            if (val != null) msgPack.Object = val;
             else return false;
             return true;
         }
 
-        private string RS(Types Val)
+        private string RS(Types val)
         {
-                 if (Val >= Types.FixStr  && Val <= Types.FixStrMax)
-                return _IO.RS(Val - Types.FixStr);
-            else if (Val >= Types.   Str8 && Val <= Types.   Str32 )
+                 if (val >= Types.FixStr  && val <= Types.FixStrMax)
+                return _IO.RS(val - Types.FixStr);
+            else if (val >= Types.   Str8 && val <= Types.   Str32 )
             {
-                System.Enum.TryParse(Val.ToString(), out Types Type);
+                System.Enum.TryParse(val.ToString(), out Types type);
                 int Length = 0;
-                     if (Type == Types.Str8 ) Length = _IO.RU8();
-                else if (Type == Types.Str16) Length = _IO.RI16E(true);
+                     if (type == Types.Str8 ) Length = _IO.RU8();
+                else if (type == Types.Str16) Length = _IO.RI16E(true);
                 else                          Length = _IO.RI32E(true);
                 return _IO.RS(Length);
             }
             return null;
         }
 
-        private bool RN(ref MsgPack MsgPack, ref Types Type)
+        private bool RN(ref MsgPack msgPack, ref Types type)
         {
-            if (Type == Types.Nil) MsgPack.Object = null;
+            if (type == Types.Nil) msgPack.Object = null;
             else return false;
             return true;
         }
 
-        private bool RA(ref MsgPack MsgPack, ref Types Type)
+        private bool RA(ref MsgPack msgPack, ref Types type)
         {
             int Length = 0;
-                 if (Type == Types.Arr16) Length = _IO.RI16E(true);
-            else if (Type == Types.Arr32) Length = _IO.RI32E(true);
+                 if (type == Types.Arr16) Length = _IO.RI16E(true);
+            else if (type == Types.Arr32) Length = _IO.RI32E(true);
             else return false;
-            MsgPack.Object = new MsgPack[Length];
-            for (int i = 0; i < Length; i++) MsgPack[i] = Read(true);
+            msgPack.Object = new MsgPack[Length];
+            for (int i = 0; i < Length; i++) msgPack[i] = Read(true);
             return true;
         }
 
-        private bool RM(ref MsgPack MsgPack, ref Types Type)
+        private bool RM(ref MsgPack msgPack, ref Types type)
         {
             int Length = 0;
-                 if (Type == Types.Map16) Length = _IO.RI16E(true);
-            else if (Type == Types.Map32) Length = _IO.RI32E(true);
+                 if (type == Types.Map16) Length = _IO.RI16E(true);
+            else if (type == Types.Map32) Length = _IO.RI32E(true);
             else return false;
-            MsgPack.Object = KKdList<MsgPack>.New;
-            for (int i = 0; i < Length; i++) MsgPack.Add(Read());
+            msgPack.Object = KKdList<MsgPack>.New;
+            for (int i = 0; i < Length; i++) msgPack.Add(Read());
             return true;
         }
 
-        private bool RE(ref MsgPack MsgPack, ref Types Type)
+        private bool RE(ref MsgPack MsgPack, ref Types type)
         {
             int Length = 0;
-                 if (Type == Types.FixExt1 ) Length = 1 ; 
-            else if (Type == Types.FixExt2 ) Length = 2 ;
-            else if (Type == Types.FixExt4 ) Length = 4 ;
-            else if (Type == Types.FixExt8 ) Length = 8 ;
-            else if (Type == Types.FixExt16) Length = 16;
-            else if (Type == Types.   Ext8 ) Length = _IO.RU8();
-            else if (Type == Types.   Ext16) Length = _IO.RI16E(true);
-            else if (Type == Types.   Ext32) Length = _IO.RI32E(true);
+                 if (type == Types.FixExt1 ) Length = 1 ; 
+            else if (type == Types.FixExt2 ) Length = 2 ;
+            else if (type == Types.FixExt4 ) Length = 4 ;
+            else if (type == Types.FixExt8 ) Length = 8 ;
+            else if (type == Types.FixExt16) Length = 16;
+            else if (type == Types.   Ext8 ) Length = _IO.RU8();
+            else if (type == Types.   Ext16) Length = _IO.RI16E(true);
+            else if (type == Types.   Ext32) Length = _IO.RI32E(true);
             else return false;
             MsgPack.Object = new MsgPack.Ext { Type = _IO.RI8(), Data = _IO.RBy(Length) };
             return true;
         }
         
-        public MP Write(MsgPack MsgPack, bool IsArray = false)
+        public MP W(MsgPack msgPack, bool IsArray = false)
         {
-            if   (MsgPack.Name != null && !IsArray) W(MsgPack.Name);
-            Write(MsgPack.Object);
+            if   (msgPack.Name != null && !IsArray) W(msgPack.Name);
+            Write(msgPack.Object);
             return this;
         }
 
@@ -179,10 +179,10 @@ namespace KKdMainLib.IO
             switch (obj)
             {
                 case KKdList<MsgPack>  val: WM(val.Count );
-                    for (int i = 0; i < val.Count ; i++) Write(val[i]); break;
+                    for (int i = 0; i < val.Count ; i++) W(val[i]); break;
                 case         MsgPack[] val: WA(val.Length);
-                    for (int i = 0; i < val.Length; i++) Write(val[i]); break;
-                case     MsgPack val: Write(val); break;
+                    for (int i = 0; i < val.Length; i++) W(val[i]); break;
+                case     MsgPack val: W(val); break;
                 case      byte[] val: W(val); break;
                 case        bool val: W(val); break;
                 case       sbyte val: W(val); break;
@@ -230,12 +230,9 @@ namespace KKdMainLib.IO
         {
             if (val == null) { WN(); return; }
 
-                 if (val.Length <   0x100)
-            { _IO.W(0xC4); _IO.W  ((  byte)val.Length      ); }
-            else if (val.Length < 0x10000)
-            { _IO.W(0xC5); _IO.WE((ushort)val.Length, true); }
-            else
-            { _IO.W(0xC6); _IO.WE(        val.Length, true); }
+                 if (val.Length <   0x100) { _IO.W(0xC4); _IO.W ((  byte)val.Length      ); }
+            else if (val.Length < 0x10000) { _IO.W(0xC5); _IO.WE((ushort)val.Length, true); }
+            else                           { _IO.W(0xC6); _IO.WE(        val.Length, true); }
             _IO.W(val);
         }
         

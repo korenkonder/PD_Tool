@@ -1,232 +1,229 @@
-﻿using System.Collections.Generic;
-using KKdBaseLib;
+﻿using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
-    public class DEX
+    public struct DEX : System.IDisposable
     {
-        public DEX()
-        { Dex = null; Header = new Header(); }
-
-        private int Offset = 0;
-        private Header Header;
-        private Stream IO;
+        private int i, i0, i1;
+        private Header header;
+        private Stream _IO;
 
         public EXP[] Dex;
 
-        public int DEXReader(string filepath, string ext)
+        public void DEXReader(string filepath, string ext)
         {
-            Header = new Header();
-            IO = File.OpenReader(filepath + ext);
+            Dex = null;
+            header = new Header();
+            _IO = File.OpenReader(filepath + ext);
 
-            Header.Format = Format.F;
-            Header.SectionSignature = IO.RI32();
-            if (Header.SectionSignature == 0x43505845)
-                Header = IO.ReadHeader(true, true);
-            if (Header.SectionSignature != 0x64) return 0;
+            header.Format = Format.F;
+            header.SectionSignature = _IO.RI32();
+            if (header.SectionSignature == 0x43505845)
+                header = _IO.ReadHeader(true, true);
+            if (header.SectionSignature != 0x64) return;
 
-            IO.O = IO.P - 0x4;
-            Dex = new EXP[IO.RI32()];
-            int DEXOffset = IO.RI32();
-            int DEXNameOffset = IO.RI32();
-            if (DEXNameOffset == 0x00) { Header.Format = Format.X; DEXNameOffset = (int)IO.RI64(); }
+            _IO.O = _IO.P - 0x4;
+            Dex = new EXP[_IO.RI32()];
+            int DEXOffset = _IO.RI32();
+            int DEXNameOffset = _IO.RI32();
+            if (DEXNameOffset == 0x00) { _IO.Format = header.Format = Format.X; DEXNameOffset = (int)_IO.RIX(); }
 
-            IO.S(DEXOffset, 0);
-            for (int i0 = 0; i0 < Dex.Length; i0++)
-                Dex[i0] = new EXP { Main = KKdList<EXPElement>.New, Eyes = KKdList<EXPElement>.New };
-
-            for (int i0 = 0; i0 < Dex.Length; i0++)
+            _IO.P = DEXOffset;
+            for (i = 0; i < Dex.Length; i++)
             {
-                Dex[i0].MainOffset = IO.RI32();
-                if (Header.IsX) IO.RI32();
-                Dex[i0].EyesOffset = IO.RI32();
-                if (Header.IsX) IO.RI32();
+                Dex[i].MainOffset = (int)_IO.RIX();
+                Dex[i].EyesOffset = (int)_IO.RIX();
             }
-            IO.S(DEXNameOffset, 0);
-            for (int i0 = 0; i0 < Dex.Length; i0++)
-            {
-                Dex[i0].NameOffset = IO.RI32();
-                if (Header.IsX) IO.RI32();
-            }
+            _IO.P = DEXNameOffset;
+            for (i = 0; i < Dex.Length; i++)
+                Dex[i].NameOffset = (int)_IO.RIX();
 
-            for (int i0 = 0; i0 < Dex.Length; i0++)
+            for (i = 0; i < Dex.Length; i++)
             {
                 EXPElement element = new EXPElement();
-                IO.S(Dex[i0].MainOffset + Offset, 0);
+                Dex[i].Main = KKdList<EXPElement>.New;
+                _IO.P = Dex[i].MainOffset;
                 while (true)
                 {
-                    element.Frame = IO.RF32();
-                    element.Both  = IO.RU16();
-                    element.ID    = IO.RU16();
-                    element.Value = IO.RF32();
-                    element.Trans = IO.RF32();
-                    Dex[i0].Main.Add(element);
-
-                    if (element.Frame == 999999 || element.Both == 0xFFFF)
-                        break;
+                    element.Frame = _IO.RF32();
+                    element.Both  = _IO.RU16();
+                    element.ID    = _IO.RU16();
+                    element.Value = _IO.RF32();
+                    element.Trans = _IO.RF32();
+                    if (element.Frame == 999999 || element.Both == 0xFFFF) break;
+                    Dex[i].Main.Add(element);
                 }
 
-                IO.S(Dex[i0].EyesOffset, 0);
+                Dex[i].Eyes = KKdList<EXPElement>.New;
+                _IO.P = Dex[i].EyesOffset;
                 while(true)
                 {
-                    element.Frame = IO.RF32();
-                    element.Both  = IO.RU16();
-                    element.ID    = IO.RU16();
-                    element.Value = IO.RF32();
-                    element.Trans = IO.RF32();
-                    Dex[i0].Eyes.Add(element);
-
+                    element.Frame = _IO.RF32();
+                    element.Both  = _IO.RU16();
+                    element.ID    = _IO.RU16();
+                    element.Value = _IO.RF32();
+                    element.Trans = _IO.RF32();
                     if (element.Frame == 999999 || element.Both == 0xFFFF) break;
+                    Dex[i].Eyes.Add(element);
                 }
 
-                Dex[i0].Name = IO.RSaO(Dex[i0].NameOffset);
+                Dex[i].Name = _IO.RSaO(Dex[i].NameOffset);
             }
 
-            IO.C();
-            return 1;
+            _IO.C();
         }
 
         public void DEXWriter(string filepath, Format Format)
         {
-            Header = new Header();
-            IO = File.OpenWriter(filepath + (Format > Format.F ? ".dex" : ".bin"), true);
-            Header.Format = IO.Format = Format;
+            if (Dex == null || Dex.Length < 1) return;
 
-            IO.O = Format > Format.F ? 0x20 : 0;
-            IO.W(0x64);
-            IO.W(Dex.Length);
+            header = new Header();
+            _IO = File.OpenWriter(filepath + (Format > Format.F && Format < Format.FT ? ".dex" : ".bin"), true);
+            header.Format = _IO.Format = Format;
 
-            IO.WX(Header.IsX ? 0x28 : 0x20);
-            IO.WX(0x00);
+            _IO.O = Format > Format.F ? 0x20 : 0;
+            _IO.W(0x64);
+            _IO.W(Dex.Length);
 
-            int Position0 = IO.P;
-            IO.W(0x00L);
-            IO.W(0x00L);
+            _IO.WX(header.IsX ? 0x28 : 0x20);
+            _IO.WX(0x00);
 
-            for (int i = 0; i < Dex.Length * 3; i++) IO.WX(0x00);
+            int Position0 = _IO.P;
+            _IO.W(0x00L);
+            _IO.W(0x00L);
 
-            IO.A(0x20, true);
+            for (i = 0; i < Dex.Length * 3; i++) _IO.WX(0x00);
+            _IO.A(0x20);
 
-            for (int i0 = 0; i0 < Dex.Length; i0++)
+            for (i0 = 0; i0 < Dex.Length; i0++)
             {
-                Dex[i0].MainOffset = IO.P;
-                for (int i1 = 0; i1 < Dex[i0].Main.Count; i1++)
+                Dex[i0].MainOffset = _IO.P;
+                for (i1 = 0; i1 < Dex[i0].Main.Count; i1++)
                 {
-                    IO.W(Dex[i0].Main[i1].Frame);
-                    IO.W(Dex[i0].Main[i1].Both );
-                    IO.W(Dex[i0].Main[i1].ID   );
-                    IO.W(Dex[i0].Main[i1].Value);
-                    IO.W(Dex[i0].Main[i1].Trans);
+                    _IO.W(Dex[i0].Main[i1].Frame);
+                    _IO.W(Dex[i0].Main[i1].Both );
+                    _IO.W(Dex[i0].Main[i1].ID   );
+                    _IO.W(Dex[i0].Main[i1].Value);
+                    _IO.W(Dex[i0].Main[i1].Trans);
                 }
-                IO.A(0x20, true);
+                _IO.W(999999f);
+                _IO.W(0xFFFF);
+                _IO.W(0x0L);
+                _IO.A(0x20);
 
-                Dex[i0].EyesOffset = IO.P;
-                for (int i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
+                Dex[i0].EyesOffset = _IO.P;
+                for (i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
                 {
-                    IO.W(Dex[i0].Eyes[i1].Frame);
-                    IO.W(Dex[i0].Eyes[i1].Both );
-                    IO.W(Dex[i0].Eyes[i1].ID   );
-                    IO.W(Dex[i0].Eyes[i1].Value);
-                    IO.W(Dex[i0].Eyes[i1].Trans);
+                    _IO.W(Dex[i0].Eyes[i1].Frame);
+                    _IO.W(Dex[i0].Eyes[i1].Both );
+                    _IO.W(Dex[i0].Eyes[i1].ID   );
+                    _IO.W(Dex[i0].Eyes[i1].Value);
+                    _IO.W(Dex[i0].Eyes[i1].Trans);
                 }
-                IO.A(0x20, true);
+                _IO.W(999999f);
+                _IO.W(0xFFFF);
+                _IO.W(0x0L);
+                _IO.A(0x20);
             }
-            for (int i0 = 0; i0 < Dex.Length; i0++)
+            for (i = 0; i < Dex.Length; i0++)
             {
-                Dex[i0].NameOffset = IO.P;
-                IO.W(Dex[i0].Name + "\0");
+                Dex[i].NameOffset = _IO.P;
+                _IO.W(Dex[i].Name + "\0");
             }
-            IO.A(0x10, true);
+            _IO.A(0x10, true);
 
-            IO.P = Header.IsX ? 0x28 : 0x20;
-            for (int i0 = 0; i0 < Dex.Length; i0++)
+            _IO.P = header.IsX ? 0x28 : 0x20;
+            for (i = 0; i < Dex.Length; i++)
             {
-                IO.WX(Dex[i0].MainOffset);
-                IO.WX(Dex[i0].EyesOffset);
+                _IO.WX(Dex[i].MainOffset);
+                _IO.WX(Dex[i].EyesOffset);
             }
-            int Position1 = IO.P;
-            for (int i0 = 0; i0 < Dex.Length; i0++)
-                IO.WX(Dex[i0].NameOffset);
+            int namesPosition = _IO.P;
+            for (i = 0; i < Dex.Length; i++)
+                _IO.WX(Dex[i].NameOffset);
 
-            IO.P = Position0 - (Header.IsX ? 8 : 4);
-            IO.W(Position1);
+            _IO.P = Position0 - (header.IsX ? 8 : 4);
+            _IO.W(namesPosition);
 
             if (Format > Format.F)
             {
-                Offset = IO.L;
-                IO.O = 0;
-                IO.P = IO.L;
-                IO.WEOFC(0);
-                IO.P = 0;
-                Header.DataSize = Offset;
-                Header.SectionSize = Offset;
-                Header.Signature = 0x43505845;
-                IO.W(Header, true);
+                int offset = _IO.L;
+                _IO.O = 0;
+                _IO.P = _IO.L;
+                _IO.WEOFC(0);
+                _IO.P = 0;
+                header.DataSize = offset;
+                header.SectionSize = offset;
+                header.Signature = 0x43505845;
+                _IO.W(header, true);
             }
-            IO.C();
+            _IO.C();
         }
 
-        public int MsgPackReader(string file, bool JSON)
+        public void MsgPackReader(string file, bool json)
         {
-            int i0 = 0;
-            int i1 = 0;
-            this.Dex = new EXP[0];
-            Header = new Header();
+            Dex = null;
+            header = new Header();
 
-            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            MsgPack Dex;
-            if ((Dex = MsgPack["Dex", true]).NotNull)
+            MsgPack msgPack = file.ReadMPAllAtOnce(json);
+            MsgPack dex;
+            if ((dex = msgPack["Dex", true]).NotNull)
             {
-                this.Dex = new EXP[Dex.Array.Length];
-                for (i0 = 0; i0 < this.Dex.Length; i0++)
+                Dex = new EXP[dex.Array.Length];
+                for (i0 = 0; i0 < Dex.Length; i0++)
                 {
-                    this.Dex[i0] = new EXP { Name = Dex[i0].RS("Name") };
+                    Dex[i0] = new EXP { Name = dex[i0].RS("Name") };
 
-                    MsgPack Temp;
-                    if ((Temp = MsgPack["Main", true]).NotNull)
+                    MsgPack temp;
+                    if ((temp = dex[i0]["Main", true]).NotNull)
                     {
-                        this.Dex[i0].Main = KKdList<EXPElement>.New;
-                        for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
-                            this.Dex[i0].Main.Add(EXPElement.Read(Temp[i1]));
+                        Dex[i0].Main = KKdList<EXPElement>.New;
+                        Dex[i0].Main.Capacity = temp.Array.Length;
+                        for (i1 = 0; i1 < Dex[i0].Main.Capacity; i1++)
+                            Dex[i0].Main.Add(EXPElement.Read(temp[i1]));
                     }
-                    if ((Temp = MsgPack["Eyes", true]).NotNull)
+                    if ((temp = dex[i0]["Eyes", true]).NotNull)
                     {
-                        this.Dex[i0].Eyes = KKdList<EXPElement>.New;
-                        for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
-                            this.Dex[i0].Eyes.Add(EXPElement.Read(Temp[i1]));
+                        Dex[i0].Eyes = KKdList<EXPElement>.New;
+                        Dex[i0].Eyes.Capacity = temp.Array.Length;
+                        for (i1 = 0; i1 < this.Dex[i0].Eyes.Capacity; i1++)
+                            Dex[i0].Eyes.Add(EXPElement.Read(temp[i1]));
                     }
-                    Temp.Dispose();
+                    temp.Dispose();
                 }
             }
-            Dex.Dispose();
-            MsgPack.Dispose();
-            return 1;
+            dex.Dispose();
+            msgPack.Dispose();
         }
 
-        public void MsgPackWriter(string file, bool JSON)
+        public void MsgPackWriter(string file, bool json)
         {
-            int i0 = 0;
-            int i1 = 0;
-            MsgPack Dex = new MsgPack(this.Dex.Length, "Dex");
-            for (i0 = 0; i0 < this.Dex.Length; i0++)
-            {
-                MsgPack EXP = MsgPack.New.Add("Name", this.Dex[i0].Name);
-                MsgPack Main = new MsgPack(this.Dex[i0].Main.Count, "Main");
-                for (i1 = 0; i1 < this.Dex[i0].Main.Count; i1++)
-                    Main[i1] = this.Dex[i0].Main[i1].Write();
-                EXP.Add(Main);
+            if (Dex == null || Dex.Length < 1) return;
 
-                MsgPack Eyes = new MsgPack(this.Dex[i0].Eyes.Count, "Eyes");
-                for (i1 = 0; i1 < this.Dex[i0].Eyes.Count; i1++)
-                    Eyes[i1] = this.Dex[i0].Eyes[i1].Write();
-                EXP.Add(Eyes);
-                Dex[i0] = EXP;
+            MsgPack dex = new MsgPack(Dex.Length, "Dex");
+            for (i0 = 0; i0 < Dex.Length; i0++)
+            {
+                MsgPack exp = MsgPack.New.Add("Name", this.Dex[i0].Name);
+                MsgPack main = new MsgPack(Dex[i0].Main.Count, "Main");
+                for (i1 = 0; i1 < Dex[i0].Main.Count; i1++)
+                    main[i1] = Dex[i0].Main[i1].Write();
+                exp.Add(main);
+
+                MsgPack eyes = new MsgPack(Dex[i0].Eyes.Count, "Eyes");
+                for (i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
+                    eyes[i1] = Dex[i0].Eyes[i1].Write();
+                exp.Add(eyes);
+                dex[i0] = exp;
             }
 
-            Dex.Write(true, file, JSON);
+            dex.Write(true, file, json);
         }
+
+        private bool disposed;
+        public void Dispose()
+        { if (!disposed) { if (_IO != null) _IO.Dispose(); Dex = null; header = default; disposed = true; } }
 
         public struct EXP
         {

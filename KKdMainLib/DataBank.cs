@@ -5,15 +5,13 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
-    public class DataBank
+    public struct DataBank : IDisposable
     {
-        public DataBank() { Success = false; IO = null; pvList = null; psrDat = null; }
-
-        private Stream IO;
+        private Stream _IO;
         private int i;
 
-        private  PvList[] pvList;
-        private psrData[] psrDat;
+        public PvList[] pvList;
+        public PsrData[] psrData;
 
         private const string d = ".";
         private const string c = ",";
@@ -28,117 +26,123 @@ namespace KKdMainLib
             while (text.Contains("%")) text = WebUtility.UrlDecode(text);
             string[] array = text.Split(',');
 
+            pvList = null;
+            psrData = null;
             if (file.Contains("psrData") && array.Length % 13 < 2)
             {
-                psrDat = new psrData[array.Length / 13];
-                for (i = 0; i < psrDat.Length; i++) psrDat[i].SetValue(array, i);
+                psrData = new PsrData[array.Length / 13];
+                for (i = 0; i < psrData.Length; i++) psrData[i].SetValue(array, i);
                 Success = true;
             }
-            else if (file.Contains("psrData")) { psrDat = null; Success = true; }
+            else if (file.Contains("psrData")) Success = true;
             else if (file.Contains("PvList") && array.Length % 7 < 2)
             {
                 pvList = new PvList[array.Length / 7];
                 for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i);
                 Success = true;
             }
-            else if (file.Contains("PvList")) { pvList = null; Success = true; }
+            else if (file.Contains("PvList")) Success = true;
         }
 
         public void DBWriter(string file, uint num2)
         {
             if (!Success) return;
 
-            IO = File.OpenWriter();
+            _IO = File.OpenWriter();
             if (file.Contains("psrData"))
             {
-                if (psrDat != null && psrDat.Length > 0)
-                    for (i = 0; i < psrDat.Length; i++)
-                        IO.W(psrDat[i].ToString() + c);
+                if (psrData != null && psrData.Length > 0)
+                    for (i = 0; i < psrData.Length; i++)
+                        _IO.W(psrData[i].ToString() + c);
             }
             else if (file.Contains("PvList"))
             {
                 if (pvList != null && pvList.Length > 0)
                     for (i = 0; i < pvList.Length; i++)
-                        IO.W(UrlEncode(pvList[i].ToString() +
+                        _IO.W(UrlEncode(pvList[i].ToString() +
                             (i < pvList.Length ? c : "")));
-                else IO.W("%2A%2A%2A");
+                else _IO.W("%2A%2A%2A");
             }
              
-            byte[] data = IO.ToArray(true);
+            byte[] data = _IO.ToArray(true);
             ushort num = DCC.CalculateChecksum(data);
             File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
         }
 
-        public void MsgPackReader(string file, bool JSON)
+        public void MsgPackReader(string file, bool json)
         {
             Success = false;
-            MsgPack MsgPack = file.ReadMPAllAtOnce(JSON);
-            bool compact = MsgPack.RB("Compact");
+            MsgPack msgPack = file.ReadMPAllAtOnce(json);
+            bool compact = msgPack.RB("Compact");
 
+            psrData = null;
+            pvList = null;
             if (file.Contains("psrData"))
             {
                 MsgPack psrData;
-                if ((psrData = MsgPack["psrData", true]).NotNull)
+                if ((psrData = msgPack["psrData", true]).NotNull)
                 {
-                    psrDat = new psrData[psrData.Array.Length];
-                    for (i = 0; i < psrDat.Length; i++)
-                        psrDat[i].SetValue(psrData[i]);
+                    this.psrData = new PsrData[psrData.Array.Length];
+                    for (i = 0; i < this.psrData.Length; i++)
+                        this.psrData[i].SetValue(psrData[i]);
                 }
-                else if (MsgPack["psrData"].NotNull) psrDat = null;
                 Success = true;
                 psrData.Dispose();
             }
             else if (file.Contains("PvList"))
             {
-                MsgPack PvList;
-                if ((PvList = MsgPack["PvList", true]).NotNull)
+                MsgPack pvList;
+                if ((pvList = msgPack["PvList", true]).NotNull)
                 {
-                    pvList = new PvList[PvList.Array.Length];
-                    for (i = 0; i < pvList.Length; i++)
-                        pvList[i].SetValue(PvList[i], compact);
+                    this.pvList = new PvList[pvList.Array.Length];
+                    for (i = 0; i < this.pvList.Length; i++)
+                        this.pvList[i].SetValue(pvList[i], compact);
                 }
-                else if (MsgPack["PvList"].NotNull) pvList = null;
                 Success = true;
-                PvList.Dispose();
+                pvList.Dispose();
             }
             
-            MsgPack.Dispose();
+            msgPack.Dispose();
         }
 
-        public void MsgPackWriter(string file, bool JSON, bool Compact = true)
+        public void MsgPackWriter(string file, bool json, bool Compact = true)
         {
             if (!Success) return;
-            MsgPack MsgPack = MsgPack.New;
+            MsgPack msgPack = MsgPack.New;
 
             if (file.Contains("psrData"))
             {
-                if (psrDat != null)
+                if (psrData != null)
                 {
-                    MsgPack psrData = new MsgPack(psrDat.Length, "psrData");
-                    for (i = 0; i < psrDat.Length; i++) psrData[i] = psrDat[i].WriteMP();
-                    MsgPack.Add(psrData);
+                    MsgPack psrData = new MsgPack(this.psrData.Length, "psrData");
+                    for (i = 0; i < this.psrData.Length; i++) psrData[i] = this.psrData[i].WriteMP();
+                    msgPack.Add(psrData);
                 }
-                else MsgPack.Add(new MsgPack("psrData", null));
+                else msgPack.Add(new MsgPack("psrData", null));
             }
             else if (file.Contains("PvList"))
             {
                 if (pvList != null)
                 {
-                    if (Compact) MsgPack.Add("Compact", Compact);
+                    if (Compact) msgPack.Add("Compact", Compact);
 
                     MsgPack PvList = new MsgPack(pvList.Length, "PvList");
                     for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
-                    MsgPack.Add(PvList);
+                    msgPack.Add(PvList);
                 }
-                else MsgPack.Add(new MsgPack("PvList", null));
+                else msgPack.Add(new MsgPack("PvList", null));
             }
-            MsgPack.Write(file, JSON).Dispose();
+            msgPack.Write(file, json).Dispose();
         }
 
         public static string UrlEncode(string value) =>
             WebUtility.UrlEncode(value).Replace("+", "%20");
 
-        public struct psrData
+        private bool disposed;
+        public void Dispose()
+        { if (!disposed) { if (_IO != null) _IO.Dispose(); psrData = null; pvList = null; Success = false; disposed = true; } }
+
+        public struct PsrData
         {
             public Player p1;
             public Player p2;
@@ -155,14 +159,15 @@ namespace KKdMainLib
 
             public void SetValue(MsgPack msg)
             {
-                int? ID = msg.RnI32("PV_ID");
-                if (ID != null) PV_ID = (int)ID;
-                else { ID = msg.RnI32("ID"); if (ID != null) PV_ID = (int)ID; }
-                MsgPack Temp;
-                if ((Temp = msg["P1", true]).NotNull) p1.SetValue(Temp);
-                if ((Temp = msg["P2", true]).NotNull) p2.SetValue(Temp);
-                if ((Temp = msg["P3", true]).NotNull) p3.SetValue(Temp);
-                Temp.Dispose();
+                int? id = msg.RnI32("PV_ID");
+                if (id != null) PV_ID = (int)id;
+                else { id = msg.RnI32("ID"); if (id != null) PV_ID = (int)id; }
+
+                MsgPack temp;
+                if ((temp = msg["P1", true]).NotNull) p1.SetValue(temp);
+                if ((temp = msg["P2", true]).NotNull) p2.SetValue(temp);
+                if ((temp = msg["P3", true]).NotNull) p3.SetValue(temp);
+                temp.Dispose();
             }
 
             public MsgPack WriteMP() =>
@@ -247,61 +252,62 @@ namespace KKdMainLib
                 PV_ID  = int.Parse(data[i * 7]);
                 Enable = int.Parse(data[i * 7 + 1]) == 1;
                 Extra  = int.Parse(data[i * 7 + 2]) == 1;
-                AdvDemoStart.SetValue(data[i * 7 + 3]);
-                AdvDemoEnd  .SetValue(data[i * 7 + 4]);
-                StartShow   .SetValue(data[i * 7 + 5]);
-                  EndShow   .SetValue(data[i * 7 + 6]);
+                AdvDemoStart.SV(data[i * 7 + 3]);
+                AdvDemoEnd  .SV(data[i * 7 + 4]);
+                StartShow   .SV(data[i * 7 + 5]);
+                  EndShow   .SV(data[i * 7 + 6]);
             }
 
             public void SetValue(MsgPack msg, bool Compact)
             {
-                this.Enable =  true;
-                this.Extra  = false;
+                Enable =  true;
+                Extra  = false;
 
-                int? ID = msg.RnI32("PV_ID");
-                if (ID != null) PV_ID = (int)ID;
-                else { ID = msg.RnI32("ID"); if (ID != null) PV_ID = (int)ID; }
-                bool? Enable = msg.RnB("Enable");
-                bool? Extra  = msg.RnB("Extra");
-                if (Enable != null) this.Enable = (bool)Enable;
-                if (Extra  != null) this.Extra  = (bool)Extra ;
+                int? id = msg.RnI32("PV_ID");
+                if (id != null) PV_ID = (int)id;
+                else { id = msg.RnI32("ID"); if (id != null) PV_ID = (int)id; }
+                bool? enable = msg.RnB("Enable");
+                bool? extra  = msg.RnB("Extra");
+                if (enable != null) Enable = (bool)enable;
+                if (extra  != null) Extra  = (bool)extra ;
                 if (Compact)
                 {
-                    AdvDemoStart.SetValue(msg.RnI32("AdvDemoStart"),  true);
-                    AdvDemoEnd  .SetValue(msg.RnI32("AdvDemoEnd"  ), false);
-                    StartShow   .SetValue(msg.RnI32("StartShow"   ), false);
-                      EndShow   .SetValue(msg.RnI32(  "EndShow"   ),  true);
+                    AdvDemoStart.SV(msg.RnI32("AdvDemoStart"),  true);
+                    AdvDemoEnd  .SV(msg.RnI32("AdvDemoEnd"  ), false);
+                    StartShow   .SV(msg.RnI32("StartShow"   ), false);
+                      EndShow   .SV(msg.RnI32(  "EndShow"   ),  true);
                     return;
                 }
-                MsgPack Temp;
-                if ((Temp = msg["AdvDemoStart", true]).NotNull) AdvDemoStart.SetValue(Temp,  true);
-                if ((Temp = msg["AdvDemoEnd"  , true]).NotNull) AdvDemoEnd  .SetValue(Temp, false);
-                if ((Temp = msg["StartShow"   , true]).NotNull) StartShow   .SetValue(Temp, false);
-                if ((Temp = msg[  "EndShow"   , true]).NotNull)   EndShow   .SetValue(Temp,  true);
-                Temp.Dispose();
+
+                MsgPack temp;
+                if ((temp = msg["AdvDemoStart", true]).NotNull) AdvDemoStart.SV(temp,  true);
+                if ((temp = msg["AdvDemoEnd"  , true]).NotNull) AdvDemoEnd  .SV(temp, false);
+                if ((temp = msg["StartShow"   , true]).NotNull) StartShow   .SV(temp, false);
+                if ((temp = msg[  "EndShow"   , true]).NotNull)   EndShow   .SV(temp,  true);
+                temp.Dispose();
             }
 
             public MsgPack WriteMP(bool Compact)
             {
-                MsgPack MsgPack = MsgPack.New;
-                MsgPack.Add("ID", PV_ID);
-                if (!Enable) MsgPack.Add("Enable", Enable);
-                if ( Extra ) MsgPack.Add("Extra" , Extra );
+                MsgPack msgPack = MsgPack.New;
+                msgPack.Add("ID", PV_ID);
+                if (!Enable) msgPack.Add("Enable", Enable);
+                if ( Extra ) msgPack.Add("Extra" , Extra );
                 if (Compact)
                 {
-                    if (AdvDemoStart.WriteUpper) MsgPack.Add("AdvDemoStart", AdvDemoStart.WriteInt());
-                    if (AdvDemoEnd  .WriteLower) MsgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WriteInt());
-                    if (StartShow   .WriteLower) MsgPack.Add("StartShow"   , StartShow   .WriteInt());
-                    if (  EndShow   .WriteUpper) MsgPack.Add(  "EndShow"   ,   EndShow   .WriteInt());
+                    if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.WI());
+                    if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WI());
+                    if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .WI());
+                    if (  EndShow   .WU) msgPack.Add(  "EndShow"   ,   EndShow   .WI());
                 }
                 else
                 {
-                    if (AdvDemoStart.WriteUpper) MsgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
-                    if (AdvDemoEnd  .WriteLower) MsgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
-                    if (StartShow   .WriteLower) MsgPack.Add(StartShow   .WriteMP("StartShow"   ));
-                    if (  EndShow   .WriteUpper) MsgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
+                    if (AdvDemoStart.WU) msgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
+                    if (AdvDemoEnd  .WL) msgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
+                    if (StartShow   .WL) msgPack.Add(StartShow   .WriteMP("StartShow"   ));
+                    if (  EndShow   .WU) msgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
                 }
-                return MsgPack;
+                return msgPack;
             }
 
             public override string ToString() =>
@@ -322,13 +328,13 @@ namespace KKdMainLib
 
             public int   Day { get =>   day; set {   day = value; CheckDate(); } }
 
-            public bool WriteUpper => Year != 2029 || Month != 1 || Day != 1;
-            public bool WriteLower => Year != 2000 || Month != 1 || Day != 1;
+            public bool WU => Year != 2029 || Month != 1 || Day != 1;
+            public bool WL => Year != 2000 || Month != 1 || Day != 1;
 
-            public void SetDefaultLower() => Year = 2000;
-            public void SetDefaultUpper() => Year = 2029;
+            public void SDL() => Year = 2000;
+            public void SDU() => Year = 2029;
 
-            public void SetValue(string data)
+            public void SV(string data)
             {
                 string[] array = data.Split('-');
                 if (array.Length == 3)
@@ -339,23 +345,23 @@ namespace KKdMainLib
                 }
             }
 
-            public void SetValue(int? YMD, bool SetDefaultUpper)
+            public void SV(int? ymd, bool setDefaultUpper)
             {
-                if (!SetDefaultUpper) SetDefaultLower();
-                else             this.SetDefaultUpper();
-                if (YMD != null)
+                if (!setDefaultUpper) SDL();
+                else                  SDU();
+                if (ymd != null)
                 {
-                    year  = YMD.Value / 10000;
-                    month = YMD.Value / 100 % 100;
-                    day   = YMD.Value % 100;
+                    year  = ymd.Value / 10000;
+                    month = ymd.Value / 100 % 100;
+                    day   = ymd.Value % 100;
                     CheckDate();
                 }
             }
 
-            public void SetValue(MsgPack msg, bool SetDefaultUpper)
+            public void SV(MsgPack msg, bool setDefaultUpper)
             {
-                if (!SetDefaultUpper) SetDefaultLower();
-                else             this.SetDefaultUpper();
+                if (!setDefaultUpper) SDL();
+                else                  SDU();
                 int?  Year = msg.RnI32( "Year");
                 int? Month = msg.RnI32("Month");
                 int?   Day = msg.RnI32(  "Day");
@@ -365,7 +371,7 @@ namespace KKdMainLib
                 CheckDate();
             }
 
-            public int WriteInt() =>
+            public int WI() =>
                 (Year * 100 + Month) * 100 + Day;
 
             public MsgPack WriteMP(string name) =>

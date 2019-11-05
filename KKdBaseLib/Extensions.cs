@@ -70,108 +70,128 @@ namespace KKdBaseLib
         public static float Pow  (this float x   , float y      ) => (float)Math.Pow  (x   , y      );
         public static float Round(this float val ,   int d      ) => (float)Math.Round(val , d      );
 
-        public static void FloorCeiling( ref double Value) => 
-            Value = Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long) Value;
+        public static void FC( ref double Value) => 
+            Value = Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long)Value;
 
-        public static long FloorCeiling(this double Value) =>
-                    Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long) Value;
+        public static long FC(this double Value) =>
+                    Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long)Value;
 
-        public static   int Align(this   int value,   int alignement,   int divide = 1) =>
+        public static   int A(this   int value,   int alignement,   int divide = 1) =>
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;
 
-        public static  uint Align(this  uint value,  uint alignement,  uint divide = 1) =>
+        public static  uint A(this  uint value,  uint alignement,  uint divide = 1) =>
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;
 
-        public static  long Align(this  long value,  long alignement,  long divide = 1) =>
+        public static  long A(this  long value,  long alignement,  long divide = 1) =>
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;
 
-        public static ulong Align(this ulong value, ulong alignement, ulong divide = 1) =>
+        public static ulong A(this ulong value, ulong alignement, ulong divide = 1) =>
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;
 
-        public static byte[] buf    = new  byte[8];
-        public static byte*  bufPtr = buf.GetPtr();
+        private static byte[] buf = new  byte[8];
         
-        public static byte[] Endian(this byte[] LE, byte Len)
-        { CFUTRM(buf, ref bufPtr);
-                      for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
-            for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; return LE; }
-        
-        public static byte[] Endian(this byte[] LE, byte Len, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < Len; i++) bufPtr[i] = LE[i];
-                for (byte i = 0; i < Len; i++) LE[Len - i - 1] = bufPtr[i]; } return LE; }
+        public static byte[] E(this byte[] le, byte len)
+        {             for (byte i = 0; i < len; i++) buf[i] = le[i];
+            for (byte i = 0; i < len; i++) le[len - i - 1] = buf[i]; return le; }
+        public static byte[] E(this byte[] le, byte len, bool isBE)
+        { if (isBE) { for (byte i = 0; i < len; i++) buf[i] = le[i];
+                for (byte i = 0; i < len; i++) le[len - i - 1] = buf[i]; } return le; }
+        public static  short E(this  short le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 2; i++) { le = (short)((int)le |
+                        buf[i]); if (i < 1) le <<= 8; } } return le; }
+        public static ushort E(this ushort le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 2; i++) { le |= buf[i]; if (i < 1) le <<= 8; } } return le; }
+        public static    int E(this    int le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 4; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 4; i++) { le |= buf[i]; if (i < 3) le <<= 8; } } return le; }
+        public static   uint E(this   uint le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 4; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 4; i++) { le |= buf[i]; if (i < 3) le <<= 8; } } return le; }
+        public static   long E(this   long le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } } return le; }
+        public static  ulong E(this  ulong le, bool isBE)
+        { if (isBE) { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } } return le; }
 
-        public static  short Endian(this  short LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { int TLE = 0; for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 2; i++) { TLE |= bufPtr[i]; if (i < 1) TLE <<= 8; } LE = (short)TLE; } return LE; }
+        public static  short TI16(this byte[] arr)
+        {  short val; fixed (byte* ptr = arr) val = *( short*)ptr; return val; }
+        public static ushort TU16(this byte[] arr)
+        { ushort val; fixed (byte* ptr = arr) val = *(ushort*)ptr; return val; }
+        public static    int TI32(this byte[] arr)
+        {    int val; fixed (byte* ptr = arr) val = *(   int*)ptr; return val; }
+        public static   uint TU32(this byte[] arr)
+        {   uint val; fixed (byte* ptr = arr) val = *(  uint*)ptr; return val; }
+        public static   long TI64(this byte[] arr)
+        {   long val; fixed (byte* ptr = arr) val = *(  long*)ptr; return val; }
+        public static  ulong TU64(this byte[] arr)
+        {  ulong val; fixed (byte* ptr = arr) val = *( ulong*)ptr; return val; }
+        public static  float TF32(this byte[] arr)
+        {  float val; fixed (byte* ptr = arr) val = *( float*)ptr; return val; }
+        public static double TF64(this byte[] arr)
+        { double val; fixed (byte* ptr = arr) val = *(double*)ptr; return val; }
 
-        public static ushort Endian(this ushort LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < 2; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 2; i++) { LE |= bufPtr[i]; if (i < 1) LE <<= 8; } } return LE; }
+        public static void GBy(this byte[] arr,  short val)
+        { fixed (byte* ptr = arr) *( short*)ptr = val; }
+        public static void GBy(this byte[] arr, ushort val)
+        { fixed (byte* ptr = arr) *(ushort*)ptr = val; }
+        public static void GBy(this byte[] arr,    int val)
+        { fixed (byte* ptr = arr) *(   int*)ptr = val; }
+        public static void GBy(this byte[] arr,   uint val)
+        { fixed (byte* ptr = arr) *(  uint*)ptr = val; }
+        public static void GBy(this byte[] arr,   long val)
+        { fixed (byte* ptr = arr) *(  long*)ptr = val; }
+        public static void GBy(this byte[] arr,  ulong val)
+        { fixed (byte* ptr = arr) *( ulong*)ptr = val; }
+        public static void GBy(this byte[] arr,  float val)
+        { fixed (byte* ptr = arr) *( float*)ptr = val; }
+        public static void GBy(this byte[] arr, double val)
+        { fixed (byte* ptr = arr) *(double*)ptr = val; }
 
-        public static    int Endian(this    int LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
-
-        public static   uint Endian(this   uint LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < 4; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 4; i++) { LE |= bufPtr[i]; if (i < 3) LE <<= 8; } } return LE; }
-
-        public static   long Endian(this   long LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
-
-        public static  ulong Endian(this  ulong LE, bool IsBE)
-        { CFUTRM(buf, ref bufPtr);
-          if (IsBE) { for (byte i = 0; i < 8; i++) { bufPtr[i] = (byte)LE; LE >>= 8; } LE = 0;
-                for (byte i = 0; i < 8; i++) { LE |= bufPtr[i]; if (i < 7) LE <<= 8; } } return LE; }
-        
         public static  sbyte CITSB(this    int c)
-        {                return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
-
+        {                return ( sbyte)(c > 0x0000007F ?
+                0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
         public static   byte CITB (this    int c)
-        {                return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
-
+        {                return (  byte)(c > 0x000000FF ?
+                0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
         public static  short CITS (this    int c)
-        {                return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
-
+        {                return ( short)(c > 0x00007FFF ?
+                0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
         public static ushort CITUS(this    int c)
-        {                return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
-
+        {                return (ushort)(c > 0x0000FFFF ?
+                0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
         public static  sbyte CFTSB(this  float c)
-        { c = c.Round(); return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
-
+        { c = c.Round(); return ( sbyte)(c > 0x0000007F ?
+                0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
         public static   byte CFTB (this  float c)
-        { c = c.Round(); return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
-
+        { c = c.Round(); return (  byte)(c > 0x000000FF ?
+                0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
         public static  short CFTS (this  float c)
-        { c = c.Round(); return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
-
+        { c = c.Round(); return ( short)(c > 0x00007FFF ?
+                0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
         public static ushort CFTUS(this  float c)
-        { c = c.Round(); return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
-
+        { c = c.Round(); return (ushort)(c > 0x0000FFFF ?
+                0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
         public static  sbyte CFTSB(this double c)
-        { c = c.Round(); return ( sbyte)(c > 0x0000007F ? 0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
-
+        { c = c.Round(); return ( sbyte)(c > 0x0000007F ?
+                0x0000007F : c < -0x00000080 ? -0x00000080 : c); }
         public static   byte CFTB (this double c)
-        { c = c.Round(); return (  byte)(c > 0x000000FF ? 0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
-
+        { c = c.Round(); return (  byte)(c > 0x000000FF ?
+                0x000000FF : c <  0x00000000 ?  0x00000000 : c); }
         public static  short CFTS (this double c)
-        { c = c.Round(); return ( short)(c > 0x00007FFF ? 0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
-
+        { c = c.Round(); return ( short)(c > 0x00007FFF ?
+                0x00007FFF : c < -0x00008000 ? -0x00008000 : c); }
         public static ushort CFTUS(this double c)
-        { c = c.Round(); return (ushort)(c > 0x0000FFFF ? 0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
-
+        { c = c.Round(); return (ushort)(c > 0x0000FFFF ?
+                0x0000FFFF : c <  0x00000000 ?  0x00000000 : c); }
         public static    int CFTI (this double c)
-        { c = c.Round(); return (   int)(c > 0x7FFFFFFF ? 0x7FFFFFFF : c < -0x80000000 ? -0x80000000 : c); }
-
+        { c = c.Round(); return (   int)(c > 0x7FFFFFFF ?
+                0x7FFFFFFF : c < -0x80000000 ? -0x80000000 : c); }
         public static   uint CFTUI(this double c)
-        { c = c.Round(); return (  uint)(c > 0xFFFFFFFF ? 0xFFFFFFFF : c <  0xFFFFFFFF ?  0x00000000 : c); }
+        { c = c.Round(); return (  uint)(c > 0xFFFFFFFF ?
+                0xFFFFFFFF : c <  0xFFFFFFFF ?  0x00000000 : c); }
 
         public static    int ToI32(this  float f) => *(  int*)&f;
         public static   uint ToU32(this  float f) => *( uint*)&f;
@@ -183,91 +203,104 @@ namespace KKdBaseLib
         public static double ToF64(this  long i) => *(double*)&i;
         public static double ToF64(this ulong i) => *(double*)&i;
 
-        public static  sbyte* GetPtr(this  sbyte[] array) { fixed ( sbyte* tempPtr = array) return tempPtr; }
-        public static   byte* GetPtr(this   byte[] array) { fixed (  byte* tempPtr = array) return tempPtr; }
-        public static  short* GetPtr(this  short[] array) { fixed ( short* tempPtr = array) return tempPtr; }
-        public static ushort* GetPtr(this ushort[] array) { fixed (ushort* tempPtr = array) return tempPtr; }
-        public static    int* GetPtr(this    int[] array) { fixed (   int* tempPtr = array) return tempPtr; }
-        public static   uint* GetPtr(this   uint[] array) { fixed (  uint* tempPtr = array) return tempPtr; }
-        public static   long* GetPtr(this   long[] array) { fixed (  long* tempPtr = array) return tempPtr; }
-        public static  ulong* GetPtr(this  ulong[] array) { fixed ( ulong* tempPtr = array) return tempPtr; }
-        public static  float* GetPtr(this  float[] array) { fixed ( float* tempPtr = array) return tempPtr; }
-        public static double* GetPtr(this double[] array) { fixed (double* tempPtr = array) return tempPtr; }
+        public static string ToString(this     int d, bool BE) =>
+            BitConverter.GetBytes(d.E(BE)).ToASCII();
 
-        public static IntPtr GetIntPtr(this  sbyte[] array) { fixed ( sbyte* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   byte[] array) { fixed (  byte* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  short[] array) { fixed ( short* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this ushort[] array) { fixed (ushort* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this    int[] array) { fixed (   int* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   uint[] array) { fixed (  uint* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   long[] array) { fixed (  long* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  ulong[] array) { fixed ( ulong* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  float[] array) { fixed ( float* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this double[] array) { fixed (double* tempPtr = array) return (IntPtr)tempPtr; }
+        public static  sbyte* GetPtr(this  sbyte[] array)
+        { fixed ( sbyte* tempPtr = array) return tempPtr; }
+        public static   byte* GetPtr(this   byte[] array)
+        { fixed (  byte* tempPtr = array) return tempPtr; }
+        public static  short* GetPtr(this  short[] array)
+        { fixed ( short* tempPtr = array) return tempPtr; }
+        public static ushort* GetPtr(this ushort[] array)
+        { fixed (ushort* tempPtr = array) return tempPtr; }
+        public static    int* GetPtr(this    int[] array)
+        { fixed (   int* tempPtr = array) return tempPtr; }
+        public static   uint* GetPtr(this   uint[] array)
+        { fixed (  uint* tempPtr = array) return tempPtr; }
+        public static   long* GetPtr(this   long[] array)
+        { fixed (  long* tempPtr = array) return tempPtr; }
+        public static  ulong* GetPtr(this  ulong[] array)
+        { fixed ( ulong* tempPtr = array) return tempPtr; }
+        public static  float* GetPtr(this  float[] array)
+        { fixed ( float* tempPtr = array) return tempPtr; }
+        public static double* GetPtr(this double[] array)
+        { fixed (double* tempPtr = array) return tempPtr; }
 
-        public static string ToString(this     int d, bool IsBE) =>
-            BitConverter.GetBytes(d.Endian(IsBE)).ToASCII();
+        public static IntPtr GetIntPtr(this  sbyte[] array)
+        { fixed ( sbyte* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   byte[] array)
+        { fixed (  byte* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  short[] array)
+        { fixed ( short* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this ushort[] array)
+        { fixed (ushort* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this    int[] array)
+        { fixed (   int* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   uint[] array)
+        { fixed (  uint* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this   long[] array)
+        { fixed (  long* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  ulong[] array)
+        { fixed ( ulong* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this  float[] array)
+        { fixed ( float* tempPtr = array) return (IntPtr)tempPtr; }
+        public static IntPtr GetIntPtr(this double[] array)
+        { fixed (double* tempPtr = array) return (IntPtr)tempPtr; }
         
-        public static string ToString(this  object d)
+        public static string ToS(this  object d)
         {
-            if (d == null) return "Null";
-            else if (d is   bool Boolean) return Boolean ? "true" : "false";
-            else if (d is  float F32    ) return ToString(F32);
-            else if (d is double F64    ) return ToString(F64);
+                 if (d ==   null        ) return "Null";
+            else if (d is   bool boolean) return boolean ? "true" : "false";
+            else if (d is  float f32    ) return ToS(f32);
+            else if (d is double f64    ) return ToS(f64);
             return d.ToString();
         }
 
         private static readonly string NumberDecimalSeparator =
              System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
 
-        public static string ToString(this   bool? d) => (d ?? default).ToString();
-        public static string ToString(this   bool  d) => d.ToString().ToLower();
-        public static string ToString(this  sbyte? d) => (d ?? default).ToString();
-        public static string ToString(this  sbyte  d) => d.ToString();
-        public static string ToString(this   byte? d) => (d ?? default).ToString();
-        public static string ToString(this   byte  d) => d.ToString();
-        public static string ToString(this  short? d) => (d ?? default).ToString();
-        public static string ToString(this  short  d) => d.ToString();
-        public static string ToString(this ushort? d) => (d ?? default).ToString();
-        public static string ToString(this ushort  d) => d.ToString();
-        public static string ToString(this    int? d) => (d ?? default).ToString();
-        public static string ToString(this    int  d) => d.ToString();
-        public static string ToString(this   uint? d) => (d ?? default).ToString();
-        public static string ToString(this   uint  d) => d.ToString();
-        public static string ToString(this   long? d) => (d ?? default).ToString();
-        public static string ToString(this   long  d) => d.ToString();
-        public static string ToString(this  ulong? d) => (d ?? default).ToString();
-        public static string ToString(this  ulong  d) => d.ToString();
-        public static string ToString(this  float? d, byte round) => (d ?? default).ToString(round);
-        public static string ToString(this  float? d)             => (d ?? default).ToString();
-        public static string ToString(this  float  d, byte round) =>
+        public static string ToS(this   bool? d) => (d ?? default).ToString();
+        public static string ToS(this   bool  d) => d.ToString().ToLower();
+        public static string ToS(this  sbyte? d) => (d ?? default).ToString();
+        public static string ToS(this  sbyte  d) => d.ToString();
+        public static string ToS(this   byte? d) => (d ?? default).ToString();
+        public static string ToS(this   byte  d) => d.ToString();
+        public static string ToS(this  short? d) => (d ?? default).ToString();
+        public static string ToS(this  short  d) => d.ToString();
+        public static string ToS(this ushort? d) => (d ?? default).ToString();
+        public static string ToS(this ushort  d) => d.ToString();
+        public static string ToS(this    int? d) => (d ?? default).ToString();
+        public static string ToS(this    int  d) => d.ToString();
+        public static string ToS(this   uint? d) => (d ?? default).ToString();
+        public static string ToS(this   uint  d) => d.ToString();
+        public static string ToS(this   long? d) => (d ?? default).ToString();
+        public static string ToS(this   long  d) => d.ToString();
+        public static string ToS(this  ulong? d) => (d ?? default).ToString();
+        public static string ToS(this  ulong  d) => d.ToString();
+        public static string ToS(this  float? d, int round) => (d ?? default).ToS(round);
+        public static string ToS(this  float? d)            => (d ?? default).ToString();
+        public static string ToS(this  float  d, int round) =>
             Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this  float  d) =>
-                       d        .ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this double? d, byte round) => (d ?? default).ToString(round);
-        public static string ToString(this double? d)             => (d ?? default).ToString();
-        public static string ToString(this double  d, byte round) => 
+        public static string ToS(this  float  d) =>
+            Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
+        public static string ToS(this double? d, int round) => (d ?? default).ToS(round);
+        public static string ToS(this double? d)            => (d ?? default).ToString();
+        public static string ToS(this double  d, int round) => 
             Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToString(this double  d) =>
-                       d        .ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static  float ToSingle(this string s) =>
+        public static string ToS(this double  d) =>
+            Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
+        public static  float ToF32(this string s) =>
              float.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToSingle(this string s, out float value) =>
+        public static   bool ToF32(this string s, out float value) =>
              float.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static double ToDouble(this string s) =>
+        public static double ToF64(this string s) =>
             double.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToDouble(this string s, out double value) =>
+        public static   bool ToF64(this string s, out double value) =>
             double.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static   bool ToSingle(this string s, out float? value)
-        { bool Val = ToSingle(s, out  float val); value = val; return Val; }
-        public static   bool ToDouble(this string s, out double? value)
-        { bool Val = ToDouble(s, out double val); value = val; return Val; }
-        
-        [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-        [System.Security.SecuritySafeCritical]
-        private static void CFUTRM(byte[] buf, ref byte* bufPtr) //CheckForUnableToReadMemory
-        { try { if (buf[0] != bufPtr[0] || bufPtr[1] != bufPtr[1] || bufPtr[2] != bufPtr[2] || buf[3] != bufPtr[3] ||
-                    buf[4] != bufPtr[4] || bufPtr[5] != bufPtr[5] || bufPtr[6] != bufPtr[6] || buf[7] != bufPtr[7])
-                    bufPtr = buf.GetPtr(); } catch (AccessViolationException) { bufPtr = buf.GetPtr(); } }
+        public static   bool ToF32(this string s, out float? value)
+        { bool Val = ToF32(s, out  float val); value = val; return Val; }
+        public static   bool ToF64(this string s, out double? value)
+        { bool Val = ToF64(s, out double val); value = val; return Val; }
     }
 }

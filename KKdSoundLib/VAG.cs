@@ -3,15 +3,13 @@ using KKdMainLib.IO;
 
 namespace KKdSoundLib
 {
-    public unsafe class VAG
+    public unsafe class VAG : System.IDisposable
     {
         private int c, d0, d1, e, g, i, i1, i2, j, s, PrNR, ShF, PrNRCount;
         private uint VBS;
         private float f;
         private ushort ch;
         private const uint BS = 28; //VAGBlockSize
-        private int[] Samp1, Samp2, Samp3, Samp4;
-        private int* S1Ptr, S2Ptr, S3Ptr, S4Ptr;
         private bool Success = false;
 
         public VAGFile VAGData = new VAGFile();
@@ -48,10 +46,10 @@ namespace KKdSoundLib
 
             four_bit    = new int[BS]; four_bitPtr    = four_bit   .GetPtr();
             temp_buffer = new int[BS]; temp_bufferPtr = temp_buffer.GetPtr();
-            Samp1 = new int[VAGData.Channels]; S1Ptr = Samp1.GetPtr();
-            Samp2 = new int[VAGData.Channels]; S2Ptr = Samp2.GetPtr();
-            Samp3 = new int[VAGData.Channels]; S3Ptr = Samp3.GetPtr();
-            Samp4 = new int[VAGData.Channels]; S4Ptr = Samp4.GetPtr();
+            S1 = new int[VAGData.Channels]; S1Ptr = S1.GetPtr();
+            S2 = new int[VAGData.Channels]; S2Ptr = S2.GetPtr();
+            S3 = new int[VAGData.Channels]; S3Ptr = S3.GetPtr();
+            S4 = new int[VAGData.Channels]; S4Ptr = S4.GetPtr();
             if (VAGData.Size + 0x30 > reader.I64L) VAGData.Size = reader.U32L - 0x30;
             VAGData.Size = (VAGData.Size / VAGData.Channels) >> 4;
             VAGData.Flags = new byte [VAGData.Size];
@@ -81,14 +79,18 @@ namespace KKdSoundLib
                         HEVAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
                         HEVAG_3 = HEVAG3Ptr[PrNR]; HEVAG_4 = HEVAG4Ptr[PrNR];
                         tS1 = S1Ptr[c]; tS2 = S2Ptr[c]; tS3 = S3Ptr[c]; tS4 = S4Ptr[c];
-                        DecodeHEVAG();
-                        S1Ptr[c] = tS1; S2Ptr[c] = tS2; S3Ptr[c] = tS3; S4Ptr[c] = tS4;
-
-                        for (i = 0, i2 = 1; i < BS; i += 2, i2 += 2)
+                        ShFf = 20 - ShF;
+                        for (i = 0; i < BS; i++)
                         {
-                            VAGData.DataPtr[i  * ch + c] = temp_bufferPtr[i ];
-                            VAGData.DataPtr[i2 * ch + c] = temp_bufferPtr[i2];
+                            d0 = four_bitPtr[i];
+                            d0 = (d0 > 7 ? d0 - 16 : d0) << ShFf;
+
+                            g = ((tS1 * HEVAG_1 + tS2 * HEVAG_2 +
+                                  tS3 * HEVAG_3 + tS4 * HEVAG_4) >> 5) + d0;
+                            tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = g >> 8;
+                            VAGData.DataPtr[i * ch + c] = g;
                         }
+                        S1Ptr[c] = tS1; S2Ptr[c] = tS2; S3Ptr[c] = tS3; S4Ptr[c] = tS4;
                     }
             else
                 for (i1 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr += VBS)
@@ -107,73 +109,24 @@ namespace KKdSoundLib
                         four_bitPtr[i2] >>= 4;
                     }
 
-                    VAG_1 = HEVAG1Ptr[PrNR]; VAG_2 = HEVAG2Ptr[PrNR];
+                    HEVAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
                     tS1 = S1Ptr[c]; tS2 = S2Ptr[c];
-                    DecodeVAG();
-                    S1Ptr[c] = tS1; S2Ptr[c] = tS2;
-
-                    for (i = 0, i2 = 1; i < BS; i += 2, i2 += 2)
+                    ShFf = 20 - ShF;
+                    i = 0;
+                    for (i = 0; i < BS; i++)
                     {
-                        VAGData.DataPtr[i ] = temp_bufferPtr[i ];
-                        VAGData.DataPtr[i2] = temp_bufferPtr[i2];
+                        d0 = four_bitPtr[i];
+                        d0 = (d0 > 7 ? d0 - 16 : d0) << ShFf;
+
+                        g = ((tS1 * HEVAG_1 + tS2 * HEVAG_2) >> 5) + d0;
+                        tS2 = tS1; tS1 = g >> 8;
+                        VAGData.DataPtr[i * ch + c] = g;
                     }
+                    S1Ptr[c] = tS1; S2Ptr[c] = tS2;
                 }
 
-            VAGData.DataPtr = VAGData.OriginDataPtr;
             reader.C();
             Success = true;
-        }
-
-        private void DecodeVAG()
-        {
-            i = 0; i2 = 1;
-            while (i < BS)
-            {
-                d0 = four_bitPtr[i];
-                d1 = four_bitPtr[i2];
-                if (d0 > 7) d0 -= 16;
-                if (d1 > 7) d1 -= 16;
-                d0 <<= 20 - ShF;
-                d1 <<= 20 - ShF;
-
-                g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
-                tS2 = tS1; tS1 = g + d0;
-
-                g = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
-                tS2 = tS1; tS1 = g + d1;
-
-                temp_bufferPtr[i ] = tS2;
-                temp_bufferPtr[i2] = tS1;
-                i  += 2;
-                i2 += 2;
-            }
-        }
-
-        private void DecodeHEVAG()
-        {
-            i = 0; i2 = 1;
-            while (i < BS)
-            {
-                d0 = four_bitPtr[i ];
-                d1 = four_bitPtr[i2];
-                if (d0 > 7) d0 -= 16;
-                if (d1 > 7) d1 -= 16;
-                d0 <<= 20 - ShF;
-                d1 <<= 20 - ShF;
-
-                g = ((tS1 >> 8) * HEVAG_1 + (tS2 >> 8) * HEVAG_2 +
-                     (tS3 >> 8) * HEVAG_3 + (tS4 >> 8) * HEVAG_4) >> 5;
-                tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = g + d0;
-
-                g = ((tS1 >> 8) * HEVAG_1 + (tS2 >> 8) * HEVAG_2 +
-                     (tS3 >> 8) * HEVAG_3 + (tS4 >> 8) * HEVAG_4) >> 5;
-                tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = g + d1;
-
-                temp_bufferPtr[i ] = tS2;
-                temp_bufferPtr[i2] = tS1;
-                i  += 2;
-                i2 += 2;
-            }
         }
         
         public void WAVWriterStraight(string file, bool IgnoreEndFlags = false)
@@ -184,7 +137,9 @@ namespace KKdSoundLib
             WAV.Header Header = new WAV.Header();
             Stream writer = File.OpenWriter(file + ".wav", true);
             writer.I64P = 0x2C;
-            
+
+            VAGData.DataPtr = VAGData.Data.GetPtr();
+            VAGData.OriginDataPtr = VAGData.DataPtr;
             if (Flag < 8)
                 for (i = 0; i < BS; i++)
                     for (c = 0; c < ch; c++)
@@ -215,7 +170,6 @@ namespace KKdSoundLib
 
                 if (!IgnoreEndFlags && Flag == 1) break;
             }
-            VAGData.DataPtr = VAGData.OriginDataPtr;
 
             Header = new WAV.Header { Bytes = 4, Channels = ch, Format = 3, SampleRate =
                 VAGData.SampleRate, Size = writer.U32P - 0x2C };
@@ -234,6 +188,8 @@ namespace KKdSoundLib
             else                              writer = File.OpenWriter(file +      ".0.wav", true);
             writer.I64P = 0x2C;
 
+            VAGData.DataPtr = VAGData.Data.GetPtr();
+            VAGData.OriginDataPtr = VAGData.DataPtr;
             if (Flag < 8)
                 for (i = 0; i < BS; i++)
                     for (c = 0; c < ch; c++)
@@ -292,7 +248,6 @@ namespace KKdSoundLib
                     writer.I64P = 0x2C;
                 }
             }
-            VAGData.DataPtr = VAGData.OriginDataPtr;
 
             Header = new WAV.Header { Bytes = 4, Channels = ch, Format = 3, SampleRate =
                 VAGData.SampleRate, Size = writer.U32P - 0x2C };
@@ -311,7 +266,7 @@ namespace KKdSoundLib
             VBS = BS * ch;
 
             VAGData.Size = Header.Size / Header.Bytes;
-            VAGData.Data = new int[VAGData.Size.Align(VBS)];
+            VAGData.Data = new int[VAGData.Size.A(VBS)];
             VAGData.DataPtr = VAGData.Data.GetPtr();
             VAGData.OriginDataPtr = VAGData.DataPtr;
             
@@ -334,8 +289,7 @@ namespace KKdSoundLib
                 for (int i1 = 0; i1 < VAGData.Size; i1++, VAGData.DataPtr++)
                     *VAGData.DataPtr = (int)(reader.RF64() * 8388608.0);
 
-            VAGData.Size = VAGData.Size.Align(VBS, VBS);
-            VAGData.DataPtr = VAGData.OriginDataPtr;
+            VAGData.Size = VAGData.Size.A(VBS, VBS);
             VAGData.Channels = ch;
             VAGData.SampleRate = Header.SampleRate;
             VAGData.Flags = new byte[VAGData.Size];
@@ -364,16 +318,9 @@ namespace KKdSoundLib
                 while (true)
                 {
                          if (File.Exists(file + "." + i2 +      ".wav"))
-                    {
-                        files.Add(file + "." + i2 +      ".wav");
-                        loop.Add(false);
-                    }
+                    { files.Add(file + "." + i2 +      ".wav"); loop.Add(false);                 }
                     else if (File.Exists(file + "." + i2 + ".loop.wav"))
-                    {
-                        files.Add(file + "." + i2 + ".loop.wav");
-                        loop.Add(true);
-                        HasLoop = true;
-                    }
+                    { files.Add(file + "." + i2 + ".loop.wav"); loop.Add( true); HasLoop = true; }
                     else break;
                     i2++;
                 }
@@ -400,15 +347,15 @@ namespace KKdSoundLib
                 if (Header.SampleRate != SampleRate) { reader.C(); return 4; }
 
                 Sizes[i] = Header.Size / Header.Bytes;
-                Size += Sizes[i].Align(VBS);
+                Size += Sizes[i].A(VBS);
                 reader.C();
             }
             
+            VAGData.Size = Size / VBS;
             VAGData.Data = new int[Size];
+            VAGData.Flags = new byte[VAGData.Size];
             VAGData.DataPtr = VAGData.Data.GetPtr();
             VAGData.OriginDataPtr = VAGData.DataPtr;
-            VAGData.Size = Size / VBS;
-            VAGData.Flags = new byte[VAGData.Size];
 
             if (HasLoop)
                 for (i = 0; i < VAGData.Size; i++)
@@ -440,7 +387,7 @@ namespace KKdSoundLib
                         *VAGData.DataPtr = (int)(reader.RF64() * 8388608.0);
                 reader.C();
 
-                AlignVAG = Sizes[i].Align(VBS) - Sizes[i];
+                AlignVAG = Sizes[i].A(VBS) - Sizes[i];
                 VAGData.DataPtr += AlignVAG;
 
                 AlignVAG = (Sizes[i] + AlignVAG) / VBS;
@@ -453,7 +400,6 @@ namespace KKdSoundLib
                 End++;
             }
             
-            VAGData.DataPtr = VAGData.OriginDataPtr;
             VAGData.Channels = ch;
             VAGData.SampleRate = SampleRate;
 
@@ -461,37 +407,39 @@ namespace KKdSoundLib
             return 0;
         }
 
-        public void VAGWriter(string file, bool HEVAG = true)
+        public void VAGWriter(string file, string choose)
         {
+            bool HEVAG = choose != "1";
             if (!Success) return;
+            byte[] data = new byte[0x30 + ((HEVAG ? (VAGData.Size * ch + ch) : (VAGData.Size + 1)) << 4)];
+            Stream writer = File.OpenWriter(data);
             VAGData.Name = Path.GetFileName(file);
-            Stream writer = File.OpenWriter(file + ".vag", true);
-            Samp1 = new int[ch]; S1Ptr = Samp1.GetPtr();
-            Samp2 = new int[ch]; S2Ptr = Samp2.GetPtr();
-            Samp3 = new int[ch]; S3Ptr = Samp3.GetPtr();
-            Samp4 = new int[ch]; S4Ptr = Samp4.GetPtr();
+            S1 = new int[ch]; S2 = new int[ch];
+            S3 = new int[ch]; S4 = new int[ch]; 
             S_1 = new int[ch]; S_2 = new int[ch];
             S_3 = new int[ch]; S_4 = new int[ch];
-            if (HEVAG) PrNRCount = 128;
-            else       PrNRCount =   5;
-            max         = new int[PrNRCount];         maxPtr = max        .GetPtr();
-            error       = new int[PrNRCount];       errorPtr = error      .GetPtr();
-            four_bit    = new int[BS];           four_bitPtr = four_bit   .GetPtr();
-            data_buffer = new int[BS];        data_bufferPtr = data_buffer.GetPtr();
-            temp_buffer = new int[BS];        temp_bufferPtr = temp_buffer.GetPtr();
+            PrNRCount = choose == "1" ? 5 : choose == "2" ? 8 : choose == "3" ? 32 :
+                choose == "4" ? 64 : choose == "5" ? 96 : 128;
+            error = new int[PrNRCount]; four_bit = new int[BS];
+            data_buffer = new int[BS]; temp_buffer = new int[BS];
+            errorPtr = error.GetPtr();
+            four_bitPtr = four_bit.GetPtr();
+            data_bufferPtr = data_buffer.GetPtr();
+            temp_bufferPtr = temp_buffer.GetPtr();
+            S1Ptr = S1.GetPtr(); S2Ptr = S2.GetPtr();
+            S3Ptr = S3.GetPtr(); S4Ptr = S4.GetPtr();
+            S_1Ptr = S_1.GetPtr(); S_2Ptr = S_2.GetPtr();
+            S_3Ptr = S_3.GetPtr(); S_4Ptr = S_4.GetPtr();
 
             writer.W(0x70474156);
-            if (HEVAG) writer.WE(0x00020001, true);
-            else       writer.WE(0x00000020, true);
+            writer.WE(HEVAG ? 0x00020001 : 0x00000020, true);
             writer.W(0);
-            if (HEVAG) writer.WE((VAGData.Size * ch + ch) << 4, true);
-            else       writer.WE((VAGData.Size      +  1) << 4, true);
+            writer.WE((HEVAG ? (VAGData.Size * ch + ch) : (VAGData.Size + 1)) << 4, true);
             writer.WE(VAGData.SampleRate, true);
             writer.W(0);
             writer.W(0);
             writer.W((ushort)0);
-            if (HEVAG) writer.W(VAGData.Channels);
-            else       writer.W((ushort)0x1);
+            writer.W((ushort)(HEVAG ? VAGData.Channels : 0x1));
             writer.W(VAGData.Name);
             writer.I64L = 0x30;
             writer.I64P = 0x30;
@@ -501,23 +449,7 @@ namespace KKdSoundLib
                     for (c = 0; c < ch; c++)
                     {
                         for (i = 0, s = 0; i < BS; i++)
-                        {
                             data_bufferPtr[i] = VAGData.OriginDataPtr[i1 * BS * ch + i * ch + c];
-                            s |= data_bufferPtr[i];
-                        }
-
-                        if (s == 0)
-                        {
-                            S_1[c] = S_2[c] = S_3[c] = S_4[c] = 0;
-                            writer.W(0);
-                            writer.W(VAGData.Flags[i1]);
-                            writer.W(0);
-                            writer.W(0);
-                            writer.W(0);
-                            writer.W(0);
-                            writer.W(0);
-                            continue;
-                        }
 
                         Calc4BitsHEVAG();
 
@@ -527,7 +459,7 @@ namespace KKdSoundLib
                         writer.W((byte)s);
                         for (i = 0, i2 = 1; i < BS; i += 2, i2 += 2)
                         {
-                            s = (four_bitPtr[i2] << 4) | four_bitPtr[i];
+                            s = ((four_bitPtr[i2] & 0xF) << 4) | (four_bitPtr[i] & 0xF);
                             writer.W((byte)s);
                         }
                     }
@@ -536,34 +468,20 @@ namespace KKdSoundLib
                 {
                     for (i = 0; i < BS; i++)
                     {
-                        for (c = 0, data_bufferPtr[i] = 0, s = 0; c < ch; c++)
+                        for (c = 0, s = 0, data_bufferPtr[i] = 0; c < ch; c++)
                             data_bufferPtr[i] += VAGData.OriginDataPtr[i1 * BS * ch + i * ch + c];
                         data_bufferPtr[i] /= ch;
-                        s |=data_bufferPtr[i];
-                        c = 0;
-                    }
-
-                    if (s == 0)
-                    {
-                        S_1[c] = S_2[c] = 0;
-                        writer.W(0);
-                        writer.W(VAGData.Flags[i1]);
-                        writer.W(0);
-                        writer.W(0);
-                        writer.W(0);
-                        writer.W(0);
-                        writer.W(0);
-                        continue;
                     }
 
                     Calc4BitsVAG();
 
                     s = ((PrNR & 0xF) << 4) | (ShF & 0xF);
                     writer.W((byte)s);
-                    writer.W(VAGData.Flags[i1]);
+                    s = VAGData.Flags[i1] & 0xF;
+                    writer.W((byte)s);
                     for (i = 0, i2 = 1; i < BS; i += 2, i2 += 2)
                     {
-                        s = (four_bitPtr[i2] << 4) | four_bitPtr[i];
+                        s = ((four_bitPtr[i2] & 0xF) << 4) | (four_bitPtr[i] & 0xF);
                         writer.W((byte)s);
                     }
                 }
@@ -576,35 +494,39 @@ namespace KKdSoundLib
                 writer.W(0x77777777);
                 writer.W(0x77777777);
             }
-            VAGData.DataPtr = VAGData.OriginDataPtr;
             writer.C();
+            File.WriteAllBytes(file + ".vag", data);
         }
 
-        private int min, ShM, S1, S2, S3, S4, tS1, tS2, tS3, tS4, PrNRf;
-        private int VAG_1, VAG_2, HEVAG_1, HEVAG_2, HEVAG_3, HEVAG_4;
-        private int[] data_buffer, error, four_bit, max, S_1, S_2, S_3, S_4, temp_buffer;
-        private int* data_bufferPtr, errorPtr, four_bitPtr, maxPtr, temp_bufferPtr;
+        private int max, min, ShM, s1, s2, s3, s4, tS1, tS2, tS3, tS4, PrNRf, ShFf;
+        private int HEVAG_1, HEVAG_2, HEVAG_3, HEVAG_4;
+        private int[] data_buffer, error, four_bit, temp_buffer;
+        private int* data_bufferPtr, errorPtr, four_bitPtr, temp_bufferPtr;
+        private int[] S_1, S_2, S_3, S_4, S1, S2, S3, S4;
+        private int* S_1Ptr, S_2Ptr, S_3Ptr, S_4Ptr, S1Ptr, S2Ptr, S3Ptr, S4Ptr;
         
         private void Calc4BitsVAG()
         {
+            min = 0x7FFFFFFF;
             PrNRf = 0;
-            min   = 134217728;
             for (j = 0; j < PrNRCount; j++)
             {
                 PrNR = j;
 
                 Calc4Bits_VAG();
-
+                
                 tS1 = S1Ptr[c]; tS2 = S2Ptr[c];
-                DecodeVAG();
-                i = 0;
                 errorPtr[j] = 0;
-                while (i < BS)
+                for (i = 0; i < BS; i++)
                 {
-                    e = data_bufferPtr[i] - temp_bufferPtr[i];
+                    d0 = four_bitPtr[i];
+                    d0 = (d0 > 7 ? d0 - 16 : d0) << ShFf;
+
+                    g = ((tS1 * HEVAG_1 + tS2 * HEVAG_2) >> 5) + d0;
+                    tS2 = tS1; tS1 = g >> 8;
+                    e = data_bufferPtr[i] - g;
                     if (e < 0) e = -e;
                     errorPtr[j] += e;
-                    i++;
                 }
 
                 if (errorPtr[j] < min) { PrNRf = j; min = errorPtr[j]; }
@@ -612,74 +534,73 @@ namespace KKdSoundLib
             PrNR = PrNRf;
 
             Calc4Bits_VAG();
-            S1Ptr[c] =  S1; S2Ptr[c] =  S2;
-            S_1  [c] = tS1; S_2  [c] = tS2;
+             S1Ptr[c] =  s1;  S2Ptr[c] =  s2;
+            S_1Ptr[c] = tS1; S_2Ptr[c] = tS2;
         }
 
         private void Calc4Bits_VAG()
         {
-            S1 = S1Ptr[c]; S2 = S2Ptr[c];
-            VAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
+            s1 = S1Ptr[c]; s2 = S2Ptr[c]; s3 = S3Ptr[c]; s4 = S4Ptr[c];
+            HEVAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
 
-            i = 0;
-            maxPtr[PrNR] = 0;
-            while (i < BS)
+            for (i = 0, max = 0; i < BS; i++)
             {
                 g = data_bufferPtr[i];
-                e = ((S1 >> 8) * VAG_1 + (S2 >> 8) * VAG_2) >> 5;
+                e = (s1 * HEVAG_1 + s2 * HEVAG_2) >> 5;
                 e = g - e;
-                if (e >  7864319) e =  7864319;
-                if (e < -7864320) e = -7864320;
+                if (e >  0x77FFFF) e =  0x77FFFF;
+                if (e < -0x780000) e = -0x780000;
                 temp_bufferPtr[i] = e;
                 if (e < 0) e = -e;
-                if (e > maxPtr[PrNR]) maxPtr[PrNR] = e;
-                S2 = S1; S1 = g;
-                i++;
+                if (e > max) max = e;
+                s4 = s3; s3 = s2; s2 = s1; s1 = g >> 8;
             }
 
             for (ShF = 0, ShM = 0x400000; ShF < 15; ShF++, ShM >>= 1)
-            { e = maxPtr[PrNR] + (ShM >> 3); if ((ShM & e) == ShM) break; }
+            { e = max + (ShM >> 3); if ((ShM & e) == ShM) break; }
+            ShFf = 20 - ShF;
 
-            tS1 = S_1[c]; tS2 = S_2[c];
-            i = 0;
-            while (i < BS)
+            tS1 = S_1Ptr[c]; tS2 = S_2Ptr[c];
+            for (i = 0; i < BS; i++)
             {
                 g = temp_bufferPtr[i];
-                e = ((tS1 >> 8) * VAG_1 + (tS2 >> 8) * VAG_2) >> 5;
+                e = (tS1 * HEVAG_1 + tS2 * HEVAG_2) >> 5;
                 e = g - e;
 
                 d1 = e << ShF;
                 d0 = (d1 + 0x80000) >> 20;
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
-                four_bitPtr[i] = d0 & 0xF;
-                d0 <<= 20 - ShF;
+                four_bitPtr[i] = d0;
+                d0 <<= ShFf;
 
-                tS2 = tS1; tS1 = d0 - e;
-                i++;
+                tS2 = tS1; tS1 = (d0 - e) >> 8;
             }
         }
         
         private void Calc4BitsHEVAG()
         {
+            min = 0x7FFFFFFF;
             PrNRf = 0;
-            min   = 134217728;
             for (j = 0; j < PrNRCount; j++)
             {
                 PrNR = j;
 
                 Calc4Bits_HEVAG();
-
+                
                 tS1 = S1Ptr[c]; tS2 = S2Ptr[c]; tS3 = S3Ptr[c]; tS4 = S4Ptr[c];
-                DecodeHEVAG();
-                i = 0;
                 errorPtr[j] = 0;
-                while (i < BS)
+                for (i = 0; i < BS; i++)
                 {
-                    e = data_bufferPtr[i] - temp_bufferPtr[i];
+                    d0 = four_bitPtr[i];
+                    d0 = (d0 > 7 ? d0 - 16 : d0) << ShFf;
+
+                    g = ((tS1 * HEVAG_1 + tS2 * HEVAG_2 +
+                          tS3 * HEVAG_3 + tS4 * HEVAG_4) >> 5) + d0;
+                    tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = g >> 8;
+                    e = data_bufferPtr[i] - g;
                     if (e < 0) e = -e;
                     errorPtr[j] += e;
-                    i++;
                 }
 
                 if (errorPtr[j] < min) { PrNRf = j; min = errorPtr[j]; }
@@ -687,56 +608,57 @@ namespace KKdSoundLib
             PrNR = PrNRf;
 
             Calc4Bits_HEVAG();
-            S1Ptr[c] =  S1; S2Ptr[c] =  S2; S3Ptr[c] =  S3; S4Ptr[c] =  S4;
-            S_1  [c] = tS1; S_2  [c] = tS2; S_3  [c] = tS3; S_4  [c] = tS4;
+             S1Ptr[c] =  s1;  S2Ptr[c] =  s2;  S3Ptr[c] =  s3;  S4Ptr[c] =  s4;
+            S_1Ptr[c] = tS1; S_2Ptr[c] = tS2; S_3Ptr[c] = tS3; S_4Ptr[c] = tS4;
         }
 
         private void Calc4Bits_HEVAG()
         {
-            S1 = S1Ptr[c]; S2 = S2Ptr[c]; S3 = S3Ptr[c]; S4 = S4Ptr[c];
+            s1 = S1Ptr[c]; s2 = S2Ptr[c]; s3 = S3Ptr[c]; s4 = S4Ptr[c];
             HEVAG_1 = HEVAG1Ptr[PrNR]; HEVAG_2 = HEVAG2Ptr[PrNR];
             HEVAG_3 = HEVAG3Ptr[PrNR]; HEVAG_4 = HEVAG4Ptr[PrNR];
 
-            i = 0;
-            maxPtr[PrNR] = 0;
-            while (i < BS)
+            for (i = 0, max = 0; i < BS; i++)
             {
                 g = data_bufferPtr[i];
-                e = ((S1 >> 8) * HEVAG_1 + (S2 >> 8) * HEVAG_2 +
-                     (S3 >> 8) * HEVAG_3 + (S4 >> 8) * HEVAG_4) >> 5;
+                e = (s1 * HEVAG_1 + s2 * HEVAG_2 +
+                     s3 * HEVAG_3 + s4 * HEVAG_4) >> 5;
                 e = g - e;
-                if (e >  7864319) e =  7864319;
-                if (e < -7864320) e = -7864320;
+                if (e >  0x77FFFF) e =  0x77FFFF;
+                if (e < -0x780000) e = -0x780000;
                 temp_bufferPtr[i] = e;
                 if (e < 0) e = -e;
-                if (e > maxPtr[PrNR]) maxPtr[PrNR] = e;
-                S4 = S3; S3 = S2; S2 = S1; S1 = g;
-                i++;
+                if (e > max) max = e;
+                s4 = s3; s3 = s2; s2 = s1; s1 = g >> 8;
             }
 
             for (ShF = 0, ShM = 0x400000; ShF < 15; ShF++, ShM >>= 1)
-            { e = maxPtr[PrNR] + (ShM >> 3); if ((ShM & e) == ShM) break; }
+            { e = max + (ShM >> 3); if ((ShM & e) == ShM) break; }
+            ShFf = 20 - ShF;
 
-            tS1 = S_1[c]; tS2 = S_2[c]; tS3 = S_3[c]; tS4 = S_4[c];
-            i = 0;
-            while (i < BS)
+            tS1 = S_1Ptr[c]; tS2 = S_2Ptr[c]; tS3 = S_3Ptr[c]; tS4 = S_4Ptr[c];
+            for (i = 0; i < BS; i++)
             {
                 g = temp_bufferPtr[i];
-                e = ((tS1 >> 8) * HEVAG_1 + (tS2 >> 8) * HEVAG_2 +
-                     (tS3 >> 8) * HEVAG_3 + (tS4 >> 8) * HEVAG_4) >> 5;
+                e = (tS1 * HEVAG_1 + tS2 * HEVAG_2 +
+                     tS3 * HEVAG_3 + tS4 * HEVAG_4) >> 5;
                 e = g - e;
 
                 d1 = e << ShF;
                 d0 = (d1 + 0x80000) >> 20;
                 if (d0 >  7) d0 =  7;
                 if (d0 < -8) d0 = -8;
-                four_bitPtr[i] = d0 & 0xF;
-                d0 <<= 20 - ShF;
+                four_bitPtr[i] = d0;
+                d0 <<= ShFf;
 
-                tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = d0 - e;
-                i++;
+                tS4 = tS3; tS3 = tS2; tS2 = tS1; tS1 = (d0 - e) >> 8;
             }
         }
+
+        public void Dispose()
+        { data_buffer = null; error = null; four_bit = null; temp_buffer = null;
+            S_1 = null; S_2 = null; S_3 = null; S_4 = null;
+            S1 = null; S2 = null; S3 = null; S4 = null; }
 
         public struct VAGFile
         {

@@ -14,16 +14,16 @@ namespace KKdMainLib
 
         public static void Decrypt(this string file)
         {
-            int StreamLength, FileLength;
+            int streamLength, fileLength;
             byte[] encrypted, decrypted;
-            using (Stream IO = File.OpenReader(file))
+            using (Stream _IO = File.OpenReader(file))
             {
-                if (IO.RI64() != 0x454C494641564944) return;
+                if (_IO.RI64() != 0x454C494641564944) return;
 
-                StreamLength = IO.RI32();
-                FileLength = IO.RI32();
-                encrypted = IO.RBy(StreamLength);
-                decrypted = new byte[StreamLength];
+                streamLength = _IO.RI32();
+                fileLength = _IO.RI32();
+                encrypted = _IO.RBy(streamLength);
+                decrypted = new byte[streamLength];
             }
 
             using (AesManaged crypto = new AesManaged())
@@ -32,40 +32,40 @@ namespace KKdMainLib
                 crypto.Mode = CipherMode.ECB; crypto.Padding = PaddingMode.Zeros;
                 using CryptoStream cryptoData = new CryptoStream(new MSIO.MemoryStream(encrypted),
                     crypto.CreateDecryptor(crypto.Key, crypto.IV), CryptoStreamMode.Read);
-                cryptoData.Read(decrypted, 0, StreamLength);
+                cryptoData.Read(decrypted, 0, streamLength);
             }
 
-            using (Stream IO = File.OpenWriter(file, FileLength))
-                IO.W(decrypted, FileLength < StreamLength ? FileLength : StreamLength);
+            using (Stream _IO = File.OpenWriter(file, fileLength))
+                _IO.W(decrypted, fileLength < streamLength ? fileLength : streamLength);
         }
 
         public static void Encrypt(this string file)
         {
-            byte[] In;
-            using (Stream IO = File.OpenReader(file))
-                In = IO.ToArray();
+            byte[] data;
+            using (Stream _IO = File.OpenReader(file))
+                data = _IO.ToArray();
 
-            int FileLengthOrigin = In.Length;
-            int FileLength = FileLengthOrigin.Align(16);
-            byte[] Inalign = new byte[FileLength];
-            for (int i = 0; i < In.Length; i++) Inalign[i] = In[i];
-            In = null;
-            byte[] encrypted = new byte[FileLength];
+            int fileLengthOrigin = data.Length;
+            int fileLength = fileLengthOrigin.A(16);
+            byte[] dataAlign = new byte[fileLength];
+            Array.Copy(data, dataAlign, data.Length);
+            data = null;
+            byte[] encrypted = new byte[fileLength];
             using (AesManaged crypto = new AesManaged())
             {
                 crypto.Key = Key; crypto.IV = new byte[16];
                 crypto.Mode = CipherMode.ECB; crypto.Padding = PaddingMode.Zeros;
-                using CryptoStream cryptoData = new CryptoStream(new MSIO.MemoryStream(Inalign),
+                using CryptoStream cryptoData = new CryptoStream(new MSIO.MemoryStream(dataAlign),
                     crypto.CreateEncryptor(crypto.Key, crypto.IV), CryptoStreamMode.Read);
-                cryptoData.Read(encrypted, 0, FileLength);
+                cryptoData.Read(encrypted, 0, fileLength);
             }
 
-            using (Stream IO = File.OpenWriter(file, Inalign.Length))
+            using (Stream _IO = File.OpenWriter(file, dataAlign.Length))
             {
-                IO.W(0x454C494641564944);
-                IO.W(FileLength);
-                IO.W(FileLengthOrigin);
-                IO.W(encrypted);
+                _IO.W(0x454C494641564944);
+                _IO.W(fileLength);
+                _IO.W(fileLengthOrigin);
+                _IO.W(encrypted);
             }
         }
     }

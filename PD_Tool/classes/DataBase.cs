@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
-using DB = KKdMainLib.DB;
+using Aet = KKdMainLib.DB.Aet;
+using Auth = KKdMainLib.DB.Auth;
+using Spr = KKdMainLib.DB.Spr;
 
 namespace PD_Tool
 {
     public class DataBase
     {
-        public static void Processor(bool JSON)
+        public static void Processor(bool json)
         {
             Console.Title = "DB Converter";
             Console.Clear();
@@ -22,99 +24,93 @@ namespace PD_Tool
             Program.ConsoleDesign(true);
             Console.WriteLine();
             string format = Console.ReadLine();
-            if (format == "1") AuthDBProcessor(JSON);
-            if (format == "2")  AETDBProcessor(JSON);
-            if (format == "3")  SPRDBProcessor(JSON);
+            if (format == "1") AuthDBProcessor(json);
+            if (format == "2")  AETDBProcessor(json);
+            if (format == "3")  SPRDBProcessor(json);
         }
 
         public static void AuthDBProcessor(bool JSON)
         {
             Console.Title = "Auth DB Converter";
-            DB.Auth Auth;
-            Program.Choose(1, "bin", out string[] FileNames);
-            if (FileNames.Length < 1) return;
-            string filepath = "";
-            string ext      = "";
+            Program.Choose(1, "bin", out string[] fileNames);
+            if (fileNames.Length < 1) return;
 
-            foreach (string file in FileNames)
-            {
-                Console.Title = "Auth DB Converter: " + Path.GetFileNameWithoutExtension(file);
-                Auth = new DB.Auth();
-                ext      = Path.GetExtension(file).ToLower();
-                filepath = file.Replace(Path.GetExtension(file), "");
+            string filepath, ext;
+            Auth auth;
+            foreach (string file in fileNames)
+                using (auth = new Auth())
+                {
+                    Console.Title = "Auth DB Converter: " + Path.GetFileNameWithoutExtension(file);
+                    ext = Path.GetExtension(file).ToLower();
+                    filepath = file.Replace(Path.GetExtension(file), "");
 
-                if (ext == ".bin")
-                {
-                    Auth.BINReader    (filepath);
-                    Auth.MsgPackWriter(filepath, JSON);
+                    if (ext == ".bin")
+                    {
+                        auth.BINReader    (filepath);
+                        auth.MsgPackWriter(filepath, JSON);
+                    }
+                    else if (ext == ".mp" || ext == ".json")
+                    {
+                        auth.MsgPackReader(filepath, ext == ".json");
+                        auth.BINWriter    (filepath);
+                    }
                 }
-                else if (ext == ".mp" || ext == ".json")
-                {
-                    Auth.MsgPackReader(filepath, ext == ".json");
-                    Auth.BINWriter    (filepath);
-                }
-                Auth = null;
-            }
         }
 
-        public static void AETDBProcessor(bool JSON)
+        public static void AETDBProcessor(bool json)
         {
             Console.Title = "AET DB Converter";
-            DB.Aet Aet;
-            Program.Choose(1, "bin", out string[] FileNames);
-            if (FileNames.Length < 1) return;
-            string filepath = "";
-            string ext      = "";
+            Program.Choose(1, "bin", out string[] fileNames);
+            if (fileNames.Length < 1) return;
 
-            foreach (string file in FileNames)
-            {
-                Console.Title = "AET DB Converter: " + Path.GetFileNameWithoutExtension(file);
-                Aet = new DB.Aet();
-                ext      = Path.GetExtension(file).ToLower();
-                filepath = file.Replace(Path.GetExtension(file), "");
+            string filepath, ext;
+            Aet aet;
+            foreach (string file in fileNames)
+                using (aet = new Aet())
+                {
+                    Console.Title = "AET DB Converter: " + Path.GetFileNameWithoutExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
+                    filepath = file.Replace(Path.GetExtension(file), "");
 
-                if (ext == ".bin")
-                {
-                    Aet.BINReader    (filepath);
-                    Aet.MsgPackWriter(filepath, JSON);
+                    if (ext == ".bin")
+                    {
+                        aet.BINReader    (filepath);
+                        aet.MsgPackWriter(filepath, json);
+                    }
+                    else if (ext == ".mp" || ext == ".json")
+                    {
+                        aet.MsgPackReader(filepath, ext == ".json");
+                        aet.BINWriter    (filepath);
+                    }
                 }
-                else if (ext == ".mp" || ext == ".json")
-                {
-                    Aet.MsgPackReader(filepath, ext == ".json");
-                    Aet.BINWriter    (filepath);
-                }
-                Aet = null;
-            }
         }
 
-        public static void SPRDBProcessor(bool JSON)
+        public static void SPRDBProcessor(bool json)
         {
             Console.Title = "SPR DB Converter";
-            DB.Spr Spr;
-            Program.Choose(1, "bin", out string[] FileNames);
-            if (FileNames.Length < 1) return;
-            string filepath = "";
-            string ext      = "";
+            Program.Choose(1, "bin", out string[] fileNames);
+            if (fileNames.Length < 1) return;
 
-            foreach (string file in FileNames)
-            {
-                Console.Title = "SPR DB Converter: " + Path.GetFileNameWithoutExtension(file);
-                Spr = new DB.Spr();
-                ext      = Path.GetExtension(file).ToLower();
-                filepath = file.Replace(Path.GetExtension(file), "");
+            string filepath, ext;
+            Spr spr;
+            foreach (string file in fileNames)
+                using (spr = new Spr())
+                {
+                    Console.Title = "SPR DB Converter: " + Path.GetFileNameWithoutExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
+                    filepath = file.Replace(Path.GetExtension(file), "");
 
-                if (ext == ".bin")
-                {
-                    Spr.BINReader    (filepath);
-                    Spr.MsgPackWriter(filepath, JSON);
+                    if (ext == ".bin")
+                    {
+                        spr.BINReader    (filepath);
+                        spr.MsgPackWriter(filepath, json);
+                    }
+                    else if (ext == ".mp" || ext == ".json")
+                    {
+                        spr.MsgPackReader(filepath, ext == ".json");
+                        spr.BINWriter    (filepath);
+                    }
                 }
-                else if (ext == ".mp" || ext == ".json")
-                {
-                    Spr.MsgPackReader(filepath, ext == ".json");
-                    Spr.BINWriter    (filepath);
-                }
-                Spr = null;
-            }
         }
     }
 }

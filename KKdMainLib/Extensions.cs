@@ -6,205 +6,206 @@ namespace KKdMainLib
 {
     public static class HeaderExtensions
     {
-        public static Header ReadHeader(this Stream stream, bool Seek, bool ReadSectionSignature = true)
+        public static Header ReadHeader(this Stream stream, bool seek, bool readSectionSignature = true)
         {
-            if (Seek)
+            if (seek)
                 if (stream.I64P > 4) stream.I64P -= 4;
                 else                 stream.I64P  = 0;
-            return stream.ReadHeader(ReadSectionSignature);
+            return stream.ReadHeader(readSectionSignature);
         }
 
-        public static Header ReadHeader(this Stream stream, bool ReadSectionSignature = true)
+        public static Header ReadHeader(this Stream stream, bool readSectionSignature = true)
         {
-            Header Header = new Header { Format = Format.F2LE, Signature = stream.RI32(),
+            Header header = new Header { Format = Format.F2LE, Signature = stream.RI32(),
                 DataSize = stream.RI32(), Length = stream.RI32(), Flags = stream.RI32(),
                 Depth = stream.RI32(), SectionSize = stream.RI32(),
                 Mode = stream.RI32() };
             stream.RI32();
-            if ((Header.Flags & 0x08000000) == 0x08000000) Header.Format = Format.F2BE;
-            Header.NotUseDataSizeAsSectionSize = (Header.Flags & 0x10000000) != 0x10000000;
-            if (Header.Length == 0x40)
+            if ((header.Flags & 0x08000000) == 0x08000000) header.Format = Format.F2BE;
+            header.NotUseDataSizeAsSectionSize = (header.Flags & 0x10000000) != 0x10000000;
+            if (header.Length == 0x40)
             {
                 stream.RI64();
                 stream.RI64();
-                Header.InnerSignature = stream.RI32();
+                header.InnerSignature = stream.RI32();
                 stream.RI32();
                 stream.RI64();
             }
-            stream.Format = Header.Format;
-            if (ReadSectionSignature) Header.SectionSignature = stream.RI32E();
-            return Header;
+            stream.Format = header.Format;
+            if (readSectionSignature) header.SectionSignature = stream.RI32E();
+            return header;
         }
 
-        public static void W(this Stream stream, Header Header, bool Extended = false)
+        public static void W(this Stream stream, Header header, bool extended = false)
         {
-            Header.Length = (Header.Format < Format.X && Extended) ? 0x40 : 0x20;
-            Header.Flags = (!Header.NotUseDataSizeAsSectionSize ? 0x10000000 : 0) |
-                            (Header.Format == Format.F2BE ? 0x08000000 : 0);
+            header.Length = (header.Format < Format.X && extended) ? 0x40 : 0x20;
+            header.Flags = (!header.NotUseDataSizeAsSectionSize ? 0x10000000 : 0) |
+                            (header.Format == Format.F2BE ? 0x08000000 : 0);
 
-            stream.W(Header.Signature);
-            stream.W(Header.DataSize);
-            stream.W(Header.Length);
-            stream.W(Header.Flags);
-            stream.W(Header.Depth);
-            stream.W(Header.SectionSize);
-            stream.W(Header.Mode);
+            stream.W(header.Signature);
+            stream.W(header.DataSize);
+            stream.W(header.Length);
+            stream.W(header.Flags);
+            stream.W(header.Depth);
+            stream.W(header.SectionSize);
+            stream.W(header.Mode);
             stream.W(0x00);
-            if (Header.Length == 0x40)
+            if (header.Length == 0x40)
             {
-                stream.W(Header.Format < Format.MGF ? (int)((Header.SectionSignature ^
-                    (Header.DataSize * (long)Header.Signature)) - Header.Depth + Header.SectionSize) : 0);
+                stream.W(header.Format < Format.MGF ? (int)((header.SectionSignature ^
+                    (header.DataSize * (long)header.Signature)) - header.Depth + header.SectionSize) : 0);
                 stream.W(0x00);
                 stream.W(0x00L);
-                stream.W(Header.InnerSignature);
+                stream.W(header.InnerSignature);
                 stream.W(0x00);
                 stream.W(0x00L);
             }
         }
 
-        public static void WEOFC(this Stream stream, int ID = 0) =>
-            stream.W(new Header { Depth = ID, Length = 0x20, Signature = 0x43464F45 });
+        public static void WEOFC(this Stream stream, int depth = 0) =>
+            stream.W(new Header { Depth = depth, Length = 0x20, Signature = 0x43464F45 });
     }
 
     public static class POFExtensions
     {
-        public static void W(this Stream stream, POF POF, bool ShiftX = false)
+        public static void W(this Stream stream, POF pof, bool shiftX = false, int depth = 0)
         {
-            byte[] data = POF.Write(POF, ShiftX);
-            Header Header = new Header { Depth = POF.Depth, Format = Format.F2LE,
-                Length = 0x20, Signature = ShiftX ? 0x31464F50 : 0x30464F50 };
-            Header.DataSize = Header.SectionSize = data.Length;
-            stream.W(Header);
+            byte[] data = POF.Write(pof, shiftX);
+            Header header = new Header { Depth = depth, Format = Format.F2LE,
+                Length = 0x20, Signature = shiftX ? 0x31464F50 : 0x30464F50 };
+            header.DataSize = header.SectionSize = data.Length;
+            stream.W(header);
             stream.W(data);
         }
     }
 
     public static class ENRSExtensions
     {
-        public static void W(this Stream stream, ENRSList ENRS)
+        public static void W(this Stream stream, ENRSList enrs, int depth = 0)
         {
-            byte[] data = ENRSList.Write(ENRS);
-            Header Header = new Header { Depth = ENRS.Depth,
-                Format = Format.F2LE, Length = 0x20, Signature = 0x53524E45 };
-            Header.DataSize = Header.SectionSize = data.Length;
-            stream.W(Header);
+            byte[] data = ENRSList.Write(enrs);
+            Header header = new Header { Depth = depth, Format = Format.F2LE,
+                Length = 0x20, Signature = 0x53524E45 };
+            header.DataSize = header.SectionSize = data.Length;
+            stream.W(header);
             stream.W(data);
         }
     }
 
     public static class StructExtensions
     {
-        public static Struct RSt(this byte[] Data)
+        public static Struct RSt(this byte[] data)
         {
-            if (Data == null || Data.Length < 1) return default;
-            Struct Struct;
-            using (Stream stream = File.OpenReader(Data))
-                Struct = stream.RSt(stream.ReadHeader(false));
-            return Struct;
+            if (data == null || data.Length < 1) return default;
+            Struct @struct;
+            using (Stream stream = File.OpenReader(data))
+                @struct = stream.RSt(stream.ReadHeader(false));
+            return @struct;
         }
 
-        public static Struct RSt(this Stream stream, Header Header)
+        public static Struct RSt(this Stream stream, Header header)
         {
-            Struct Struct = new Struct { Header = Header, DataOffset =
-                stream.P, Data = stream.RBy(Header.SectionSize) };
-            int Depth = Header.Depth;
+            Struct @struct = new Struct { Header = header, DataOffset =
+                stream.P, Data = stream.RBy(header.SectionSize) };
+            ref int depth = ref header.Depth;
 
-            int LastSig = 0, Sig;
-            long Length = stream.L - stream.P;
-            long Position = 0;
-            KKdList<Struct> SubStructs = KKdList<Struct>.New;
-            while (Length > Position)
+            int lastSig = 0, sig;
+            long length = stream.L - stream.P;
+            long position = 0;
+            KKdList<Struct> subStructs = KKdList<Struct>.New;
+            while (length > position)
             {
-                Header = stream.ReadHeader(false);
-                Sig = Header.Signature;
-                Position += Header.Length + Header.SectionSize;
-                if (Sig == 0x43464F45 && Header.Depth == Depth + 1) break;
-                else if (Header.Depth == 0 &&  (Sig == 0x53524E45 ||
-                    (Sig & 0xF0FFFFFF) == 0x30464F50 || Sig == 0x43505854))
+                header = stream.ReadHeader(false);
+                sig = header.Signature;
+                position += header.Length + header.SectionSize;
+                if (sig == 0x43464F45 && header.Depth == depth + 1) break;
+                else if (sig == 0x53524E45 || (sig & 0xF0FFFFFF) == 0x30464F50)
                 {
-                    byte[] Data = stream.RBy(Header.SectionSize);
-                    if (Sig == 0x53524E45) Struct.ENRS = ENRSList.Read(Data,                    Header.Depth);
-                    else                   Struct.POF  = POF     .Read(Data, Sig == 0x31464F50, Header.Depth);
+                    byte[] Data = stream.RBy(header.SectionSize);
+                    if (sig == 0x53524E45) @struct.ENRS = ENRSList.Read(Data);
+                    else                   @struct.POF  = POF     .Read(Data, sig == 0x31464F50);
                 }
-                else if (Header.Depth <= Depth) { stream.I64P -= Header.Length; break; }
-                else SubStructs.Add(stream.RSt(Header));
-                LastSig = Sig;
+                else if (header.Depth == 0 && sig == 0x43505854)
+                { }
+                else if (header.Depth <= depth) { stream.I64P -= header.Length; break; }
+                else subStructs.Add(stream.RSt(header));
+                lastSig = sig;
             }
 
-            if (SubStructs.Capacity > 0) Struct.SubStructs = SubStructs.ToArray();
-            return Struct;
+            if (subStructs.Capacity > 0) @struct.SubStructs = subStructs.ToArray();
+            return @struct;
         }
 
-        public static byte[] W(this Struct Struct, bool ShiftX = false)
+        public static byte[] W(this Struct Struct, bool shiftX = false)
         {
             byte[] Data;
-            using (Stream stream = File.OpenWriter()) { Struct.Update(ShiftX);
-                stream.W(Struct, ShiftX); stream.WEOFC(); Data = stream.ToArray(); }
+            using (Stream stream = File.OpenWriter()) { Struct.Update(shiftX);
+                stream.W(Struct, shiftX); stream.WEOFC(); Data = stream.ToArray(); }
             return Data;
         }
 
-        public static void W(this Stream stream, Struct Struct, bool ShiftX = false)
+        public static void W(this Stream stream, Struct @struct, bool shiftX = false)
         {
-            stream.W(Struct.Header);
-            stream.W(Struct.Data  );
-            if (Struct.HasPOF ) stream.W(Struct.POF , ShiftX);
-            if (Struct.HasENRS) stream.W(Struct.ENRS);
-            if (Struct.HasSubStructs)
+            stream.W(@struct.Header);
+            stream.W(@struct.Data  );
+            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX);
+            if (@struct.HasENRS) stream.W(@struct.ENRS);
+            if (@struct.HasSubStructs)
             {
-                for (int i = 0; i < Struct.SubStructs.Length; i++)
-                    stream.W(Struct.SubStructs[i], ShiftX);
-                stream.WEOFC(Struct.Depth + 1);
+                for (int i = 0; i < @struct.SubStructs.Length; i++)
+                    stream.W(@struct.SubStructs[i], shiftX);
+                stream.WEOFC(@struct.Depth + 1);
             }
         }
     }
     
     public static class MPExt
     {
-        public static MsgPack ReadMP(this byte[] array, bool JSON = false)
+        public static MsgPack ReadMP(this byte[] array, bool json = false)
         {
             MsgPack MsgPack;
-            if (JSON) using (JSON IO = new JSON(File.OpenReader(array))) MsgPack = IO.Read(    );
-            else      using (  MP IO = new   MP(File.OpenReader(array))) MsgPack = IO.Read(true);
+            if (json) using (JSON _IO = new JSON(File.OpenReader(array))) MsgPack = _IO.Read(    );
+            else      using (  MP _IO = new   MP(File.OpenReader(array))) MsgPack = _IO.Read(true);
             return MsgPack;
         }
 
-        public static MsgPack ReadMPAllAtOnce(this string file, bool JSON = false)
+        public static MsgPack ReadMPAllAtOnce(this string file, bool json = false)
         {
             MsgPack MsgPack;
-            if (JSON) using (JSON IO = new JSON(File.OpenReader(file + ".json", true))) MsgPack = IO.Read(    );
-            else      using (  MP IO = new   MP(File.OpenReader(file + ".mp"  , true))) MsgPack = IO.Read(true);
+            if (json) using (JSON _IO = new JSON(File.OpenReader(file + ".json", true))) MsgPack = _IO.Read(    );
+            else      using (  MP _IO = new   MP(File.OpenReader(file + ".mp"  , true))) MsgPack = _IO.Read(true);
             return MsgPack;
         }
 
-        public static MsgPack ReadMP(this string file, bool JSON = false)
+        public static MsgPack ReadMP(this string file, bool json = false)
         {
             MsgPack MsgPack;
-            if (JSON) using (JSON IO = new JSON(File.OpenReader(file + ".json"))) MsgPack = IO.Read(    );
-            else      using (  MP IO = new   MP(File.OpenReader(file + ".mp"  ))) MsgPack = IO.Read(true);
+            if (json) using (JSON _IO = new JSON(File.OpenReader(file + ".json"))) MsgPack = _IO.Read(    );
+            else      using (  MP _IO = new   MP(File.OpenReader(file + ".mp"  ))) MsgPack = _IO.Read(true);
             return MsgPack;
         }
         
-        public static void Write(this MsgPack mp, bool Temp, string file, bool JSON = false)
-        { if (Temp) MsgPack.New.Add(mp).Write(file, JSON).Dispose();
-          else                      mp .Write(file, JSON); }
+        public static void Write(this MsgPack mp, bool temp, string file, bool json = false)
+        { if (temp) MsgPack.New.Add(mp).Write(file, json).Dispose();
+          else                      mp .Write(file, json); }
 
-        public static MsgPack Write(this MsgPack mp, string file, bool JSON = false)
+        public static MsgPack Write(this MsgPack mp, string file, bool json = false)
         {
-            if (JSON) using (JSON IO = new JSON(File.OpenWriter(file + ".json", true))) IO.W(mp, "\n", "  ");
-            else      using (  MP IO = new   MP(File.OpenWriter(file + ".json", true))) IO.Write(mp);
+            if (json) using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true))) _IO.W(mp, "\n", "  ");
+            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".json", true))) _IO.W(mp);
             return mp;
         }
 
-        public static void WriteAfterAll(this MsgPack mp, bool Temp, string file, bool JSON = false)
-        { if (Temp) MsgPack.New.Add(mp).WriteAfterAll(file, JSON).Dispose();
-          else                      mp .WriteAfterAll(file, JSON); }
+        public static void WriteAfterAll(this MsgPack mp, bool temp, string file, bool json = false)
+        { if (temp) MsgPack.New.Add(mp).WriteAfterAll(file, json).Dispose();
+          else                      mp .WriteAfterAll(file, json); }
 
-        public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool JSON = false)
+        public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool json = false)
         {
             byte[] data = null;
-            if (JSON) using (JSON IO = new JSON(File.OpenWriter())) { IO.W(mp, true); data = IO.ToArray(); }
-            else      using (  MP IO = new   MP(File.OpenWriter())) { IO.Write(mp      ); data = IO.ToArray(); }
-            File.WriteAllBytes(file + (JSON ? ".json" : ".mp"), data);
+            if (json) using (JSON _IO = new JSON(File.OpenWriter())) { _IO.W(mp, true); data = _IO.ToArray(); }
+            else      using (  MP _IO = new   MP(File.OpenWriter())) { _IO.W(mp      ); data = _IO.ToArray(); }
+            File.WriteAllBytes(file + (json ? ".json" : ".mp"), data);
             return mp;
         }
 
@@ -217,15 +218,15 @@ namespace KKdMainLib
 
     public static class IKFExt
     {
-        public static IKF Round(this IKF KF, int d)
+        public static IKF Round(this IKF kf, int d)
         {
-                 if (KF is KFT0 KFT0) { KFT0.F  = KFT0.F .Round(d);                             return KFT0; }
-            else if (KF is KFT1 KFT1) { KFT1.F  = KFT1.F .Round(d); KFT1.V  = KFT1.V .Round(d); return KFT1; }
-            else if (KF is KFT2 KFT2) { KFT2.F  = KFT2.F .Round(d); KFT2.V  = KFT2.V .Round(d);
-                                        KFT2.T  = KFT2.T .Round(d);                             return KFT2; }
-            else if (KF is KFT3 KFT3) { KFT3.F  = KFT3.F .Round(d); KFT3.V  = KFT3.V .Round(d);
-                                        KFT3.T1 = KFT3.T1.Round(d); KFT3.T2 = KFT3.T2.Round(d); return KFT3; }
-            return   KF;
+                 if (kf is KFT0 kft0) { kft0.F  = kft0.F .Round(d);                             return kft0; }
+            else if (kf is KFT1 kft1) { kft1.F  = kft1.F .Round(d); kft1.V  = kft1.V .Round(d); return kft1; }
+            else if (kf is KFT2 kft2) { kft2.F  = kft2.F .Round(d); kft2.V  = kft2.V .Round(d);
+                                        kft2.T  = kft2.T .Round(d);                             return kft2; }
+            else if (kf is KFT3 kft3) { kft3.F  = kft3.F .Round(d); kft3.V  = kft3.V .Round(d);
+                                        kft3.T1 = kft3.T1.Round(d); kft3.T2 = kft3.T2.Round(d); return kft3; }
+            return   kf;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace KKdBaseLib
             return *(float*)&si32;
         }
 
-        public static unsafe implicit operator Half(float val)
+        public static unsafe explicit operator Half(float val)
         {
             int si32 = *(int*)&val;
             ushort sign     = (ushort)( (si32 >> 16) & 0x8000);
@@ -51,7 +51,7 @@ namespace KKdBaseLib
             return *(double*)&si64;
         }
 
-        public static unsafe implicit operator Half(double val)
+        public static unsafe explicit operator Half(double val)
         {
             long si64 = *(long*)&val;
             ushort sign     = (ushort) ((si64 >> 48) & 0x8000);
@@ -64,10 +64,10 @@ namespace KKdBaseLib
             return new Half { _value = (ushort)(sign | (exponent << 10) | mantissa) };
         }
 
-        public static Half operator + (Half a, Half b) => (float)a +  (float)b;
-        public static Half operator - (Half a, Half b) => (float)a -  (float)b;
-        public static Half operator * (Half a, Half b) => (float)a *  (float)b;
-        public static Half operator / (Half a, Half b) => (float)a /  (float)b;
+        public static Half operator + (Half a, Half b) => (Half)((float)a + (float)b);
+        public static Half operator - (Half a, Half b) => (Half)((float)a - (float)b);
+        public static Half operator * (Half a, Half b) => (Half)((float)a * (float)b);
+        public static Half operator / (Half a, Half b) => (Half)((float)a / (float)b);
         public static bool operator > (Half a, Half b) => (float)a >  (float)b;
         public static bool operator < (Half a, Half b) => (float)a <  (float)b;
         public static bool operator >=(Half a, Half b) => (float)a >= (float)b;
@@ -79,7 +79,7 @@ namespace KKdBaseLib
         public int CompareTo(Half h) => this == h ? 0 : (this > h ? 1 : -1);
         public bool Equals(Half other) => this == other;
         public override bool Equals(object obj) => base.Equals(obj);
-        public override string ToString() => Extensions.ToString((double)this);
+        public override string ToString() => Extensions.ToS((double)this);
         public string ToString(string format, IFormatProvider formatProvider) =>
             ((float)this).ToString(format, formatProvider);
         public override int GetHashCode() => base.GetHashCode();

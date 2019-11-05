@@ -45,7 +45,7 @@ namespace KKdBaseLib
                     return MsgPack.Object is MsgPack[] ? MsgPack : default; } return default; } }
         
         public MsgPack Add(MsgPack obj)
-        { if (Object is KKdList<MsgPack> List) { List.Add(obj); Object = List; } return this; }
+        { if (Object is KKdList<MsgPack> List && obj.Object != null) { List.Add(obj); Object = List; } return this; }
 
         public void Dispose()
         { Name = null; Object = null; }
