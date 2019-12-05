@@ -41,14 +41,26 @@ namespace KKdMainLib.IO
             return Data.Replace(((char)0xFEFF).ToString(), "").Replace("\r", "").Split('\n'); }
 
         public static void WriteAllBytes(string file,   byte[] data)
-        { using (Stream _IO = OpenWriter(file, true)) _IO.W(data); }
+        { using Stream _IO = OpenWriter(file, true); if (data != null) _IO.W(data); }
 
         public static void WriteAllText (string file, string   data)
-        { using (Stream _IO = OpenWriter(file, true)) _IO.W(data); }
+        { using Stream _IO = OpenWriter(file, true); if (data != null) _IO.W(data); }
 
         public static void WriteAllLines(string file, string[] data)
-        { using (Stream _IO = OpenWriter(file, true)) for (int i = 0; i < data.Length; i++)
-                    _IO.W(data[i] + "\r\n"); }
+        { using Stream _IO = OpenWriter(file, true);
+            if (data != null) for (int i = 0; i < data.Length; i++)
+                    if (data[i] != null) _IO.W(data[i] + "\r\n"); }
+
+        public static void WriteAllBytes(string file,   byte[] data, long length)
+        { using Stream _IO = OpenWriter(file, true); if (data != null) { _IO.W(data); _IO.LI64 = length; } }
+
+        public static void WriteAllText (string file, string   data, long length)
+        { using Stream _IO = OpenWriter(file, true); if (data != null) { _IO.W(data); _IO.LI64 = length; } }
+
+        public static void WriteAllLines(string file, string[] data, long length)
+        { using Stream _IO = OpenWriter(file, true);
+            if (data != null) { for (int i = 0; i < data.Length; i++)
+                    if (data[i] != null) _IO.W(data[i] + "\r\n"); } _IO.LI64 = length; }
 
         public static bool Exists(string file) => MSIO.File.Exists(file);
         public static void Delete(string file) => MSIO.File.Delete(file);

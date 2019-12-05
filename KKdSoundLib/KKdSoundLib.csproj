@@ -1,16 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D8A3F2D7-10CC-5723-EC9A-45D3B9C2DFEA}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>KKdSoundLib</RootNamespace>
-    <AssemblyName>KKdSoundLib</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Authors>korenkonder</Authors>
+    <Company></Company>
+    <Configuration></Configuration>
+    <Copyright>korenkonder © 2019</Copyright>
+    <Description>A simple library for working with Project Diva F/AFT/F2/X/FT audio files</Description>
+    <FileVersion>0.1.1.1</FileVersion>
+    <PackageId>KKdSoundLib</PackageId>
+    <Product>KKdSoundLib</Product>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>KKdSoundLib</Title>
+    <Version>0.1.1.1</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -39,27 +40,7 @@
     <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Extensions.cs" />
-    <Compile Include="DIVA.cs" />
-    <Compile Include="VAG.cs" />
-    <Compile Include="WAV.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj" />
+    <ProjectReference Include="..\KKdMainLib\KKdMainLib.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj">
-      <Project>{da55bfd3-927e-473c-a779-f9e6365384ae}</Project>
-      <Name>KKdBaseLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\KKdMainLib\KKdMainLib.csproj">
-      <Project>{2BA7EFC6-91D1-8BBC-C487-06C7F36CC789}</Project>
-      <Name>KKdMainLib</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

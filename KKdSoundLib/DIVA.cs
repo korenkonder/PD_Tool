@@ -28,35 +28,39 @@ namespace KKdSoundLib
             reader.RU16();
             Data.Name = reader.RS(0x20);
 
-            Stream writer = File.OpenWriter();
-            if (!ToArray) writer = File.OpenWriter(file + ".wav", true);
-            writer.I64P = 0x2C;
-
             byte value = 0;
+            byte[] data = new byte[Data.SamplesCount * Data.Channels * 4];
             int[] current = new int[Data.Channels];
             int[] currentclamp = new int[Data.Channels];
             sbyte[] stepindex = new sbyte[Data.Channels];
-            float f;
 
-            int* currentPtr = current.GetPtr();
-            int* currentclampPtr = currentclamp.GetPtr();
-            sbyte* stepindexPtr = stepindex.GetPtr();
-
-            for (i = 0; i < Data.SamplesCount; i++)
-                for (c = 0; c < Data.Channels; c++)
-                {
-                    value = reader.RHB();
-                    IMADecoder(value, ref currentPtr[c], ref currentclampPtr[c], ref stepindexPtr[c]);
-                    f = (float)(currentPtr[c] / 32768.0);
-                    writer.W(f);
-                }
+            fixed (int* currentPtr = current)
+            fixed (int* currentclampPtr = currentclamp)
+            fixed (sbyte* stepindexPtr = stepindex)
+            fixed (byte* ptr = data)
+            {
+                float* dataPtr = (float*)ptr;
+                for (i = 0; i < Data.SamplesCount; i++)
+                    for (c = 0; c < Data.Channels; c++, dataPtr++)
+                    {
+                        value = reader.RHB();
+                        IMADecoder(value, ref currentPtr[c], ref currentclampPtr[c], ref stepindexPtr[c]);
+                        *dataPtr = (float)(currentPtr[c] / 32768.0);
+                    }
+            }
             reader.CR();
 
-            WAV.Header Header = new WAV.Header { Bytes = 4, Channels = Data.Channels, Format = 3,
-                SampleRate = Data.SampleRate, Size = Data.SamplesCount * Data.Channels * 4 };
-            writer.W(Header, 0);
-            if (ToArray) Data.Data = writer.ToArray();
-            writer.C();
+
+            if (ToArray) Data.Data = data;
+            else
+            {
+                Stream writer = File.OpenWriter(file + ".wav", true);
+                WAV.Header Header = new WAV.Header { Bytes = 4, Channels = Data.Channels, Format = 3,
+                    SampleRate = Data.SampleRate, Size = Data.SamplesCount * Data.Channels * 4 };
+                writer.W(Header, 0);
+                writer.W(data);
+                writer.C();
+            }
 
             reader.C();
         }
@@ -74,7 +78,9 @@ namespace KKdSoundLib
             Stream writer = File.OpenWriter(file + ".diva", true);
             Data.Channels = Header.Channels;
             Data.SampleRate = Header.SampleRate;
-            writer.I64P = 0x40;
+            Data.SamplesCount = Header.Size / Header.Channels / Header.Bytes;
+            writer.PI64 = 0x40;
+            writer.LI64 = 0x40 + (Data.SamplesCount * Data.Channels).A(2, 2);
 
             byte value = 0;
             int[] sample = new int[Data.Channels];
@@ -82,23 +88,24 @@ namespace KKdSoundLib
             int[] currentclamp = new int[Data.Channels];
             sbyte[] stepindex = new sbyte[Data.Channels];
 
-            int* samplePtr = sample.GetPtr();
-            int* currentPtr = current.GetPtr();
-            int* currentclampPtr = currentclamp.GetPtr();
-            sbyte* stepindexPtr = stepindex.GetPtr();
-            Data.SamplesCount = Header.Size / Header.Channels / Header.Bytes;
+            fixed (int* samplePtr = sample)
+            fixed (int* currentPtr = current)
+            fixed (int* currentclampPtr = currentclamp)
+            fixed (sbyte* stepindexPtr = stepindex)
+            {
+                for (i = 0; i < Data.SamplesCount; i++)
+                    for (c = 0; c < Header.Channels; c++)
+                    {
+                        samplePtr[c] = (reader.RS(Header.Bytes, Header.Format) * 0x8000).CFTI();
+                        value = IMAEncoder(samplePtr[c], ref currentPtr[c],
+                            ref currentclampPtr[c], ref stepindexPtr[c]);
+                        writer.W(value, 4);
+                    }
+            }
 
-            for (i = 0; i < Data.SamplesCount; i++)
-                for (c = 0; c < Header.Channels; c++)
-                {
-                    samplePtr[c] = (reader.RS(Header.Bytes, Header.Format) * 0x8000).CFTI();
-                    value = IMAEncoder(samplePtr[c], ref currentPtr[c],
-                        ref currentclampPtr[c], ref stepindexPtr[c]);
-                    writer.W(value, 4);
-                }
             writer.CW();
 
-            writer.I64P = 0x00;
+            writer.PI64 = 0x00;
             writer.W("DIVA");
             writer.W(0x00);
             writer.W((Data.SamplesCount * Data.Channels).A(2, 2));
@@ -119,14 +126,14 @@ namespace KKdSoundLib
             if ((value & 1) == 1) diff += step >> 2;
             if ((value & 2) == 2) diff += step >> 1;
             if ((value & 4) == 4) diff += step;
-            
+
             if ((value & 8) == 8)
             {       currentclamp -=   diff; current = currentclamp;
                 if (currentclamp < -0x8000) currentclamp = -0x8000; }
             else
             {       currentclamp +=   diff; current = currentclamp;
                 if (currentclamp >  0x7FFF) currentclamp =  0x7FFF; }
-            
+
             stepindex += ima_index_table[value & 7];
             if (stepindex <  0) stepindex =  0;
             if (stepindex > 88) stepindex = 88;
@@ -140,9 +147,9 @@ namespace KKdSoundLib
         {
             value = 0;
             step = ima_step_table[stepindex];
-            
+
             delta = sample - current;
-            
+
             if (delta < 0)
             { value |= 8; delta = -delta; }
             diff = step >> 3;
@@ -154,14 +161,14 @@ namespace KKdSoundLib
             step >>= 1;
             if (delta > step)
             { value |= 1; diff += step; }
-            
+
             if ((value & 8) == 8)
             {       currentclamp -=   diff; current = currentclamp;
                 if (currentclamp < -0x8000) currentclamp = -0x8000; }
             else
             {       currentclamp +=   diff; current = currentclamp;
                 if (currentclamp >  0x7FFF) currentclamp =  0x7FFF; }
-            
+
             stepindex += ima_index_table[value & 0x07];
             if (stepindex <  0) stepindex =  0;
             if (stepindex > 88) stepindex = 88;

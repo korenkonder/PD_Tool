@@ -120,7 +120,7 @@ namespace KKdMainLib
                 {
                     ref KeySet key = ref mot.KeySet.V[i0];
                     if (key.Type == KeySetType.Static)
-                        _IO.W(key.Keys[0].V); 
+                        _IO.W(key.Keys[0].V);
                     else if (key.Type == KeySetType.Linear)
                     {
                         _IO.W((ushort)key.Keys.Length);
@@ -251,7 +251,7 @@ namespace KKdMainLib
                     }
                 }
             }
-            
+
             if ((temp = msgPack["BoneInfo", true]).NotNull)
             {
                 mot.BoneInfo.V = new BoneInfo[temp.Array.Length];

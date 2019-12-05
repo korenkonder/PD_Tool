@@ -9,8 +9,8 @@ namespace KKdMainLib
         public static Header ReadHeader(this Stream stream, bool seek, bool readSectionSignature = true)
         {
             if (seek)
-                if (stream.I64P > 4) stream.I64P -= 4;
-                else                 stream.I64P  = 0;
+                if (stream.PI64 > 4) stream.PI64 -= 4;
+                else                 stream.PI64  = 0;
             return stream.ReadHeader(readSectionSignature);
         }
 
@@ -70,7 +70,7 @@ namespace KKdMainLib
     {
         public static void W(this Stream stream, POF pof, bool shiftX = false, int depth = 0)
         {
-            byte[] data = POF.Write(pof, shiftX);
+            byte[] data = pof.Write(shiftX);
             Header header = new Header { Depth = depth, Format = Format.F2LE,
                 Length = 0x20, Signature = shiftX ? 0x31464F50 : 0x30464F50 };
             header.DataSize = header.SectionSize = data.Length;
@@ -81,9 +81,9 @@ namespace KKdMainLib
 
     public static class ENRSExtensions
     {
-        public static void W(this Stream stream, ENRSList enrs, int depth = 0)
+        public static void W(this Stream stream, ENRS enrs, int depth = 0)
         {
-            byte[] data = ENRSList.Write(enrs);
+            byte[] data = enrs.Write();
             Header header = new Header { Depth = depth, Format = Format.F2LE,
                 Length = 0x20, Signature = 0x53524E45 };
             header.DataSize = header.SectionSize = data.Length;
@@ -107,7 +107,7 @@ namespace KKdMainLib
         {
             Struct @struct = new Struct { Header = header, DataOffset =
                 stream.P, Data = stream.RBy(header.SectionSize) };
-            ref int depth = ref header.Depth;
+            int depth = header.Depth;
 
             int lastSig = 0, sig;
             long length = stream.L - stream.P;
@@ -122,12 +122,13 @@ namespace KKdMainLib
                 else if (sig == 0x53524E45 || (sig & 0xF0FFFFFF) == 0x30464F50)
                 {
                     byte[] Data = stream.RBy(header.SectionSize);
-                    if (sig == 0x53524E45) @struct.ENRS = ENRSList.Read(Data);
-                    else                   @struct.POF  = POF     .Read(Data, sig == 0x31464F50);
+                    if (sig == 0x53524E45) @struct.ENRS.Read(Data);
+                    else                   @struct.POF .Read(Data, sig == 0x31464F50);
                 }
                 else if (header.Depth == 0 && sig == 0x43505854)
-                { }
-                else if (header.Depth <= depth) { stream.I64P -= header.Length; break; }
+                { subStructs.Add(new Struct { Header = header, DataOffset =
+                    stream.P, Data = stream.RBy(header.SectionSize) }); }
+                else if (header.Depth <= depth) { stream.PI64 -= header.Length; break; }
                 else subStructs.Add(stream.RSt(header));
                 lastSig = sig;
             }
@@ -136,20 +137,20 @@ namespace KKdMainLib
             return @struct;
         }
 
-        public static byte[] W(this Struct Struct, bool shiftX = false)
+        public static byte[] W(this Struct Struct, bool shiftX = false, bool useDepth = true)
         {
             byte[] Data;
             using (Stream stream = File.OpenWriter()) { Struct.Update(shiftX);
-                stream.W(Struct, shiftX); stream.WEOFC(); Data = stream.ToArray(); }
+                stream.W(Struct, shiftX, useDepth); stream.WEOFC(); Data = stream.ToArray(); }
             return Data;
         }
 
-        public static void W(this Stream stream, Struct @struct, bool shiftX = false)
+        public static void W(this Stream stream, Struct @struct, bool shiftX = false, bool useDepth = true)
         {
             stream.W(@struct.Header);
             stream.W(@struct.Data  );
-            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX);
-            if (@struct.HasENRS) stream.W(@struct.ENRS);
+            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? @struct.Depth + 1 : 0);
+            if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? @struct.Depth + 1 : 0);
             if (@struct.HasSubStructs)
             {
                 for (int i = 0; i < @struct.SubStructs.Length; i++)
@@ -158,7 +159,7 @@ namespace KKdMainLib
             }
         }
     }
-    
+
     public static class MPExt
     {
         public static MsgPack ReadMP(this byte[] array, bool json = false)
@@ -184,7 +185,7 @@ namespace KKdMainLib
             else      using (  MP _IO = new   MP(File.OpenReader(file + ".mp"  ))) MsgPack = _IO.Read(true);
             return MsgPack;
         }
-        
+
         public static void Write(this MsgPack mp, bool temp, string file, bool json = false)
         { if (temp) MsgPack.New.Add(mp).Write(file, json).Dispose();
           else                      mp .Write(file, json); }

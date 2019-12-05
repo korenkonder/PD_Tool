@@ -28,7 +28,7 @@
 
         public int O;
         public AetLayer[] E;
-        
+
         public override string ToString() => "Count: " + C;
     }
 
@@ -45,11 +45,13 @@
         public AetLayerFlags Flags;
         public byte Pad;
         public AetLayerType Type;
-        public int DataID;
+        public int DataOffset;
         public int ParentLayer;
         public CountPointer<AetMarker> Marker;
         public Pointer<AnimationData> Data;
         public Pointer<AudioData> ExtraData;
+
+        public int DataID;
 
         public enum AetLayerFlags : ushort
         {
@@ -80,10 +82,10 @@
         }
 
         public override string ToString() => $"ID: {ID}; Name: {Name.V}; Type: {Type}" +
-            (        DataID > -1 ? $"; Data ID: "    + $"{        DataID}" : "") +
+            (     DataID > -1 ? $"; " +    $"Data ID: {     DataID}" : "") +
             (ParentLayer > -1 ? $"; Parent Object ID: {ParentLayer}" : "");
     }
-    
+
     public struct AetMarker
     {
         public float Frame;
@@ -114,7 +116,7 @@
             SrcAlphaOneMinusSrcColor = 7,
             Transparent              = 8,
         }
-        
+
         public struct Perspective
         {
             public CountPointer<KFT2> Unk1      ;

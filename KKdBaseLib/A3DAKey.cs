@@ -9,8 +9,8 @@ namespace KKdBaseLib
         public float MaxFrames;
         public EPType EPTypePre;
         public EPType EPTypePost;
-        public float FDBSaE; //Frame Difference Between Start and End
-        public float VDBSaE; //Value Difference Between Start and End
+        public float FrameDelta;
+        public float ValueDelta;
         public int Unk1C;
         public int Unk20;
         public int Unk24;

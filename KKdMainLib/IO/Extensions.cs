@@ -12,7 +12,7 @@ namespace KKdMainLib.IO
         public static byte[] NT     (this Stream stream, byte end = 0)
         {
             KKdList<byte> s = KKdList<byte>.New;
-            while (stream.I64P < stream.I64L)
+            while (stream.PI64 < stream.LI64)
             {
                 byte a = stream.RU8();
                 if (a == end) break;
@@ -20,14 +20,14 @@ namespace KKdMainLib.IO
             }
             return s.ToArray();
         }
-        
+
         public static byte PB     (this Stream stream)
-        { byte val = stream.RU8(); stream.I64P--; return       val; }
+        { byte val = stream.RU8(); stream.PI64--; return       val; }
         public static char PCASCII(this Stream stream)
-        { byte val = stream.RU8(); stream.I64P--; return (char)val; }
+        { byte val = stream.RU8(); stream.PI64--; return (char)val; }
         public static char PCUTF8 (this Stream stream)
-        {   long LongPosition = stream.I64P;   char val = stream.RCUTF8();
-          stream.I64P =        LongPosition; return val; }
+        {   long LongPosition = stream.PI64;   char val = stream.RCUTF8();
+          stream.PI64 =        LongPosition; return val; }
 
         public static Stream SW(this Stream stream)
         {
@@ -37,32 +37,32 @@ namespace KKdMainLib.IO
             return stream;
         }
 
-		public static bool As(this Stream stream, byte next)
-		{ if (stream.PB() == next) { stream.PB(); return true; } else return false; }
-		public static bool As(this Stream stream, byte[] next)
-		{
+        public static bool As(this Stream stream, byte next)
+        { if (stream.PB() == next) { stream.PB(); return true; } else return false; }
+        public static bool As(this Stream stream, byte[] next)
+        {
             for (var i = 0; i < next.Length; i++)
                 if (!As(stream, next[i])) return false;
             return true;
-		}
-        
-		public static bool AsASCII(this Stream stream, char next)
-		{ if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
-		public static bool AsASCII(this Stream stream, string next)
-		{
+        }
+
+        public static bool AsASCII(this Stream stream, char next)
+        { if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
+        public static bool AsASCII(this Stream stream, string next)
+        {
             for (var i = 0; i < next.Length; i++)
                 if (!stream.AsASCII(next[i])) return false;
             return true;
-		}
+        }
 
-		public static bool As(this Stream stream, char next)
-		{ if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
-		public static bool As(this Stream stream, string next)
-		{
+        public static bool As(this Stream stream, char next)
+        { if (stream.PCUTF8() == next) { stream.RCUTF8(); return true; } else return false; }
+        public static bool As(this Stream stream, string next)
+        {
             for (var i = 0; i < next.Length; i++)
                 if (!As(stream, next[i])) return false;
             return true;
-		}
+        }
 
         public static long RIX(this Stream stream           ) => stream.IsX ?
             stream.RI64() : stream.RU32E(  );
@@ -86,24 +86,24 @@ namespace KKdMainLib.IO
         public static byte[] RaO(this Stream stream, long Offset = -1, long Length = -1)
         {
             byte[] arr = null;
-            long Position = stream.I64P;
+            long Position = stream.PI64;
             if (Offset == -1) { Position += stream.IsX ? 8 : 4; Offset = stream.RIX(); }
-            stream.I64P = Offset;
+            stream.PI64 = Offset;
             if (Length == -1) arr = stream.NT();
             else              arr = stream.RBy(Length);
-            stream.I64P = Position;
+            stream.PI64 = Position;
             return arr;
         }
 
         public static string RSaO(this Stream stream, long Offset = -1, long Length = -1)
         {
             string s = null;
-            long Position = stream.I64P;
+            long Position = stream.PI64;
             if (Offset == -1) { Position += stream.IsX ? 8 : 4; Offset = stream.RIX(); }
-            stream.I64P = Offset;
+            stream.PI64 = Offset;
             if (Length == -1) s = stream.NTUTF8();
             else              s = stream.RSUTF8(Length);
-            stream.I64P = Position;
+            stream.PI64 = Position;
             return s;
         }
 

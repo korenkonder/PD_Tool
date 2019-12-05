@@ -23,7 +23,7 @@
         public float Value => last;
         public bool  IsNull => array == null ?  true : array.Length < 1;
         public bool NotNull => array == null ? false : array.Length > 0;
-        
+
         public PDI(KFT2[] Array, float InterpolationFramerate = 60, float RequestedFramerate = 60)
         {
             lastTime = 0;

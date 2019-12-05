@@ -41,7 +41,7 @@ namespace KKdMainLib.DB
             _IO.P = spritesOffset;
             for (i = 0; i < spritesLength; i++)
             {
-                _IO.I64P += 10;
+                _IO.PI64 += 10;
                 setIndex = _IO.RI16();
                 isTexture = (setIndex & 0x1000) == 0x1000;
                 setIndex &= 0xFFF;
@@ -68,7 +68,7 @@ namespace KKdMainLib.DB
                 setIndex = _IO.RI16();
                 isTexture = (setIndex & 0x1000) == 0x1000;
                 setIndex &= 0xFFF;
-                
+
                 if (isTexture) { SpriteSets[setIndex].Textures[texCount[setIndex]] = st; texCount[setIndex]++; }
                 else           { SpriteSets[setIndex]. Sprites[sprCount[setIndex]] = st; sprCount[setIndex]++; }
             }
@@ -159,7 +159,7 @@ namespace KKdMainLib.DB
 
             for (i = 0, i0 = 0, i2 = 0; i < SpriteSets.Length; i++)
                 if (!notAdd.Contains(i)) { i0 += SpriteSets[i].Sprites.Length + SpriteSets[i].Textures.Length; i2++; }
-            
+
             i1 = i0 * 12;
             i1 = i1.A(0x20) + 0x20;
 
@@ -190,13 +190,13 @@ namespace KKdMainLib.DB
                 SpriteSets[i].    NameOffset = _IO.P; _IO.W(SpriteSets[i].    Name + "\0");
                 SpriteSets[i].FileNameOffset = _IO.P; _IO.W(SpriteSets[i].FileName + "\0");
             }
-            
+
             _IO.A(0x08, true);
             _IO.P = 0x20;
             for (i = 0, i2 = 0; i < SpriteSets.Length; i++)
             {
                 if (notAdd.Contains(i)) { i2++; continue; }
-                
+
                 for (i0 = 0; i0 < SpriteSets[i].Textures.Length; i0++)
                 {
                     _IO.W(SpriteSets[i].Textures[i0].Id        );
@@ -204,7 +204,7 @@ namespace KKdMainLib.DB
                     _IO.W((ushort)               i0  );
                     _IO.W((ushort)(0x1000 | (i - i2)));
                 }
-                
+
                 for (i0 = 0; i0 < SpriteSets[i]. Sprites.Length; i0++)
                 {
                     _IO.W(SpriteSets[i]. Sprites[i0].Id        );
@@ -281,7 +281,7 @@ namespace KKdMainLib.DB
             public string FileName;
             public SpriteTexture[] Sprites;
             public SpriteTexture[] Textures;
-            
+
             public void ReadMsgPack(MsgPack msg)
             {
                 FileName = msg.RS   ("FileName");

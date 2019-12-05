@@ -110,32 +110,32 @@ namespace KKdMainLib.Aet
                 for (i0 = 0; i0 < aet.Surfaces[i].Sprites.C; i0++)
                     aet.Surfaces.E[i].Sprites[i0] = new AetSpriteIdentifier { Name = _IO.RPS(), ID = _IO.RU32() };
             }
-            
+
             for (i = 0; i < aet.Compositions.C; i++)
             {
                 for (i0 = 0; i0 < aet.Compositions[i].C; i0++)
                 {
                     ref AetLayer obj = ref aet.Compositions[i].E[i0];
-                    ref int dataID = ref obj.DataID;
-                    if (dataID > 0)
+                    obj.DataID = -1;
+                    int dataOffset = obj.DataOffset;
+                    if (dataOffset > 0)
                     {
                         if (obj.Type == AetLayer.AetLayerType.Pic)
                         {
                             for (i1 = 0; i1 < aet.Surfaces.C; i1++)
-                                if (aet.Surfaces[i1].O == dataID) { obj.DataID = i1; break; }
+                                if (aet.    Surfaces[i1].O == dataOffset) { obj.DataID = i1; break; }
                         }
                         else if (obj.Type == AetLayer.AetLayerType.Aif)
                         {
                             for (i1 = 0; i1 < aet.SoundEffects.C; i1++)
-                                if (aet. SoundEffects[i1].O == dataID) { obj.DataID = i1; break; }
+                                if (aet.SoundEffects[i1].O == dataOffset) { obj.DataID = i1; break; }
                         }
                         else if (obj.Type == AetLayer.AetLayerType.Eff)
                         {
                             for (i1 = 0; i1 < aet.Compositions.C; i1++)
-                                if (aet. Compositions[i1].P == dataID) { obj.DataID = i1; break; }
+                                if (aet.Compositions[i1].P == dataOffset) { obj.DataID = i1; break; }
                         }
                     }
-                    if (dataID == obj.DataID) obj.DataID = -1;
 
                     ref int parentLayer = ref obj.ParentLayer;
                     if (parentLayer > 0)
@@ -154,7 +154,7 @@ namespace KKdMainLib.Aet
         private void AETWriter(ref Pointer<AetData> aetData)
         {
             ref AetData aet = ref aetData.V;
-            
+
             for (i = 0; i < aet.Surfaces.C; i++)
             {
                 ref AetSurface region = ref aet.Surfaces.E[i];
@@ -226,7 +226,7 @@ namespace KKdMainLib.Aet
                          W(ref data.   ScaleY);
                          W(ref data.Opacity  );
                     }
-                    
+
                     if (obj.Data.V.Persp.O > 0)
                     {
                         _IO.A(0x20);
@@ -234,7 +234,7 @@ namespace KKdMainLib.Aet
                         _IO.W(0L); _IO.W(0L); _IO.W(0L); _IO.W(0L);
                         _IO.W(0L); _IO.W(0L); _IO.W(0L); _IO.W(0L);
                     }
-            
+
                     if (obj.ExtraData.O > 0)
                     {
                         W(ref extraData.Data0);
@@ -250,7 +250,7 @@ namespace KKdMainLib.Aet
                         _IO.W(0L); _IO.W(0L); _IO.W(0L); _IO.W(0L);
                         _IO.W(0L); _IO.W(0L); _IO.W(0L); _IO.W(0L); _IO.W(0L);
                     }
-            
+
                     if (obj.ExtraData.O > 0)
                     {
                         _IO.A(0x20);
@@ -334,7 +334,21 @@ namespace KKdMainLib.Aet
                 }
             }
 
-            _IO.A(0x10);
+            for (i = 0; i < aet.Compositions.C; i++)
+                for (i0 = 0; i0 < aet.Compositions.E[i].C; i0++)
+                {
+                    ref AetLayer obj = ref aet.Compositions.E[i].E[i0];
+                         if (obj.Type == AetLayer.AetLayerType.Pic) obj.DataOffset = aet.Surfaces    [obj.DataID].O;
+                    else if (obj.Type == AetLayer.AetLayerType.Aif) obj.DataOffset = aet.SoundEffects[obj.DataID].O;
+                    else if (obj.Type == AetLayer.AetLayerType.Eff) obj.DataOffset = aet.Compositions[obj.DataID].O;
+                    else obj.DataOffset = 0;
+                    if (obj.DataOffset == 0)
+                    {
+
+                    }
+                }
+
+            _IO.A(0x4);
             int returnPos = _IO.P;
             int nvp = 0;
 
@@ -350,7 +364,7 @@ namespace KKdMainLib.Aet
                     ref AnimationData data = ref obj.Data.V;
                     ref AnimationData.Perspective persp = ref data.Persp.V;
                     ref AudioData extraData = ref obj.ExtraData.V;
-                    
+
                     if (obj.Data.V.Persp.O > 0)
                     {
                         _IO.P = data.Persp.O;
@@ -382,7 +396,7 @@ namespace KKdMainLib.Aet
                         W(ref _IO, ref data.Opacity  );
                         _IO.W(data.Persp.O);
                     }
-            
+
                     if (obj.ExtraData.O > 0)
                     {
                         _IO.P = obj.ExtraData.O;
@@ -396,7 +410,7 @@ namespace KKdMainLib.Aet
                     {
                         if (keys.C < 1) _IO.W(0L);
                         else { if (keys.C > 0 && keys.O == 0) { keys.O = returnPos + (nvp << 2); nvp++; } _IO.W(keys); }
-                        
+
                     }
                 }
             }
@@ -422,10 +436,7 @@ namespace KKdMainLib.Aet
                     _IO.W((ushort)obj.Flags);
                     _IO.W(obj.Pad);
                     _IO.W((byte)obj.Type);
-                         if (obj.Type == AetLayer.AetLayerType.Pic) _IO.W(aet.Surfaces    [obj.DataID].O);
-                    else if (obj.Type == AetLayer.AetLayerType.Aif) _IO.W(aet.SoundEffects[obj.DataID].O);
-                    else if (obj.Type == AetLayer.AetLayerType.Eff) _IO.W(aet.Compositions[obj.DataID].O);
-                    else _IO.W(0x00);
+                    _IO.W(obj.DataOffset);
 
                     if (obj.ParentLayer > -1)
                     {
@@ -505,12 +516,12 @@ namespace KKdMainLib.Aet
                 obj.Flags = (AetLayer.AetLayerFlags)_IO.RU16();
                 obj.Pad   = _IO.RU8();
                 obj.Type  = (AetLayer.AetLayerType)_IO.RU8();
-                obj.DataID      = _IO.RI32();
+                obj.DataOffset  = _IO.RI32();
                 obj.ParentLayer = _IO.RI32();
                 obj.Marker = _IO.ReadCountPointer<AetMarker>();
                 obj.Data = _IO.RP<AnimationData>();
                 obj.ExtraData = _IO.RP<AudioData>();
-                
+
                 if (obj.Data.O > 0)
                 {
                     ref AnimationData data = ref obj.Data.V;
@@ -528,7 +539,7 @@ namespace KKdMainLib.Aet
                     data.   ScaleY = _IO.ReadCountPointer<KFT2>();
                     data.Opacity   = _IO.ReadCountPointer<KFT2>();
                     data.Persp = _IO.RP<AnimationData.Perspective>();
-                    
+
                     RKF(ref data.  OriginX);
                     RKF(ref data.  OriginY);
                     RKF(ref data.PositionX);
@@ -537,7 +548,7 @@ namespace KKdMainLib.Aet
                     RKF(ref data.   ScaleX);
                     RKF(ref data.   ScaleY);
                     RKF(ref data.Opacity  );
-                    
+
                     if (data.Persp.O > 0)
                     {
                         ref AnimationData.Perspective Persp = ref data.Persp.V;
@@ -550,7 +561,7 @@ namespace KKdMainLib.Aet
                         Persp. RotationX = _IO.ReadCountPointer<KFT2>();
                         Persp. RotationY = _IO.ReadCountPointer<KFT2>();
                         Persp.    ScaleZ = _IO.ReadCountPointer<KFT2>();
-                        
+
                         RKF(ref Persp.Unk1      );
                         RKF(ref Persp.Unk2      );
                         RKF(ref Persp.RotReturnX);
@@ -561,7 +572,7 @@ namespace KKdMainLib.Aet
                         RKF(ref Persp.    ScaleZ);
                     }
                 }
-                    
+
                 if (obj.ExtraData.O > 0)
                 {
                     ref AudioData extraData = ref obj.ExtraData.V;
@@ -570,13 +581,13 @@ namespace KKdMainLib.Aet
                     extraData.Data1 = _IO.ReadCountPointer<KFT2>();
                     extraData.Data2 = _IO.ReadCountPointer<KFT2>();
                     extraData.Data3 = _IO.ReadCountPointer<KFT2>();
-                    
+
                     RKF(ref extraData.Data0);
                     RKF(ref extraData.Data1);
                     RKF(ref extraData.Data2);
                     RKF(ref extraData.Data3);
                 }
-                    
+
                 _IO.P = obj.Marker.O;
                 for (i2 = 0; i2 < obj.Marker.C; i2++)
                     obj.Marker[i2] = new AetMarker() { Frame = _IO.RF32(), Name = _IO.RPSSJIS() };
@@ -667,14 +678,14 @@ namespace KKdMainLib.Aet
                 aet.Camera.V.X = RKF(temp, "X");
                 aet.Camera.V.Y = RKF(temp, "Y");
             }
-            
+
             if ((temp = msgPack["SoundEffect", true]).NotNull)
             {
                 aet.SoundEffects.C = temp.Array.Length;
                 for (i = 0; i < aet.SoundEffects.C; i++)
                     aet.SoundEffects.E[i] = new AetSoundEffect { Unk = temp[i].RU32("Unk") };
             }
-            
+
             if ((temp = msgPack["Surface", true]).NotNull)
             {
                 aet.Surfaces.C = temp.Array.Length;
@@ -698,7 +709,7 @@ namespace KKdMainLib.Aet
                     sprite.Dispose();
                 }
             }
-            
+
             if ((temp = msgPack["Composition", true]).NotNull)
             {
                 aet.Compositions.C = temp.Array.Length + 1;
@@ -727,7 +738,7 @@ namespace KKdMainLib.Aet
             }
             temp.Dispose();
         }
-        
+
         public MsgPack MsgPackWriter(ref Pointer<AetData> aetData)
         {
             int i, i0;
@@ -757,7 +768,7 @@ namespace KKdMainLib.Aet
                 {
                     ref AetComposition layer = ref aet.Compositions.E[i];
                     MsgPack Object = MsgPack.New.Add("ID", i);
-                    if (layer.C > 0) 
+                    if (layer.C > 0)
                     {
                         MsgPack objects = new MsgPack(layer.C, "Object");
                         for (i0 = 0; i0 < layer.C; i0++)
@@ -801,18 +812,18 @@ namespace KKdMainLib.Aet
         {
             uint i;
             layer = default;
-            layer.ID            = msg.RI32("ID"          );
-            layer.Name.V        = msg.RS  ("Name"        );
-            layer.StartFrame    = msg.RF32("StartFrame"  );
-            layer.  EndFrame    = msg.RF32(  "EndFrame"  );
-            layer.StartOffset   = msg.RF32("StartFrame"  );
+            layer.ID            = msg.RI32("ID"           );
+            layer.Name.V        = msg.RS  ("Name"         );
+            layer.StartFrame    = msg.RF32("StartFrame"   );
+            layer.  EndFrame    = msg.RF32(  "EndFrame"   );
+            layer.StartOffset   = msg.RF32("StartOffset"  );
             layer.PlaybackSpeed = msg.RF32("PlaybackSpeed");
             layer.Flags = (AetLayer.AetLayerFlags)msg.RU16("Flags");
             layer.Pad = msg.RU8("Pad");
             System.Enum.TryParse(msg.RS("Type"), out layer.Type);
             layer.DataID      = msg.RnI32("DataID"     ) ?? -1;
             layer.ParentLayer = msg.RnI32("ParentLayer") ?? -1;
-                
+
             MsgPack temp;
             if ((temp = msg["Markers", true]).NotNull)
             {
@@ -830,7 +841,7 @@ namespace KKdMainLib.Aet
                 ref AnimationData data = ref layer.Data.V;
                 System.Enum.TryParse(temp.RS("BlendMode"), out data.Mode);
                 data.UseTextureMask = temp.RB("UseTextureMask");
-                
+
                 data.  OriginX = RKF(temp,   "OriginX");
                 data.  OriginY = RKF(temp,   "OriginY");
                 data.PositionX = RKF(temp, "PositionX");

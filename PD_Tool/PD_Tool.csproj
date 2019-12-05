@@ -11,6 +11,7 @@
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -69,14 +70,112 @@
       <Name>KKdBaseLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\KKdMainLib\KKdMainLib.csproj">
-      <Project>{2BA7EFC6-91D1-8BBC-C487-06C7F36CC789}</Project>
+      <Project>{2ba7efc6-91d1-8bbc-c487-06c7f36cc789}</Project>
       <Name>KKdMainLib</Name>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
     <ProjectReference Include="..\KKdSoundLib\KKdSoundLib.csproj">
-      <Project>{D8A3F2D7-10CC-5723-EC9A-45D3B9C2DF77}</Project>
+      <Project>{d8a3f2d7-10cc-5723-ec9a-45d3b9c2df77}</Project>
       <Name>KKdSoundLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>del Microsoft.Win32.Primitives.dll
+del netstandard.dll
+del PD_Tool.exe.config
+del System.AppContext.dll
+del System.Collections.Concurrent.dll
+del System.Collections.dll
+del System.Collections.NonGeneric.dll
+del System.Collections.Specialized.dll
+del System.ComponentModel.dll
+del System.ComponentModel.EventBasedAsync.dll
+del System.ComponentModel.Primitives.dll
+del System.ComponentModel.TypeConverter.dll
+del System.Console.dll
+del System.Data.Common.dll
+del System.Diagnostics.Contracts.dll
+del System.Diagnostics.Debug.dll
+del System.Diagnostics.FileVersionInfo.dll
+del System.Diagnostics.Process.dll
+del System.Diagnostics.StackTrace.dll
+del System.Diagnostics.TextWriterTraceListener.dll
+del System.Diagnostics.Tools.dll
+del System.Diagnostics.TraceSource.dll
+del System.Diagnostics.Tracing.dll
+del System.Drawing.Primitives.dll
+del System.Dynamic.Runtime.dll
+del System.Globalization.Calendars.dll
+del System.Globalization.dll
+del System.Globalization.Extensions.dll
+del System.IO.Compression.dll
+del System.IO.Compression.ZipFile.dll
+del System.IO.dll
+del System.IO.FileSystem.dll
+del System.IO.FileSystem.DriveInfo.dll
+del System.IO.FileSystem.Primitives.dll
+del System.IO.FileSystem.Watcher.dll
+del System.IO.IsolatedStorage.dll
+del System.IO.MemoryMappedFiles.dll
+del System.IO.Pipes.dll
+del System.IO.UnmanagedMemoryStream.dll
+del System.Linq.dll
+del System.Linq.Expressions.dll
+del System.Linq.Parallel.dll
+del System.Linq.Queryable.dll
+del System.Net.Http.dll
+del System.Net.NameResolution.dll
+del System.Net.NetworkInformation.dll
+del System.Net.Ping.dll
+del System.Net.Primitives.dll
+del System.Net.Requests.dll
+del System.Net.Security.dll
+del System.Net.Sockets.dll
+del System.Net.WebHeaderCollection.dll
+del System.Net.WebSockets.Client.dll
+del System.Net.WebSockets.dll
+del System.ObjectModel.dll
+del System.Reflection.dll
+del System.Reflection.Extensions.dll
+del System.Reflection.Primitives.dll
+del System.Resources.Reader.dll
+del System.Resources.ResourceManager.dll
+del System.Resources.Writer.dll
+del System.Runtime.CompilerServices.VisualC.dll
+del System.Runtime.dll
+del System.Runtime.Extensions.dll
+del System.Runtime.Handles.dll
+del System.Runtime.InteropServices.dll
+del System.Runtime.InteropServices.RuntimeInformation.dll
+del System.Runtime.Numerics.dll
+del System.Runtime.Serialization.Formatters.dll
+del System.Runtime.Serialization.Json.dll
+del System.Runtime.Serialization.Primitives.dll
+del System.Runtime.Serialization.Xml.dll
+del System.Security.Claims.dll
+del System.Security.Cryptography.Algorithms.dll
+del System.Security.Cryptography.Csp.dll
+del System.Security.Cryptography.Encoding.dll
+del System.Security.Cryptography.Primitives.dll
+del System.Security.Cryptography.X509Certificates.dll
+del System.Security.Principal.dll
+del System.Security.SecureString.dll
+del System.Text.Encoding.dll
+del System.Text.Encoding.Extensions.dll
+del System.Text.RegularExpressions.dll
+del System.Threading.dll
+del System.Threading.Overlapped.dll
+del System.Threading.Tasks.dll
+del System.Threading.Tasks.Parallel.dll
+del System.Threading.Thread.dll
+del System.Threading.ThreadPool.dll
+del System.Threading.Timer.dll
+del System.ValueTuple.dll
+del System.Xml.ReaderWriter.dll
+del System.Xml.XDocument.dll
+del System.Xml.XmlDocument.dll
+del System.Xml.XmlSerializer.dll
+del System.Xml.XPath.dll
+del System.Xml.XPath.XDocument.dll</PostBuildEvent>
+  </PropertyGroup>
 </Project>

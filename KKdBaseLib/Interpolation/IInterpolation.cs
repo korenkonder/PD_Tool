@@ -7,7 +7,7 @@
 
         float Frame { get; }
         float Value { get; }
-        
+
         float  SetTime (float  time);
         float  SetFrame(float frame);
         float NextFrame(float  time);

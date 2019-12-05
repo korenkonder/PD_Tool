@@ -37,54 +37,54 @@ namespace KKdMainLib.IO
                 };
             return new MsgPack(Key, obj);
         }
-        
-		private string RS()
-		{
-			if (!Extensions.As(_IO, '"')) return null;
+
+        private string RS()
+        {
+            if (!Extensions.As(_IO, '"')) return null;
             char c;
             string s = "";
-			while (true)
-			{
+            while (true)
+            {
                 c = _IO.RCUTF8();
 
-				if (c == '\\')
-				{
-					c = _IO.RCUTF8();
+                if (c == '\\')
+                {
+                    c = _IO.RCUTF8();
 
-					switch (char.ToLower(c))
-					{
-						case '"' :
-						case '\\':
-						case '/' : s += c; break;
-						case 'b' : s += '\b'; break;
-						case 'f' : s += '\f'; break;
+                    switch (char.ToLower(c))
+                    {
+                        case '"' :
+                        case '\\':
+                        case '/' : s += c; break;
+                        case 'b' : s += '\b'; break;
+                        case 'f' : s += '\f'; break;
                         case 'n' : s += '\n'; break;
-						case 'r' : s += '\r'; break;
-						case 't' : s += '\t'; break;
-						case 'u' : s += RUL(); break;
-						default: return null;
-					}
-				}
-				else if (c == '"') break;
-				else if (char.IsControl(c))
+                        case 'r' : s += '\r'; break;
+                        case 't' : s += '\t'; break;
+                        case 'u' : s += RUL(); break;
+                        default: return null;
+                    }
+                }
+                else if (c == '"') break;
+                else if (char.IsControl(c))
                     return null;
                 else s += c;
-			}
+            }
 
-			return s;
-		}
+            return s;
+        }
 
-		private char RUL() =>
+        private char RUL() =>
             (char)((((((RHD() << 4) | RHD()) << 4) | RHD()) << 4) | RHD());
 
-		private int RHD() => byte.Parse(_IO.RCUTF8().ToString(),
+        private int RHD() => byte.Parse(_IO.RCUTF8().ToString(),
             System.Globalization.NumberStyles.HexNumber);
 
         private KKdList<MsgPack> RO()
         {
             KKdList<MsgPack> obj = KKdList<MsgPack>.New;
             if (!Extensions.As(_IO, '{')) return KKdList<MsgPack>.Null;
-			if (_IO.SW().PCUTF8() == '}')
+            if (_IO.SW().PCUTF8() == '}')
             { _IO.RCUTF8(); return KKdList<MsgPack>.Null; }
 
             string key;
@@ -99,15 +99,15 @@ namespace KKdMainLib.IO
 
                 obj.Add(ReadValue(key));
                 c = _IO.SW().PCUTF8();
-                
+
                      if (c == '}') { _IO.RCUTF8();    break; }
                 else if (c == ',') { _IO.RCUTF8(); continue; }
                 else return KKdList<MsgPack>.Null;
             }
 
             return obj;
-		}
-        
+        }
+
         private MsgPack[] RA()
         {
             KKdList<MsgPack> obj = KKdList<MsgPack>.New;
@@ -126,17 +126,18 @@ namespace KKdMainLib.IO
                 else return null;
             }
             return obj.ToArray();
-		}
+        }
 
-		private object RF()
-		{
-			string s = " ";
+        private object RF()
+        {
+            string s = " ";
             _IO.SW();
             if (_IO.PCUTF8() == '-') s += _IO.RCUTF8();
-			if (_IO.PCUTF8() == '0') s += _IO.RCUTF8();
-            else                           s +=     ReadDigits  ();
-            if (_IO.PCUTF8() == '.') s += _IO.RCUTF8() + ReadDigits();
-            else
+            if (_IO.PCUTF8() == '0') s += _IO.RCUTF8();
+            else                     s +=     RD    ();
+            char c = _IO.PCUTF8();
+            if (c == '.') s += _IO.RCUTF8() + RD();
+            else if (c != 'e' && c != 'E')
             {
                 long val = long.Parse(s);
                      if (val >=  0x00000000 && val < 0x000000100) return (  byte)val;
@@ -148,19 +149,19 @@ namespace KKdMainLib.IO
                 else                                              return         val;
             }
 
-            char c = _IO.PCUTF8();
+            c = _IO.PCUTF8();
             if (c == 'e' || c == 'E')
-			{
+            {
                 s += _IO.RCUTF8();
                 c  = _IO.PCUTF8();
                 if (c == '+' || c == '-') s += _IO.RCUTF8();
-                s += ReadDigits();
-			}
+                s += RD();
+            }
             double d = s.ToF64();
             return (float)d == d ? (float)d : d;
         }
 
-		private bool RBo()
+        private bool RBo()
         {
             char c = _IO.PCUTF8();
                  if (c == 't' && _IO.As( "true")) return  true;
@@ -168,9 +169,9 @@ namespace KKdMainLib.IO
             return false;
         }
 
-		private object RN() { _IO.As("null"); return null; }
+        private object RN() { _IO.As("null"); return null; }
 
-        private string ReadDigits()
+        private string RD()
         { string s = ""; while (char.IsDigit(_IO.SW().
             PCUTF8())) s += _IO.RCUTF8(); return s; }
 

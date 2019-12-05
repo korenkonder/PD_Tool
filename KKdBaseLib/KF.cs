@@ -33,7 +33,7 @@
         public override int GetHashCode() => base.GetHashCode();
         public override bool Equals(object obj)
         { if (obj is KFT0 b) return this == b; else return base.Equals(obj); }
-        
+
         public static bool operator > (float a, KFT0 b) => a >  b.F;
         public static bool operator < (float a, KFT0 b) => a <  b.F;
         public static bool operator >=(float a, KFT0 b) => a >= b.F;
@@ -49,7 +49,7 @@
         public static bool operator ==(KFT0 a, KFT0 b) => a.F == b.F;
         public static bool operator !=(KFT0 a, KFT0 b) => a.F != b.F;
     }
-    
+
     public struct KFT1 : IKF
     {
         public float F;
@@ -86,7 +86,7 @@
         public override int GetHashCode() => base.GetHashCode();
         public override bool Equals(object obj)
         { if (obj is KFT1 b) return this == b; else return base.Equals(obj); }
-        
+
         public static bool operator > (float a, KFT1 b) => a >  b.F;
         public static bool operator < (float a, KFT1 b) => a <  b.F;
         public static bool operator >=(float a, KFT1 b) => a >= b.F;
@@ -102,7 +102,7 @@
         public static bool operator ==(KFT1 a, KFT1 b) => a.F == b.F && a.V == b.V;
         public static bool operator !=(KFT1 a, KFT1 b) => a.F != b.F || a.V != b.V;
     }
-    
+
     public struct KFT2 : IKF
     {
         public float F;
@@ -121,7 +121,7 @@
             new KFT3(F, V, T, T);
 
         public KFT3 ToT3(IKF Previous) =>
-            Previous is KFT2 PreviousT2 ? 
+            Previous is KFT2 PreviousT2 ?
             new KFT3(F, V, PreviousT2.T, T) :
             new KFT3(F, V,            T, T);
 
@@ -145,7 +145,7 @@
         public override int GetHashCode() => base.GetHashCode();
         public override bool Equals(object obj)
         { if (obj is KFT2 b) return this == b; else return base.Equals(obj); }
-        
+
         public static bool operator > (float a, KFT2 b) => a >  b.F;
         public static bool operator < (float a, KFT2 b) => a <  b.F;
         public static bool operator >=(float a, KFT2 b) => a >= b.F;
@@ -161,7 +161,7 @@
         public static bool operator ==(KFT2 a, KFT2 b) => a.F == b.F && a.V == b.V && a.T == b.T;
         public static bool operator !=(KFT2 a, KFT2 b) => a.F != b.F || a.V != b.V || a.T != b.T;
     }
-    
+
     public struct KFT3 : IKF
     {
         public float F;

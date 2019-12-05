@@ -101,7 +101,7 @@
         public Key Density;
         public Vector4<Key> Diffuse;
     }
-    
+
     public enum KeyType : int
     {
         Null    = 0,
@@ -110,7 +110,7 @@
         Hermite = 3,
         Hold    = 4,
     }
-    
+
     public enum EPType : int
     {
         EP_1 = 1,
@@ -174,8 +174,8 @@
                 key.Type = k.Type.Value;
                 key.Length = k.Length;
                 key.Keys = k.Keys;
-                key.FDBSaE = k.Keys[k.Length - 1].F - k.Keys[0].F;
-                key.VDBSaE = k.Keys[k.Length - 1].V - k.Keys[0].V;
+                key.FrameDelta = k.Keys[k.Length - 1].F - k.Keys[0].F;
+                key.ValueDelta = k.Keys[k.Length - 1].V - k.Keys[0].V;
             }
             else
             {
@@ -185,6 +185,11 @@
                 {
                     key.Type = KeyType.Value;
                     key.Keys[0].V = k.Value ?? 0;
+                }
+                else if (k.Type.HasValue && k.Value.HasValue)
+                {
+                    key.Type = k.Type.Value;
+                    key.Keys[0].V = k.Value.Value;
                 }
             }
             return key;

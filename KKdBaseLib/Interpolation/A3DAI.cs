@@ -8,7 +8,7 @@ namespace KKdBaseLib.Interpolation
 
         private float f;
         private float last;
-        private float deltaFrame;
+        private float df;
         private float @if;
         private float rf;
         private float lastTime;
@@ -17,9 +17,9 @@ namespace KKdBaseLib.Interpolation
         private KFT3  lastKey;
 
         public float InterpolationFramerate
-        { get => @if; set { @if = value; deltaFrame = @if / rf; } }
+        { get => @if; set { @if = value; df = @if / rf; } }
         public float RequestedFramerate
-        { get => rf; set { rf = value; deltaFrame = @if / rf; } }
+        { get => rf; set { rf = value; df = @if / rf; } }
 
         public float Frame => f;
         public float Value => last;
@@ -29,11 +29,11 @@ namespace KKdBaseLib.Interpolation
         public A3DAI(A3DAKey key, float a3daFramerate = 60, float requestedFramerate = 60)
         {
             lastTime = 0;
-            this.key = key; f = -1; deltaFrame = last = rf = @if = 0;
+            this.key = key; last = rf = @if = 0;
+            f = -1; df = 1;
             @if = a3daFramerate;
             firstKey = lastKey = default;
             RequestedFramerate = requestedFramerate;
-            f = -deltaFrame;
             ResetFrameCount();
 
             if (key.Keys != null && key.Length > 0)
@@ -60,7 +60,7 @@ namespace KKdBaseLib.Interpolation
             if ((int)key.Type == 1) return key.Keys[0].V;
 
             lastTime = frame / rf;
-            f = frame * deltaFrame;
+            f = frame * df;
             last = Interpolate(f);
             return last;
         }
@@ -81,7 +81,7 @@ namespace KKdBaseLib.Interpolation
             if ((int)key.Type <  1 || (int)key.Type > 4 || key.Length < 1) return 0;
             if ((int)key.Type == 1) return key.Keys[0].V;
 
-            f += deltaFrame;
+            f += df;
             lastTime = f / @if;
             last = Interpolate(f);
             return last;
@@ -103,7 +103,7 @@ namespace KKdBaseLib.Interpolation
                     return firstKey.V - df * firstKey.T1;
                 else if (key.EPTypePre == EPType.EP_2 || key.EPTypePre == EPType.EP_3)
                 {
-                    frame = lastKey.F - df % key.FDBSaE;
+                    frame = lastKey.F - df % key.FrameDelta;
                     f = (int)frame;
                 }
             }
@@ -117,7 +117,7 @@ namespace KKdBaseLib.Interpolation
                     return lastKey.V + df * lastKey.T2;
                 else if (key.EPTypePost == EPType.EP_2 || key.EPTypePost == EPType.EP_3)
                 {
-                    frame = firstKey.F + df % key.FDBSaE;
+                    frame = firstKey.F + df % key.FrameDelta;
                     f = (int)frame;
                 }
             }
@@ -125,9 +125,9 @@ namespace KKdBaseLib.Interpolation
             if ((f <  firstKey.F && key.EPTypePre  == EPType.EP_3) ||
                 (f >= firstKey.F && key.EPTypePost == EPType.EP_3))
             {
-                ep = df / key.FDBSaE;
+                ep = df / key.FrameDelta;
                 ep = (ep >= 0 && ep != (int)ep) ? (ep - (int)ep > 0 ? 1 : 0) : ep;
-                ep = (f < firstKey.F ? -1 : 1) * (ep + 1) * key.VDBSaE;
+                ep = (f < firstKey.F ? -1 : 1) * (ep + 1) * key.ValueDelta;
             }
 
             if (f <= firstKey.F)
@@ -150,8 +150,8 @@ namespace KKdBaseLib.Interpolation
                 }
             }
 
-            KFT3 c = key.Keys[data - 1];
-            KFT3 n = key.Keys[data];
+            ref KFT3 c = ref key.Keys[data - 1];
+            ref KFT3 n = ref key.Keys[data];
             float result;
             if (frame > c.F && frame < n.F)
             {
@@ -175,7 +175,7 @@ namespace KKdBaseLib.Interpolation
             return result + ep;
         }
 
-        public void ResetFrameCount() => f = -deltaFrame;
+        public void ResetFrameCount() => f = -df;
 
         public override string ToString() => $"Frame: {f}, Value: {last}";
     }

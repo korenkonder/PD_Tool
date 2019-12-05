@@ -41,7 +41,7 @@ namespace KKdBaseLib
             return new Half { _value = (ushort)(sign | (exponent << 10) | mantissa) };
         }
 
-        public static unsafe implicit operator double(Half h) 
+        public static unsafe implicit operator double(Half h)
         {
             int sign     =  (h._value >> 15) & 0x001;
             int exponent = ((h._value >> 10) & 0x01F) + 1023 - 15;
@@ -64,6 +64,7 @@ namespace KKdBaseLib
             return new Half { _value = (ushort)(sign | (exponent << 10) | mantissa) };
         }
 
+        public static Half operator - (Half a        ) => new Half() { _value = (ushort)(a._value ^ 0x8000) };
         public static Half operator + (Half a, Half b) => (Half)((float)a + (float)b);
         public static Half operator - (Half a, Half b) => (Half)((float)a - (float)b);
         public static Half operator * (Half a, Half b) => (Half)((float)a * (float)b);

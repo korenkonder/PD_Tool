@@ -1,16 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2BA7EFC6-91D1-8BBC-C487-06C7F36CC789}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>KKdMainLib</RootNamespace>
-    <AssemblyName>KKdMainLib</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Authors>korenkonder</Authors>
+    <Company></Company>
+    <Configuration></Configuration>
+    <Copyright>korenkonder © 2018-2019</Copyright>
+    <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/FT files</Description>
+    <FileVersion>0.4.8.1</FileVersion>
+    <PackageId>KKdMainLib</PackageId>
+    <Product>KKdMainLib</Product>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>KKdMainLib</Title>
+    <Version>0.4.8.1</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -39,43 +40,6 @@
     <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DB\Aet.cs" />
-    <Compile Include="DB\Auth.cs" />
-    <Compile Include="DB\Spr.cs" />
-    <Compile Include="F2\Bloom.cs" />
-    <Compile Include="F2\ColorCorrection.cs" />
-    <Compile Include="F2\DOF.cs" />
-    <Compile Include="F2\Light.cs" />
-    <Compile Include="IO\Directory.cs" />
-    <Compile Include="IO\Extensions.cs" />
-    <Compile Include="IO\File.cs" />
-    <Compile Include="IO\JSON.cs" />
-    <Compile Include="IO\MP.cs" />
-    <Compile Include="IO\Path.cs" />
-    <Compile Include="IO\Stream.cs" />
-    <Compile Include="A3DA.cs" />
-    <Compile Include="Aet.cs" />
-    <Compile Include="DataBank.cs" />
-    <Compile Include="DEX.cs" />
-    <Compile Include="DIVAFILE.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="FARC.cs" />
-    <Compile Include="Main.cs" />
-    <Compile Include="Mot.cs" />
-    <Compile Include="STR.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj">
-      <Project>{437f63f1-8c23-429e-ab14-38b85c9edb16}</Project>
-      <Name>KKdBaseLib</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

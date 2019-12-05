@@ -128,7 +128,7 @@ namespace KKdMainLib.DB
 
         public void MsgPackWriter(string file, bool json)
         {
-            MsgPack authDB = new MsgPack("AuthDB");            
+            MsgPack authDB = new MsgPack("AuthDB");
             if (Category != null)
             {
                 MsgPack category = new MsgPack(Category.Length, "Category");

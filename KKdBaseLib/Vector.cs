@@ -13,7 +13,7 @@
 
         public override string ToString() => $"({X}; {Y})";
     }
-    
+
     public struct Vector3<T> : INull
     {
         public T X;
@@ -22,7 +22,7 @@
 
         public Vector3(T X, T Y, T Z)
         { this.X = X; this.Y = Y; this.Z = Z; }
-        
+
         public bool  IsNull => X == null && Y == null && Z == null;
         public bool NotNull => X != null || Y != null || Z != null;
 
@@ -38,7 +38,7 @@
 
         public Vector4(T X, T Y, T Z, T W)
         { this.X = X; this.Y = Y; this.Z = Z; this.W = W; }
-        
+
         public bool  IsNull => X == null && Y == null && Z == null && W == null;
         public bool NotNull => X != null || Y != null || Z != null || W != null;
 

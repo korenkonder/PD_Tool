@@ -127,7 +127,7 @@ namespace KKdMainLib
                 _IO.W(0x0L);
                 _IO.A(0x20);
             }
-            for (i = 0; i < Dex.Length; i0++)
+            for (i = 0; i < Dex.Length; i++)
             {
                 Dex[i].NameOffset = _IO.P;
                 _IO.W(Dex[i].Name + "\0");

@@ -100,12 +100,12 @@ namespace KKdBaseLib
         }
 
         public void Sort()
-        { List<T> List = this; List.Sort(); array = List.ToArray(); Count = List.Count; }
+        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); Count = List.Count; }
 
-        public static implicit operator KKdList<T>(   List<T> List) =>
+        public static explicit operator KKdList<T>(   List<T> List) =>
             new KKdList<T> { array = List.ToArray(), Count = List.Count };
 
-        public static implicit operator    List<T>(KKdList<T> List)
+        public static explicit operator    List<T>(KKdList<T> List)
         {
             List<T> list = new List<T>();
             for (int i = 0; i < List.Count; i++) list.Add(List[i]);

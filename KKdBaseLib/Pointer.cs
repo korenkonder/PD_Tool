@@ -13,7 +13,35 @@
         public Pointer(int offset, T value)
         { O = offset; V = value; }
     }
-    
+
+    public struct PointerI64<T>
+    {
+        public long O;
+        public T V;
+
+        public override string ToString() => Extensions.ToS(V);
+
+        public PointerI64(T value)
+        { O = 0; V = value; }
+
+        public PointerI64(long offset, T value)
+        { O = offset; V = value; }
+    }
+
+    public struct PointerU64<T>
+    {
+        public ulong O;
+        public T V;
+
+        public override string ToString() => Extensions.ToS(V);
+
+        public PointerU64(T value)
+        { O = 0; V = value; }
+
+        public PointerU64(ulong offset, T value)
+        { O = offset; V = value; }
+    }
+
     public struct CountPointer<T>
     {
         public int C { get => E != null ? E.Length : 0;

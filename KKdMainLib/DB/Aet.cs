@@ -40,7 +40,7 @@ namespace KKdMainLib.DB
             _IO.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                _IO.I64P += 10;
+                _IO.PI64 += 10;
                 setIndex = _IO.RI16();
                 AetCount[setIndex]++;
             }
@@ -133,7 +133,7 @@ namespace KKdMainLib.DB
 
             for (i = 0, i0 = 0, i2 = 0; i < AetSets.Length; i++)
                 if (!NotAdd.Contains(i)) { i0 += AetSets[i].Aets.Length; i2++; }
-            
+
             i1 = i0 * 12;
             i1 = i1.A(0x20) + 0x20;
 
@@ -160,12 +160,12 @@ namespace KKdMainLib.DB
                 { AetSets[i].Aets[i0].NameOffset = _IO.P; _IO.W(AetSets[i].Aets[i0].Name + "\0"); }
             }
             _IO.A(0x08, true);
-            
+
             _IO.P = 0x20;
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
                 if (NotAdd.Contains(i)) { i2++; continue; }
-                
+
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
                 {
                     _IO.W(AetSets[i].Aets[i0].Id        );
@@ -228,7 +228,7 @@ namespace KKdMainLib.DB
 
             public void ReadMsgPack(MsgPack msg)
             { Id = msg.RnU16("Id"); Name  = msg.RS("Name"); }
-            
+
             public MsgPack WriteMsgPack() =>
                 MsgPack.New.Add("Id", Id).Add("Name", Name);
         }
@@ -243,7 +243,7 @@ namespace KKdMainLib.DB
             public string Name;
             public string FileName;
             public AET[] Aets;
-            
+
             public void ReadMsgPack(MsgPack msg)
             {
                 FileName    = msg.RS ("FileName"   );

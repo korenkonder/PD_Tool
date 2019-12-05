@@ -310,7 +310,7 @@ namespace KKdMainLib
                     name = "m_objhrc" + d + i0 + d;
 
                     dict.FindValue(out Data.MObjectHRC[i0].Name, name + "name");
-                    
+
                     if (dict.StartsWith(name + "joint_orient"))
                     {
                         Data.MObjectHRC[i0].JointOrient = new Vector3<float?>();
@@ -349,7 +349,7 @@ namespace KKdMainLib
                             Data.MObjectHRC[i0].Node[i1].MT = RMT(nameView);
                         }
                     }
-                    
+
                     Data.MObjectHRC[i0].MT = RMT(name);
                 }
             }
@@ -434,7 +434,7 @@ namespace KKdMainLib
                                 RKUV(nameView + "translateFrame");
                         }
                     }
-                    
+
                     Data.Object[i0].MT = RMT(name);
                 }
             }
@@ -527,7 +527,7 @@ namespace KKdMainLib
                 }
                 W("ambient.length=", Data.Fog.Length);
             }
-            
+
             if (Data.CameraAuxiliary != null)
             {
                 name = "camera_auxiliary" + d;
@@ -922,7 +922,7 @@ namespace KKdMainLib
         {
             ModelTransform mt = new ModelTransform();
             dict.FindValue(out mt.BinOffset, str + MTBO);
-            
+
             mt.Rot        = RV3(str + "rot"        + d);
             mt.Scale      = RV3(str + "scale"      + d);
             mt.Trans      = RV3(str + "trans"      + d);
@@ -1324,7 +1324,7 @@ namespace KKdMainLib
                         W(ref Data.Ambient[i0].RimLightDiffuse);
                     }
 
-                
+
                 if (Data.CameraAuxiliary != null)
                 {
                     CameraAuxiliary ca = Data.CameraAuxiliary.Value;
@@ -1482,7 +1482,7 @@ namespace KKdMainLib
             _IO.WE(Head.BinaryOffset, true);
             _IO.WE(Head.BinaryLength, true);
             _IO.WE(0x20, true);
-            
+
             if (Head.Format > Format.AFT && Head.Format < Format.FT)
             {
                 _IO.P = A3DCEnd;
@@ -1498,7 +1498,7 @@ namespace KKdMainLib
             _IO.Dispose();
             return data;
         }
-        
+
         private void RMT(ref ModelTransform mt)
         {
             if (mt.BinOffset == null) return;
@@ -1529,7 +1529,7 @@ namespace KKdMainLib
         private void RK(ref Key key, bool f16 = false)
         {
             if (key.BinOffset == null || key.BinOffset < 0) return;
-            
+
             _IO.P = (int)key.BinOffset;
             int Type = _IO.RI32();
             key.Value = _IO.RF32();
@@ -1553,7 +1553,7 @@ namespace KKdMainLib
                 for (int i = 0; i < key.Keys.Length; i++)
                 { ref KFT3 kf = ref key.Keys[i]; kf.F  = _IO.RU16(); kf.V  = _IO.RF16();
                                                  kf.T1 = _IO.RF32(); kf.T2 = _IO.RF32(); }
-            else 
+            else
                 for (int i = 0; i < key.Keys.Length; i++)
                 { ref KFT3 kf = ref key.Keys[i]; kf.F  = _IO.RF32(); kf.V  = _IO.RF32();
                                                  kf.T1 = _IO.RF32(); kf.T2 = _IO.RF32(); }
@@ -1617,7 +1617,7 @@ namespace KKdMainLib
                     for (i = 0; i < key.Keys.Length; i++)
                     { ref KFT3 kf = ref key.Keys[i]; _IO.W((ushort)kf.F ); _IO.W((Half)kf.V );
                                                      _IO.W(        kf.T1); _IO.W(      kf.T2); }
-                else 
+                else
                     for (i = 0; i < key.Keys.Length; i++)
                     { ref KFT3 kf = ref key.Keys[i]; _IO.W(        kf.F ); _IO.W(      kf.V );
                                                      _IO.W(        kf.T1); _IO.W(      kf.T2); }
@@ -1787,7 +1787,7 @@ namespace KKdMainLib
                 mData.PostProcess = mPP;
             }
         }
-        
+
         private void MMT(ref ModelTransform mt, ref ModelTransform mMT)
         {
             MV3(ref mt.Scale     , ref mMT.Scale     );
@@ -1808,7 +1808,14 @@ namespace KKdMainLib
 
         private void MK(ref Key key, ref Key mKey)
         {
-            if (key.Keys == null || mKey.Keys == null) return;
+            if (key.Keys == null && mKey.Keys != null)
+                return;
+
+            if (key.Keys != null && mKey.Keys == null)
+                return;
+
+            if (key.Keys == null || mKey.Keys == null)
+                return;
 
             if (key.Keys.Length >= 1 && mKey.Keys.Length == 1)
             {
@@ -1828,10 +1835,15 @@ namespace KKdMainLib
                 return;
             }
 
-            if (key.Keys[key.Keys.Length - 1] != mKey.Keys[0] && key.Keys[key.Keys.Length - 2] != mKey.Keys[0])
-                return;
+            int i = key.Keys.Length;
+            bool found = false;
+            while (i > 1 && !found)
+                if (key.Keys[--i] == mKey.Keys[0])
+                    found = true;
 
-            int OldLength = key.Keys.Length - (key.Keys[key.Keys.Length - 1] == mKey.Keys[0] ? 1 : 2);
+            if (!found) return;
+
+            int OldLength = i;
             Array.Resize(ref key.Keys, OldLength + mKey.Keys.Length);
             Array.Copy(mKey.Keys, 0, key.Keys, OldLength, mKey.Keys.Length);
             key.Length = key.Keys.Length;
@@ -2019,7 +2031,7 @@ namespace KKdMainLib
                             Y = temp1.RnF32("Y"),
                             Z = temp1.RnF32("Z"),
                         };
-                    
+
                     if ((temp1 = temp[i0]["Instance", true]).NotNull)
                     {
                         Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[temp1.Array.Length];
@@ -2032,7 +2044,7 @@ namespace KKdMainLib
                                 UIDName = temp1[i1].RS   ("UIDName"),
                             };
                     }
-                    
+
                     if ((temp1 = temp[i0]["Node", true]).NotNull)
                     {
                         Data.MObjectHRC[i0].Node = new Node[temp1.Array.Length];
@@ -2053,7 +2065,7 @@ namespace KKdMainLib
                 for (i = 0; i < Data.MObjectHRCList.Length; i++)
                     Data.MObjectHRCList[i] = temp[i].RS();
             }
-            
+
             if ((temp = a3d["Motion", true]).NotNull)
             {
                 Data.Motion = new string[temp.Array.Length];
@@ -2203,7 +2215,7 @@ namespace KKdMainLib
                                             .Add("RimLightDiffuse", ref Data.Ambient[i].RimLightDiffuse);
                 a3d.Add(ambient);
             }
-            
+
             if (Data.CameraAuxiliary != null)
             {
                 CameraAuxiliary ca = Data.CameraAuxiliary.Value;
@@ -2420,7 +2432,7 @@ namespace KKdMainLib
                     MsgPack _objectHRC = MsgPack.New.Add(   "Name", Data.ObjectHRC[i0].   Name)
                                                     .Add("Shadow" , Data.ObjectHRC[i0].Shadow )
                                                     .Add("UIDName", Data.ObjectHRC[i0].UIDName);
-                    
+
                     if (Data.ObjectHRC[i0].JointOrient.NotNull &&
                         (Head.Format == Format.X || Head.Format == Format.XHD))
                         _objectHRC.Add(new MsgPack("JointOrient")
@@ -2502,7 +2514,7 @@ namespace KKdMainLib
             Head = default;
         }
     }
-    
+
     public static class A3DAExt
     {
         public static ModelTransform RMT(this MsgPack msgPack, string name) =>
@@ -2537,7 +2549,7 @@ namespace KKdMainLib
         public static Key ReadKey(this MsgPack msgPack)
         {
             if (msgPack.Object == null) return default;
-            
+
             Key key = new Key { Max = msgPack.RnF32("Max"), Value = msgPack.RnF32("Value") };
             if (Enum.TryParse(msgPack.RS("EPTypePost"), out EPType EPTypePost)) key.EPTypePost = EPTypePost;
             if (Enum.TryParse(msgPack.RS("EPTypePre" ), out EPType EPTypePre )) key.EPTypePre  = EPTypePre;
@@ -2613,7 +2625,7 @@ namespace KKdMainLib
                     keys.Add("EPTypePre", key.EPTypePre.ToString());
 
                 if (key.RawData.KeyType != 0) keys.Add("RawData", true);
-                
+
                 MsgPack Trans = new MsgPack(key.Keys.Length, "Trans");
                 for (int i = 0; i < key.Keys.Length; i++)
                 {
@@ -2635,7 +2647,7 @@ namespace KKdMainLib
     }
 
     public struct A3DAHeader
-    { 
+    {
         public int Count;
         public int BinaryLength;
         public int BinaryOffset;

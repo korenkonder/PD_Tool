@@ -6,9 +6,9 @@
         public byte[] Data;
         public Struct[] SubStructs;
 
-        public ENRSList ENRS;
+        public ENRS ENRS;
         public POF POF;
-        
+
         public int Length  => length(false);
         public int LengthX => length( true);
 
@@ -36,7 +36,7 @@
                     length += (shiftX ? SubStructs[i].LengthX : SubStructs[i].Length) + SubStructs[i].Header.Length;
                 length += 0x20;
             }
-            return length; 
+            return length;
         }
 
         public void Update(bool ShiftX = false)

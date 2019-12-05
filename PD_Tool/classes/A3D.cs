@@ -84,15 +84,21 @@ namespace PD_Tool
         {
             if (!farc.HeaderReader()) return;
             if (!farc.HasFiles) return;
-                
+
             KKdList<string> list = KKdList<string>.New;
-            for (int i = 0; i < farc.Files.Length; i++)
-                if (!farc.Files[i].Name.Contains("div") && farc.Files[i].Name.EndsWith(".a3da"))
-                    list.Add(farc.Files[i].Name);
+            for (int i = 0; i < farc.Files.Count; i++)
+            {
+                string file = farc.Files[i].Name.ToLower();
+                bool div = false;
+                for (int i0 = 0; i0 < 159 && !div; i0++)
+                    if (file.Contains("div_" + i0)) div = true;
+
+                if (!div && file.EndsWith(".a3da")) list.Add(file);
+            }
 
             KKdList<string> A3DAlist = KKdList<string>.New;
-            for (int i = 0; i < farc.Files.Length; i++)
-                if (farc.Files[i].Name.EndsWith(".a3da"))
+            for (int i = 0; i < farc.Files.Count; i++)
+                if (farc.Files[i].Name.ToLower().EndsWith(".a3da"))
                     A3DAlist.Add(farc.Files[i].Name);
 
             byte[] data = null;
@@ -106,10 +112,12 @@ namespace PD_Tool
                         int state = a3da.A3DAReader(data);
                         if (state == 1)
                         {
+                            KKdFARC.FARCFile file = farc.Files[i];
                             a3da.Data._.CompressF16 = format > Format.AFT && format <
                                 Format.FT ? format == Format.MGF ? 2 : 1 : 0;
                             a3da.Head.Format = format;
-                            farc.Files[i].Data = (choose != "1" && choose != "3") ? a3da.A3DCWriter() : a3da.A3DAWriter();
+                            file.Data = (choose != "1" && choose != "3") ? a3da.A3DCWriter() : a3da.A3DAWriter();
+                            farc.Files[i] = file;
                         }
                     }
                 farc.Save();
@@ -149,14 +157,16 @@ namespace PD_Tool
                 a3daArray[i].Data.PlayControl.Div = null;
             }
 
-            farc.Files = new KKdFARC.FARCFile[list.Count];
+            farc.Files.Capacity = list.Count;
             for (int i = 0; i < list.Count; i++)
             {
-                farc.Files[i].Name = list[i];
+                KKdFARC.FARCFile file = default;
+                file.Name = list[i];
                 a3daArray[i].Data._.CompressF16 = format > Format.AFT && format <
                     Format.FT ? format == Format.MGF ? 2 : 1 : 0;
                 a3daArray[i].Head.Format = format;
-                farc.Files[i].Data = (choose != "1" && choose != "3") ? a3daArray[i].A3DCWriter() : a3daArray[i].A3DAWriter();
+                file.Data = (choose != "1" && choose != "3") ? a3daArray[i].A3DCWriter() : a3daArray[i].A3DAWriter();
+                farc.Files.Add(file);
             }
             farc.Save();
             return;

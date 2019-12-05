@@ -233,15 +233,15 @@ namespace PD_Tool
                         GetArgs("STR", true, "str") + bin + json + mp;
                 else if (filetype == "vag" ) Filter = GetArgs("VAG" , "vag", "wav") +
                         GetArgs("VAG", true, "vag") + wav;
-                     
-                using (OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
-                    Filter = Filter, Multiselect = true, Title = "Choose file(s) to open:" })
-                    if (ofd.ShowDialog() == DialogResult.OK) FileNames = ofd.FileNames;
+                
+                using OpenFileDialog ofd = new OpenFileDialog { //InitialDirectory = Application.StartupPath,
+                    Filter = Filter, Multiselect = true, Title = "Choose file(s) to open:" };
+                if (ofd.ShowDialog() == DialogResult.OK) FileNames = ofd.FileNames;
             }
             else if (code == 2)
             {
                 string Return = "";
-                using (OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
+                using (OpenFileDialog ofd = new OpenFileDialog { //InitialDirectory = Application.StartupPath,
                     ValidateNames = false, CheckFileExists = false, Filter = " | ", CheckPathExists = true,
                     Title = "Choose any file in folder:", FileName = "Folder Selection." })
                     if (ofd.ShowDialog() == DialogResult.OK) Return = Path.GetDirectoryName(ofd.FileName);

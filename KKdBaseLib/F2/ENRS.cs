@@ -1,88 +1,90 @@
 ﻿namespace KKdBaseLib.F2
 {
-    public struct ENRSList : INull
+    public struct ENRS : INull
     {
-        public KKdList<ENRS> List;
+        public ENRSEntry[] Array;
 
         public int Length => length();
 
-        public bool  IsNull => List. IsNull;
-        public bool NotNull => List.NotNull;
+        public bool  IsNull => Array == null;
+        public bool NotNull => Array != null;
 
-        public unsafe static ENRSList Read(byte[] data)
+        public unsafe void Read(byte[] data)
         {
-            if (data == null || data.Length < 0x10) return default;
-            byte* ptr = data.GetPtr();
-            int i, i0;
-            int ENRSCount = ((int*)ptr)[1];
-            KKdList<ENRS> list = KKdList<ENRS>.New;
-            ptr += 0x10;
-            ENRS enrs;
-            ENRS.SubENRS sub;
-
-            for (i = 0; i < ENRSCount; i++)
+            if (data == null || data.Length < 0x10) return;
+            fixed (byte* ptr = data)
             {
-                enrs = default;
-                enrs.Offset = ReadENRSValue(ref ptr);
-                enrs.Count  = ReadENRSValue(ref ptr);
-                enrs.Size   = ReadENRSValue(ref ptr);
-                enrs.Repeat = ReadENRSValue(ref ptr);
+                int i, i0;
+                int ENRSCount = ((int*)ptr)[1];
+                ENRSEntry enrsEntry;
+                ENRSEntry.SubENRSEntry sub;
+                Array = new ENRSEntry[ENRSCount];
 
-                if (i > 0) enrs.Offset += list[list.Count - 1].Offset;
-
-                if (enrs.Repeat < 1) { enrs.Sub = null; list.Add(enrs); continue; }
-
-                enrs.Sub = new KKdList<ENRS.SubENRS> { Capacity = enrs.Count };
-                for (i0 = 0; i0 < enrs.Count; i0++)
+                byte* localPtr = ptr + 0x10;
+                for (i = 0; i < ENRSCount; i++)
                 {
-                    sub = default;
-                    sub.Skip    = ReadENRSValue(ref ptr, out sub.Type);
-                    sub.Reverse = ReadENRSValue(ref ptr);
-                    if (i0 > 0) sub.Skip += enrs.Sub[i0 - 1].SizeSkip;
-                    enrs.Sub.Add(sub);
+                    enrsEntry = default;
+                    enrsEntry.Offset = ReadENRSValue(ref localPtr);
+                    enrsEntry.Count  = ReadENRSValue(ref localPtr);
+                    enrsEntry.Size   = ReadENRSValue(ref localPtr);
+                    enrsEntry.Repeat = ReadENRSValue(ref localPtr);
 
-                    if (enrs.Sub[i0].Type == ENRS.Type.Invalid) return default;
+                    if (i > 0) enrsEntry.Offset += Array[i - 1].Offset;
+
+                    if (enrsEntry.Repeat < 1) { enrsEntry.Sub = null; Array[i] = enrsEntry; continue; }
+
+                    enrsEntry.Sub = new ENRSEntry.SubENRSEntry[enrsEntry.Count];
+                    for (i0 = 0; i0 < enrsEntry.Count; i0++)
+                    {
+                        sub = default;
+                        sub.Skip    = ReadENRSValue(ref localPtr, out sub.Type);
+                        sub.Reverse = ReadENRSValue(ref localPtr);
+                        if (i0 > 0) sub.Skip += enrsEntry.Sub[i0 - 1].SizeSkip;
+                        enrsEntry.Sub[i0] = sub;
+
+                        if (enrsEntry.Sub[i0].Type == ENRSEntry.Type.Invalid) { Array = null; return; }
+                    }
+                    Array[i] = enrsEntry;
                 }
-                list.Add(enrs);
             }
-            return new ENRSList { List = list };
         }
 
-        public unsafe static byte[] Write(ENRSList enrsList)
+        public unsafe byte[] Write()
         {
             int i, i0;
             byte[] data;
-            byte* ptr;
 
-            KKdList<ENRS> list = (System.Collections.Generic.List<ENRS>)enrsList.List;
-            if (enrsList.IsNull || enrsList.List.Count < 1) return new byte[0x20];
+            if (IsNull || Array.Length < 1) return new byte[0x20];
 
-            data = new byte[enrsList.Length];
-            ptr  = data.GetPtr();
-            ((int*)ptr)[1] = enrsList.List.Count;
-            ptr += 0x10;
-
-            for (i = 0; i < enrsList.List.Count; i++)
+            data = new byte[Length];
+            fixed (byte* ptr = data)
             {
-                ENRS enrs = enrsList.List[i];
-                WriteENRSValue(ref ptr, i > 0 ? enrs.Offset - enrsList.List[i - 1].Offset : enrs.Offset);
-                WriteENRSValue(ref ptr, enrs.Count );
-                WriteENRSValue(ref ptr, enrs.Size  );
-                WriteENRSValue(ref ptr, enrs.Repeat);
+                ((int*)ptr)[1] = Array.Length;
 
-                if (enrs.Repeat < 1) continue;
-
-                for (i0 = 0; i0 < enrs.Count; i0++)
+                byte* localPtr = ptr + 0x10;
+                for (i = 0; i < Array.Length; i++)
                 {
-                    if (enrs.Sub[i0].Type < ENRS.Type. WORD ||
-                        enrs.Sub[i0].Type > ENRS.Type.QWORD)
-                        return data;
+                    ENRSEntry enrsEntry = Array[i];
+                    WriteENRSValue(ref localPtr, i > 0 ? enrsEntry.Offset -
+                        Array[i - 1].Offset : enrsEntry.Offset);
+                    WriteENRSValue(ref localPtr, enrsEntry.Count > enrsEntry.Sub.Length ?
+                        enrsEntry.Sub.Length : enrsEntry.Count);
+                    WriteENRSValue(ref localPtr, enrsEntry.Size  );
+                    WriteENRSValue(ref localPtr, enrsEntry.Repeat);
 
-                    WriteENRSValue(ref ptr, i0 > 0 ? enrs.Sub[i0].Skip -
-                        enrs.Sub[i0 - 1].SizeSkip : enrs.Sub[i0].Skip, enrs.Sub[i0].Type);
-                    WriteENRSValue(ref ptr, enrs.Sub[i0].Reverse);
+                    if (enrsEntry.Repeat < 1) continue;
+
+                    for (i0 = 0; i0 < enrsEntry.Count && i0 < enrsEntry.Sub.Length; i0++)
+                    {
+                        if (enrsEntry.Sub[i0].Type < ENRSEntry.Type. WORD ||
+                            enrsEntry.Sub[i0].Type > ENRSEntry.Type.QWORD)
+                            return data;
+
+                        WriteENRSValue(ref localPtr, i0 > 0 ? enrsEntry.Sub[i0].Skip -
+                            enrsEntry.Sub[i0 - 1].SizeSkip : enrsEntry.Sub[i0].Skip, enrsEntry.Sub[i0].Type);
+                        WriteENRSValue(ref localPtr, enrsEntry.Sub[i0].Reverse);
+                    }
                 }
-                
             }
             return data;
         }
@@ -91,10 +93,10 @@
         {
             int i, i0;
             int length = 0x10;
-            for (i = 0; i < List.Count; i++)
+            for (i = 0; i < Array.Length; i++)
             {
-                ENRS enrs = List[i];
-                length += GetSize(i > 0 ? enrs.Offset - List[i - 1].Offset : enrs.Offset);
+                ENRSEntry enrs = Array[i];
+                length += GetSize(i > 0 ? enrs.Offset - Array[i - 1].Offset : enrs.Offset);
                 length += GetSize(enrs.Count );
                 length += GetSize(enrs.Size  );
                 length += GetSize(enrs.Repeat);
@@ -103,8 +105,8 @@
 
                 for (i0 = 0; i0 < enrs.Count; i0++)
                 {
-                    if (enrs.Sub[i0].Type < ENRS.Type. WORD ||
-                        enrs.Sub[i0].Type > ENRS.Type.QWORD) return length.A(0x10);
+                    if (enrs.Sub[i0].Type < ENRSEntry.Type. WORD ||
+                        enrs.Sub[i0].Type > ENRSEntry.Type.QWORD) return length.A(0x10);
 
                     length += GetSizeType(i0 > 0 ? enrs.Sub[i0].Skip -
                         enrs.Sub[i0 - 1].SizeSkip : enrs.Sub[i0].Skip);
@@ -114,7 +116,7 @@
             return length.A(0x10);
 
             static int GetSizeType(int val) => val < 0x00000010 ? 1 : val < 0x00001000 ? 2 : 4;
-            static int GetSize    (int val) => val < 0x00000040 ? 1 : val < 0x00004000 ? 2 : 4; 
+            static int GetSize    (int val) => val < 0x00000040 ? 1 : val < 0x00004000 ? 2 : 4;
         }
 
         /*private static KKdList<ENRS.SubENRS> Optimize(KKdList<ENRS.SubENRS> Sub)
@@ -134,41 +136,41 @@
             return Sub;
         }*/
 
-        [System.ThreadStatic] private static ENRS.Value value;
+        [System.ThreadStatic] private static ENRSEntry.Value value;
 
-        private unsafe static int ReadENRSValue(ref byte* ptr, out ENRS.Type type)
+        private unsafe static int ReadENRSValue(ref byte* ptr, out ENRSEntry.Type type)
         {
             int V = *ptr & 0xF;
-             type = (ENRS. Type)((*ptr & 0x30) >> 4);
-            value = (ENRS.Value)((*ptr & 0xC0) >> 6);
+             type = (ENRSEntry. Type)((*ptr & 0x30) >> 4);
+            value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
-                 if (value == ENRS.Value.Int32  )
+                 if (value == ENRSEntry.Value.Int32  )
             { V = (V << 24) | (ptr[0] << 16) | (ptr[1] << 8) | ptr[2]; ptr += 3; }
-            else if (value == ENRS.Value.Int16  )
+            else if (value == ENRSEntry.Value.Int16  )
             { V = (V <<  8) |  ptr[0];                                 ptr += 1; }
-            else if (value == ENRS.Value.Invalid) V = 0;
+            else if (value == ENRSEntry.Value.Invalid) V = 0;
             return V;
         }
 
         private unsafe static int ReadENRSValue(ref byte* ptr)
         {
             int V = *ptr & 0x3F;
-            value = (ENRS.Value)((*ptr & 0xC0) >> 6);
+            value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
-                 if (value == ENRS.Value.Int32  )
+                 if (value == ENRSEntry.Value.Int32  )
             { V = (V << 24) | (ptr[0] << 16) | (ptr[1] << 8) | ptr[2]; ptr += 3; }
-            else if (value == ENRS.Value.Int16  )
+            else if (value == ENRSEntry.Value.Int16  )
             { V = (V <<  8) |  ptr[0];                                 ptr += 1; }
-            else if (value == ENRS.Value.Invalid) V = 0;
+            else if (value == ENRSEntry.Value.Invalid) V = 0;
             return V;
         }
 
-        private unsafe static void WriteENRSValue(ref byte* ptr, int val, ENRS.Type type)
+        private unsafe static void WriteENRSValue(ref byte* ptr, int val, ENRSEntry.Type type)
         {
-            value = ENRS.Value.Invalid;
-                 if (val < 0x00000040) value = ENRS.Value.Int8 ;
-            else if (val < 0x00004000) value = ENRS.Value.Int16;
-            else if (val < 0x40000000) value = ENRS.Value.Int32;
+            value = ENRSEntry.Value.Invalid;
+                 if (val < 0x00000040) value = ENRSEntry.Value.Int8 ;
+            else if (val < 0x00004000) value = ENRSEntry.Value.Int16;
+            else if (val < 0x40000000) value = ENRSEntry.Value.Int32;
             *ptr = (byte)((((byte)value << 6) & 0xC0) | (((byte)type << 4) & 0x30));
 
                  if (val < 0x00000010)
@@ -186,10 +188,10 @@
 
         private unsafe static void WriteENRSValue(ref byte* ptr, int val)
         {
-            value = ENRS.Value.Invalid;
-                 if (val < 0x00000040) value = ENRS.Value.Int8 ;
-            else if (val < 0x00004000) value = ENRS.Value.Int16;
-            else if (val < 0x40000000) value = ENRS.Value.Int32;
+            value = ENRSEntry.Value.Invalid;
+                 if (val < 0x00000040) value = ENRSEntry.Value.Int8 ;
+            else if (val < 0x00004000) value = ENRSEntry.Value.Int16;
+            else if (val < 0x40000000) value = ENRSEntry.Value.Int32;
             *ptr = (byte)(((byte)value << 6) & 0xC0);
 
                  if (val < 0x00000040)
@@ -205,13 +207,13 @@
             ptr++;
         }
 
-        public struct ENRS
+        public struct ENRSEntry
         {
             public int Offset;
             public int Count;
             public int Size;
             public int Repeat;
-            public KKdList<SubENRS> Sub;
+            public SubENRSEntry[] Sub;
 
             public enum Type : byte
             {
@@ -229,7 +231,7 @@
                 Invalid = 0b11,
             }
 
-            public struct SubENRS
+            public struct SubENRSEntry
             {
                 public int Skip;
                 public int Reverse;
@@ -248,6 +250,6 @@
         }
 
         public override string ToString() =>
-            $"{(NotNull ? $"ENRS Count: {List.Count}" : "No ENRS")}";
+            $"{(NotNull ? $"ENRS Count: {Array.Length}" : "No ENRS")}";
     }
 }

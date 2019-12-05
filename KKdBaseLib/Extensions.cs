@@ -70,7 +70,7 @@ namespace KKdBaseLib
         public static float Pow  (this float x   , float y      ) => (float)Math.Pow  (x   , y      );
         public static float Round(this float val ,   int d      ) => (float)Math.Round(val , d      );
 
-        public static void FC( ref double Value) => 
+        public static void FC( ref double Value) =>
             Value = Value % 1 >= 0.5 ? (long)(Value + 0.5) : (long)Value;
 
         public static long FC(this double Value) =>
@@ -89,7 +89,7 @@ namespace KKdBaseLib
             ((value % alignement == 0) ? value : (value + alignement - value % alignement)) / divide;
 
         private static byte[] buf = new  byte[8];
-        
+
         public static byte[] E(this byte[] le, byte len)
         {             for (byte i = 0; i < len; i++) buf[i] = le[i];
             for (byte i = 0; i < len; i++) le[len - i - 1] = buf[i]; return le; }
@@ -206,48 +206,6 @@ namespace KKdBaseLib
         public static string ToString(this     int d, bool BE) =>
             BitConverter.GetBytes(d.E(BE)).ToASCII();
 
-        public static  sbyte* GetPtr(this  sbyte[] array)
-        { fixed ( sbyte* tempPtr = array) return tempPtr; }
-        public static   byte* GetPtr(this   byte[] array)
-        { fixed (  byte* tempPtr = array) return tempPtr; }
-        public static  short* GetPtr(this  short[] array)
-        { fixed ( short* tempPtr = array) return tempPtr; }
-        public static ushort* GetPtr(this ushort[] array)
-        { fixed (ushort* tempPtr = array) return tempPtr; }
-        public static    int* GetPtr(this    int[] array)
-        { fixed (   int* tempPtr = array) return tempPtr; }
-        public static   uint* GetPtr(this   uint[] array)
-        { fixed (  uint* tempPtr = array) return tempPtr; }
-        public static   long* GetPtr(this   long[] array)
-        { fixed (  long* tempPtr = array) return tempPtr; }
-        public static  ulong* GetPtr(this  ulong[] array)
-        { fixed ( ulong* tempPtr = array) return tempPtr; }
-        public static  float* GetPtr(this  float[] array)
-        { fixed ( float* tempPtr = array) return tempPtr; }
-        public static double* GetPtr(this double[] array)
-        { fixed (double* tempPtr = array) return tempPtr; }
-
-        public static IntPtr GetIntPtr(this  sbyte[] array)
-        { fixed ( sbyte* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   byte[] array)
-        { fixed (  byte* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  short[] array)
-        { fixed ( short* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this ushort[] array)
-        { fixed (ushort* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this    int[] array)
-        { fixed (   int* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   uint[] array)
-        { fixed (  uint* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this   long[] array)
-        { fixed (  long* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  ulong[] array)
-        { fixed ( ulong* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this  float[] array)
-        { fixed ( float* tempPtr = array) return (IntPtr)tempPtr; }
-        public static IntPtr GetIntPtr(this double[] array)
-        { fixed (double* tempPtr = array) return (IntPtr)tempPtr; }
-        
         public static string ToS(this  object d)
         {
                  if (d ==   null        ) return "Null";
@@ -286,7 +244,7 @@ namespace KKdBaseLib
             Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
         public static string ToS(this double? d, int round) => (d ?? default).ToS(round);
         public static string ToS(this double? d)            => (d ?? default).ToString();
-        public static string ToS(this double  d, int round) => 
+        public static string ToS(this double  d, int round) =>
             Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
         public static string ToS(this double  d) =>
             Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");

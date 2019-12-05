@@ -97,7 +97,7 @@ namespace KKdMainLib.F2
             public Vector3 Position;
             public Vector3 ToneCurve;
 
-            public override string ToString() => Flags == 0 ? ",,,,,,,,,,,,,,,," : Type + "," +  
+            public override string ToString() => Flags == 0 ? ",,,,,,,,,,,,,,,," : Type + "," +
                 ((Flags & Flags.Ambient  ) == 0 ? ",,,"  : Ambient  .ToString(6) + ",") +
                 ((Flags & Flags.Diffuse  ) == 0 ? ",,,"  : Diffuse  .ToString(6) + ",") +
                 ((Flags & Flags.Specular ) == 0 ? ",,,," : Specular .ToString(6) + ",") +

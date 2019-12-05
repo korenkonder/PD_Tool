@@ -30,20 +30,20 @@ namespace KKdMainLib.IO
           set { if (value && ENRSDict == null)
                     ENRSDict = new ENRSDict(); getENRS = value; } }
 
-        public  int    O { get => ( int)I64O; set => I64O = value; }
-        public uint U32O { get => (uint)I64O; set => I64O = value; }
-        public long I64O;
+        public  int O    { get => ( int)OI64; set => OI64 = value; }
+        public uint OU32 { get => (uint)OI64; set => OI64 = value; }
+        public long OI64;
 
-        public  int    L { get => ( int)s.Length -    O; set => s.SetLength(value +    O); }
-        public uint U32L { get => (uint)s.Length - U32O; set => s.SetLength(value + U32O); }
-        public long I64L { get =>       s.Length - I64O; set => s.SetLength(value + I64O); }
+        public  int L    { get => ( int)s.Length -    O; set => s.SetLength(value +    O); }
+        public uint LU32 { get => (uint)s.Length - OU32; set => s.SetLength(value + OU32); }
+        public long LI64 { get =>       s.Length - OI64; set => s.SetLength(value + OI64); }
 
-        public  int    P
+        public  int P
         { get => ( int)s.Position -    O; set => s.Position = value +     O; }
-        public uint U32P
-        { get => (uint)s.Position - U32O; set => s.Position = value + U32O; }
-        public long I64P
-        { get =>       s.Position - I64O; set => s.Position = value + I64O; }
+        public uint PU32
+        { get => (uint)s.Position - OU32; set => s.Position = value + OU32; }
+        public long PI64
+        { get =>       s.Position - OI64; set => s.Position = value + OI64; }
 
         public bool CanRead    => s.CanRead;
         public bool CanSeek    => s.CanSeek;
@@ -55,7 +55,7 @@ namespace KKdMainLib.IO
         public Stream(MSIO.Stream output = null, bool isBE = false)
         {
             if (output == null) output = MSIO.Stream.Null;
-            I64O = 0;
+            OI64 = 0;
             BitRead = 8;
             ValRead = ValRead = BitWrite = 0;
             s = output;
@@ -72,7 +72,7 @@ namespace KKdMainLib.IO
 
         public long S(long offset, SeekOrigin origin = 0) =>
             s.Seek(offset + O, (MSIO.SeekOrigin)(int)origin);
-        
+
         public long? S(long? offset, SeekOrigin origin)
         { if (offset == null) return null;
             return s.Seek((long)offset + O, (MSIO.SeekOrigin)(int)origin); }
@@ -122,7 +122,7 @@ namespace KKdMainLib.IO
         public  ulong RU64() { s.Read(b, 0, 8); return b.TU64(); }
         public  float RF32() { s.Read(b, 0, 4); return b.TF32(); }
         public double RF64() { s.Read(b, 0, 8); return b.TF64(); }
-        
+
         public  short RI16E() { s.Read(b, 0, 2); b.E(2, IsBE); return b.TI16(); }
         public ushort RU16E() { s.Read(b, 0, 2); b.E(2, IsBE); return b.TU16(); }
         public    int RI32E() { s.Read(b, 0, 4); b.E(4, IsBE); return b.TI32(); }
@@ -177,7 +177,7 @@ namespace KKdMainLib.IO
             W(UTF8 ? val.ToString().ToUTF8() : val.ToString().ToASCII());
         public void W(string val, bool UTF8 = true) =>
             W(UTF8 ? val           .ToUTF8() : val           .ToASCII());
-        
+
         public void WE( short val) { b.GBy(val); b.E(2, IsBE); s.Write(b, 0, 2); }
         public void WE(ushort val) { b.GBy(val); b.E(2, IsBE); s.Write(b, 0, 2); }
         public void WE(   int val) { b.GBy(val); b.E(4, IsBE); s.Write(b, 0, 4); }
@@ -198,7 +198,7 @@ namespace KKdMainLib.IO
 
         private void RENRS(byte[] b, int c)
         { if (getENRS) ENRSDict.Add(P, c); s.Read(b, 0, c); }
-        
+
         public  short RI16ENRS() { RENRS(b, 2); return b.TI16(); }
         public ushort RU16ENRS() { RENRS(b, 2); return b.TU16(); }
         public    int RI32ENRS() { RENRS(b, 4); return b.TI32(); }
@@ -207,7 +207,7 @@ namespace KKdMainLib.IO
         public  ulong RU64ENRS() { RENRS(b, 8); return b.TU64(); }
         public  float RF32ENRS() { RENRS(b, 4); return b.TF32(); }
         public double RF64ENRS() { RENRS(b, 8); return b.TF64(); }
-        
+
         public  short RI16ENRSE() { RENRS(b, 2); b.E(2, IsBE); return b.TI16(); }
         public ushort RU16ENRSE() { RENRS(b, 2); b.E(2, IsBE); return b.TU16(); }
         public    int RI32ENRSE() { RENRS(b, 4); b.E(4, IsBE); return b.TI32(); }
@@ -216,7 +216,7 @@ namespace KKdMainLib.IO
         public  ulong RU64ENRSE() { RENRS(b, 8); b.E(8, IsBE); return b.TU64(); }
         public  float RF32ENRSE() { RENRS(b, 4); b.E(4, IsBE); return b.TF32(); }
         public double RF64ENRSE() { RENRS(b, 8); b.E(8, IsBE); return b.TF64(); }
-        
+
         public  short RI16ENRSE(bool isBE) { RENRS(b, 2); b.E(2, isBE); return b.TI16(); }
         public ushort RU16ENRSE(bool isBE) { RENRS(b, 2); b.E(2, isBE); return b.TU16(); }
         public    int RI32ENRSE(bool isBE) { RENRS(b, 4); b.E(4, isBE); return b.TI32(); }
@@ -237,7 +237,7 @@ namespace KKdMainLib.IO
         public void WENRS( ulong val) { b.GBy(val); WENRS(b, 8); }
         public void WENRS( float val) { b.GBy(val); WENRS(b, 4); }
         public void WENRS(double val) { b.GBy(val); WENRS(b, 8); }
-        
+
         public void WENRSE( short val) { b.GBy(val); b.E(2, IsBE); WENRS(b, 2); }
         public void WENRSE(ushort val) { b.GBy(val); b.E(2, IsBE); WENRS(b, 2); }
         public void WENRSE(   int val) { b.GBy(val); b.E(4, IsBE); WENRS(b, 4); }
@@ -246,7 +246,7 @@ namespace KKdMainLib.IO
         public void WENRSE( ulong val) { b.GBy(val); b.E(8, IsBE); WENRS(b, 8); }
         public void WENRSE( float val) { b.GBy(val); b.E(4, IsBE); WENRS(b, 4); }
         public void WENRSE(double val) { b.GBy(val); b.E(8, IsBE); WENRS(b, 8); }
-        
+
         public void WENRSE( short val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS(b, 2); }
         public void WENRSE(ushort val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS(b, 2); }
         public void WENRSE(   int val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS(b, 4); }
@@ -269,7 +269,7 @@ namespace KKdMainLib.IO
         public void WENRS (Half val           ) => WENRS ((ushort)val      );
         public void WENRSE(Half val           ) => WENRSE((ushort)val      );
         public void WENRSE(Half val, bool isBE) => WENRSE((ushort)val, isBE);
-        
+
         public char RC(bool UTF8 = true) => UTF8 ? RCUTF8() : (char)s.ReadByte();
 
         public char RCUTF8()
@@ -298,18 +298,18 @@ namespace KKdMainLib.IO
 
         public string RSUTF8 (long Length) => RBy(Length).ToUTF8 ();
         public string RSASCII(long Length) => RBy(Length).ToASCII();
-        
-        
+
+
         public string RS(long? Length, bool UTF8 = true) =>
             UTF8 ? RSUTF8(Length) : RSASCII(Length);
 
         public string RSUTF8 (long? Length) => RBy(Length).ToUTF8 ();
         public string RSASCII(long? Length) => RBy(Length).ToASCII();
-        
+
         public byte[] RBy(long Length, int Offset = -1)
         { byte[] Buf = new byte[Length]; if (Offset > -1) s.Position = Offset;
             s.Read(Buf, 0, (int)Length); return Buf; }
-        
+
         public void RBy(long Length, byte[] Buf, long Offset = -1)
         { if (Offset > -1) s.Position = Offset; s.Read(Buf, 0, (int)Length); }
 
@@ -319,7 +319,7 @@ namespace KKdMainLib.IO
         public void RBy(long  Length, byte Bits, byte[] Buf, long Offset = -1)
         { if (Offset > -1) s.Seek(Offset, 0);
                  if (Bits > 0 && Bits < 8) for (i = 0; i < Length; i++) Buf[i] = RBi(Bits); CR(); }
-           
+
         public byte RBi(byte Bits)
         {
             BitRead += Bits;
@@ -334,7 +334,7 @@ namespace KKdMainLib.IO
         }
 
         public byte RHB() => RBi(4);
-        
+
         public void W(int val, byte Bits)
         {
             val &= (1 << Bits) - 1;

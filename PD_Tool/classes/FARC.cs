@@ -22,16 +22,16 @@ namespace PD_Tool
                     }
                 return;
             }
-            
+
             string file = Program.Choose(2, "", out string[] fileNames);
             Console.Clear();
             if (file == null || file == "") return;
             Console.Title = "FARC Creator";
-                
+
             using (KKdFARC farc = new KKdFARC(file, true))
             {
                 Console.Title = "FARC Creator: " + Path.GetDirectoryName(file);
-                
+
                 Program.ConsoleDesign(true);
                 Program.ConsoleDesign("         Choose type of created FARC:");
                 Program.ConsoleDesign(false);
@@ -50,8 +50,8 @@ namespace PD_Tool
                 else if (choose == "3" || choose == "4")
                 {
                     farc.Signature = KKdFARC.Farc.FARC;
-                    
-                    Console.WriteLine();
+
+                    Console.Clear();
                     Program.ConsoleDesign(true);
                     Program.ConsoleDesign("             Choose type of FARC:");
                     Program.ConsoleDesign(false);

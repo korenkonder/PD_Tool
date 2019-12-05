@@ -96,7 +96,7 @@ namespace KKdMainLib.IO
             msgPack.Object = _IO.RBy(Length);
             return true;
         }
-        
+
         private bool RS(ref MsgPack msgPack, ref Types type)
         {
             string val = RS(type);
@@ -153,7 +153,7 @@ namespace KKdMainLib.IO
         private bool RE(ref MsgPack MsgPack, ref Types type)
         {
             int Length = 0;
-                 if (type == Types.FixExt1 ) Length = 1 ; 
+                 if (type == Types.FixExt1 ) Length = 1 ;
             else if (type == Types.FixExt2 ) Length = 2 ;
             else if (type == Types.FixExt4 ) Length = 4 ;
             else if (type == Types.FixExt8 ) Length = 8 ;
@@ -165,7 +165,7 @@ namespace KKdMainLib.IO
             MsgPack.Object = new MsgPack.Ext { Type = _IO.RI8(), Data = _IO.RBy(Length) };
             return true;
         }
-        
+
         public MP W(MsgPack msgPack, bool IsArray = false)
         {
             if   (msgPack.Name != null && !IsArray) W(msgPack.Name);
@@ -235,7 +235,7 @@ namespace KKdMainLib.IO
             else                           { _IO.W(0xC6); _IO.WE(        val.Length, true); }
             _IO.W(val);
         }
-        
+
         private void W(string val)
         {
             if (val == null) { WN(); return; }
@@ -257,7 +257,7 @@ namespace KKdMainLib.IO
             else if (val < 0x10000) { _IO.W(0xDC); _IO.WE((ushort)val, true); }
             else                    { _IO.W(0xDD); _IO.WE(        val, true); }
         }
-                
+
         private void WM(int val)
         {
                  if (val ==      0) { WN(); return; }

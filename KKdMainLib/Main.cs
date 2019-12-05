@@ -25,7 +25,7 @@ namespace KKdMainLib
             else           Console.Write    (TimeFormatHHmmssfff + " - " + Text,
                     time.Hours, time.Minutes, time.Seconds, time.Milliseconds);
         }
-        
+
         public static string NullTerminated(this string source, ref int i, byte end)
         {
             string s = "";
@@ -148,7 +148,7 @@ namespace KKdMainLib
             value = (string)dict[args[0]];
             return true;
         }
-        
+
         public static void GetDictionary(this Dictionary<string, object> dict,
             string args, string value, char split = '.') =>
             dict.GetDictionary(args.Split(split), value);
@@ -180,7 +180,7 @@ namespace KKdMainLib
         }
 
         public static TKey GetKey<TKey, TVal>(this Dictionary<TKey, TVal> dict, TVal val) =>
-            dict.First((KeyValuePair<TKey, TVal> x) => x.Value.Equals(val)).Key;
+            dict.First((System.Collections.Generic.KeyValuePair<TKey, TVal> x) => x.Value.Equals(val)).Key;
 
         public static string ToTitleCase(this string s)
         { return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s); }

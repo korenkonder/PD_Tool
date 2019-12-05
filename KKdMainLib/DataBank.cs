@@ -63,7 +63,7 @@ namespace KKdMainLib
                             (i < pvList.Length ? c : "")));
                 else _IO.W("%2A%2A%2A");
             }
-             
+
             byte[] data = _IO.ToArray(true);
             ushort num = DCC.CalculateChecksum(data);
             File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
@@ -101,7 +101,7 @@ namespace KKdMainLib
                 Success = true;
                 pvList.Dispose();
             }
-            
+
             msgPack.Dispose();
         }
 

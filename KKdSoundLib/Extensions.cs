@@ -52,7 +52,7 @@ namespace KKdSoundLib
                 _IO.S(Offset + 0x14, 0);
                 if (_IO.RS(4) != "data") return Header;
                 Header.Size = _IO.RU32();
-                Header.HeaderSize = _IO.U32P;
+                Header.HeaderSize = _IO.PU32;
                 Header.IsSupported = true;
                 return Header;
             }
@@ -73,7 +73,7 @@ namespace KKdSoundLib
             _IO.W("fmt ");
             if (Header.Format != 0xFFFE) _IO.W(0x10);
             else                         _IO.W(0x28);
-            
+
             _IO.W(Header.Format);
             _IO.W((short)Header.Channels);
             _IO.W(Header.SampleRate);

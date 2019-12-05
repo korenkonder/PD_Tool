@@ -6,7 +6,7 @@ namespace KKdBaseLib
     {
         public string Name;
         public object Object;
-        
+
         public         MsgPack[] Array => Object is         MsgPack[] Array ? Array :    null;
         public KKdList<MsgPack>   List => Object is KKdList<MsgPack>   List ?  List : default;
 
@@ -43,7 +43,7 @@ namespace KKdBaseLib
         {   get { if (!array) return this[key];
                 if (Object is KKdList<MsgPack> List) { MsgPack MsgPack = List[ElementIndex(key)];
                     return MsgPack.Object is MsgPack[] ? MsgPack : default; } return default; } }
-        
+
         public MsgPack Add(MsgPack obj)
         { if (Object is KKdList<MsgPack> List && obj.Object != null) { List.Add(obj); Object = List; } return this; }
 
@@ -69,7 +69,7 @@ namespace KKdBaseLib
         public static implicit operator MsgPack( ulong val) => new MsgPack(null, val);
         public static implicit operator MsgPack( float val) => new MsgPack(null, val);
         public static implicit operator MsgPack(double val) => new MsgPack(null, val);
-        
+
         public MsgPack Add(  bool? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
         public MsgPack Add( sbyte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
         public MsgPack Add(  byte? val) => val.HasValue ? Add(new MsgPack(null, val.Value)) : this;
@@ -95,7 +95,7 @@ namespace KKdBaseLib
         public MsgPack Add( ulong  val) => Add(new MsgPack(null, val));
         public MsgPack Add( float  val) => Add(new MsgPack(null, val));
         public MsgPack Add(double  val) => Add(new MsgPack(null, val));
-        
+
         public MsgPack Add(string Val,   bool? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,  sbyte? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,   byte? val) => val.HasValue ? Add(Val, val.Value) : this;
@@ -107,7 +107,7 @@ namespace KKdBaseLib
         public MsgPack Add(string Val,  ulong? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val,  float? val) => val.HasValue ? Add(Val, val.Value) : this;
         public MsgPack Add(string Val, double? val) => val.HasValue ? Add(Val, val.Value) : this;
-        
+
         public MsgPack Add(string Val, byte[] val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val, string val) => Add(new MsgPack(Val, val));
         public MsgPack Add(string Val,   bool val) => Add(new MsgPack(Val, val));
@@ -253,7 +253,7 @@ namespace KKdBaseLib
         public  ulong RU64() => RnU64() ?? default;
         public  float RF32() => RnF32() ?? default;
         public double RF64() => RnF64() ?? default;
-        
+
         public   bool? RnB  ()
         {        if (Object is   bool B  ) return         B  ; return null; }
         public  sbyte? RnI8 ()
