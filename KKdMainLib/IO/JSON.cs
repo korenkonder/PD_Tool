@@ -113,7 +113,7 @@ namespace KKdMainLib.IO
             KKdList<MsgPack> obj = KKdList<MsgPack>.New;
             if (!Extensions.As(_IO, '[')) return null;
             if (_IO.SW().PCUTF8() == ']')
-            { _IO.RCUTF8(); return null; }
+            { _IO.RCUTF8(); return obj.ToArray(); }
 
             char c;
             while (true)

@@ -21,7 +21,7 @@ namespace KKdBaseLib
         { Object = KKdList<MsgPack>.New; this.Name = Name; }
 
         public MsgPack(long Count, string Name = null)
-        { Object = Count > 0 ? new MsgPack[Count] : null; this.Name = Name; }
+        { Object = Count > -1 ? new MsgPack[Count] : null; this.Name = Name; }
 
         public MsgPack(string Name, object Object)
         { this.Name = Name; this.Object = Object; }

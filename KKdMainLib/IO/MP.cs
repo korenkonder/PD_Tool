@@ -196,7 +196,7 @@ namespace KKdMainLib.IO
                 case       float val: W(val); break;
                 case      double val: W(val); break;
                 case      string val: W(val); break;
-                case MsgPack.Ext val: WE(val); break;
+                case MsgPack.Ext val: W(val); break;
             }
         }
 
@@ -265,6 +265,8 @@ namespace KKdMainLib.IO
             else if (val < 0x10000) { _IO.W(0xDE); _IO.WE((ushort)val, true); }
             else                    { _IO.W(0xDF); _IO.WE(        val, true); }
         }
+
+        private void W(MsgPack.Ext val) => WE(val);
 
         private void WE(MsgPack.Ext val)
         {

@@ -1,6 +1,6 @@
 ﻿using System;
 using KKdMainLib.IO;
-using KKdAet = KKdMainLib.Aet.Aet;
+using KKdAet = KKdMainLib.Aet;
 
 namespace PD_Tool
 {

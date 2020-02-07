@@ -1,6 +1,6 @@
-﻿namespace KKdBaseLib.A3DA
+﻿namespace KKdBaseLib.Auth3D
 {
-    public struct A3DAData
+    public struct Data
     {
         public string[] Motion;
         public string[] ObjectList;
@@ -284,7 +284,7 @@
 
     public struct ObjectHRC
     {
-        public float? Shadow;
+        public int? Shadow;
         public string Name;
         public string UIDName;
         public Node[] Node;
@@ -293,11 +293,11 @@
 
     public struct PlayControl
     {
-        public float? Begin;
-        public float? Div;
-        public float? FPS;
-        public float? Offset;
-        public float? Size;
+        public int? Begin;
+        public int? Div;
+        public int? FPS;
+        public int? Offset;
+        public int? Size;
     }
 
     public struct PostProcess

@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using KKdBaseLib;
 using KKdBaseLib.F2;
-using KKdBaseLib.A3DA;
+using KKdBaseLib.Auth3D;
 using KKdMainLib.IO;
-using Extensions = KKdBaseLib.Extensions;
-using Object = KKdBaseLib.A3DA.Object;
+using Object = KKdBaseLib.Auth3D.Object;
+using A3DADict = System.Collections.Generic.Dictionary<string, object>;
+using UsedDict = System.Collections.Generic.Dictionary<  int?, float?>;
 
 namespace KKdMainLib
 {
     public struct A3DA : IDisposable
     {
-        public A3DAData Data;
+        public Data Data;
         public A3DAHeader Head;
 
         private Stream _IO;
@@ -28,8 +28,8 @@ namespace KKdMainLib
         private string nameView;
         private string value;
         private string[] dataArray;
-        private Dictionary<int?, float?> usedValues;
-        private Dictionary<string, object> dict;
+        private A3DADict dict;
+        private UsedDict usedValues;
 
         private const string d = ".";
         private const string BO = "bin_offset";
@@ -56,8 +56,8 @@ namespace KKdMainLib
             name = "";
             nameView = "";
             dataArray = new string[4];
-            dict = new Dictionary<string, object>();
-            Data = new A3DAData();
+            dict = new A3DADict();
+            Data = new Data();
             Head = new A3DAHeader();
             Header header = new Header();
 
@@ -98,13 +98,9 @@ namespace KKdMainLib
             if (header.Format == Format.DT)
                 Head.StringLength = _IO.L - 0x10;
 
-            string[] strData = _IO.RS(Head.StringLength).Replace("\r", "").Split('\n');
+            string[] strData = _IO.RS(Head.StringLength).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             for (i = 0; i < strData.Length; i++)
-            {
-                dataArray = strData[i].Split('=');
-                if (dataArray.Length == 2)
-                    dict.GetDictionary(dataArray[0], dataArray[1]);
-            }
+                dict.GetDictionary(strData[i]);
             strData = null;
 
             A3DAReader();
@@ -123,6 +119,7 @@ namespace KKdMainLib
             name = "";
             nameView = "";
             dataArray = null;
+            dict.Clear();
             dict = null;
             return 1;
         }
@@ -741,10 +738,10 @@ namespace KKdMainLib
                     name = "material_list" + d + soi0 + d;
                     ref MaterialList ml = ref Data.MaterialList[soi0];
 
-                    W(ref ml.BlendColor   , name + "blend_color"    + d);
-                    W(ref ml.GlowIntensity, name + "glow_intensity" + d);
+                    W(ref ml.BlendColor   , name + "blend_color"   );
+                    W(ref ml.GlowIntensity, name + "glow_intensity");
                     W(name + "hash_name=", ml.HashName);
-                    W(ref ml.Incandescence, name + "incandescence"  + d);
+                    W(ref ml.Incandescence, name + "incandescence" );
                     W(name +      "name=", ml.    Name);
                 }
                 W("material_list.length=", Data.MaterialList.Length);
@@ -1015,15 +1012,16 @@ namespace KKdMainLib
 
         private void W(ref ModelTransform mt, string str, byte flags = 0b11111)
         {
-            if (a3dc && !mt.Writed && (flags & 0b10000) == 0b10000)
+            if (a3dc && !mt.Writed && (flags & 0b10000) != 0)
             { W(str + MTBO + "=", mt.BinOffset); mt.Writed = true; }
 
-            if (a3dc && Head.Format != Format.X && Head.Format != Format.XHD) return;
-
-            if ((flags & 0b01000) == 0b01000) W(ref mt.Rot       , str + "rot"        + d);
-            if ((flags & 0b00100) == 0b00100) W(ref mt.Scale     , str + "scale"      + d);
-            if ((flags & 0b00010) == 0b00010) W(ref mt.Trans     , str + "trans"      + d);
-            if ((flags & 0b00001) == 0b00001) W(ref mt.Visibility, str + "visibility" + d);
+            if (!a3dc)
+            {
+                if ((flags & 0b01000) != 0) W(ref mt.Rot       , str + "rot"        + d);
+                if ((flags & 0b00100) != 0) W(ref mt.Scale     , str + "scale"      + d);
+                if ((flags & 0b00010) != 0) W(ref mt.Trans     , str + "trans"      + d);
+                if ((flags & 0b00001) != 0) W(ref mt.Visibility, str + "visibility" + d);
+            }
         }
 
         private void W(ref Vector4<Key> rgba, string str)
@@ -1260,7 +1258,7 @@ namespace KKdMainLib
 
         public byte[] A3DCWriter()
         {
-            if (a3dcOpt) usedValues = new Dictionary<int?, float?>();
+            if (a3dcOpt) usedValues = new UsedDict();
             if (Head.Format < Format.F2LE) Data._.CompressF16 = null;
 
             _IO = File.OpenWriter();
@@ -1404,9 +1402,9 @@ namespace KKdMainLib
                 if (Data.MaterialList != null && (Head.Format == Format.X || Head.Format == Format.XHD))
                     for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                     {
-                        W(ref Data.MaterialList[so0[i0]].BlendColor   );
-                        W(ref Data.MaterialList[so0[i0]].GlowIntensity);
-                        W(ref Data.MaterialList[so0[i0]].Incandescence);
+                        W(ref Data.MaterialList[i0].BlendColor   );
+                        W(ref Data.MaterialList[i0].GlowIntensity);
+                        W(ref Data.MaterialList[i0].Incandescence);
                     }
 
                 if (Data.Object != null)
@@ -1637,7 +1635,7 @@ namespace KKdMainLib
             }
         }
 
-        public void A3DAMerger(ref A3DAData mData)
+        public void A3DAMerger(ref Data mData)
         {
             if (Data.Ambient != null && mData.Ambient != null)
                 for (i0 = 0; i0 < Data.Ambient.Length && i0 < mData.Ambient.Length; i0++)
@@ -1681,7 +1679,7 @@ namespace KKdMainLib
             if (Data.DOF != null && mData.DOF != null)
             {
                 DOF mDOF = mData.DOF.Value;
-                DOF dof = Data.DOF.Value;
+                DOF  dof =  Data.DOF.Value;
                 MMT(ref dof.MT, ref mDOF.MT);
                 Data.DOF = dof;
                 mData.DOF = mDOF;
@@ -1715,7 +1713,7 @@ namespace KKdMainLib
                     if (Data.MObjectHRC[i0].Instances != null && mData.MObjectHRC[i0].Instances != null)
                     {
                         ref MObjectHRC.Instance[] mI = ref mData.MObjectHRC[i0].Instances;
-                        ref MObjectHRC.Instance[] i = ref Data.MObjectHRC[i0].Instances;
+                        ref MObjectHRC.Instance[]  i = ref  Data.MObjectHRC[i0].Instances;
                         for (i1 = 0; i1 < i.Length && i1 < mI.Length; i1++)
                             MMT(ref i[i1].MT, ref mI[i1].MT);
                     }
@@ -1723,7 +1721,7 @@ namespace KKdMainLib
                     if (Data.MObjectHRC[i0].Node != null && mData.MObjectHRC[i0].Node != null)
                     {
                         ref Node[] mN = ref mData.MObjectHRC[i0].Node;
-                        ref Node[] n = ref Data.MObjectHRC[i0].Node;
+                        ref Node[]  n = ref  Data.MObjectHRC[i0].Node;
                         for (i1 = 0; i1 < n.Length && i1 < mN.Length; i1++)
                             MMT(ref n[i1].MT, ref mN[i1].MT);
                     }
@@ -1733,7 +1731,7 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
                     ref MaterialList mML = ref mData.MaterialList[i0];
-                    ref MaterialList ml = ref Data.MaterialList[i0];
+                    ref MaterialList  ml = ref  Data.MaterialList[i0];
                     MRGBAK(ref ml.BlendColor   , ref mML.BlendColor   );
                     MK    (ref ml.GlowIntensity, ref mML.GlowIntensity);
                     MRGBAK(ref ml.Incandescence, ref mML.Incandescence);
@@ -1748,7 +1746,7 @@ namespace KKdMainLib
                             i1 < mData.Object[i0].TexTrans.Length; i1++)
                         {
                             ref Object.TextureTransform mTT = ref mData.Object[i0].TexTrans[i1];
-                            ref Object.TextureTransform tt = ref Data.Object[i0].TexTrans[i1];
+                            ref Object.TextureTransform  tt = ref  Data.Object[i0].TexTrans[i1];
                             MKUV(ref tt.Coverage      , ref mTT.Coverage      );
                             MKUV(ref tt.Offset        , ref mTT.Offset        );
                             MKUV(ref tt.Repeat        , ref mTT.Repeat        );
@@ -1763,7 +1761,7 @@ namespace KKdMainLib
                     if (Data.ObjectHRC[i0].Node != null && mData.ObjectHRC[i0].Node != null)
                     {
                         ref Node[] mN = ref mData.ObjectHRC[i0].Node;
-                        ref Node[] n = ref Data.ObjectHRC[i0].Node;
+                        ref Node[]  n = ref  Data.ObjectHRC[i0].Node;
                         for (i1 = 0; i1 < n.Length && i1 < mN.Length; i1++)
                             MMT(ref n[i1].MT, ref mN[i1].MT);
                     }
@@ -1776,7 +1774,7 @@ namespace KKdMainLib
             if (Data.PostProcess != null && mData.PostProcess != null)
             {
                 PostProcess mPP = mData.PostProcess.Value;
-                PostProcess pp = Data.PostProcess.Value;
+                PostProcess  pp =  Data.PostProcess.Value;
                 MRGBAK(ref pp.Ambient  , ref mPP.Ambient  );
                 MRGBAK(ref pp.Diffuse  , ref mPP.Diffuse  );
                 MRGBAK(ref pp.Specular , ref mPP.Specular );
@@ -2126,7 +2124,7 @@ namespace KKdMainLib
                     Data.ObjectHRC[i0] = new ObjectHRC
                     {
                            Name = temp[i0].RS   (   "Name"),
-                         Shadow = temp[i0].RnF32( "Shadow"),
+                         Shadow = temp[i0].RnI32( "Shadow"),
                         UIDName = temp[i0].RS   ("UIDName"),
                     };
 
@@ -2169,11 +2167,11 @@ namespace KKdMainLib
             if ((temp = a3d["PlayControl"]).NotNull)
                 Data.PlayControl = new PlayControl
                 {
-                    Begin  = temp.RnF32("Begin" ),
-                    Div    = temp.RnF32("Div"   ),
-                    FPS    = temp.RnF32("FPS"   ),
-                    Offset = temp.RnF32("Offset"),
-                    Size   = temp.RnF32("Size"  ),
+                    Begin  = temp.RnI32("Begin" ),
+                    Div    = temp.RnI32("Div"   ),
+                    FPS    = temp.RnI32("FPS"   ),
+                    Offset = temp.RnI32("Offset"),
+                    Size   = temp.RnI32("Size"  ),
                 };
 
             if ((temp = a3d["Point", true]).NotNull)

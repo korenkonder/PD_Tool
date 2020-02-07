@@ -62,5 +62,29 @@ namespace KKdBaseLib
                 result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }
+
+        public static unsafe ushort CalculateChecksum(byte* data, int length)
+        {
+            ushort result = 0xFFFF;
+            for (int i = 0; i < length; i++)
+                result = (ushort)(ChecksumLookupTable[(result >> 8) ^ data[i]] ^ (result << 8));
+            return result;
+        }
+
+        public static unsafe uint CalculateChecksumUInt(byte* data, int length)
+        {
+            uint result = 0xFFFFFFFF;
+            for (int i = 0; i < length; i++)
+                result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
+            return result;
+        }
+
+        public static unsafe ulong CalculateChecksumULong(byte* data, int length)
+        {
+            ulong result = 0xFFFFFFFFFFFFFFFF;
+            for (int i = 0; i < length; i++)
+                result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
+            return result;
+        }
     }
 }

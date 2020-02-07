@@ -3,6 +3,7 @@ using System.Linq;
 using System.Globalization;
 using System.Collections.Generic;
 using KKdBaseLib;
+using A3DADict = System.Collections.Generic.Dictionary<string, object>;
 
 namespace KKdMainLib
 {
@@ -38,14 +39,12 @@ namespace KKdMainLib
             return s;
         }
 
-        public static bool StartsWith(this Dictionary<string, object> dict, string args, char split = '.') =>
+        public static bool StartsWith(this A3DADict dict, string args, char split = '.') =>
             dict.StartsWith(args.Split(split));
 
-        public static bool StartsWith(this Dictionary<string, object> dict, string[] args)
+        public static bool StartsWith(this A3DADict dict, string[] args)
         {
-            Dictionary<string, object> bufDict = new Dictionary<string, object>();
-                 if (dict == null)    return false;
-            else if (args.Length < 1) return false;
+            if (dict == null || args.Length < 1) return false;
 
             args[0] = args[0].ToLower();
             if (args.Length > 1)
@@ -53,82 +52,64 @@ namespace KKdMainLib
                 string[] newArgs = new string[args.Length - 1];
                 for (int i = 0; i < args.Length - 1; i++)
                     newArgs[i] = args[i + 1];
-                if (!dict.ContainsKey(args[0]))
-                    return false;
-                bufDict = (Dictionary<string, object>)dict[args[0]];
-                return StartsWith(bufDict, newArgs);
+                return dict.ContainsKey(args[0]) ? StartsWith((A3DADict)dict[args[0]], newArgs) : false;
             }
             return dict.ContainsKey(args[0]);
         }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            ref   bool value, char split, string args) =>
+        public static bool FindValue(this A3DADict dict, ref   bool value, char split, string args) =>
             dict.FindValue(out string val, args.Split(split)) ? bool.TryParse(val, out value) : false;
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            ref    int value, char split, string args) =>
+        public static bool FindValue(this A3DADict dict, ref    int value, char split, string args) =>
             dict.FindValue(out string val, args.Split(split)) ?  int.TryParse(val, out value) : false;
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            ref  float value, char split, string args) =>
+        public static bool FindValue(this A3DADict dict, ref  float value, char split, string args) =>
             dict.FindValue(out string val, args.Split(split)) ?  val.ToF32(     out value) : false;
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            ref double value, char split, string args) =>
+        public static bool FindValue(this A3DADict dict, ref double value, char split, string args) =>
             dict.FindValue(out string val, args.Split(split)) ?  val.ToF64(     out value) : false;
 
-        public static bool FindValue(this Dictionary<string, object> Dict,
-            ref string value, char split, string args)
-        { if (Dict.FindValue(out string val, args.Split(split)))
+        public static bool FindValue(this A3DADict dict, ref string value, char split, string args)
+        { if (dict.FindValue(out string val, args.Split(split)))
                            { value = val;             return true; } return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out   bool  value, string   args)
+        public static bool FindValue(this A3DADict dict, out   bool  value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
                 return bool.TryParse(val, out value); value = false; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> Dict,
-            out    int  value, string   args)
-        { if (Dict.FindValue(out string val, args.Split('.'  )))
+        public static bool FindValue(this A3DADict dict, out    int  value, string   args)
+        { if (dict.FindValue(out string val, args.Split('.'  )))
                 return  int.TryParse(val, out value); value =     0; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out  float  value, string   args)
+        public static bool FindValue(this A3DADict dict, out  float  value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
                 return       val.ToF32(out value); value =     0; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out double  value, string   args)
+        public static bool FindValue(this A3DADict dict, out double  value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
                 return       val.ToF64(out value); value =     0; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out    int? value, string   args)
+        public static bool FindValue(this A3DADict dict, out    int? value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
             { bool Val =  int.TryParse(val, out int _value);
                 value = _value; return Val; }         value =  null; return false; }
-
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out  float? value, string   args)
+        
+        public static bool FindValue(this A3DADict dict, out  float? value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
                 return       val.ToF32(out value); value =  null; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out double? value, string   args)
+        public static bool FindValue(this A3DADict dict, out double? value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
                 return       val.ToF64(out value); value =  null; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out string  value, string   args)
+        public static bool FindValue(this A3DADict dict, out string  value, string   args)
         { if (dict.FindValue(out string val, args.Split('.'  )))
               { value = val;           return true; } value =  null; return false; }
 
-        public static bool FindValue(this Dictionary<string, object> dict,
-            out string  value, string[] args)
+        public static bool FindValue(this A3DADict dict, out string  value, string[] args)
         {
             value = "";
-                 if (dict == null)    return false;
-            else if (args.Length < 1) return false;
+            if (dict == null || args.Length < 1) return false;
 
             args[0] = args[0].ToLower();
                  if (!dict.ContainsKey(args[0])) return false;
@@ -136,12 +117,12 @@ namespace KKdMainLib
             {
                 string[] newArgs = new string[args.Length - 1];
                 for (int i = 0; i < args.Length - 1; i++) newArgs[i] = args[i + 1];
-                return ((Dictionary<string, object>)dict[args[0]]).FindValue(out value, newArgs);
+                return ((A3DADict)dict[args[0]]).FindValue(out value, newArgs);
             }
             else if (args.Length == 1)
             {
                 if (dict[args[0]].GetType() == dict.GetType())
-                    return ((Dictionary<string, object>)dict[args[0]]).FindValue(out value, args);
+                    return ((A3DADict)dict[args[0]]).FindValue(out value, args);
                 else if (dict[args[0]].GetType() != typeof(string)) return false;
             }
 
@@ -149,15 +130,20 @@ namespace KKdMainLib
             return true;
         }
 
-        public static void GetDictionary(this Dictionary<string, object> dict,
-            string args, string value, char split = '.') =>
+        public static void GetDictionary(this A3DADict dict, string args, char split = '.')
+        {
+            string[] dataArray = args.Split('=');
+            if (dataArray.Length == 2)
+                dict.GetDictionary(dataArray[0].Split(split), dataArray[1]);
+            dataArray = null;
+        }
+
+        public static void GetDictionary(this A3DADict dict, string args, string value, char split = '.') =>
             dict.GetDictionary(args.Split(split), value);
 
-        public static void GetDictionary(this Dictionary<string, object> dict,
-            string[] args, string value)
+        public static void GetDictionary(this A3DADict dict, string[] args, string value)
         {
-            Dictionary<string, object> bufDict = new Dictionary<string, object>();
-                 if (dict == null) dict = new Dictionary<string, object>();
+                 if (dict == null) dict = new A3DADict();
             else if (args.Length < 1) return;
 
             args[0] = args[0].ToLower();
@@ -169,10 +155,10 @@ namespace KKdMainLib
                 if (dict[args[0]] != null)
                 {
                     if (dict[args[0]].GetType() == typeof(string))
-                        dict[args[0]] = new Dictionary<string, object> { { "", dict[args[0]] } };
+                        dict[args[0]] = new A3DADict { { "", dict[args[0]] } };
                 }
-                else dict[args[0]] = new Dictionary<string, object>();
-                bufDict = (Dictionary<string, object>)dict[args[0]];
+                else dict[args[0]] = new A3DADict();
+                A3DADict bufDict = (A3DADict)dict[args[0]];
                 bufDict.GetDictionary(newArgs, value);
                 dict[args[0]] = bufDict;
             }

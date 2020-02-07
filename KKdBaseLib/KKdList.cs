@@ -3,31 +3,37 @@ using System.Collections.Generic;
 
 namespace KKdBaseLib
 {
-    public struct KKdList<T> : System.IDisposable, IEnumerator, IEnumerable, INull
+    public struct KKdList<T> : System.IDisposable, IEnumerable<T>, IEnumerable, IEnumerator, INull
     {
         public static KKdList<T> Null => new KKdList<T>();
-        public static KKdList<T> New  => new KKdList<T>() { Count = 0, Capacity = 0 };
-        public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { Count = 0, Capacity = Capacity };
+        public static KKdList<T> New  => new KKdList<T>() { count = 0, Capacity = 0 };
+        public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { count = 0, Capacity = Capacity };
 
+        private int count;
         private int index;
         private T[] array;
 
-        public int Count { get; private set; }
+        private Enumerator enumerator;
+
+        public int Count => count;
 
         public bool  IsNull => array == null;
         public bool NotNull => array != null;
 
         public int Capacity { get => array != null ? array.Length : -1;
-            set { if (array != null) System.Array.Resize(ref array, value); else array = new T[value];
-                if (Count >= value) Count = value; } }
+            set { if (array !=  null) System.Array.Resize(ref array, value); else array = new T[value];
+                  if (Count >= value) count = value; } }
 
 
-        public KKdList(T[] Array)
-        { index = 0; Count = Array.Length; array = Array; }
+        public KKdList(T[] array)
+        { index = -1; count = array.Length; this.array = array; enumerator = new Enumerator(this.array); }
 
-        public T Current => index < Count ? array[index] : default;
+        public T Current => index > -1 && index < Count ? array[index] : default;
 
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => enumerator.Current;
+
+        public bool MoveNext() => enumerator.MoveNext();
+        public void Reset() => enumerator.Reset();
 
         public T this[ int index]
         {   get =>    array != null && index > -1 && index < array.Length ? array[index] : default;
@@ -37,44 +43,41 @@ namespace KKdBaseLib
         {   get =>    array != null && index < array.Length ? array[index] : default;
             set { if (array != null && index < array.Length)  array[index] =   value; } }
 
-        public bool MoveNext()
-        { if (index == Count - 1) { index = 0; return false; }
-          else                    { index++  ; return  true; } }
+        public IEnumerator GetEnumerator() => enumerator = new Enumerator(array);
 
-        public IEnumerator GetEnumerator() => this;
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => enumerator = new Enumerator(array);
 
-        public void Dispose() { array = null; Count = 0; index = 0; }
+        IEnumerator IEnumerable.GetEnumerator() => enumerator = new Enumerator(array);
 
-        public void Reset() => index = 0;
+        public void Dispose() { array = null; count = 0; index = -1; }
 
         public void Add(T item)
         {
             if (IsNull) return;
 
-            Count++;
-            if (array.Length < Count)
-                System.Array.Resize(ref array, Count);
-            array[Count - 1] = item;
+            count++;
+            if (array.Length < count)
+                System.Array.Resize(ref array, count);
+            array[count - 1] = item;
         }
 
         public void RemoveAt(int index)
         {
-            if (IsNull) return;
+            if (IsNull || index < 0 || index >= count) return;
 
-            for (int i = index + 1; i < Count; i++)
-                array[i - 1] = array[i];
-            Count--;
+            if (index + 1 < count)
+                System.Array.Copy(array, index + 1, array, index, count - index);
+            count--;
         }
 
-        public void RemoveRange(int IndexStart, int IndexEnd)
+        public void RemoveRange(int indexStart, int indexEnd)
         {
-            if (IsNull) return;
-            if (IndexEnd - IndexStart < 1) return;
+            int indexCount = indexEnd - indexStart;
+            if (IsNull || indexCount < 1 || indexStart < 0 || indexEnd > count) return;
 
-            if (IndexEnd - IndexStart != Count)
-                for (int i = IndexStart; i < Count; i++)
-                    array[i] = array[i + IndexEnd - IndexStart];
-            Count -= IndexEnd - IndexStart;
+            if ((indexEnd + indexCount) < count)
+                System.Array.Copy(array, indexEnd, array, indexStart, indexCount);
+            count -= indexCount;
         }
 
         public T[] ToArray() => array;
@@ -82,34 +85,60 @@ namespace KKdBaseLib
         public bool Contains(T val)
         {
             if (IsNull) return false;
-            for (int i = 0; i < Count; i++)
+            for (int i = 0; i < count; i++)
                      if (array[i] == null && val == null) return true;
                 else if (array[i] == null || val == null)    continue;
-                else if (array[i]    .Equals(val)       ) return true;
+                else if (array[i].Equals(val)) return true;
             return false;
         }
 
         public int IndexOf(T val)
         {
             if (IsNull) return -1;
-            for (int i = 0; i < Count; i++)
+            for (int i = 0; i < count; i++)
                      if (array[i] == null && val == null) return i;
                 else if (array[i] == null || val == null) continue;
-                else if (array[i]    .Equals(val)       ) return i;
+                else if (array[i].Equals(val)) return i;
             return -1;
         }
 
         public void Sort()
-        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); Count = List.Count; }
+        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); count = List.Count; }
 
-        public static explicit operator KKdList<T>(   List<T> List) =>
-            new KKdList<T> { array = List.ToArray(), Count = List.Count };
+        public static explicit operator KKdList<T>(   List<T> list) =>
+            new KKdList<T> { array = list.ToArray(), count = list.Count };
 
-        public static explicit operator    List<T>(KKdList<T> List)
+        public static explicit operator    List<T>(KKdList<T> list)
+        { List<T> outList = new List<T>(); for (int i = 0; i < list.Count; i++) outList.Add(list[i]); return outList; }
+
+        public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            List<T> list = new List<T>();
-            for (int i = 0; i < List.Count; i++) list.Add(List[i]);
-            return list;
+            private T[] array;
+            private int index;
+            private int count;
+            private T current;
+ 
+            internal Enumerator(T[] array) 
+            { this.array = array; count = index = 0;   current = default;
+              if (array != null && array.Length > 0) { current = array[0]; count = array.Length; } }
+ 
+            public void Dispose()
+            { array = null; count = index = 0; current = default; }
+ 
+            public bool MoveNext()
+            {
+                if (index < count) { current = array[index]; index++;           return  true; }
+                else               { current =      default; index = count + 1; return false; }
+            }
+
+            public T Current => current;
+ 
+            object IEnumerator.Current =>
+                (index == 0 || index == array.Length + 1) ? default : current;
+
+            void IEnumerator.Reset() => Reset();
+
+            public void Reset() { index = 0; current = default; }
         }
     }
 }

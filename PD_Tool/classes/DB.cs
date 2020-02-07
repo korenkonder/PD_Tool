@@ -16,21 +16,6 @@ namespace PD_Tool
                      if (file.EndsWith(".mp"  )) { mp = false; break; }
                 else if (file.EndsWith(".json")) { mp = false; break; }
 
-            string choose = "1";
-            if (mp)
-            {
-                Console.Clear();
-                Program.ConsoleDesign(true);
-                Program.ConsoleDesign("        Choose type of exporting file:");
-                Program.ConsoleDesign(false);
-                Program.ConsoleDesign("1. Compact");
-                Program.ConsoleDesign("2. Normal");
-                Program.ConsoleDesign(false);
-                Program.ConsoleDesign(true);
-                Console.WriteLine();
-                choose = Console.ReadLine();
-            }
-
             uint num2 = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             string[] file_split;
             string filepath, ext;
@@ -51,7 +36,7 @@ namespace PD_Tool
                         Console.Title = "DataBank Converter: " + filename;
                         db.     DBReader(file);
                         db.MsgPackWriter(filepath + file_split[0] + "_" + 
-                            file_split[1] + "_" + file_split[2], json, choose != "2");
+                            file_split[1] + "_" + file_split[2], json);
                     }
                     else if ((ext == ".mp" || ext == ".json") && !mp)
                     {

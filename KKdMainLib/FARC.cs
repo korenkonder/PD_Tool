@@ -14,15 +14,14 @@ namespace KKdMainLib
         public FARC(string File, bool IsDirectory = false)
         { if (IsDirectory) DirectoryPath = File; else FilePath = File; NewFARC(); }
 
-        private void NewFARC() { Files = KKdList<FARCFile>.New; Signature = Farc.FArC; cbc = ft = false; }
+        private void NewFARC() { Files = KKdList<FARCFile>.New; Signature = Farc.FArC; Format = Format.DT; }
 
         public KKdList<FARCFile> Files = KKdList<FARCFile>.New;
         public Type FARCType;
         public Farc Signature = Farc.FArC;
+        public Format Format = Format.DT;
         public string FilePath, DirectoryPath;
         public bool HasFiles => Files.IsNull ? false : Files.Count > 0;
-
-        private bool cbc, ft;
 
         private readonly byte[] key = Text.ToASCII("project_diva.bin");
 
@@ -30,7 +29,7 @@ namespace KKdMainLib
             0x31, 0xEB, 0xA2, 0x39, 0xB8, 0x3C, 0x15, 0x57, 0xC6, 0xBB };
 
         private AesManaged GetAes(bool isFT, byte[] iv) =>
-            new AesManaged { KeySize = 128, Key = isFT ? keyFT : key,
+            new AesManaged () { KeySize = 128, Key = isFT ? keyFT : key,
                 BlockSize = 128, Mode = isFT ? CipherMode.CBC : CipherMode.ECB,
                 Padding = PaddingMode.Zeros, IV = iv ?? new byte[16] };
 
@@ -53,12 +52,11 @@ namespace KKdMainLib
             {
                 FARCType = (Type)reader.RI32E(true);
                 reader.RI32();
-
                 int farcMode = reader.RI32E(true);
-                ft  = farcMode == 0x10;
-                cbc = farcMode != 0x10 && farcMode != 0x40;
 
-                if (cbc && (FARCType & Type.ECB) != 0)
+                Format = (FARCType & Type.ECB) != 0 && (farcMode & (farcMode - 1)) != 0 ? Format.FT : Format.DT;
+
+                if (Format == Format.FT && (FARCType & Type.ECB) != 0)
                 {
                     reader.Dispose();
                     byte[] header = new byte[headerLength - 0x08];
@@ -73,7 +71,6 @@ namespace KKdMainLib
                     reader = File.OpenReader(header);
 
                     farcMode = reader.RI32E(true);
-                    ft = farcMode == 0x10;
                 }
             }
 
@@ -90,9 +87,9 @@ namespace KKdMainLib
                 {
                     reader.NT();
                     reader.RI32();
-                    if (Signature != Farc.FArc      ) reader.RI32();
+                    if (Signature != Farc.FArc) reader.RI32();
                     reader.RI32();
-                    if (Signature == Farc.FARC && ft) reader.RI32();
+                    if (Signature == Farc.FARC && Format == Format.FT) reader.RI32();
                     Count++;
                 }
                 reader.PI64 = Position;
@@ -106,7 +103,7 @@ namespace KKdMainLib
                 file.Offset = reader.RI32E(true);
                 if (Signature != Farc.FArc) file.SizeComp = reader.RI32E(true);
                 file.SizeUnc = reader.RI32E(true);
-                if (Signature == Farc.FARC && ft)
+                if (Signature == Farc.FARC && Format == Format.FT)
                     file.Type = (Type)reader.RI32E(true);
                 Files.Add(file);
             }
@@ -166,7 +163,7 @@ namespace KKdMainLib
                 bool encrypted = false;
                 if ((FARCType & Type.ECB) != 0)
                 {
-                    if ((ft && (file.Type & Type.ECB) != 0) || cbc)
+                    if (Format == Format.FT && (file.Type & Type.ECB) != 0)
                     {
                         using (AesManaged aes = GetAes(true, null))
                         using (CryptoStream cryptoStream = new CryptoStream(stream,
@@ -183,7 +180,7 @@ namespace KKdMainLib
                 }
 
                 bool compressed = false;
-                if (((ft && (file.Type & Type.GZip) != 0) ||
+                if (((Format == Format.FT && (file.Type & Type.GZip) != 0) ||
                     (FARCType & Type.GZip) != 0) && file.SizeUnc > 0)
                 {
                     GZipStream gZipStream = new GZipStream(encrypted ? new MSIO.MemoryStream(file.Data) :
@@ -258,21 +255,26 @@ namespace KKdMainLib
                 else if (Signature == Farc.FARC)
                 {
                     headerWriter.WE((int)FARCType, true);
-                    headerWriter.W      (0x00);
+                    headerWriter.W (0x00);
                     headerWriter.WE(0x40, true);
-                    headerWriter.W      (0x00);
+                    headerWriter.W (0x00);
+                    headerWriter.W (0x00);
                 }
-                int HeaderPartLength = Signature == Farc.FArc ? 0x09 : 0x0D;
-                for (int i = 0; i < Files.Count; i++)
-                    headerWriter.L += Path.GetFileName(Files[i].Name).Length + HeaderPartLength + 1;
+                if (Signature != Farc.FArc)
+                    for (int i = 0; i < Files.Count; i++)
+                    { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); headerWriter.W(0x00); }
+                else
+                    for (int i = 0; i < Files.Count; i++)
+                    { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); }
                 writer.WE(headerWriter.L, true);
-                writer.W(headerWriter.ToArray(true));
+                writer.W (headerWriter.ToArray(true));
             }
 
             int align = writer.P.A(0x10) - writer.P;
             for (int i1 = 0; i1 < align; i1++)
                 writer.W((byte)(Signature == Farc.FArc ? 0x00 : 0x78));
 
+            writer.F();
             for (int i = 0; i < Files.Count; i++)
                 CompressStuff(i, ref writer);
 
@@ -280,10 +282,9 @@ namespace KKdMainLib
             for (int i = 0; i < Files.Count; i++)
             {
                 FARCFile file = Files[i];
-                writer.W(Path.GetFileName(file.Name) + "\0");
+                writer.W (file.Name + "\0");
                 writer.WE(file.Offset, true);
-                if (Signature != Farc.FArc)
-                    writer.WE(file.SizeComp, true);
+                if (Signature != Farc.FArc) writer.WE(file.SizeComp, true);
                 writer.WE(file.SizeUnc, true);
             }
             writer.Dispose();

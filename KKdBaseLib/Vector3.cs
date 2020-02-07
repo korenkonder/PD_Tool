@@ -28,8 +28,8 @@
         { vec.X /= scale  ; vec.Y /= scale  ; vec.Z /= scale  ; return vec; }
         public static Vector3 operator /(Vector3   vec, Vector3 scale)
         { vec.X /= scale.X; vec.Y /= scale.Y; vec.Z /= scale.Z; return vec; }
-        public static bool operator ==(Vector3 A, Vector3 B) =>  A.Equals(B);
-        public static bool operator !=(Vector3 A, Vector3 B) => !A.Equals(B);
+        public static bool operator ==(Vector3 A, Vector3 B) => A.X == B.X && A.Y == B.Y && A.Z == B.Z;
+        public static bool operator !=(Vector3 A, Vector3 B) => A.X != B.X || A.Y != B.Y || A.Z != B.Z;
 
         public static double Distance       (Vector3 left, Vector3 right) =>
             (right.X - left.X) * (right.X - left.X) + (right.Y - left.Y) *

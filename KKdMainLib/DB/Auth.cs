@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using KKdBaseLib;
 using KKdMainLib.IO;
+using A3DADict = System.Collections.Generic.Dictionary<string, object>;
 
 namespace KKdMainLib.DB
 {
@@ -15,8 +15,7 @@ namespace KKdMainLib.DB
 
         public void BINReader(string file)
         {
-            Dictionary<string, object> dict = new Dictionary<string, object>();
-            string[] dataArray;
+            A3DADict dict = new A3DADict();
 
             _IO = File.OpenReader(file + ".bin");
 
@@ -27,13 +26,10 @@ namespace KKdMainLib.DB
             if (signature != 0x5F5F5F41) return;
             _IO.RI64();
 
-            string[] strData = _IO.RS(_IO.L - _IO.P).Replace("\r", "").Split('\n');
+            string[] strData = _IO.RS(_IO.L - _IO.P).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             for (i = 0; i < strData.Length; i++)
-            {
-                dataArray = strData[i].Split('=');
-                if (dataArray.Length == 2)
-                    dict.GetDictionary(dataArray[0], dataArray[1]);
-            }
+                dict.GetDictionary(strData[i]);
+            strData = null;
 
             if (dict.FindValue(out string value, "category.length"))
             {
@@ -56,6 +52,8 @@ namespace KKdMainLib.DB
             }
 
             _IO.C();
+            dict.Clear();
+            dict = null;
         }
 
         public void BINWriter(string file)

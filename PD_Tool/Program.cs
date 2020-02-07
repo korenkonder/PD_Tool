@@ -57,8 +57,9 @@ namespace PD_Tool
             ConsoleDesign("4. Encrypt to   DIVAFILE");
             ConsoleDesign("5. DB_Tools");
             ConsoleDesign("6. AC/DT/F/AFT/FT Converting Tools");
-            ConsoleDesign("7. F/F2/X/FT      Converting Tools");
-            ConsoleDesign(json ? "8. MsgPack to JSON" : "9. JSON to MsgPack");
+            ConsoleDesign("7. F/F2/FT        Converting Tools");
+            ConsoleDesign("8. X/XHD          Converting Tools");
+            ConsoleDesign(json ? "9. MsgPack to JSON" : "9. JSON to MsgPack");
             ConsoleDesign(false);
             ConsoleDesign(json ? "M. MessagePack" : "J. JSON");
             ConsoleDesign("Q. Quit");
@@ -95,9 +96,8 @@ namespace PD_Tool
                 ConsoleDesign("3. DataBank");
                 ConsoleDesign("4. DEX"     );
                 ConsoleDesign("5. DIVA"    );
-                ConsoleDesign("6. MotHead" );
-                ConsoleDesign("7. MOT"     );
-                ConsoleDesign("8. STR"     );
+                ConsoleDesign("6. MOT"     );
+                ConsoleDesign("7. STR"     );
                 ConsoleDesign(false);
                 ConsoleDesign("R. Return to Main Menu");
                 ConsoleDesign(false);
@@ -109,14 +109,14 @@ namespace PD_Tool
                 else if (localChoose == "3") DB .Processor(json);
                 else if (localChoose == "4") DEX.Processor(json);
                 else if (localChoose == "5") DIV.Processor();
-                else if (localChoose == "6") MOT.Processor(json);
-                else if (localChoose == "7") STR.Processor(json);
+                else if (localChoose == "7") MOT.Processor(json);
+                else if (localChoose == "8") STR.Processor(json);
                 else choose = localChoose;
             }
             else if (choose == "7")
             {
                 Console.Clear();
-                Console.Title = "F/F2/X/FT Converting Tools";
+                Console.Title = "F/F2/FT Converting Tools";
                 ConsoleDesign(true);
                 ConsoleDesign("               Choose converter:");
                 ConsoleDesign(false);
@@ -126,9 +126,8 @@ namespace PD_Tool
                 ConsoleDesign("4. DEX"             );
                 ConsoleDesign("5. DOF"             );
                 ConsoleDesign("6. Light"           );
-                ConsoleDesign("7. Particles"       );
-                ConsoleDesign("8. STR"             );
-                ConsoleDesign("9. VAG"             );
+                ConsoleDesign("7. STR"             );
+                ConsoleDesign("8. VAG"             );
                 ConsoleDesign(false);
                 ConsoleDesign("R. Return to Main Menu");
                 ConsoleDesign(false);
@@ -146,6 +145,27 @@ namespace PD_Tool
                 else choose = localChoose;
             }
             else if (choose == "8")
+            {
+                Console.Clear();
+                Console.Title = "X Converting Tools";
+                ConsoleDesign(true);
+                ConsoleDesign("               Choose converter:");
+                ConsoleDesign(false);
+                ConsoleDesign("1. A3DA"          );
+                ConsoleDesign("2. DEX"           );
+                ConsoleDesign("3. VAG"           );
+                ConsoleDesign(false);
+                ConsoleDesign("R. Return to Main Menu");
+                ConsoleDesign(false);
+                ConsoleDesign(true);
+                Console.WriteLine();
+                string localChoose = Console.ReadLine();
+                     if (localChoose == "1") A3D.Processor(json);
+                else if (localChoose == "2") DEX.Processor(json);
+                else if (localChoose == "3") VAG.Processor();
+                else choose = localChoose;
+            }
+            else if (choose == "9")
             {
                 Console.Title = json ? "MsgPack to JSON" : "JSON to MsgPack";
                 Choose(1, json ? "mp" : "json", out string[] fileNames);

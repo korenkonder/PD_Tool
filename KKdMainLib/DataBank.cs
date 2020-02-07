@@ -105,7 +105,7 @@ namespace KKdMainLib
             msgPack.Dispose();
         }
 
-        public void MsgPackWriter(string file, bool json, bool Compact = true)
+        public void MsgPackWriter(string file, bool json)
         {
             if (!Success) return;
             MsgPack msgPack = MsgPack.New;
@@ -123,11 +123,10 @@ namespace KKdMainLib
             else if (file.Contains("PvList"))
             {
                 if (pvList != null)
-                {
-                    if (Compact) msgPack.Add("Compact", Compact);
+                {msgPack.Add("Compact", true);
 
                     MsgPack PvList = new MsgPack(pvList.Length, "PvList");
-                    for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP(Compact);
+                    for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP();
                     msgPack.Add(PvList);
                 }
                 else msgPack.Add(new MsgPack("PvList", null));
@@ -140,7 +139,8 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); psrData = null; pvList = null; Success = false; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.Dispose(); psrData = null;
+                pvList = null; Success = false; disposed = true; } }
 
         public struct PsrData
         {
@@ -287,26 +287,16 @@ namespace KKdMainLib
                 temp.Dispose();
             }
 
-            public MsgPack WriteMP(bool Compact)
+            public MsgPack WriteMP()
             {
                 MsgPack msgPack = MsgPack.New;
                 msgPack.Add("ID", PV_ID);
                 if (!Enable) msgPack.Add("Enable", Enable);
                 if ( Extra ) msgPack.Add("Extra" , Extra );
-                if (Compact)
-                {
-                    if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.WI());
-                    if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WI());
-                    if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .WI());
-                    if (  EndShow   .WU) msgPack.Add(  "EndShow"   ,   EndShow   .WI());
-                }
-                else
-                {
-                    if (AdvDemoStart.WU) msgPack.Add(AdvDemoStart.WriteMP("AdvDemoStart"));
-                    if (AdvDemoEnd  .WL) msgPack.Add(AdvDemoEnd  .WriteMP("AdvDemoEnd"  ));
-                    if (StartShow   .WL) msgPack.Add(StartShow   .WriteMP("StartShow"   ));
-                    if (  EndShow   .WU) msgPack.Add(  EndShow   .WriteMP(  "EndShow"   ));
-                }
+                if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.WI());
+                if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WI());
+                if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .WI());
+                if (  EndShow   .WU) msgPack.Add(  "EndShow"   ,   EndShow   .WI());
                 return msgPack;
             }
 
@@ -323,9 +313,7 @@ namespace KKdMainLib
             private int  day;
 
             public int  Year { get =>  year; set {  year = value; CheckDate(); } }
-
             public int Month { get => month; set { month = value; CheckDate(); } }
-
             public int   Day { get =>   day; set {   day = value; CheckDate(); } }
 
             public bool WU => Year != 2029 || Month != 1 || Day != 1;

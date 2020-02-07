@@ -1,11 +1,11 @@
-﻿namespace KKdBaseLib.Aet
+﻿namespace KKdBaseLib.Auth2D
 {
-    public struct AetHeader
+    public struct Header
     {
-        public Pointer<AetData>[] Data;
+        public Pointer<Data>[] Data;
     }
 
-    public struct AetData
+    public struct Data
     {
         public Pointer<string> Name;
         public float StartFrame;
@@ -15,25 +15,25 @@
         public uint Width;
         public uint Height;
         public Pointer<Vector2<CountPointer<KFT2>>> Camera;
-        public CountPointer<AetComposition > Compositions ;
-        public CountPointer<AetSurface> Surfaces;
+        public CountPointer<Composition > Compositions ;
+        public CountPointer<Surface> Surfaces;
         public CountPointer<AetSoundEffect > SoundEffects ;
     }
 
-    public struct AetComposition
+    public struct Composition
     {
         public int P;
         public int C { get => E != null ? E.Length : 0;
-                       set => E = value > -1 ? new AetLayer[value] : null; }
+                       set => E = value > -1 ? new Layer[value] : null; }
 
         public int O;
-        public AetLayer[] E;
+        public Layer[] E;
 
         public override string ToString() => "Count: " + C;
     }
 
 
-    public struct AetLayer
+    public struct Layer
     {
         public int ID;
         public int Offset;
@@ -47,7 +47,7 @@
         public AetLayerType Type;
         public int DataOffset;
         public int ParentLayer;
-        public CountPointer<AetMarker> Marker;
+        public CountPointer<Marker> Marker;
         public Pointer<AnimationData> Data;
         public Pointer<AudioData> ExtraData;
 
@@ -86,7 +86,7 @@
             (ParentLayer > -1 ? $"; Parent Object ID: {ParentLayer}" : "");
     }
 
-    public struct AetMarker
+    public struct Marker
     {
         public float Frame;
         public Pointer<string> Name;
@@ -138,19 +138,19 @@
         public CountPointer<KFT2> Data3;
     }
 
-    public struct AetSurface
+    public struct Surface
     {
         public int O;
         public uint Color;
         public ushort Width;
         public ushort Height;
         public float Frames;
-        public CountPointer<AetSpriteIdentifier> Sprites;
+        public CountPointer<SpriteIdentifier> Sprites;
 
         public override string ToString() => $"Width: {Width}; Height: {Height}; Color: {Color.ToString("X2")}";
     }
 
-    public struct AetSpriteIdentifier
+    public struct SpriteIdentifier
     {
         public Pointer<string> Name;
         public uint ID;

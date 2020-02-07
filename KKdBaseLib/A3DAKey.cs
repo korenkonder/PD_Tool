@@ -1,4 +1,4 @@
-﻿using KKdBaseLib.A3DA;
+﻿using KKdBaseLib.Auth3D;
 
 namespace KKdBaseLib
 {
