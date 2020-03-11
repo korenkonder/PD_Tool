@@ -23,7 +23,7 @@ namespace PD_Tool
             Program.ConsoleDesign(false);
             Program.ConsoleDesign(true);
             Console.WriteLine();
-            string format = Console.ReadLine();
+            string format = Console.ReadLine().ToUpper();
             if (format == "1") AuthDBProcessor(json);
             if (format == "2")  AETDBProcessor(json);
             if (format == "3")  SPRDBProcessor(json);

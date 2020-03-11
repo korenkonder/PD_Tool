@@ -1,6 +1,6 @@
 ﻿using System;
+using KKdMainLib;
 using KKdMainLib.IO;
-using KKdAet = KKdMainLib.Aet;
 
 namespace PD_Tool
 {
@@ -13,9 +13,9 @@ namespace PD_Tool
             if (fileNames.Length < 1) return;
 
             string filepath, ext;
-            KKdAet aet;
+            Aet aet;
             foreach (string file in fileNames)
-                using (aet = new KKdAet())
+                using (aet = new Aet())
                 {
                     ext = Path.GetExtension(file);
                     filepath = file.Replace(ext, "");

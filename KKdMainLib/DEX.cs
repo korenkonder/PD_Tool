@@ -205,7 +205,7 @@ namespace KKdMainLib
             MsgPack dex = new MsgPack(Dex.Length, "Dex");
             for (i0 = 0; i0 < Dex.Length; i0++)
             {
-                MsgPack exp = MsgPack.New.Add("Name", this.Dex[i0].Name);
+                MsgPack exp = MsgPack.New.Add("Name", Dex[i0].Name);
                 MsgPack main = new MsgPack(Dex[i0].Main.Count, "Main");
                 for (i1 = 0; i1 < Dex[i0].Main.Count; i1++)
                     main[i1] = Dex[i0].Main[i1].Write();

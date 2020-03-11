@@ -5,8 +5,8 @@
         public T X;
         public T Y;
 
-        public Vector2(T X, T Y)
-        { this.X = X; this.Y = Y; }
+        public Vector2(T x, T y)
+        { X = x; Y = y; }
 
         public bool  IsNull => X == null && Y == null;
         public bool NotNull => X != null || Y != null;
@@ -20,8 +20,8 @@
         public T Y;
         public T Z;
 
-        public Vector3(T X, T Y, T Z)
-        { this.X = X; this.Y = Y; this.Z = Z; }
+        public Vector3(T x, T y, T z)
+        { X = x; Y = y; Z = z; }
 
         public bool  IsNull => X == null && Y == null && Z == null;
         public bool NotNull => X != null || Y != null || Z != null;
@@ -36,8 +36,8 @@
         public T Z;
         public T W;
 
-        public Vector4(T X, T Y, T Z, T W)
-        { this.X = X; this.Y = Y; this.Z = Z; this.W = W; }
+        public Vector4(T x, T y, T z, T w)
+        { X = x; Y = y; Z = z; W = w; }
 
         public bool  IsNull => X == null && Y == null && Z == null && W == null;
         public bool NotNull => X != null || Y != null || Z != null || W != null;

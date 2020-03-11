@@ -36,7 +36,7 @@ namespace PD_Tool
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign(true);
                 Console.WriteLine();
-                choose = Console.ReadLine();
+                choose = Console.ReadLine().ToUpper();
                      if (choose == "1") format = Format.DT  ;
                 else if (choose == "2") format = Format.F   ;
                 else if (choose == "3") format = Format.AFT ;
@@ -70,8 +70,6 @@ namespace PD_Tool
                     using (a3da = new KKdA3DA(true))
                     {
                         a3da.MsgPackReader(filepath, ext == ".json");
-                        a3da.Data._.CompressF16 = format > Format.AFT && format <
-                            Format.FT ? format == Format.MGF ? 2 : 1 : 0;
                         a3da.Head.Format = format;
 
                         File.WriteAllBytes(filepath + ".a3da", (choose != "1" &&
@@ -113,8 +111,6 @@ namespace PD_Tool
                         if (state == 1)
                         {
                             KKdFARC.FARCFile file = farc.Files[i];
-                            a3da.Data._.CompressF16 = format > Format.AFT && format <
-                                Format.FT ? format == Format.MGF ? 2 : 1 : 0;
                             a3da.Head.Format = format;
                             file.Data = (choose != "1" && choose != "3") ? a3da.A3DCWriter() : a3da.A3DAWriter();
                             farc.Files[i] = file;
@@ -162,8 +158,6 @@ namespace PD_Tool
             {
                 KKdFARC.FARCFile file = default;
                 file.Name = list[i];
-                a3daArray[i].Data._.CompressF16 = format > Format.AFT && format <
-                    Format.FT ? format == Format.MGF ? 2 : 1 : 0;
                 a3daArray[i].Head.Format = format;
                 file.Data = (choose != "1" && choose != "3") ? a3daArray[i].A3DCWriter() : a3daArray[i].A3DAWriter();
                 farc.Files.Add(file);

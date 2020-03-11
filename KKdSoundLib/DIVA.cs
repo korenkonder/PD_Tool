@@ -20,9 +20,9 @@ namespace KKdSoundLib
             if (reader.RS(0x04) != "DIVA") { reader.C(); return; }
 
             reader.RI32();
-            Data.Size = reader.RU32();
-            Data.SampleRate = reader.RU32();
-            Data.SamplesCount = reader.RU32();
+            Data.Size = reader.RI32();
+            Data.SampleRate = reader.RI32();
+            Data.SamplesCount = reader.RI32();
             reader.RI64();
             Data.Channels = reader.RU16();
             reader.RU16();
@@ -195,9 +195,9 @@ namespace KKdSoundLib
 
         public struct DIVAFile
         {
-            public uint Size;
-            public uint SampleRate;
-            public uint SamplesCount;
+            public int Size;
+            public int SampleRate;
+            public int SamplesCount;
             public string Name;
             public ushort Channels;
             public byte[] Data;

@@ -8,9 +8,10 @@ namespace PD_Tool
         public static void Decrypt(string file)
         {
             Stream reader = File.OpenReader(file);
-            if (reader.RI64() != 0x454C494641564944) { reader.C(); return; }
+            ulong head = reader.RU64();
             reader.C();
 
+            if (head != 0x454C494641564944) return;
             System.Console.Title = "DIVAFILE Decrypt: " + Path.GetFileName(file);
             file.Decrypt();
         }
@@ -18,9 +19,10 @@ namespace PD_Tool
         public static void Encrypt(string file)
         {
             Stream reader = File.OpenReader(file);
-            if (reader.RI64() == 0x454C494641564944) { reader.C(); return; }
+            ulong head = reader.RU64();
             reader.C();
 
+            if (head == 0x454C494641564944) return;
             System.Console.Title = "DIVAFILE Encrypt: " + Path.GetFileName(file);
             file.Encrypt();
         }

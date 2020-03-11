@@ -5,13 +5,13 @@
     <Company></Company>
     <Configuration></Configuration>
     <Copyright>korenkonder © 2018-2020</Copyright>
-    <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/FT files</Description>
-    <FileVersion>0.4.8.2</FileVersion>
+    <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files</Description>
+    <FileVersion>0.4.9.0</FileVersion>
     <PackageId>KKdMainLib</PackageId>
     <Product>KKdMainLib</Product>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>KKdMainLib</Title>
-    <Version>0.4.8.2</Version>
+    <Version>0.4.9.0</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

@@ -35,8 +35,15 @@ namespace PD_Tool
                         filepath = file.Replace(filename + ".dat", "");
                         Console.Title = "DataBank Converter: " + filename;
                         db.     DBReader(file);
-                        db.MsgPackWriter(filepath + file_split[0] + "_" + 
+                        db.MsgPackWriter(filepath + file_split[0] + "_" +
                             file_split[1] + "_" + file_split[2], json);
+                    }
+                    else if (ext == ".bin" && mp)
+                    {
+                        filepath = file.Replace(".bin", "");
+                        Console.Title = "DataBank Converter: " + filename;
+                        db.     DBReader(file);
+                        db.MsgPackWriter(filepath, json);
                     }
                     else if ((ext == ".mp" || ext == ".json") && !mp)
                     {

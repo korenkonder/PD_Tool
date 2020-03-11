@@ -22,7 +22,8 @@ namespace PD_Tool
                     ext = ext.ToLower();
 
                     Console.Title = "Color Correction Converter: " + Path.GetFileNameWithoutExtension(file);
-                    if (ext == ".cct") { cct.CCTReader(filepath); cct.TXTWriter(filepath); }
+                         if (ext == ".cct") { cct.CCTReader(filepath); cct.TXTWriter(filepath); }
+                    //else if (ext == ".txt") { cct.TXTReader(filepath); cct.BLTWriter(filepath); }
                 }
         }
     }

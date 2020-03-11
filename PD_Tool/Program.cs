@@ -28,7 +28,7 @@ namespace PD_Tool
                 GC.Collect();
                      if (Directory.Exists(arg)) using (KKdFARC FARC = new KKdFARC(arg, true)) FARC.Pack();
                 else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc")
-                    using (KKdFARC farc = new KKdFARC(arg)) farc.UnPack(true);
+                    using (KKdFARC farc = new KKdFARC(arg)) farc.Unpack(true);
                 else if (File.Exists(arg))
                 {
                     using (reader = File.OpenReader(arg))
@@ -96,21 +96,25 @@ namespace PD_Tool
                 ConsoleDesign("3. DataBank");
                 ConsoleDesign("4. DEX"     );
                 ConsoleDesign("5. DIVA"    );
-                ConsoleDesign("6. MOT"     );
-                ConsoleDesign("7. STR"     );
+                ConsoleDesign("6. MotHead" );
+                ConsoleDesign("7. MOT"     );
+                ConsoleDesign("8. Table"   );
+                ConsoleDesign("9. STR"     );
                 ConsoleDesign(false);
                 ConsoleDesign("R. Return to Main Menu");
                 ConsoleDesign(false);
                 ConsoleDesign(true);
                 Console.WriteLine();
-                string localChoose = Console.ReadLine();
+                string localChoose = Console.ReadLine().ToUpper();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") AET.Processor(json);
                 else if (localChoose == "3") DB .Processor(json);
                 else if (localChoose == "4") DEX.Processor(json);
                 else if (localChoose == "5") DIV.Processor();
+                else if (localChoose == "6") MHD.Processor(json);
                 else if (localChoose == "7") MOT.Processor(json);
-                else if (localChoose == "8") STR.Processor(json);
+                else if (localChoose == "8") TBL.Processor(json);
+                else if (localChoose == "9") STR.Processor(json);
                 else choose = localChoose;
             }
             else if (choose == "7")
@@ -133,7 +137,7 @@ namespace PD_Tool
                 ConsoleDesign(false);
                 ConsoleDesign(true);
                 Console.WriteLine();
-                string localChoose = Console.ReadLine();
+                string localChoose = Console.ReadLine().ToUpper();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") BLT.Processor();
                 else if (localChoose == "3") CCT.Processor();
@@ -159,7 +163,7 @@ namespace PD_Tool
                 ConsoleDesign(false);
                 ConsoleDesign(true);
                 Console.WriteLine();
-                string localChoose = Console.ReadLine();
+                string localChoose = Console.ReadLine().ToUpper();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") DEX.Processor(json);
                 else if (localChoose == "3") VAG.Processor();
@@ -245,12 +249,14 @@ namespace PD_Tool
                 else if (filetype == "dft" ) Filter = GetArgs("DFT" , "dft");
                 else if (filetype == "diva") Filter = GetArgs("DIVA", "diva", "wav") +
                         GetArgs("DIVA", true, "diva") + wav;
-                else if (filetype == "farc") Filter = "FARC Archives (*.farc)|*.farc";
+                else if (filetype == "farc") Filter = GetArgs("FARC", "farc");
                 else if (filetype == "json") Filter = GetArgs("JSON", "json");
                 else if (filetype == "mp"  ) Filter = GetArgs("MessagePack", "mp");
                 else if (filetype == "lit")  Filter = GetArgs("LIT" , "lit");
                 else if (filetype == "str" ) Filter = GetArgs("STR" , "str", "bin", "json", "mp") +
                         GetArgs("STR", true, "str") + bin + json + mp;
+                else if (filetype == "tbl" ) Filter = GetArgs("Table" , "bin", "farc", "json", "mp") +
+                        bin + GetArgs("FARC Archives", true, "farc") + json + mp;
                 else if (filetype == "vag" ) Filter = GetArgs("VAG" , "vag", "wav") +
                         GetArgs("VAG", true, "vag") + wav;
                 

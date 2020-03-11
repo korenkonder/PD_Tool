@@ -34,7 +34,7 @@ namespace KKdSoundLib
             if (Header.Format == 0x01 || Header.Format == 0x03 || Header.Format == 0xFFFE)
             {
                 Header.Channels = _IO.RU16();
-                Header.SampleRate = _IO.RU32();
+                Header.SampleRate = _IO.RI32();
                 _IO.RI32(); _IO.RI16();
                 Header.Bytes = _IO.RU16();
                 if (Header.Bytes % 8 != 0) return Header;
@@ -51,8 +51,8 @@ namespace KKdSoundLib
                 if (Header.Bytes == 8 && Header.Format == 1) return Header;
                 _IO.S(Offset + 0x14, 0);
                 if (_IO.RS(4) != "data") return Header;
-                Header.Size = _IO.RU32();
-                Header.HeaderSize = _IO.PU32;
+                Header.Size = _IO.RI32();
+                Header.HeaderSize = _IO.P;
                 Header.IsSupported = true;
                 return Header;
             }

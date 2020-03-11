@@ -20,8 +20,7 @@ namespace PD_Tool
                     filepath = file.Replace(ext, "");
                     ext      = ext.ToLower();
 
-                    Console.Title = "PD_Tool: Converter Tools: STR Reader: " +
-                        Path.GetFileNameWithoutExtension(file);
+                    Console.Title = "STR Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".str" || ext == ".bin")
                     {
                         str.STRReader    (filepath, ext);

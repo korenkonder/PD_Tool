@@ -52,8 +52,10 @@
     <Compile Include="classes\DIVAFILE.cs" />
     <Compile Include="classes\FARC.cs" />
     <Compile Include="classes\LIT.cs" />
+    <Compile Include="classes\MHD.cs" />
     <Compile Include="classes\MOT.cs" />
     <Compile Include="classes\STR.cs" />
+    <Compile Include="classes\TBL.cs" />
     <Compile Include="classes\VAG.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -6,12 +6,12 @@
     <Configuration></Configuration>
     <Copyright>korenkonder © 2019-2020</Copyright>
     <Description>A simple library for working with Project Diva F/AFT/F2/X/FT audio files</Description>
-    <FileVersion>0.1.1.1</FileVersion>
+    <FileVersion>0.1.2.0</FileVersion>
     <PackageId>KKdSoundLib</PackageId>
     <Product>KKdSoundLib</Product>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>KKdSoundLib</Title>
-    <Version>0.1.1.1</Version>
+    <Version>0.1.2.0</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

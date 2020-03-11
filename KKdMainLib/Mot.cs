@@ -5,7 +5,7 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
-    public struct Mot
+    public struct Mot : System.IDisposable
     {
         private int i, i0, i1;
         public MotHeader[] MOT;
@@ -57,7 +57,6 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
                     if (i0 % 8 == 0) i1 = _IO.RU16();
-
                     mot.KeySet.V[i0] = new KeySet { Type = (KeySetType)((i1 >> (i0 % 8 * 2)) & 0b11) };
                 }
 
@@ -94,7 +93,7 @@ namespace KKdMainLib
         public void MOTWriter(string file)
         {
             if (MOT == null) return;
-            _IO = File.OpenWriter(file + ".bin");
+            _IO = File.OpenWriter(file + ".bin", true);
 
             int MOTCount = MOT.Length;
             _IO.P = (MOTCount + 1) << 4;
@@ -113,8 +112,8 @@ namespace KKdMainLib
                     if (i0 % 8 == 7) { _IO.W((ushort)i1); i1 = 0; }
                 }
                 _IO.W((ushort)i1);
+                if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
 
-                _IO.A(0x4);
                 mot.KeySetOffset = _IO.P;
                 for (i0 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
@@ -125,8 +124,8 @@ namespace KKdMainLib
                     {
                         _IO.W((ushort)key.Keys.Length);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                            _IO.W(key.Keys[i1].F);
-                        _IO.A(0x4);
+                            _IO.W((ushort)key.Keys[i1].F);
+                        if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
                             _IO.W(key.Keys[i1].V);
                     }
@@ -134,19 +133,20 @@ namespace KKdMainLib
                     {
                         _IO.W((ushort)key.Keys.Length);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                          _IO.W(key.Keys[i1].F);
-                        _IO.A(0x4);
+                          _IO.W((ushort)key.Keys[i1].F);
+                        if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
                         { _IO.W(key.Keys[i1].V); _IO.W(key.Keys[i1].T); }
                     }
                 }
-                _IO.A(0x4);
+                if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
 
                 mot.BoneInfo.O = _IO.P;
                 for (i0 = 0; i0 < mot.BoneInfo.V.Length; i0++)
                     _IO.W((ushort)mot.BoneInfo.V[i0].Id);
                 _IO.W((ushort)0);
             }
+            if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
             _IO.A(0x4, true);
 
             _IO.P = 0;
@@ -215,9 +215,9 @@ namespace KKdMainLib
                     else if (temp1.Array[0].Array == null)     continue;
                     else if (temp1.Array[0].Array.Length == 0) continue;
                     else if (temp1.Array[0].Array.Length == 1)
-                        keySet.Keys[0] = new KFT2 (temp1.Array[0][0].RF32());
+                        keySet.Keys[0] = new KFT2(temp1.Array[0][0].RF32());
                     else if (temp1.Array[0].Array.Length >  1)
-                        keySet.Keys[0] = new KFT2 (temp1.Array[0][0].RF32(), temp1.Array[1].RF32());
+                        keySet.Keys[0] = new KFT2(temp1.Array[0][0].RF32(), temp1.Array[0][1].RF32());
                 }
                 else if (keySet.Type == KeySetType.Linear)
                 {
@@ -228,9 +228,9 @@ namespace KKdMainLib
                              if (array.Array == null)     continue;
                         else if (array.Array.Length == 0) continue;
                         else if (array.Array.Length == 1)
-                            keySet.Keys[i1] = new KFT2 (array[0].RF32());
+                            keySet.Keys[i1] = new KFT2(array[0].RF32());
                         else if (array.Array.Length == 2)
-                            keySet.Keys[i1] = new KFT2 (array[0].RF32(), array[1].RF32());
+                            keySet.Keys[i1] = new KFT2(array[0].RF32(), array[1].RF32());
                     }
                 }
                 else if (keySet.Type == KeySetType.Interpolated)
@@ -242,11 +242,11 @@ namespace KKdMainLib
                              if (array.Array == null ||
                                  array.Array.Length == 0) continue;
                         else if (array.Array.Length == 1)
-                            keySet.Keys[i1] = new KFT2 (array[0].RF32());
+                            keySet.Keys[i1] = new KFT2(array[0].RF32());
                         else if (array.Array.Length == 2)
-                            keySet.Keys[i1] = new KFT2 (array[0].RF32(), array[1].RF32());
+                            keySet.Keys[i1] = new KFT2(array[0].RF32(), array[1].RF32());
                         else if (array.Array.Length >  2)
-                            keySet.Keys[i1] = new KFT2 (array[0].RF32(),
+                            keySet.Keys[i1] = new KFT2(array[0].RF32(),
                                 array[1].RF32(), temp1.Array[i1][2].RF32());
                     }
                 }
@@ -313,6 +313,12 @@ namespace KKdMainLib
             return mot;
         }
 
+        public void Dispose()
+        {
+            _IO = null;
+            MOT = null;
+        }
+
         public struct MotHeader
         {
             public int      KeySetOffset;
@@ -330,7 +336,7 @@ namespace KKdMainLib
             public KeySetType Type;
 
             public override string ToString() => $"Type: {Type}" + (Type == KeySetType.Static ?
-                $"; Value: {Keys[0].Check()}" : Type > KeySetType.Static ? $"; Keys: {Keys.Length}" : "");
+                $"; Value: {Keys[0].V}" : Type > KeySetType.Static ? $"; Keys: {Keys.Length}" : "");
         }
 
         public enum KeySetType : byte

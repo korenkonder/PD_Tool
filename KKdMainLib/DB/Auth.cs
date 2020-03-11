@@ -28,26 +28,26 @@ namespace KKdMainLib.DB
 
             string[] strData = _IO.RS(_IO.L - _IO.P).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             for (i = 0; i < strData.Length; i++)
-                dict.GetDictionary(strData[i]);
+                dict.GD(strData[i]);
             strData = null;
 
-            if (dict.FindValue(out string value, "category.length"))
+            if (dict.FV(out string value, "category.length"))
             {
                 Category = new string[int.Parse(value)];
                 for (i = 0; i < Category.Length; i++)
-                    if (dict.FindValue(out value, "category." + i + ".value"))
+                    if (dict.FV(out value, $"category.{i}.value"))
                         Category[i] = value;
             }
 
-            if (dict.FindValue(out value, "uid.length"))
+            if (dict.FV(out value, "uid.length"))
             {
                 UIDs = new UID[int.Parse(value)];
                 for (i = 0; i < UIDs.Length; i++)
                 {
-                    dict.FindValue(out UIDs[i].Category, "uid." + i + ".category");
-                    dict.FindValue(out UIDs[i].OrgUid  , "uid." + i + ".org_uid" );
-                    dict.FindValue(out UIDs[i].Size    , "uid." + i + ".size"    );
-                    dict.FindValue(out UIDs[i].Value   , "uid." + i + ".value"   );
+                    dict.FV(out UIDs[i].Category, $"uid.{i}.category");
+                    dict.FV(out UIDs[i].OrgUid  , $"uid.{i}.org_uid" );
+                    dict.FV(out UIDs[i].Size    , $"uid.{i}.size"    );
+                    dict.FV(out UIDs[i].Value   , $"uid.{i}.value"   );
                 }
             }
 
@@ -66,7 +66,7 @@ namespace KKdMainLib.DB
 
             if (Category != null)
             {
-                int[] so = Category.Length.SortWriter();
+                int[] so = Category.Length.SW();
                 for (i = 0; i < Category.Length; i++)
                     _IO.W($"category.{so[i]}.value={ Category[so[i]]}\n");
                 _IO.W($"category.length={Category.Length}\n");
@@ -74,7 +74,7 @@ namespace KKdMainLib.DB
 
             if (UIDs != null)
             {
-                int[] so = UIDs.Length.SortWriter();
+                int[] so = UIDs.Length.SW();
                 for (i = 0; i < UIDs.Length; i++)
                 {
                     if (UIDs[so[i]].Category != null && UIDs[so[i]].Category != "")

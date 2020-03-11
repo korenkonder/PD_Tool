@@ -7,7 +7,7 @@ namespace KKdMainLib.IO
 {
     public unsafe class Stream : IDisposable
     {
-        private int I, i, BitRead, BitWrite, TempBitRead, TempBitWrite, ValRead, ValWrite;
+        private int i, j, bitRead, bitWrite, tempBitRead, tempBitWrite, valRead, valWrite;
         private byte[] b;
         private MSIO.Stream s;
 
@@ -16,8 +16,8 @@ namespace KKdMainLib.IO
         private Format format = Format.NULL;
 
         public Format Format
-        {   get =>      format;
-            set {       format = value;
+        {   get =>       format;
+            set {        format = value;
                   IsBE = format == Format.F2BE;
                   IsX  = format == Format.X || format == Format.XHD; } }
 
@@ -34,16 +34,13 @@ namespace KKdMainLib.IO
         public uint OU32 { get => (uint)OI64; set => OI64 = value; }
         public long OI64;
 
-        public  int L    { get => ( int)s.Length -    O; set => s.SetLength(value +    O); }
+        public  int L    { get => ( int)s.Length -    O; set => s.SetLength(value + O   ); }
         public uint LU32 { get => (uint)s.Length - OU32; set => s.SetLength(value + OU32); }
         public long LI64 { get =>       s.Length - OI64; set => s.SetLength(value + OI64); }
 
-        public  int P
-        { get => ( int)s.Position -    O; set => s.Position = value +     O; }
-        public uint PU32
-        { get => (uint)s.Position - OU32; set => s.Position = value + OU32; }
-        public long PI64
-        { get =>       s.Position - OI64; set => s.Position = value + OI64; }
+        public  int P    { get => ( int)s.Position -    O; set => s.Position = value + O   ; }
+        public uint PU32 { get => (uint)s.Position - OU32; set => s.Position = value + OU32; }
+        public long PI64 { get =>       s.Position - OI64; set => s.Position = value + OI64; }
 
         public bool CanRead    => s.CanRead;
         public bool CanSeek    => s.CanSeek;
@@ -56,12 +53,12 @@ namespace KKdMainLib.IO
         {
             if (output == null) output = MSIO.Stream.Null;
             OI64 = 0;
-            BitRead = 8;
-            ValRead = ValRead = BitWrite = 0;
+            bitRead = 8;
+            valRead = valRead = bitWrite = 0;
             s = output;
             Format = Format.NULL;
             b = new byte[0x100];
-            this.IsBE = isBE;
+            IsBE = isBE;
         }
 
         public void C() => D(true);
@@ -270,24 +267,24 @@ namespace KKdMainLib.IO
         public void WENRSE(Half val           ) => WENRSE((ushort)val      );
         public void WENRSE(Half val, bool isBE) => WENRSE((ushort)val, isBE);
 
-        public char RC(bool UTF8 = true) => UTF8 ? RCUTF8() : (char)s.ReadByte();
+        public char RC(bool utf8 = true) => utf8 ? RCUTF8() : (char)s.ReadByte();
 
         public char RCUTF8()
         {
             byte t;
             int T;
             int val = 0;
-            for (I = 0, i = 4; I < i; I++)
+            for (j = 0, i = 4; j < i; j++)
             {
                 T = s.ReadByte();
                 if (T == -1) return '\uFFFF';
                 t = (byte)T;
 
-                     if ((t & 0xC0) == 0x80 && I >  0)   val = (val << 6) | (t & 0x3F);
-                else if ((t & 0x80) == 0x00 && I == 0)   return (char)t;
-                else if ((t & 0xE0) == 0xC0 && I == 0) { val = t & 0x1F; i = 2; }
-                else if ((t & 0xF0) == 0xE0 && I == 0) { val = t & 0x0F; i = 3; }
-                else if ((t & 0xF8) == 0xF0 && I == 0) { val = t & 0x07; i = 4; }
+                     if ((t & 0xC0) == 0x80 && j >  0)   val = (val << 6) | (t & 0x3F);
+                else if ((t & 0x80) == 0x00 && j == 0)   return (char)t;
+                else if ((t & 0xE0) == 0xC0 && j == 0) { val = t & 0x1F; i = 2; }
+                else if ((t & 0xF0) == 0xE0 && j == 0) { val = t & 0x0F; i = 3; }
+                else if ((t & 0xF8) == 0xF0 && j == 0) { val = t & 0x07; i = 4; }
                 else return '\uFFFF';
             }
             return (char)val;
@@ -296,68 +293,68 @@ namespace KKdMainLib.IO
         public string RS(long Length, bool UTF8 = true) =>
             UTF8 ? RSUTF8(Length) : RSASCII(Length);
 
-        public string RSUTF8 (long Length) => RBy(Length).ToUTF8 ();
-        public string RSASCII(long Length) => RBy(Length).ToASCII();
+        public string RSUTF8 (long length) => RBy(length).ToUTF8 ();
+        public string RSASCII(long length) => RBy(length).ToASCII();
 
 
-        public string RS(long? Length, bool UTF8 = true) =>
-            UTF8 ? RSUTF8(Length) : RSASCII(Length);
+        public string RS(long? length, bool utf8 = true) =>
+            utf8 ? RSUTF8(length) : RSASCII(length);
 
-        public string RSUTF8 (long? Length) => RBy(Length).ToUTF8 ();
-        public string RSASCII(long? Length) => RBy(Length).ToASCII();
+        public string RSUTF8 (long? length) => RBy(length).ToUTF8 ();
+        public string RSASCII(long? length) => RBy(length).ToASCII();
 
-        public byte[] RBy(long Length, int Offset = -1)
-        { byte[] Buf = new byte[Length]; if (Offset > -1) s.Position = Offset;
-            s.Read(Buf, 0, (int)Length); return Buf; }
+        public byte[] RBy(long length, int offset = -1)
+        { byte[] Buf = new byte[length]; if (offset > -1) s.Position = offset;
+            s.Read(Buf, 0, (int)length); return Buf; }
 
-        public void RBy(long Length, byte[] Buf, long Offset = -1)
-        { if (Offset > -1) s.Position = Offset; s.Read(Buf, 0, (int)Length); }
+        public int RBy(long length, byte[] buf, long offset = -1)
+        { if (offset > -1) s.Position = offset; return s.Read(buf, 0, (int)length); }
 
-        public byte[] RBy(long? Length, int Offset = -1)
-        { if (Length == null) return new byte[0]; else return RBy((long)Length, Offset); }
+        public byte[] RBy(long? length, int offset = -1)
+        { if (length == null) return new byte[0]; else return RBy((long)length, offset); }
 
-        public void RBy(long  Length, byte Bits, byte[] Buf, long Offset = -1)
-        { if (Offset > -1) s.Seek(Offset, 0);
-                 if (Bits > 0 && Bits < 8) for (i = 0; i < Length; i++) Buf[i] = RBi(Bits); CR(); }
+        public void RBy(long length, byte bits, byte[] buf, long offset = -1)
+        { if (offset > -1) s.Seek(offset, 0);
+                 if (bits > 0 && bits < 8) for (i = 0; i < length; i++) buf[i] = RBi(bits); CR(); }
 
-        public byte RBi(byte Bits)
+        public byte RBi(byte bits)
         {
-            BitRead += Bits;
-            TempBitRead = 8 - BitRead;
-            if (TempBitRead < 0)
+            bitRead += bits;
+            tempBitRead = 8 - bitRead;
+            if (tempBitRead < 0)
             {
-                BitRead = (byte)-TempBitRead;
-                TempBitRead = 8 + TempBitRead;
-                ValRead = (ushort)((ValRead << 8) | (byte)s.ReadByte());
+                bitRead = (byte)-tempBitRead;
+                tempBitRead = 8 + tempBitRead;
+                valRead = (ushort)((valRead << 8) | (byte)s.ReadByte());
             }
-            return (byte)((ValRead >> TempBitRead) & ((1 << Bits) - 1));
+            return (byte)((valRead >> tempBitRead) & ((1 << bits) - 1));
         }
 
         public byte RHB() => RBi(4);
 
-        public void W(int val, byte Bits)
+        public void W(int val, byte bits)
         {
-            val &= (1 << Bits) - 1;
-            BitWrite += Bits;
-            TempBitWrite = 8 - BitWrite;
-            if (TempBitWrite < 0)
+            val &= (1 << bits) - 1;
+            bitWrite += bits;
+            tempBitWrite = 8 - bitWrite;
+            if (tempBitWrite < 0)
             {
-                BitWrite = (byte)-TempBitWrite;
-                TempBitWrite = 8 + TempBitWrite;
-                s.WriteByte((byte)(ValWrite | (val >> BitWrite)));
-                ValWrite = 0;
+                bitWrite = (byte)-tempBitWrite;
+                tempBitWrite = 8 + tempBitWrite;
+                s.WriteByte((byte)(valWrite | (val >> bitWrite)));
+                valWrite = 0;
             }
-            ValWrite |= val << TempBitWrite;
-            ValWrite &= 0xFF;
+            valWrite |= val << tempBitWrite;
+            valWrite &= 0xFF;
         }
 
         public void CR() //CheckRead
-        { if (BitRead  > 0)                                ValRead  = 0; BitRead  = 8;   }
+        { if (bitRead  > 0)                                valRead  = 0; bitRead  = 8;   }
         public void CW() //CheckWrite
-        { if (BitWrite > 0) { s.WriteByte((byte)ValWrite); ValWrite = 0; BitWrite = 0; } }
+        { if (bitWrite > 0) { s.WriteByte((byte)valWrite); valWrite = 0; bitWrite = 0; } }
 
-        public byte[] ToArray(bool Close)
-        { byte[] Data = ToArray(); if (Close) Dispose(); return Data; }
+        public byte[] ToArray(bool close)
+        { byte[] Data = ToArray(); if (close) Dispose(); return Data; }
 
         public byte[] ToArray()
         {

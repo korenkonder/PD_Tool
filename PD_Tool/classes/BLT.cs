@@ -22,7 +22,8 @@ namespace PD_Tool
                     ext = ext.ToLower();
 
                     Console.Title = "Bloom Converter: " + Path.GetFileNameWithoutExtension(file);
-                    if (ext == ".blt") { blt.BLTReader(filepath); blt.TXTWriter(filepath); }
+                         if (ext == ".blt") { blt.BLTReader(filepath); blt.TXTWriter(filepath); }
+                    //else if (ext == ".txt") { blt.TXTReader(filepath); blt.BLTWriter(filepath); }
                 }
         }
     }

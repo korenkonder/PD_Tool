@@ -200,28 +200,28 @@ namespace KKdMainLib.IO
             }
         }
 
-        private void W( sbyte val) { if (val < -0x20) _IO.W(0xD0); _IO.W(val); }
-        private void W(  byte val) { if (val >= 0x80) _IO.W(0xCC); _IO.W(val); }
+        private void W( sbyte val) { if (val < -0x20) _IO.W((byte)0xD0); _IO.W(val); }
+        private void W(  byte val) { if (val >= 0x80) _IO.W((byte)0xCC); _IO.W(val); }
         private void W( short val) { if (( sbyte)val == val) W(( sbyte)val);
                                 else if ((  byte)val == val) W((  byte)val);
-                                else { _IO.W(0xD1); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xD1); _IO.WE(val, true); } }
         private void W(ushort val) { if ((  byte)val == val) W((  byte)val);
-                                else { _IO.W(0xCD); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xCD); _IO.WE(val, true); } }
         private void W(   int val) { if (( short)val == val) W(( short)val);
                                 else if ((ushort)val == val) W((ushort)val);
-                                else { _IO.W(0xD2); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xD2); _IO.WE(val, true); } }
         private void W(  uint val) { if ((ushort)val == val) W((ushort)val);
-                                else { _IO.W(0xCE); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xCE); _IO.WE(val, true); } }
         private void W(  long val) { if ((   int)val == val) W((   int)val);
                                 else if ((  uint)val == val) W((  uint)val);
-                                else { _IO.W(0xD3); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xD3); _IO.WE(val, true); } }
         private void W( ulong val) { if ((  uint)val == val) W((  uint)val);
-                                else { _IO.W(0xCF); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xCF); _IO.WE(val, true); } }
         private void W( float val) { if ((  long)val == val) W((  long)val);
-                                else { _IO.W(0xCA); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xCA); _IO.WE(val, true); } }
         private void W(double val) { if ((  long)val == val) W((  long)val);
                                 else if (( float)val == val) W(( float)val);
-                                else { _IO.W(0xCB); _IO.WE(val, true); } }
+                                else { _IO.W((byte)0xCB); _IO.WE(val, true); } }
 
         private void W(  bool val) =>
             _IO.W((byte)(val ? 0xC3 : 0xC2));
@@ -230,9 +230,9 @@ namespace KKdMainLib.IO
         {
             if (val == null) { WN(); return; }
 
-                 if (val.Length <   0x100) { _IO.W(0xC4); _IO.W ((  byte)val.Length      ); }
-            else if (val.Length < 0x10000) { _IO.W(0xC5); _IO.WE((ushort)val.Length, true); }
-            else                           { _IO.W(0xC6); _IO.WE(        val.Length, true); }
+                 if (val.Length <   0x100) { _IO.W((byte)0xC4); _IO.W ((  byte)val.Length      ); }
+            else if (val.Length < 0x10000) { _IO.W((byte)0xC5); _IO.WE((ushort)val.Length, true); }
+            else                           { _IO.W((byte)0xC6); _IO.WE(        val.Length, true); }
             _IO.W(val);
         }
 
@@ -242,28 +242,28 @@ namespace KKdMainLib.IO
 
             byte[] array = Text.ToUTF8(val);
                  if (array.Length <    0x20)   _IO.W((byte)(0xA0 | (array.Length & 0x1F)));
-            else if (array.Length <   0x100) { _IO.W(0xD9); _IO.W ((  byte)array.Length); }
-            else if (array.Length < 0x10000) { _IO.W(0xDA); _IO.WE((ushort)array.Length, true); }
-            else                             { _IO.W(0xDB); _IO.WE(        array.Length, true); }
+            else if (array.Length <   0x100) { _IO.W((byte)0xD9); _IO.W ((  byte)array.Length); }
+            else if (array.Length < 0x10000) { _IO.W((byte)0xDA); _IO.WE((ushort)array.Length, true); }
+            else                             { _IO.W((byte)0xDB); _IO.WE(        array.Length, true); }
             _IO.W(array);
         }
 
-        private void WN() => _IO.W(0xC0);
+        private void WN() => _IO.W((byte)0xC0);
 
         private void WA(int val)
         {
                  if (val ==      0) { WN(); return; }
             else if (val <    0x10)   _IO.W((byte)(0x90 | (val & 0x0F)));
-            else if (val < 0x10000) { _IO.W(0xDC); _IO.WE((ushort)val, true); }
-            else                    { _IO.W(0xDD); _IO.WE(        val, true); }
+            else if (val < 0x10000) { _IO.W((byte)0xDC); _IO.WE((ushort)val, true); }
+            else                    { _IO.W((byte)0xDD); _IO.WE(        val, true); }
         }
 
         private void WM(int val)
         {
                  if (val ==      0) { WN(); return; }
             else if (val <    0x10)   _IO.W((byte)(0x80 | (val & 0x0F)));
-            else if (val < 0x10000) { _IO.W(0xDE); _IO.WE((ushort)val, true); }
-            else                    { _IO.W(0xDF); _IO.WE(        val, true); }
+            else if (val < 0x10000) { _IO.W((byte)0xDE); _IO.WE((ushort)val, true); }
+            else                    { _IO.W((byte)0xDF); _IO.WE(        val, true); }
         }
 
         private void W(MsgPack.Ext val) => WE(val);
@@ -273,19 +273,19 @@ namespace KKdMainLib.IO
             if (val.Data == null) { WN(); return; }
 
                  if (val.Data.Length <  1 ) { WN(); return; }
-            else if (val.Data.Length == 1 ) _IO.W(0xD4);
-            else if (val.Data.Length == 2 ) _IO.W(0xD5);
-            else if (val.Data.Length == 4 ) _IO.W(0xD6);
-            else if (val.Data.Length == 8 ) _IO.W(0xD7);
-            else if (val.Data.Length == 16) _IO.W(0xD8);
+            else if (val.Data.Length == 1 ) _IO.W((byte)0xD4);
+            else if (val.Data.Length == 2 ) _IO.W((byte)0xD5);
+            else if (val.Data.Length == 4 ) _IO.W((byte)0xD6);
+            else if (val.Data.Length == 8 ) _IO.W((byte)0xD7);
+            else if (val.Data.Length == 16) _IO.W((byte)0xD8);
             else
             {
                      if (val.Data.Length <   0x100)
-                { _IO.W(0xC7); _IO.W  ((  byte)val.Data.Length); }
+                { _IO.W((byte)0xC7); _IO.W ((  byte)val.Data.Length); }
                 else if (val.Data.Length < 0x10000)
-                { _IO.W(0xC8); _IO.WE((ushort)val.Data.Length, true); }
+                { _IO.W((byte)0xC8); _IO.WE((ushort)val.Data.Length, true); }
                 else
-                { _IO.W(0xC9); _IO.WE(        val.Data.Length, true); }
+                { _IO.W((byte)0xC9); _IO.WE(        val.Data.Length, true); }
             }
             _IO.W(val.Type);
             _IO.W(val.Data);

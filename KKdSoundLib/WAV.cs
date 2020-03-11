@@ -4,9 +4,9 @@
     {
         public struct Header
         {
-            public uint Size;
-            public uint SampleRate;
-            public uint HeaderSize;
+            public int Size;
+            public int SampleRate;
+            public int HeaderSize;
             public uint ChannelMask;
             public bool IsSupported;
             public ushort Bytes;

@@ -193,7 +193,7 @@ namespace KKdMainLib
         public static MsgPack Write(this MsgPack mp, string file, bool json = false)
         {
             if (json) using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true))) _IO.W(mp, "\n", "  ");
-            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".json", true))) _IO.W(mp);
+            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".mp"  , true))) _IO.W(mp);
             return mp;
         }
 
@@ -228,6 +228,15 @@ namespace KKdMainLib
             else if (kf is KFT3 kft3) { kft3.F  = kft3.F .Round(d); kft3.V  = kft3.V .Round(d);
                                         kft3.T1 = kft3.T1.Round(d); kft3.T2 = kft3.T2.Round(d); return kft3; }
             return   kf;
+        }
+    }
+
+    public static class LibDeflate
+    {
+        public static void Extract()
+        {
+            if (!File.Exists("libdeflate.dll"))
+                File.WriteAllBytes("libdeflate.dll", Properties.Resources.libdeflate);
         }
     }
 }

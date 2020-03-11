@@ -12,7 +12,7 @@ namespace PD_Tool
             Console.Title = "DEX Converter";
             Program.Choose(1, "dex", out string[] fileNames);
             if (fileNames.Length < 1) return;
-            
+
             bool  mp   = true;
             bool _json = true;
             foreach (string file in fileNames)
@@ -32,8 +32,8 @@ namespace PD_Tool
             Program.ConsoleDesign(false);
             Program.ConsoleDesign(true);
             Console.WriteLine();
-            choose = Console.ReadLine();
-            
+            choose = Console.ReadLine().ToUpper();
+
             Format format = Format.NULL;
                  if (choose == "1") format = Format.F   ;
             else if (choose == "2") format = Format.F2LE;
@@ -49,11 +49,11 @@ namespace PD_Tool
                     ext      = Path.GetExtension(file);
                     filepath = file.Replace(ext, "");
                     ext = ext.ToLower();
-                
+
                     Console.Title = "DEX Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".bin" || ext == ".dex") DEX.    DEXReader(filepath, ext );
                     else                                DEX.MsgPackReader(filepath, json);
-                    
+
                     if (format > Format.NULL) DEX.    DEXWriter(filepath, format);
                     else                      DEX.MsgPackWriter(filepath, json);
                 }

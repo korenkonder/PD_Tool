@@ -25,15 +25,16 @@ namespace PD_Tool
                 Program.ConsoleDesign("          Choose type of format to export:");
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign("1. VAG (Downmix to 1 ch)");
-                Program.ConsoleDesign("2. HEVAG [Fastest]");
+                Program.ConsoleDesign("2. HEVAG [Fastest] (Multichannel VAG)");
                 Program.ConsoleDesign("3. HEVAG [Fast]");
                 Program.ConsoleDesign("4. HEVAG [Medium]");
                 Program.ConsoleDesign("5. HEVAG [Slow]");
                 Program.ConsoleDesign("6. HEVAG [Slowest]");
+                Program.ConsoleDesign("7. HEVAG [Slow as hell] (Full HEVAG)");
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign(true);
                 Console.WriteLine();
-                choose = Console.ReadLine();
+                choose = Console.ReadLine().ToUpper();
             }
 
             string filepath, ext;

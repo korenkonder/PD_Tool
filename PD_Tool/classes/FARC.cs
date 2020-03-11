@@ -18,7 +18,7 @@ namespace PD_Tool
                     {
                         Console.Title = "FARC Extractor: " + Path.GetFileNameWithoutExtension(fileExtract);
                         using (KKdFARC farc = new KKdFARC(fileExtract))
-                            farc.UnPack();
+                            farc.Unpack();
                     }
                 return;
             }
@@ -35,8 +35,8 @@ namespace PD_Tool
                 Program.ConsoleDesign(true);
                 Program.ConsoleDesign("         Choose type of created FARC:");
                 Program.ConsoleDesign(false);
-                Program.ConsoleDesign("1. FArc [DT/DT2/DTex/F/F2/X]");
-                Program.ConsoleDesign("2. FArC [DT/DT2/DTex/F/F2/X] (Compressed)");
+                Program.ConsoleDesign("1. FArc (Uncompressed)");
+                Program.ConsoleDesign("2. FArC (Compressed)");
                 Program.ConsoleDesign("3. FARC [F/F2/X]");
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign("R. Return to Main Menu");
@@ -62,7 +62,7 @@ namespace PD_Tool
                     Program.ConsoleDesign(false);
                     Program.ConsoleDesign(true);
                     Console.WriteLine();
-                    choose = Console.ReadLine();
+                    choose = Console.ReadLine().ToUpper();
                     if (choose == "2" || choose == "4") farc.FARCType |= KKdFARC.Type.GZip;
                     if (choose == "3" || choose == "4") farc.FARCType |= KKdFARC.Type.ECB ;
                 }

@@ -22,7 +22,8 @@ namespace PD_Tool
                     ext = ext.ToLower();
 
                     Console.Title = "Light Converter: " + Path.GetFileNameWithoutExtension(file);
-                    if (ext == ".lit") { lit.LITReader(filepath); lit.TXTWriter(filepath); }
+                         if (ext == ".lit") { lit.LITReader(filepath); lit.TXTWriter(filepath); }
+                    //else if (ext == ".txt") { lit.TXTReader(filepath); lit.LITWriter(filepath); }
                 }
         }
     }

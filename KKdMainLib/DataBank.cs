@@ -58,9 +58,11 @@ namespace KKdMainLib
             else if (file.Contains("PvList"))
             {
                 if (pvList != null && pvList.Length > 0)
-                    for (i = 0; i < pvList.Length; i++)
-                        _IO.W(UrlEncode(pvList[i].ToString() +
-                            (i < pvList.Length ? c : "")));
+                {
+                    for (i = 0; i < pvList.Length - 1; i++)
+                        _IO.W(UrlEncode(pvList[i].ToString() + c));
+                    _IO.W(UrlEncode(pvList[i].ToString()));
+                }
                 else _IO.W("%2A%2A%2A");
             }
 
@@ -175,7 +177,7 @@ namespace KKdMainLib
                      .Add(p2.WriteMP("P2")).Add(p3.WriteMP("P3"));
 
             public override string ToString() =>
-                UrlEncode(p1.ToString() + c + p2.ToString() + c + p3.ToString() + c + PV_ID);
+                UrlEncode($"{p1.ToString()},{p2.ToString()},{p3.ToString()},{PV_ID}");
         }
 
         public struct Player
@@ -240,8 +242,8 @@ namespace KKdMainLib
         public struct PvList
         {
             public int PV_ID;
-            public bool Enable;
-            public bool Extra;
+            public int Version;
+            public int Edition;
             public Date AdvDemoStart;
             public Date AdvDemoEnd;
             public Date StartShow;
@@ -249,9 +251,9 @@ namespace KKdMainLib
 
             public void SetValue(string[] data, int i = 0)
             {
-                PV_ID  = int.Parse(data[i * 7]);
-                Enable = int.Parse(data[i * 7 + 1]) == 1;
-                Extra  = int.Parse(data[i * 7 + 2]) == 1;
+                PV_ID   = int.Parse(data[i * 7]);
+                Version = int.Parse(data[i * 7 + 1]);
+                Edition = int.Parse(data[i * 7 + 2]);
                 AdvDemoStart.SV(data[i * 7 + 3]);
                 AdvDemoEnd  .SV(data[i * 7 + 4]);
                 StartShow   .SV(data[i * 7 + 5]);
@@ -260,16 +262,15 @@ namespace KKdMainLib
 
             public void SetValue(MsgPack msg, bool Compact)
             {
-                Enable =  true;
-                Extra  = false;
+                Version = 1;
+                Edition = 0;
 
                 int? id = msg.RnI32("PV_ID");
-                if (id != null) PV_ID = (int)id;
-                else { id = msg.RnI32("ID"); if (id != null) PV_ID = (int)id; }
-                bool? enable = msg.RnB("Enable");
-                bool? extra  = msg.RnB("Extra");
-                if (enable != null) Enable = (bool)enable;
-                if (extra  != null) Extra  = (bool)extra ;
+                if (id != null) PV_ID = id.Value; else { id = msg.RnI32("ID"); if (id != null) PV_ID = id.Value; }
+                bool? enable = msg.RnB("Enable"); if (enable != null) Version = enable.Value ? 1 : 0;
+                bool? extra  = msg.RnB("Extra" ); if (extra  != null) Edition = extra .Value ? 1 : 0;
+                int? version = msg.RnI32("Version"); if (version != null) Version = version.Value;
+                int? edition = msg.RnI32("Edition"); if (edition != null) Edition = edition.Value;
                 if (Compact)
                 {
                     AdvDemoStart.SV(msg.RnI32("AdvDemoStart"),  true);
@@ -289,21 +290,18 @@ namespace KKdMainLib
 
             public MsgPack WriteMP()
             {
-                MsgPack msgPack = MsgPack.New;
-                msgPack.Add("ID", PV_ID);
-                if (!Enable) msgPack.Add("Enable", Enable);
-                if ( Extra ) msgPack.Add("Extra" , Extra );
-                if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.WI());
-                if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .WI());
-                if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .WI());
-                if (  EndShow   .WU) msgPack.Add(  "EndShow"   ,   EndShow   .WI());
+                MsgPack msgPack = MsgPack.New.Add("ID"     , PV_ID  )
+                                             .Add("Version", Version)
+                                             .Add("Edition", Edition);
+                if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.Int);
+                if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .Int);
+                if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .Int);
+                if (  EndShow   .WU) msgPack.Add(  "EndShow"   ,   EndShow   .Int);
                 return msgPack;
             }
 
             public override string ToString() =>
-                UrlEncode(PV_ID + c + (Enable ? 1 : 0) + c + (Extra ? 1 : 0) + c +
-                    AdvDemoStart.ToString() + c + AdvDemoEnd.ToString() + c +
-                    StartShow.ToString() + c + EndShow.ToString());
+                UrlEncode($"{PV_ID},{Version},{Edition},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}");
         }
 
         public struct Date
@@ -359,11 +357,7 @@ namespace KKdMainLib
                 CheckDate();
             }
 
-            public int WI() =>
-                (Year * 100 + Month) * 100 + Day;
-
-            public MsgPack WriteMP(string name) =>
-                new MsgPack(name).Add("Year", Year).Add("Month", Month).Add("Day", Day);
+            public int Int => (Year * 100 + Month) * 100 + Day;
 
             private void CheckDate()
             {
@@ -381,7 +375,7 @@ namespace KKdMainLib
             }
 
             public override string ToString() =>
-                Year.ToString("d4") + "-" + Month.ToString("d2") + "-" + Day.ToString("d2");
+                $"{Year.ToString("d4")}-{Month.ToString("d2")}-{Day.ToString("d2")}";
         }
 
         public enum Difficulty

@@ -27,7 +27,7 @@
 
     public struct _
     {
-        public int? CompressF16;
+        public CompressF16 CompressF16;
         public string FileName;
         public string PropertyVersion;
         public string ConverterVersion;
@@ -35,7 +35,7 @@
 
     public struct Ambient
     {
-        public string  Name;
+        public string Name;
         public Vector4<Key>    LightDiffuse;
         public Vector4<Key> RimLightDiffuse;
     }
@@ -57,7 +57,7 @@
 
         public struct ViewPoint
         {
-            public bool? FOVHorizontal;
+            public  bool  FOVHorizontal;
             public float? Aspect;
             public float? CameraApertureH;
             public float? CameraApertureW;
@@ -102,13 +102,11 @@
         public Vector4<Key> Diffuse;
     }
 
-    public enum KeyType : int
+    public enum CompressF16 : int
     {
-        Null    = 0,
-        Value   = 1,
-        Lerp    = 2,
-        Hermite = 3,
-        Hold    = 4,
+        F32F32F32F32 = 0,
+        I16F16F32F32 = 1,
+        I16F16F16F16 = 2,
     }
 
     public enum EPType : int
@@ -116,6 +114,15 @@
         EP_1 = 1,
         EP_2 = 2,
         EP_3 = 3,
+    }
+
+    public enum KeyType : int
+    {
+        Null    = 0,
+        Value   = 1,
+        Lerp    = 2,
+        Hermite = 3,
+        Hold    = 4,
     }
 
     public struct Key
@@ -138,10 +145,10 @@
             public string[] ValueList;
         }
 
-        public static Vector3<A3DAKey> ToA3DAKey(Vector3<Key> k) =>
+        public static Vector3<A3DAKey> ToA3DAKey(Vector3<     Key> k) =>
             new Vector3<A3DAKey> { X = (A3DAKey)k.X, Y = (A3DAKey)k.Y, Z = (A3DAKey)k.Z };
-        public static Vector3<Key> ToKey(Vector3<A3DAKey> k) =>
-            new Vector3<Key> { X = (Key)k.X, Y = (Key)k.Y, Z = (Key)k.Z };
+        public static Vector3<    Key> ToKey    (Vector3<A3DAKey> k) =>
+            new Vector3<    Key> { X = (    Key)k.X, Y = (    Key)k.Y, Z = (    Key)k.Z };
 
         public static explicit operator Key(A3DAKey k)
         {
@@ -152,7 +159,7 @@
             if (k.Length > 1)
             {
                 key.Type = k.Type;
-                key.Length = k.Length;
+                key.Length = (int)k.Length;
                 key.Keys = k.Keys;
             }
             else if (k.Length == 1)
@@ -179,17 +186,12 @@
             }
             else
             {
-                key.Length = 1;
-                key.Keys = new KFT3[1];
-                if (k.Length == 1)
-                {
-                    key.Type = KeyType.Value;
-                    key.Keys[0].V = k.Value ?? 0;
-                }
-                else if (k.Type.HasValue && k.Value.HasValue)
+                key.Type = 0;
+                key.Value = 0.0f;
+                if (k.Type.HasValue && k.Value.HasValue)
                 {
                     key.Type = k.Type.Value;
-                    key.Keys[0].V = k.Value.Value;
+                    key.Value = k.Value.Value;
                 }
             }
             return key;
@@ -293,11 +295,11 @@
 
     public struct PlayControl
     {
-        public int? Begin;
+        public int Begin;
         public int? Div;
-        public int? FPS;
+        public int FPS;
         public int? Offset;
-        public int? Size;
+        public int Size;
     }
 
     public struct PostProcess

@@ -215,7 +215,7 @@ namespace KKdBaseLib
             return d.ToString();
         }
 
-        private static readonly string NumberDecimalSeparator =
+        private static readonly string NDS =
              System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
 
         public static string ToS(this   bool? d) => (d ?? default).ToString();
@@ -237,28 +237,38 @@ namespace KKdBaseLib
         public static string ToS(this  ulong? d) => (d ?? default).ToString();
         public static string ToS(this  ulong  d) => d.ToString();
         public static string ToS(this  float? d, int round) => (d ?? default).ToS(round);
-        public static string ToS(this  float? d)            => (d ?? default).ToString();
-        public static string ToS(this  float  d, int round) =>
-            Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToS(this  float  d) =>
-            Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
+        public static string ToS(this  float? d)            => (d ?? default).ToS();
+        public static string ToS(this  float  d, int round)
+        { string s = (d.ToU32() & 0x80000000) != 0 ? "-" : ""; d = (d.ToU32() & 0x7FFFFFFF).ToF32();
+          return s + Math.Round(d, round).ToString().ToLower().Replace(NDS, "."); }
+        public static string ToS(this  float  d)
+        { string s = (d.ToU32() & 0x80000000) != 0 ? "-" : ""; d = (d.ToU32() & 0x7FFFFFFF).ToF32();
+          return s + Math.Round(d,    15).ToString().ToLower().Replace(NDS, "."); }
         public static string ToS(this double? d, int round) => (d ?? default).ToS(round);
-        public static string ToS(this double? d)            => (d ?? default).ToString();
-        public static string ToS(this double  d, int round) =>
-            Math.Round(d, round).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static string ToS(this double  d) =>
-            Math.Round(d,    15).ToString().ToLower().Replace(NumberDecimalSeparator, ".");
-        public static  float ToF32(this string s) =>
-             float.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToF32(this string s, out float value) =>
-             float.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static double ToF64(this string s) =>
-            double.   Parse(s.Replace(".", NumberDecimalSeparator));
-        public static   bool ToF64(this string s, out double value) =>
-            double.TryParse(s.Replace(".", NumberDecimalSeparator), out value);
-        public static   bool ToF32(this string s, out float? value)
-        { bool Val = ToF32(s, out  float val); value = val; return Val; }
-        public static   bool ToF64(this string s, out double? value)
-        { bool Val = ToF64(s, out double val); value = val; return Val; }
+        public static string ToS(this double? d)            => (d ?? default).ToS();
+        public static string ToS(this double  d, int round)
+        { string s = (d.ToU64() & 0x8000000000000000) != 0 ? "-" : ""; d = (d.ToU64() & 0x7FFFFFFFFFFFFFFF).ToF64();
+          return s + Math.Round(d, round).ToString().ToLower().Replace(NDS, "."); }
+        public static string ToS(this double  d)
+        { string s = (d.ToU64() & 0x8000000000000000) != 0 ? "-" : ""; d = (d.ToU64() & 0x7FFFFFFFFFFFFFFF).ToF64();
+          return s + Math.Round(d,    15).ToString().ToLower().Replace(NDS, "."); }
+        public static  float ToF32(this string s)
+        { if (s.Length < 1) return 0;  uint d = 0; if (s[0] == '-') d = 0x80000000;
+          d |=  float.Parse(s.Replace(".", NDS)).ToU32(); return d.ToF32(); }
+        public static double ToF64(this string s)
+        { if (s.Length < 1) return 0; ulong d = 0; if (s[0] == '-') d = 0x8000000000000000;
+          d |= double.Parse(s.Replace(".", NDS)).ToU64(); return d.ToF64(); }
+        public static bool ToF32(this string s, out  float  val)
+        { val = 0; if (s.Length < 1) return false;  uint d = 0; if (s[0] == '-') d = 0x80000000;
+          bool b =  float.TryParse(s.Replace(".", NDS), out val); if (b) val = (d | val.ToU32()).ToF32(); return b; }
+        public static bool ToF64(this string s, out double  val)
+        { val = 0; if (s.Length < 1) return false; ulong d = 0; if (s[0] == '-') d = 0x8000000000000000;
+          bool b = double.TryParse(s.Replace(".", NDS), out val); if (b) val = (d | val.ToU64()).ToF64(); return b; }
+        public static bool ToF32(this string s, out  float? val)
+        { val = null; if (s.Length < 1) return false;  uint d = 0; if (s[0] == '-') d = 0x80000000;
+          bool b =  float.TryParse(s.Replace(".", NDS), out  float t); if (b) val = (d | t.ToU32()).ToF32(); return b; }
+        public static bool ToF64(this string s, out double? val)
+        { val = null; if (s.Length < 1) return false; ulong d = 0; if (s[0] == '-') d = 0x8000000000000000;
+          bool b = double.TryParse(s.Replace(".", NDS), out double t); if (b) val = (d | t.ToU64()).ToF64(); return b; }
     }
 }
