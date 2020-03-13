@@ -303,14 +303,14 @@ namespace KKdMainLib.IO
         public string RSUTF8 (long? length) => RBy(length).ToUTF8 ();
         public string RSASCII(long? length) => RBy(length).ToASCII();
 
-        public byte[] RBy(long length, int offset = -1)
+        public byte[] RBy(long length, long offset = -1)
         { byte[] Buf = new byte[length]; if (offset > -1) s.Position = offset;
             s.Read(Buf, 0, (int)length); return Buf; }
 
         public int RBy(long length, byte[] buf, long offset = -1)
         { if (offset > -1) s.Position = offset; return s.Read(buf, 0, (int)length); }
 
-        public byte[] RBy(long? length, int offset = -1)
+        public byte[] RBy(long? length, long offset = -1)
         { if (length == null) return new byte[0]; else return RBy((long)length, offset); }
 
         public void RBy(long length, byte bits, byte[] buf, long offset = -1)

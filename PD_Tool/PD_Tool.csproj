@@ -41,6 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="classes\A3D.cs" />
+    <Compile Include="classes\ADP.cs" />
     <Compile Include="classes\AET.cs" />
     <Compile Include="classes\BLT.cs" />
     <Compile Include="classes\CCT.cs" />

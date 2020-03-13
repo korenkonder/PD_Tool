@@ -43,6 +43,10 @@ namespace KKdBaseLib
         {   get =>    array != null && index < array.Length ? array[index] : default;
             set { if (array != null && index < array.Length)  array[index] =   value; } }
 
+        public T this[long index]
+        {   get =>    array != null && index < array.Length ? array[index] : default;
+            set { if (array != null && index < array.Length)  array[index] =   value; } }
+
         public IEnumerator GetEnumerator() => enumerator = new Enumerator(array);
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => enumerator = new Enumerator(array);

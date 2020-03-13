@@ -56,10 +56,11 @@ namespace PD_Tool
             ConsoleDesign("3. Decrypt from DIVAFILE");
             ConsoleDesign("4. Encrypt to   DIVAFILE");
             ConsoleDesign("5. DB_Tools");
-            ConsoleDesign("6. AC/DT/F/AFT/FT Converting Tools");
-            ConsoleDesign("7. F/F2/FT        Converting Tools");
-            ConsoleDesign("8. X/XHD          Converting Tools");
-            ConsoleDesign(json ? "9. MsgPack to JSON" : "9. JSON to MsgPack");
+            ConsoleDesign("6. AC/DT/F/AFT Converting Tools");
+            ConsoleDesign("7. F/F2/FT     Converting Tools");
+            ConsoleDesign("8. X/XHD       Converting Tools");
+            ConsoleDesign("9. FT/M39      Converting Tools");
+            ConsoleDesign(json ? "A. MsgPack to JSON" : "A. JSON to MsgPack");
             ConsoleDesign(false);
             ConsoleDesign(json ? "M. MessagePack" : "J. JSON");
             ConsoleDesign("Q. Quit");
@@ -87,7 +88,7 @@ namespace PD_Tool
             else if (choose == "6")
             {
                 Console.Clear();
-                Console.Title = "AC/DT/F/AFT/FT Converting Tools";
+                Console.Title = "AC/DT/F/AFT Converting Tools";
                 ConsoleDesign(true);
                 ConsoleDesign("               Choose converter:");
                 ConsoleDesign(false);
@@ -170,6 +171,39 @@ namespace PD_Tool
                 else choose = localChoose;
             }
             else if (choose == "9")
+            {
+                Console.Clear();
+                Console.Title = "FT/M39 Converting Tools";
+                ConsoleDesign(true);
+                ConsoleDesign("               Choose converter:");
+                ConsoleDesign(false);
+                ConsoleDesign("1. A3DA"    );
+                ConsoleDesign("2. AddParam");
+                ConsoleDesign("3. AET"     );
+                ConsoleDesign("4. DEX"     );
+                ConsoleDesign("5. DIVA"    );
+                ConsoleDesign("6. MotHead" );
+                ConsoleDesign("7. MOT"     );
+                ConsoleDesign("8. Table"   );
+                ConsoleDesign("9. STR"     );
+                ConsoleDesign(false);
+                ConsoleDesign("R. Return to Main Menu");
+                ConsoleDesign(false);
+                ConsoleDesign(true);
+                Console.WriteLine();
+                string localChoose = Console.ReadLine().ToUpper();
+                     if (localChoose == "1") A3D.Processor(json);
+                else if (localChoose == "2") ADP.Processor(json);
+                else if (localChoose == "3") AET.Processor(json);
+                else if (localChoose == "4") DEX.Processor(json);
+                else if (localChoose == "5") DIV.Processor();
+                else if (localChoose == "6") MHD.Processor(json);
+                else if (localChoose == "7") MOT.Processor(json);
+                else if (localChoose == "8") TBL.Processor(json);
+                else if (localChoose == "9") STR.Processor(json);
+                else choose = localChoose;
+            }
+            else if (choose == "A")
             {
                 Console.Title = json ? "MsgPack to JSON" : "JSON to MsgPack";
                 Choose(1, json ? "mp" : "json", out string[] fileNames);

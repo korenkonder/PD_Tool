@@ -3,7 +3,7 @@ using KKdMainLib.IO;
 
 namespace KKdMainLib
 {
-    public struct MotHead
+    public struct MotHead : System.IDisposable
     {
         private int i, i0, i1;
         private Stream _IO;
@@ -92,7 +92,8 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Header.Data[i].Array.Length; i0++)
                 {
                     ref HeaderData.Sub.Data Data = ref Header.Data[i].Array[i0];
-                    if (!GetSize(Data.Type, out i1)) goto RETURN;
+                    if ((i1 = GetSize(Data.Type)) < 1) continue;
+
 
                     if (Data.Offset > 0)
                     {
@@ -152,27 +153,25 @@ RETURN:
                         for (i0 = Header.Data[i].Array.Length - 1; i0 > -1; i0--)
                         {
                             ref HeaderData.Sub.Data data = ref Header.Data[i].Array[i0];
-                            if (data.Array != null)
-                                if (data.Array.Length > 0 &&
-                                    GetSize(data.Type, out int Size))
-                                {
-                                    if (data.Type == 0x3E) _IO.A(0x20, true);
-                                    data.Offset = _IO.P;
-
-                                         if (Size == 0x01) _IO.W(( byte)data.Array[0]);
-                                    else if (Size == 0x02) _IO.W((short)data.Array[0]);
-                                    else
-                                    {
-                                        if (_IO.P % 0x4 != 0) _IO.A(0x04, true);
-                                        Size /= 4;
-
-                                        data.Offset = _IO.P;
-                                        for (i1 = 0; i1 < data.Array.Length && i1 < Size; i1++)
-                                            _IO.W(data.Array[i1]);
-
-                                        for (; i1 < Size; i1++) _IO.W(0);
-                                    }
-                                }
+                            int Size = GetSize(data.Type);
+                            if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
+                            
+                            if (data.Type == 0x3E) _IO.A(0x20, true);
+                            data.Offset = _IO.P;
+                            
+                                 if (Size == 0x01) _IO.W(( byte)data.Array[0]);
+                            else if (Size == 0x02) _IO.W((short)data.Array[0]);
+                            else
+                            {
+                                if (_IO.P % 0x4 != 0) _IO.A(0x04, true);
+                                Size /= 4;
+                                
+                                data.Offset = _IO.P;
+                                for (i1 = 0; i1 < data.Array.Length && i1 < Size; i1++)
+                                    _IO.W(data.Array[i1]);
+                                
+                                for (; i1 < Size; i1++) _IO.W(0);
+                            }
                         }
 
                         if (Header.Data[i].Array2 != null)
@@ -678,16 +677,26 @@ RETURN:
             motHead.WriteAfterAll(true, file, json);
         }
 
-        private static bool GetSize(int Type, out int Size)
-        {
-            Size = Type switch
+        private static int GetSize(int Type) =>
+            Type switch
             {
+                0x02 => 0x02,
                 0x03 => 0x04,
+                0x04 => 0x04,
+                0x07 => 0x08,
+                0x08 => 0x08,
+                0x0D => 0x0C,
+                0x11 => 0x1C,
+                0x1D => 0x30,
+                0x20 => 0x10,
+                0x21 => 0x18,
                 0x35 => 0x14,
                 0x36 => 0x14,
                 0x37 => 0x14,
                 0x38 => 0x14,
                 0x39 => 0x14,
+                0x3A => 0x14,
+                0x3B => 0x04,
                 0x3C => 0x10,
                 0x3D => 0x08,
                 0x3E => 0x40,
@@ -705,12 +714,14 @@ RETURN:
                 0x4B => 0x34,
                 0x4C => 0x10,
                 0x4D => 0x04,
+                0x4E => 0x1C,
                 0x4F => 0x01,
-                0x50 => 0x04,
+                0x50 => 0x01,
                 _    => 0x00,
             };
-            return Size > 0;
-        }
+
+        public void Dispose()
+        { if (_IO != null) { if (_IO.CanRead || _IO.CanWrite)  _IO.D(); _IO = null; } Header = default; }
 
         public struct HeaderData
         {

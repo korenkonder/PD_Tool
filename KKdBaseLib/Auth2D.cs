@@ -1,4 +1,6 @@
-﻿namespace KKdBaseLib.Auth2D
+﻿//Original: AetSet.bt Version: 5.0 by samyuu
+
+namespace KKdBaseLib.Auth2D
 {
     public struct Header
     {
@@ -122,11 +124,46 @@
 
             public enum TransferBlendMode : byte
             {
-                Alpha                    = 3,
-                Additive                 = 5,
-                DstColorZero             = 6,
-                SrcAlphaOneMinusSrcColor = 7,
-                Transparent              = 8,
+                None              =  0,
+                Copy              =  1,
+                Behind            =  2,
+                Normal            =  3,
+                Dissolve          =  4,
+                Add               =  5,
+                Multiply          =  6,
+                Screen            =  7,
+                Overlay           =  8,
+                SoftLight         =  9,
+                HardLight         = 10,
+                Darken            = 11,
+                Lighten           = 12,
+                ClassicDifference = 13,
+                Hue               = 14,
+                Saturation        = 15,
+                Color             = 16,
+                Luminosity        = 17,
+                StenciilAlpha     = 18,
+                StencilLuma       = 19,
+                SilhouetteAlpha   = 20,
+                SilhouetteLuma    = 21,
+                LuminescentPremul = 22,
+                AlphaAdd          = 23,
+                ClassicColorDodge = 24,
+                ClassicColorBurn  = 25,
+                Exclusion         = 26,
+                Difference        = 27,
+                ColorDodge        = 28,
+                ColorBurn         = 29,
+                LinearDodge       = 30,
+                LinearBurn        = 31,
+                LinearLight       = 32,
+                VividLight        = 33,
+                PinLight          = 34,
+                HardMix           = 35,
+                LighterColor      = 36,
+                DarkerColor       = 37,
+                Subtract          = 38,
+                Divide            = 39,
             }
 
             public enum TransferFlags : byte

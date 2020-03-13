@@ -49,6 +49,12 @@
             set { if (keyArray != null && valArray != null && index < keyArray.Length &&
                     index < valArray.Length) { keyArray[index] = value.Key; valArray[index] = value.Value; } } }
 
+        public KeyValuePair<TKey, TValue> this[long index, bool list]
+        {   get =>    keyArray != null && valArray != null && index > -1 && index < keyArray.Length &&
+                index < valArray.Length ? new KeyValuePair<TKey, TValue>(keyArray[index], valArray[index]) : default;
+            set { if (keyArray != null && valArray != null && index > -1 && index < keyArray.Length &&
+                    index < valArray.Length) { keyArray[index] = value.Key; valArray[index] = value.Value; } } }
+
         public TValue this[TKey key]
         {   get =>    valArray != null && valArray.Length > 0 && CK(key, out int index) ? valArray[index] : default;
             set { if (valArray != null && valArray.Length > 0) if (CK(key, out int index)) valArray[index] = value; else Add(key, value); } }

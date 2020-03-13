@@ -36,6 +36,10 @@ namespace KKdBaseLib
         {   get =>    Object is MsgPack[] Array  ? Array[index] : default;
             set { if (Object is MsgPack[] Array) { Array[index] =   value; Object = Array; } } }
 
+        public MsgPack this[long index]
+        {   get =>    Object is MsgPack[] Array  ? Array[index] : default;
+            set { if (Object is MsgPack[] Array) { Array[index] =   value; Object = Array; } } }
+
         public MsgPack this[string key]
         {   get =>    Object is KKdList<MsgPack> List  ? List[ElementIndex(key)] : default;
             set { if (Object is KKdList<MsgPack> List && value.Object != null) 

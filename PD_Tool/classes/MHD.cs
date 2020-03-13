@@ -32,7 +32,7 @@ namespace PD_Tool
                     mhd.MsgPackReader(filepath, ext == ".json");
                     mhd.MotHeadWriter(filepath);
                 }
-                mhd = new MotHead();
+                mhd.Dispose();
             }
         }
     }
