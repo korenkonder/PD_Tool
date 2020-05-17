@@ -1,4 +1,4 @@
-﻿//Original: AetSet.bt Version: 5.0 by samyuu
+//Original: AetSet.bt Version: 5.0 by samyuu
 
 using KKdBaseLib;
 using KKdBaseLib.Auth2D;
@@ -65,7 +65,7 @@ namespace KKdMainLib
             aet.BackColor  = _IO.RU32();
             aet.Width      = _IO.RU32();
             aet.Height     = _IO.RU32();
-            aet.Camera       = _IO.RP<Vector2<CountPointer<KFT2>>>();
+            aet.Camera       = _IO.RP<Vec2<CountPointer<KFT2>>>();
             aet.Compositions = _IO.ReadCountPointer<Composition>();
             aet.Videos       = _IO.ReadCountPointer<Video      >();
             aet.Audios       = _IO.ReadCountPointer<Audio      >();
@@ -263,7 +263,7 @@ namespace KKdMainLib
 
             if (aet.Camera.O > 0)
             {
-                ref Vector2<CountPointer<KFT2>> pos = ref aet.Camera.V;
+                ref Vec2<CountPointer<KFT2>> pos = ref aet.Camera.V;
                 _IO.A(0x10);
                 W(ref pos.X);
                 W(ref pos.Y);
@@ -982,6 +982,6 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); AET = default; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; AET = default; disposed = true; } }
     }
 }

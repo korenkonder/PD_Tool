@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib.F2
+namespace KKdBaseLib.F2
 {
     public struct POF : INull
     {

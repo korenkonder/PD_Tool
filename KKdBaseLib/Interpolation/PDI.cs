@@ -1,31 +1,32 @@
-﻿namespace KKdBaseLib.Interpolation
+namespace KKdBaseLib.Interpolation
 {
-    public struct PDI : IInterpolation //Project DIVA Interpolation
+    public class PDI : IInterpolation<float> //Project DIVA Interpolation
     {
         private KFT2[] array;
+        private int length;
 
         private float f;
-        private float last;
+        private float t;
+        private float v;
         private float df;
         private float @if;
         private float rf;
-        private float lastTime;
 
         private KFT2 firstKey;
         private KFT2  lastKey;
 
-        public float InterpolationFramerate { get => @if; set { @if = value; df = @if / rf; } }
-        public float     RequestedFramerate { get =>  rf; set {  rf = value; df = @if / rf; } }
+        public float RequestedFramerate { get =>  rf; set {  rf = value; df = @if / rf; } }
 
         public float Frame => f;
-        public float Value => last;
+        public float Time  => t;
+        public float Value => v;
         public bool  IsNull => array == null ?  true : array.Length < 1;
         public bool NotNull => array == null ? false : array.Length > 0;
 
         public PDI(KFT2[] array, float interpolationFramerate = 60, float requestedFramerate = 60)
         {
-            lastTime = 0;
-            this.array = array; f = -1; df = last = rf = @if = 0;
+            length = 0;
+            this.array = array; f = -1; df = @if = rf = t = v = 0;
             @if = interpolationFramerate;
             firstKey = lastKey = default;
             RequestedFramerate = requestedFramerate;
@@ -36,47 +37,52 @@
             {
                 firstKey = array[0];
                  lastKey = array[array.Length - 1];
+                  length = array.Length;
             }
         }
 
         public float SetTime(float time)
         {
-            if (array == null || array.Length < 1) return 0;
-
-            lastTime = time;
+            t = time;
             f = time * @if;
-            last = Interpolate(f);
-            return last;
+
+            if (array == null || length < 1) v = 0.0f;
+            else                             v = Interpolate(f);
+
+            return v;
         }
 
         public float SetFrame(float frame)
         {
-            if (array == null || array.Length < 1) return 0;
-
-            lastTime = frame / rf;
+            t = frame / rf;
             f = frame * df;
-            last = Interpolate(f);
-            return last;
+
+            if (array == null || length < 1) v = 0.0f;
+            else                             v = Interpolate(f);
+
+            return v;
         }
 
         public float NextFrame(float time)
         {
-            if (array == null || array.Length < 1) return 0;
+            t += time;
+            f = t * @if;
 
-            lastTime += time;
-            f = lastTime * @if;
-            last = Interpolate(f);
-            return last;
+            if (array == null || length < 1) v = 0.0f;
+            else                             v = Interpolate(f);
+
+            return v;
         }
 
         public float NextFrame()
         {
-            if (array == null || array.Length < 1) return 0;
-
             f += df;
-            lastTime = f / @if;
-            last = Interpolate(f);
-            return last;
+            t = f / @if;
+
+            if (array == null || length < 1) v = 0.0f;
+            else                             v = Interpolate(f);
+
+            return v;
         }
 
         private float Interpolate(float frame)
@@ -86,19 +92,27 @@
                  if (f <= firstKey.F) return firstKey.V;
             else if (f >=  lastKey.F) return  lastKey.V;
 
-            int key = 0;
-            int length = array.Length;
-            int temp;
-            while (length > 0)
-                if (f > array[key + (temp = length >> 1)].F)
+            KFT2 c, n;
+            unsafe
+            {
+                fixed (KFT2* ptr = array)
                 {
-                       key += temp + 1;
-                    length -= temp + 1;
-                }
-                else length = temp;
+                    long key = 0;
+                    long length = this.length;
+                    long temp;
+                    while (length > 0)
+                        if (f > array[key + (temp = length >> 1)].F)
+                        {
+                               key += temp + 1;
+                            length -= temp + 1;
+                        }
+                        else length = temp;
 
-            ref KFT2 c = ref array[key - 1];
-            ref KFT2 n = ref array[key];
+                    c = ptr[key - 1];
+                    n = ptr[key];
+                }
+            }
+
             float result;
             if (frame > c.F && frame < n.F)
             {
@@ -110,9 +124,9 @@
             else result = frame > c.F ? n.V : c.V;
             return result;
         }
+        
+        public void ResetFrameCount() { f = -df; t = f / rf; }
 
-        public void ResetFrameCount() => f = -df;
-
-        public override string ToString() => $"Frame: {f}, Value: {last}";
+        public override string ToString() => $"F: {f}; T: {t}; V: {v}";
     }
 }

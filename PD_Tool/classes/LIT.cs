@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using KKdMainLib.IO;
 using KKdMainLib.F2;
 

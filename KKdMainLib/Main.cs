@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Globalization;
 using System.Collections.Generic;
@@ -93,7 +93,7 @@ namespace KKdMainLib
         { if (dict.FV(out string val  , args.Split('.'  )))
             { bool Val =  int.TryParse(val, out int _value);
                 value = _value; return Val; }         value =  null; return false; }
-        
+
         public static bool FV(this A3DADict dict, out  float? value, string   args)
         { if (dict.FV(out string val  , args.Split('.'  )))
                 return          val.ToF32(out value); value =  null; return false; }

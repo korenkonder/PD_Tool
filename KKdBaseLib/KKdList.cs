@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace KKdBaseLib
@@ -115,20 +115,23 @@ namespace KKdBaseLib
         public static explicit operator    List<T>(KKdList<T> list)
         { List<T> outList = new List<T>(); for (int i = 0; i < list.Count; i++) outList.Add(list[i]); return outList; }
 
+        public override string ToString() =>
+            $"(Count: {Count}; Capacity: {Capacity}; Current: {Current})";
+
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private T[] array;
             private int index;
             private int count;
             private T current;
- 
-            internal Enumerator(T[] array) 
+
+            internal Enumerator(T[] array)
             { this.array = array; count = index = 0;   current = default;
               if (array != null && array.Length > 0) { current = array[0]; count = array.Length; } }
- 
+
             public void Dispose()
             { array = null; count = index = 0; current = default; }
- 
+
             public bool MoveNext()
             {
                 if (index < count) { current = array[index]; index++;           return  true; }
@@ -136,7 +139,7 @@ namespace KKdBaseLib
             }
 
             public T Current => current;
- 
+
             object IEnumerator.Current =>
                 (index == 0 || index == array.Length + 1) ? default : current;
 

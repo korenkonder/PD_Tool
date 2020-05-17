@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
@@ -155,21 +155,21 @@ RETURN:
                             ref HeaderData.Sub.Data data = ref Header.Data[i].Array[i0];
                             int Size = GetSize(data.Type);
                             if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
-                            
+
                             if (data.Type == 0x3E) _IO.A(0x20, true);
                             data.Offset = _IO.P;
-                            
+
                                  if (Size == 0x01) _IO.W(( byte)data.Array[0]);
                             else if (Size == 0x02) _IO.W((short)data.Array[0]);
                             else
                             {
                                 if (_IO.P % 0x4 != 0) _IO.A(0x04, true);
                                 Size /= 4;
-                                
+
                                 data.Offset = _IO.P;
                                 for (i1 = 0; i1 < data.Array.Length && i1 < Size; i1++)
                                     _IO.W(data.Array[i1]);
-                                
+
                                 for (; i1 < Size; i1++) _IO.W(0);
                             }
                         }
@@ -721,7 +721,7 @@ RETURN:
             };
 
         public void Dispose()
-        { if (_IO != null) { if (_IO.CanRead || _IO.CanWrite)  _IO.D(); _IO = null; } Header = default; }
+        { if (_IO != null) _IO.D(); _IO = null; Header = default; }
 
         public struct HeaderData
         {

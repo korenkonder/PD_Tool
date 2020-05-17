@@ -1,4 +1,4 @@
-﻿namespace KKdSoundLib
+namespace KKdSoundLib
 {
     public static class WAV
     {

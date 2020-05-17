@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib
+namespace KKdBaseLib
 {
     public struct ButtonSE
     {
@@ -137,13 +137,13 @@
         public string   Name;
         public string SEName;
     }
-    
+
     public struct TableDate : INull
     {
         private int  year;
         private int month;
         private int  day;
-        
+
         public int  Year { get =>  year; set {  year = value; CheckDate(); } }
         public int Month { get => month; set { month = value; CheckDate(); } }
         public int   Day { get =>   day; set {   day = value; CheckDate(); } }
@@ -157,7 +157,7 @@
         public void SN () => Year =   -1;
         public void SDL() => Year = 2000;
         public void SDU() => Year = 2029;
-        
+
         public void SV(int? ymd, bool setDefaultUpper)
         {
             if (!setDefaultUpper) SDL();
@@ -170,9 +170,9 @@
                 CheckDate();
             }
         }
-        
+
         public int Int => NotNull ? (Year * 100 + Month) * 100 + Day : -1;
-        
+
         private void CheckDate()
         {
             if (year == -1 || month == -1 || day == -1) { year = -1; month = -1; day = -1; return; }
@@ -188,7 +188,7 @@
             else if (day > 29 && month == 2 && year % 4 == 0) day = 29;
             else if (day > 28 && month == 2 && year % 4 != 0) day = 28;
         }
-        
+
         public override string ToString() =>
                 $"{Year.ToString("d4")}-{Month.ToString("d2")}-{Day.ToString("d2")}";
     }

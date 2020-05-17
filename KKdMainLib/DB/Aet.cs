@@ -1,4 +1,4 @@
-﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
+//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
 using System.Collections.Generic;
 using KKdBaseLib;
@@ -218,7 +218,7 @@ namespace KKdMainLib.DB
 
         private bool disposed = false;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); AetSets = null; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; AetSets = null; disposed = true; } }
 
         public struct AET
         {

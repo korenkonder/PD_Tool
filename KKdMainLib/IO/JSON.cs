@@ -1,4 +1,4 @@
-﻿//Original or reader part: https://github.com/MarcosLopezC/LightJson/
+//Original or reader part: https://github.com/MarcosLopezC/LightJson/
 
 using KKdBaseLib;
 using BaseExtensions = KKdBaseLib.Extensions;

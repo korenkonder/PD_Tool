@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib
+namespace KKdBaseLib
 {
     public struct Pointer<T>
     {

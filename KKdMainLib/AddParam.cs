@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
@@ -9,7 +9,7 @@ namespace KKdMainLib
         private Stream _IO;
 
         public HeaderData Header;
-        
+
         public void MotHeadReader(string file)
         {
             Header = new HeaderData();
@@ -21,7 +21,7 @@ namespace KKdMainLib
 
             if (Header.Count < 1 || Header.DataOffset > _IO.P || Header.DataLength > _IO.LI64
                 - Header.DataOffset || Header.Count * 0x20 > _IO.LI64 - Header.DataOffset) { _IO.C(); return; }
-            
+
             Header.Data = new HeaderData.Sub[Header.Count];
             byte[] data = _IO.RBy(Header.DataLength, Header.DataOffset);
             _IO.C();
@@ -109,18 +109,18 @@ namespace KKdMainLib
                         addParam[i] = addParam[i].Add("PVBranch", sub.PVBranch);
 
                     addParam[i] = addParam[i].Add("ID", sub.ID);
-                    
+
                     if (sub.ID == 0)
                         addParam[i] = addParam[i].Add("Value", *(uint*)&ptr[i].Value);
                     else if (*(uint*)&ptr[i].Value != 0xFFFFFFFF)
                         addParam[i] = addParam[i].Add("Value", sub.Value);
-                     
+
                 }
             addParam.WriteAfterAll(true, file, json);
         }
 
         public void Dispose()
-        { if (_IO != null) { if (_IO.CanRead || _IO.CanWrite)  _IO.D(); _IO = null; } Header = default; }
+        { if (_IO != null) _IO.D(); _IO = null; Header = default; }
 
         public struct HeaderData
         {

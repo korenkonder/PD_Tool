@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
@@ -60,12 +60,12 @@ namespace KKdMainLib.F2
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); BLTs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; BLTs = default; header = default; disposed = true; } }
 
         public struct BLT
         {
-            public Vector3 Color;
-            public Vector3 Brightpass;
+            public Vec3 Color;
+            public Vec3 Brightpass;
             public float Range;
 
             public override string ToString() => Color     .ToString(6) + "," +

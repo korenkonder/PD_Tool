@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
@@ -181,7 +181,7 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); Strings = default;
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; Strings = default;
                 pof = default; header = default; disposed = true; } }
 
         public struct String

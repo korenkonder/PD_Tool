@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using KKdBaseLib;
 using KKdMainLib.IO;
 using KKdA3DA = KKdMainLib.A3DA;

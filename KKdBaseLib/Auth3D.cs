@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib.Auth3D
+namespace KKdBaseLib.Auth3D
 {
     public struct Data
     {
@@ -36,8 +36,8 @@
     public struct Ambient
     {
         public string Name;
-        public Vector4<Key>    LightDiffuse;
-        public Vector4<Key> RimLightDiffuse;
+        public Vec4<Key>    LightDiffuse;
+        public Vec4<Key> RimLightDiffuse;
     }
 
     public struct CameraAuxiliary
@@ -99,7 +99,7 @@
         public Key End;
         public Key Start;
         public Key Density;
-        public Vector4<Key> Diffuse;
+        public Vec4<Key> Diffuse;
     }
 
     public enum CompressF16 : int
@@ -145,10 +145,10 @@
             public string[] ValueList;
         }
 
-        public static Vector3<A3DAKey> ToA3DAKey(Vector3<     Key> k) =>
-            new Vector3<A3DAKey> { X = (A3DAKey)k.X, Y = (A3DAKey)k.Y, Z = (A3DAKey)k.Z };
-        public static Vector3<    Key> ToKey    (Vector3<A3DAKey> k) =>
-            new Vector3<    Key> { X = (    Key)k.X, Y = (    Key)k.Y, Z = (    Key)k.Z };
+        public static Vec3<A3DAKey> ToA3DAKey(Vec3<     Key> k) =>
+            new Vec3<A3DAKey> { X = (A3DAKey)k.X, Y = (A3DAKey)k.Y, Z = (A3DAKey)k.Z };
+        public static Vec3<    Key> ToKey    (Vec3<A3DAKey> k) =>
+            new Vec3<    Key> { X = (    Key)k.X, Y = (    Key)k.Y, Z = (    Key)k.Z };
 
         public static explicit operator Key(A3DAKey k)
         {
@@ -203,10 +203,10 @@
         public int? Id;
         public string Name;
         public string Type;
-        public Vector4<Key> Ambient;
-        public Vector4<Key> Diffuse;
-        public Vector4<Key> Specular;
-        public Vector4<Key> Incandescence;
+        public Vec4<Key> Ambient;
+        public Vec4<Key> Diffuse;
+        public Vec4<Key> Specular;
+        public Vec4<Key> Incandescence;
         public ModelTransform Position;
         public ModelTransform SpotDirection;
     }
@@ -216,15 +216,15 @@
         public string Name;
         public string HashName;
         public Key GlowIntensity;
-        public Vector4<Key> BlendColor;
-        public Vector4<Key> Incandescence;
+        public Vec4<Key> BlendColor;
+        public Vec4<Key> Incandescence;
     }
 
     public struct MObjectHRC
     {
         public string Name;
         public Node[] Node;
-        public Vector3<float?> JointOrient;
+        public Vec3<float?> JointOrient;
         public Instance[] Instances;
         public ModelTransform MT;
 
@@ -242,9 +242,9 @@
         public bool Writed;
         public int? BinOffset;
         public Key Visibility;
-        public Vector3<Key> Rot;
-        public Vector3<Key> Scale;
-        public Vector3<Key> Trans;
+        public Vec3<Key> Rot;
+        public Vec3<Key> Scale;
+        public Vec3<Key> Trans;
     }
 
     public struct Node
@@ -277,10 +277,10 @@
             public string Name;
             public Key Rotate;
             public Key RotateFrame;
-            public Vector2<Key> Offset;
-            public Vector2<Key> Repeat;
-            public Vector2<Key> Coverage;
-            public Vector2<Key> TranslateFrame;
+            public Vec2<Key> Offset;
+            public Vec2<Key> Repeat;
+            public Vec2<Key> Coverage;
+            public Vec2<Key> TranslateFrame;
         }
     }
 
@@ -290,7 +290,7 @@
         public string Name;
         public string UIDName;
         public Node[] Node;
-        public Vector3<float?> JointOrient;
+        public Vec3<float?> JointOrient;
     }
 
     public struct PlayControl
@@ -307,8 +307,8 @@
         public Key LensFlare;
         public Key LensGhost;
         public Key LensShaft;
-        public Vector4<Key> Ambient;
-        public Vector4<Key> Diffuse;
-        public Vector4<Key> Specular;
+        public Vec4<Key> Ambient;
+        public Vec4<Key> Diffuse;
+        public Vec4<Key> Specular;
     }
 }

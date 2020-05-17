@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using KKdBaseLib;
 using KKdMainLib.IO;
 using A3DADict = System.Collections.Generic.Dictionary<string, object>;
@@ -151,7 +151,7 @@ namespace KKdMainLib.DB
 
         private bool disposed = false;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); Category = null; UIDs = null; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; Category = null; UIDs = null; disposed = true; } }
 
         public struct UID
         {

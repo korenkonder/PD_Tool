@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 
 namespace KKdMainLib.IO
 {

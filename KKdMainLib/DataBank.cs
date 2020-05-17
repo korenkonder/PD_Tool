@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using KKdBaseLib;
 using KKdMainLib.IO;
@@ -141,7 +141,7 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); psrData = null;
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; psrData = null;
                 pvList = null; Success = false; disposed = true; } }
 
         public struct PsrData

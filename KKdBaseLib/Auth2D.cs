@@ -1,4 +1,4 @@
-﻿//Original: AetSet.bt Version: 5.0 by samyuu
+//Original: AetSet.bt Version: 5.0 by samyuu
 
 namespace KKdBaseLib.Auth2D
 {
@@ -16,7 +16,7 @@ namespace KKdBaseLib.Auth2D
         public uint BackColor;
         public uint Width;
         public uint Height;
-        public Pointer<Vector2<CountPointer<KFT2>>> Camera;
+        public Pointer<Vec2<CountPointer<KFT2>>> Camera;
         public CountPointer<Composition> Compositions;
         public CountPointer<Video      > Videos;
         public CountPointer<Audio      > Audios;

@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
@@ -223,7 +223,7 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); Dex = null; header = default; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; Dex = null; header = default; disposed = true; } }
 
         public struct EXP
         {

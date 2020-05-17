@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace KKdBaseLib
 {
@@ -42,7 +42,7 @@ namespace KKdBaseLib
 
         public MsgPack this[string key]
         {   get =>    Object is KKdList<MsgPack> List  ? List[ElementIndex(key)] : default;
-            set { if (Object is KKdList<MsgPack> List && value.Object != null) 
+            set { if (Object is KKdList<MsgPack> List && value.Object != null)
                 { List.Add(value); Object = List; } } }
 
         public MsgPack this[string key, bool array]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using KKdMainLib.IO;
 
 namespace PD_Tool
@@ -16,7 +16,7 @@ namespace PD_Tool
                      if (file.EndsWith(".mp"  )) { mp = false; break; }
                 else if (file.EndsWith(".json")) { mp = false; break; }
 
-            uint num2 = (uint)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            uint num2 = (uint)(DateTime.Now.Ticks / 10000000);
             string[] file_split;
             string filepath, ext;
             KKdMainLib.DataBank db;

@@ -1,4 +1,4 @@
-﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
+//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
 using KKdBaseLib;
 using KKdMainLib.IO;

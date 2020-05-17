@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
@@ -91,11 +91,11 @@ namespace KKdMainLib.F2
             public Id Id;
             public Flags Flags;
             public Type Type;
-            public Vector4 Ambient;
-            public Vector4 Diffuse;
-            public Vector4 Specular;
-            public Vector3 Position;
-            public Vector3 ToneCurve;
+            public Vec4 Ambient;
+            public Vec4 Diffuse;
+            public Vec4 Specular;
+            public Vec3 Position;
+            public Vec3 ToneCurve;
 
             public override string ToString() => Flags == 0 ? ",,,,,,,,,,,,,,,," : Type + "," +
                 ((Flags & Flags.Ambient  ) == 0 ? ",,,"  : Ambient  .ToString(6) + ",") +
@@ -107,7 +107,7 @@ namespace KKdMainLib.F2
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); LITs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; LITs = default; header = default; disposed = true; } }
 
         public enum Id : int
         {

@@ -1,4 +1,4 @@
-﻿//Original research by Samyuu
+//Original research by Samyuu
 
 namespace KKdBaseLib
 {
@@ -39,50 +39,59 @@ namespace KKdBaseLib
             0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0,
         };
 
-        public static ushort CalculateChecksum(this byte[] data)
+        public static ushort CalculateChecksum(byte[] data,
+            int offset = 0, ushort seed = 0xFFFF)
         {
-            ushort result = 0xFFFF;
-            for (int i = 0; i < data.Length; i++)
+            int length = data.Length;
+            ushort result = seed;
+            for (int i = offset; i < length; i++)
                 result = (ushort)(ChecksumLookupTable[(result >> 8) ^ data[i]] ^ (result << 8));
             return result;
         }
 
-        public static uint CalculateChecksumUInt(this byte[] data)
+        public static uint CalculateChecksumU32(byte[] data,
+            int offset = 0, uint seed = 0xFFFFFFFF)
         {
-            uint result = 0xFFFFFFFF;
-            for (int i = 0; i < data.Length; i++)
+            int length = data.Length;
+            uint result = seed;
+            for (int i = offset; i < length; i++)
                 result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }
 
-        public static ulong CalculateChecksumULong(this byte[] data)
+        public static ulong CalculateChecksumU64(byte[] data,
+            int offset = 0, ulong seed = 0xFFFFFFFFFFFFFFFF)
         {
-            ulong result = 0xFFFFFFFFFFFFFFFF;
-            for (int i = 0; i < data.Length; i++)
+            int length = data.Length;
+            ulong result = seed;
+            for (int i = offset; i < length; i++)
                 result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }
 
-        public static unsafe ushort CalculateChecksum(byte* data, int length)
+        public static unsafe ushort CalculateChecksum(byte* data,
+            int length, int offset = 0, ushort seed = 0xFFFF)
         {
-            ushort result = 0xFFFF;
-            for (int i = 0; i < length; i++)
+            ushort result = seed;
+            for (int i = offset; i < length; i++)
                 result = (ushort)(ChecksumLookupTable[(result >> 8) ^ data[i]] ^ (result << 8));
             return result;
         }
 
-        public static unsafe uint CalculateChecksumUInt(byte* data, int length)
+        public static unsafe uint CalculateChecksumU32(byte* data,
+            int length, int offset = 0, uint seed = 0xFFFFFFFF)
         {
-            uint result = 0xFFFFFFFF;
-            for (int i = 0; i < length; i++)
+            uint result = seed;
+            for (int i = offset; i < length; i++)
                 result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }
 
-        public static unsafe ulong CalculateChecksumULong(byte* data, int length)
+        public static unsafe ulong CalculateChecksumU64(byte* data,
+            int length, int offset = 0, ulong seed = 0xFFFFFFFFFFFFFFFF)
         {
-            ulong result = 0xFFFFFFFFFFFFFFFF;
-            for (int i = 0; i < length; i++)
+            ulong result = seed;
+            for (int i = offset; i < length; i++)
                 result = ChecksumLookupTable[(byte)(result >> 8) ^ data[i]] ^ (result << 8);
             return result;
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdBaseLib.Auth3D;
@@ -311,7 +311,7 @@ namespace KKdMainLib
 
                     if (dict.SW(name + "joint_orient"))
                     {
-                        Data.MObjectHRC[i0].JointOrient = new Vector3<float?>();
+                        Data.MObjectHRC[i0].JointOrient = new Vec3<float?>();
                         dict.FV(out Data.MObjectHRC[i0].JointOrient.X, name + "joint_orient.x");
                         dict.FV(out Data.MObjectHRC[i0].JointOrient.Y, name + "joint_orient.y");
                         dict.FV(out Data.MObjectHRC[i0].JointOrient.Z, name + "joint_orient.z");
@@ -446,7 +446,7 @@ namespace KKdMainLib
 
                     if (dict.SW(name + "joint_orient"))
                     {
-                        Data.ObjectHRC[i0].JointOrient = new Vector3<float?>();
+                        Data.ObjectHRC[i0].JointOrient = new Vec3<float?>();
                         dict.FV(out Data.ObjectHRC[i0].JointOrient.X, name + "joint_orient.x");
                         dict.FV(out Data.ObjectHRC[i0].JointOrient.Y, name + "joint_orient.y");
                         dict.FV(out Data.ObjectHRC[i0].JointOrient.Z, name + "joint_orient.z");
@@ -928,15 +928,15 @@ namespace KKdMainLib
             return mt;
         }
 
-        private Vector4<Key> RRGBAK(string str) =>
-            new Vector4<Key> { W = RK(str + "a" + d), Z = RK(str + "b" + d),
+        private Vec4<Key> RRGBAK(string str) =>
+            new Vec4<Key> { W = RK(str + "a" + d), Z = RK(str + "b" + d),
                                Y = RK(str + "g" + d), X = RK(str + "r" + d) };
 
-        private Vector3<Key> RV3(string str) =>
-            new Vector3<Key> { X = RK(str + "x" + d), Y = RK(str + "y" + d), Z = RK(str + "z" + d) };
+        private Vec3<Key> RV3(string str) =>
+            new Vec3<Key> { X = RK(str + "x" + d), Y = RK(str + "y" + d), Z = RK(str + "z" + d) };
 
-        private Vector2<Key> RKUV(string str) =>
-            new Vector2<Key> { X = RK(str + "U" + d), Y = RK(str + "V" + d) };
+        private Vec2<Key> RKUV(string str) =>
+            new Vec2<Key> { X = RK(str + "U" + d), Y = RK(str + "V" + d) };
 
         private Key RK(string str)
         {
@@ -1025,7 +1025,7 @@ namespace KKdMainLib
             }
         }
 
-        private void W(ref Vector4<Key> rgba, string str)
+        private void W(ref Vec4<Key> rgba, string str)
         {
             if (rgba.X.Type == null && rgba.Y.Type == null &&
                 rgba.Z.Type == null && rgba.W.Type == null) return;
@@ -1036,10 +1036,10 @@ namespace KKdMainLib
             W(ref rgba.X, str + d + "r" + d);
         }
 
-        private void W(ref Vector3<Key> key, string str)
+        private void W(ref Vec3<Key> key, string str)
         { W(ref key.X, str + "x" + d); W(ref key.Y, str + "y" + d); W(ref key.Z, str + "z" + d); }
 
-        private void W(ref Vector2<Key> uv, string str)
+        private void W(ref Vec2<Key> uv, string str)
         { W(ref uv.X, str + "U", true); W(ref uv.Y, str + "V", true); }
 
         private void W(ref Key Key, string Temp, bool setBoolean)
@@ -1516,14 +1516,14 @@ namespace KKdMainLib
             RK (ref mt.Visibility);
         }
 
-        private void RRGBAK(ref Vector4<Key> rgba)
+        private void RRGBAK(ref Vec4<Key> rgba)
         { RK(ref rgba.X); RK(ref rgba.Y);
           RK(ref rgba.Z); RK(ref rgba.W); }
 
-        private void RV3(ref Vector3<Key> key, bool f16 = false)
+        private void RV3(ref Vec3<Key> key, bool f16 = false)
         { RK(ref key.X, f16); RK(ref key.Y, f16); RK(ref key.Z, f16); }
 
-        private void RKUV(ref Vector2<Key> uv)
+        private void RKUV(ref Vec2<Key> uv)
         { RK(ref uv.X); RK(ref uv.Y); }
 
         private void RK(ref Key key, bool f16 = false)
@@ -1558,8 +1558,8 @@ namespace KKdMainLib
                                                  kf.T1 = _IO.RF32(); kf.T2 = _IO.RF32(); }
         }
 
-        private void ReadOffset(out Vector3<Key> key)
-        { key = new Vector3<Key> { X = new Key { BinOffset = _IO.RI32() },
+        private void ReadOffset(out Vec3<Key> key)
+        { key = new Vec3<Key> { X = new Key { BinOffset = _IO.RI32() },
                                    Y = new Key { BinOffset = _IO.RI32() },
                                    Z = new Key { BinOffset = _IO.RI32() }, }; }
 
@@ -1576,19 +1576,19 @@ namespace KKdMainLib
             else { mt.BinOffset = _IO.P; _IO.P += 0x30; _IO.L += 0x30; }
         }
 
-        private void WriteOffset(Vector3<Key> key)
+        private void WriteOffset(Vec3<Key> key)
         { _IO.W(key.X.BinOffset); _IO.W(key.Y.BinOffset); _IO.W(key.Z.BinOffset); }
 
         private void W(ref ModelTransform mt)
         { W(ref mt.Scale); W(ref mt.Rot, true); W(ref mt.Trans); W(ref mt.Visibility); }
 
-        private void W(ref Vector4<Key> rgba)
+        private void W(ref Vec4<Key> rgba)
         { W(ref rgba.X); W(ref rgba.Y); W(ref rgba.Z); W(ref rgba.W); }
 
-        private void W(ref Vector3<Key> key, bool f16 = false)
+        private void W(ref Vec3<Key> key, bool f16 = false)
         { W(ref key.X, f16); W(ref key.Y, f16); W(ref key.Z, f16); }
 
-        private void W(ref Vector2<Key> uv)
+        private void W(ref Vec2<Key> uv)
         { W(ref uv.X); W(ref uv.Y); }
 
         private void W(ref Key key, bool f16 = false)
@@ -1798,14 +1798,14 @@ namespace KKdMainLib
             MK (ref mt.Visibility, ref mMT.Visibility);
         }
 
-        private void MRGBAK(ref Vector4<Key> rgba, ref Vector4<Key> mRGBA)
+        private void MRGBAK(ref Vec4<Key> rgba, ref Vec4<Key> mRGBA)
         { MK(ref rgba.X, ref mRGBA.X); MK(ref rgba.Y, ref mRGBA.Y);
           MK(ref rgba.Z, ref mRGBA.Z); MK(ref rgba.W, ref mRGBA.W); }
 
-        private void MV3(ref Vector3<Key> key, ref Vector3<Key> mKey)
+        private void MV3(ref Vec3<Key> key, ref Vec3<Key> mKey)
         { MK(ref key.X, ref mKey.X); MK(ref key.Y, ref mKey.Y); MK(ref key.Z, ref mKey.Z); }
 
-        private void MKUV(ref Vector2<Key> uv, ref Vector2<Key> mUV)
+        private void MKUV(ref Vec2<Key> uv, ref Vec2<Key> mUV)
         { MK(ref uv.X, ref mUV.X); MK(ref uv.Y, ref mUV.Y); }
 
         private void MK(ref Key key, ref Key mKey)
@@ -2026,7 +2026,7 @@ namespace KKdMainLib
                     };
 
                     if ((temp1 = temp[i0]["JointOrient"]).NotNull)
-                        Data.MObjectHRC[i0].JointOrient = new Vector3<float?>
+                        Data.MObjectHRC[i0].JointOrient = new Vec3<float?>
                         {
                             X = temp1.RnF32("X"),
                             Y = temp1.RnF32("Y"),
@@ -2132,7 +2132,7 @@ namespace KKdMainLib
                     };
 
                     if ((temp1 = temp[i0]["JointOrient"]).NotNull)
-                        Data.ObjectHRC[i0].JointOrient = new Vector3<float?>
+                        Data.ObjectHRC[i0].JointOrient = new Vec3<float?>
                         {
                             X = temp1.RF32("X"),
                             Y = temp1.RF32("Y"),
@@ -2521,24 +2521,24 @@ namespace KKdMainLib
             new ModelTransform { Rot   = msgPack.RV3("Rot"  ), Scale      = msgPack.RV3("Scale"     ),
                                  Trans = msgPack.RV3("Trans"), Visibility = msgPack.RK ("Visibility") };
 
-        public static Vector4<Key> RRGBAK(this MsgPack msgPack, string name) =>
+        public static Vec4<Key> RRGBAK(this MsgPack msgPack, string name) =>
             msgPack[name].RRGBAK();
 
-        public static Vector4<Key> RRGBAK(this MsgPack msgPack) =>
-            new Vector4<Key> { X = msgPack.RK("R"), Y = msgPack.RK("G"),
+        public static Vec4<Key> RRGBAK(this MsgPack msgPack) =>
+            new Vec4<Key> { X = msgPack.RK("R"), Y = msgPack.RK("G"),
                                Z = msgPack.RK("B"), W = msgPack.RK("A") };
 
-        public static Vector3<Key> RV3(this MsgPack msgPack, string name) =>
+        public static Vec3<Key> RV3(this MsgPack msgPack, string name) =>
             msgPack[name].RV3();
 
-        public static Vector3<Key> RV3(this MsgPack msgPack) =>
-            new Vector3<Key> { X = msgPack.RK("X"), Y = msgPack.RK("Y"), Z = msgPack.RK("Z") };
+        public static Vec3<Key> RV3(this MsgPack msgPack) =>
+            new Vec3<Key> { X = msgPack.RK("X"), Y = msgPack.RK("Y"), Z = msgPack.RK("Z") };
 
-        public static Vector2<Key> RKUV(this MsgPack msgPack, string name) =>
+        public static Vec2<Key> RKUV(this MsgPack msgPack, string name) =>
             msgPack[name].RKUV();
 
-        public static Vector2<Key> RKUV(this MsgPack msgPack) =>
-            new Vector2<Key> { X = msgPack.RK("U"), Y = msgPack.RK("V") };
+        public static Vec2<Key> RKUV(this MsgPack msgPack) =>
+            new Vec2<Key> { X = msgPack.RK("U"), Y = msgPack.RK("V") };
 
         public static Key RK(this MsgPack msgPack, string name) =>
             msgPack[name].ReadKey();
@@ -2595,16 +2595,16 @@ namespace KKdMainLib
                                          .Add("Trans"     , ref mt.Trans     )
                                          .Add("Visibility", ref mt.Visibility));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vector4<Key> rgba) =>
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec4<Key> rgba) =>
             (rgba.X.Type == null && rgba.Y.Type == null &&
              rgba.Z.Type == null && rgba.W.Type == null) ? msgPack :
            msgPack.Add(new MsgPack(name).Add("R", ref rgba.X).Add("G", ref rgba.Y)
                                         .Add("B", ref rgba.Z).Add("A", ref rgba.W));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vector3<Key> key) =>
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec3<Key> key) =>
             msgPack.Add(new MsgPack(name).Add("X", ref key.X).Add("Y", ref key.Y).Add("Z", ref key.Z));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vector2<Key> uv) =>
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec2<Key> uv) =>
             (uv.X.Type == null && uv.Y.Type == null) ? msgPack :
             msgPack.Add(new MsgPack(name).Add("U", ref uv.X).Add("V", ref uv.Y));
 

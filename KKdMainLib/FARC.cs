@@ -1,4 +1,4 @@
-﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
+//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -180,7 +180,7 @@ namespace KKdMainLib
                         aes.CreateDecryptor(), CryptoStreamMode.Read))
                         cryptoStream.Read(file.Data, 0, FileSize);
             }
-            
+
             if (((Format == Format.FT && (file.Type & Type.GZip) != 0) ||
                 (FARCType & Type.GZip) != 0) && file.SizeUnc > 0)
                 file.Data = file.Data.InflateGZip(file.SizeUnc);

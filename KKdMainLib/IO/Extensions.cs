@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 
 namespace KKdMainLib.IO
@@ -69,40 +69,40 @@ namespace KKdMainLib.IO
         public static long RIX(this Stream stream, bool isBE) => stream.IsX ?
             stream.RI64() : stream.RU32E(isBE);
 
-        public static void WX(this Stream stream, long val, ref POF POF)
+        public static void WX(this Stream stream, long val, ref POF pof)
         {   if (stream.IsX) stream.W (     val);
-            else            stream.WE((int)val);       POF.Offsets.Add(stream.P); }
-        public static void WX(this Stream stream, long val, ref POF POF, bool IsBE)
+            else            stream.WE((int)val);       pof.Offsets.Add(stream.P); }
+        public static void WX(this Stream stream, long val, ref POF pof, bool isBE)
         {   if (stream.IsX) stream.W (     val      );
-            else            stream.WE((int)val, IsBE); POF.Offsets.Add(stream.P); }
+            else            stream.WE((int)val, isBE); pof.Offsets.Add(stream.P); }
 
         public static void WX(this Stream stream, long val)
         {   if (stream.IsX) stream.W (     val);
             else            stream.WE((int)val);       }
-        public static void WX(this Stream stream, long val, bool IsBE)
+        public static void WX(this Stream stream, long val, bool isBE)
         {   if (stream.IsX) stream.W (     val      );
-            else            stream.WE((int)val, IsBE); }
+            else            stream.WE((int)val, isBE); }
 
-        public static byte[] RaO(this Stream stream, long Offset = -1, long Length = -1)
+        public static byte[] RaO(this Stream stream, long offset = -1, long length = -1)
         {
             byte[] arr = null;
             long Position = stream.PI64;
-            if (Offset == -1) { Position += stream.IsX ? 8 : 4; Offset = stream.RIX(); }
-            stream.PI64 = Offset;
-            if (Length == -1) arr = stream.NT();
-            else              arr = stream.RBy(Length);
+            if (offset == -1) { Position += stream.IsX ? 8 : 4; offset = stream.RIX(); }
+            stream.PI64 = offset;
+            if (length == -1) arr = stream.NT();
+            else              arr = stream.RBy(length);
             stream.PI64 = Position;
             return arr;
         }
 
-        public static string RSaO(this Stream stream, long Offset = -1, long Length = -1)
+        public static string RSaO(this Stream stream, long offset = -1, long length = -1)
         {
             string s = null;
             long Position = stream.PI64;
-            if (Offset == -1) { Position += stream.IsX ? 8 : 4; Offset = stream.RIX(); }
-            stream.PI64 = Offset;
-            if (Length == -1) s = stream.NTUTF8();
-            else              s = stream.RSUTF8(Length);
+            if (offset == -1) { Position += stream.IsX ? 8 : 4; offset = stream.RIX(); }
+            stream.PI64 = offset;
+            if (length == -1) s = stream.NTUTF8();
+            else              s = stream.RSUTF8(length);
             stream.PI64 = Position;
             return s;
         }
@@ -114,11 +114,11 @@ namespace KKdMainLib.IO
         public static void WPSSJIS(this Stream stream, ref Pointer<string> val)
         { val.O = stream.P; stream.WPSSJIS(val.V); }
 
-        public static string RPSSJIS(this Stream stream, long Offset = -1, long Length = -1) =>
-            Text.ShiftJIS.GetString(stream.RaO(Offset, Length));
+        public static string RPSSJIS(this Stream stream, long offset = -1, long length = -1) =>
+            Text.ShiftJIS.GetString(stream.RaO(offset, length));
 
-        public static void WPSSJIS(this Stream stream, string String) =>
-            stream.W(Text.ShiftJIS.GetBytes(String));
+        public static void WPSSJIS(this Stream stream, string val) =>
+            stream.W(val.ToSJIS());
 
         public static Pointer<string> RPS(this Stream stream)
         { Pointer<string> val = stream.RP<string>();

@@ -1,17 +1,17 @@
-﻿namespace KKdBaseLib.Interpolation
+namespace KKdBaseLib.Interpolation
 {
-    public interface IInterpolation : INull
+    public interface IInterpolation<T> : INull
     {
-        float     RequestedFramerate { get; set; }
-        float InterpolationFramerate { get; set; }
+        float RequestedFramerate { get; set; }
 
         float Frame { get; }
-        float Value { get; }
+        float  Time { get; }
+            T Value { get; }
 
-        float  SetTime (float  time);
-        float  SetFrame(float frame);
-        float NextFrame(float  time);
-        float NextFrame();
+        T  SetTime (float  time);
+        T  SetFrame(float frame);
+        T NextFrame(float  time);
+        T NextFrame();
         void ResetFrameCount();
     }
 }

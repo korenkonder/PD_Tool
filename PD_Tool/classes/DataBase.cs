@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Aet = KKdMainLib.DB.Aet;
 using Auth = KKdMainLib.DB.Auth;

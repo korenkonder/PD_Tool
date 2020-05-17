@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib
+namespace KKdBaseLib
 {
     public struct KKdDict<TKey, TValue> : System.IDisposable, System.Collections.IEnumerator, INull
     {
@@ -56,8 +56,10 @@
                     index < valArray.Length) { keyArray[index] = value.Key; valArray[index] = value.Value; } } }
 
         public TValue this[TKey key]
-        {   get =>    valArray != null && valArray.Length > 0 && CK(key, out int index) ? valArray[index] : default;
-            set { if (valArray != null && valArray.Length > 0) if (CK(key, out int index)) valArray[index] = value; else Add(key, value); } }
+        {   get =>    valArray != null && valArray.Length > 0
+                    &&  CK(key, out int index) ? valArray[index] : default;
+            set { if (valArray != null && valArray.Length > 0)
+                    if (CK(key, out int index)) valArray[index] = value; else Add(key, value); } }
 
         public bool MoveNext()
         { if (index == count - 1) { index = 0; return false; }
@@ -215,6 +217,9 @@
                 else if (valArray[i].Equals(val)) return i;
             return -1;
         }
+
+        public override string ToString() =>
+            $"(Count: {Count}; Capacity: {Capacity}; Current: {Current})";
     }
 
     public struct KeyValuePair<TKey, TValue>
@@ -224,5 +229,8 @@
 
         public KeyValuePair(TKey key, TValue value)
         { Key = key; Value = value; }
+
+        public override string ToString() =>
+            $"(Key: {Key}; value: {Value})";
     }
 }

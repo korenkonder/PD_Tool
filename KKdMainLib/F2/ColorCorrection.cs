@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
@@ -62,7 +62,7 @@ namespace KKdMainLib.F2
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.Dispose(); CCTs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; CCTs = default; header = default; disposed = true; } }
 
         public struct CCT
         {
@@ -70,7 +70,7 @@ namespace KKdMainLib.F2
             public float Saturation;
             public float Lightness;
             public float Exposure;
-            public Vector3 Gamma;
+            public Vec3 Gamma;
             public float Contrast;
 
             public override string ToString() => Hue       .ToS(6) + "," +

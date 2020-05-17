@@ -1,13 +1,9 @@
-﻿using System;
+using System;
 
 namespace KKdBaseLib
 {
     public static unsafe class Extensions
     {
-        private const double RadPi = 180 / Math.PI;
-        public static double ToDegrees(this double val) => val * RadPi;
-        public static double ToRadians(this double val) => val / RadPi;
-
         public static double Acos   (this double d  ) =>     Math.Acos   (d  );
         public static double Asin   (this double d  ) =>     Math.Asin   (d  );
         public static double Atan   (this double d  ) =>     Math.Atan   (d  );
@@ -37,9 +33,6 @@ namespace KKdBaseLib
         public static double Min  (this double val1, double val2   ) => Math.Min  (val1, val2   );
         public static double Pow  (this double x   , double y      ) => Math.Pow  (x   , y      );
         public static double Round(this double val ,    int d      ) => Math.Round(val , d      );
-
-        public static float ToDegrees(this float val) => (float)(val * RadPi);
-        public static float ToRadians(this float val) => (float)(val / RadPi);
 
         public static float Acos   (this float d  ) => (float)     Math.Acos   (d  ) ;
         public static float Asin   (this float d  ) => (float)     Math.Asin   (d  ) ;
@@ -116,22 +109,38 @@ namespace KKdBaseLib
         { if (isBE) { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
                 for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } } return le; }
 
-        public static  short TI16(this byte[] arr)
-        {  short val; fixed (byte* ptr = arr) val = *( short*)ptr; return val; }
-        public static ushort TU16(this byte[] arr)
-        { ushort val; fixed (byte* ptr = arr) val = *(ushort*)ptr; return val; }
-        public static    int TI32(this byte[] arr)
-        {    int val; fixed (byte* ptr = arr) val = *(   int*)ptr; return val; }
-        public static   uint TU32(this byte[] arr)
-        {   uint val; fixed (byte* ptr = arr) val = *(  uint*)ptr; return val; }
-        public static   long TI64(this byte[] arr)
-        {   long val; fixed (byte* ptr = arr) val = *(  long*)ptr; return val; }
-        public static  ulong TU64(this byte[] arr)
-        {  ulong val; fixed (byte* ptr = arr) val = *( ulong*)ptr; return val; }
-        public static  float TF32(this byte[] arr)
-        {  float val; fixed (byte* ptr = arr) val = *( float*)ptr; return val; }
-        public static double TF64(this byte[] arr)
-        { double val; fixed (byte* ptr = arr) val = *(double*)ptr; return val; }
+        public static  short TI16(this byte[] arr, int offset = 0)
+        {  short val; fixed (byte* ptr = arr) val = *( short*)(ptr + offset); return val; }
+        public static ushort TU16(this byte[] arr, int offset = 0)
+        { ushort val; fixed (byte* ptr = arr) val = *(ushort*)(ptr + offset); return val; }
+        public static    int TI24(this byte[] arr, int offset = 0)
+        {    int val; fixed (byte* ptr = arr) val = (*(ushort*)(ptr + offset))
+                    | ((( short)*(sbyte*)(ptr + offset + 2)) << 16); return val; }
+        public static   uint TU24(this byte[] arr, int offset = 0)
+        {   uint val; fixed (byte* ptr = arr) val = (*(ushort*)(ptr + offset))
+                    | (((  uint)*( byte*)(ptr + offset + 2)) << 16); return val; }
+        public static    int TI32(this byte[] arr, int offset = 0)
+        {    int val; fixed (byte* ptr = arr) val = *(   int*)(ptr + offset); return val; }
+        public static   uint TU32(this byte[] arr, int offset = 0)
+        {   uint val; fixed (byte* ptr = arr) val = *(  uint*)(ptr + offset); return val; }
+        public static   long TI64(this byte[] arr, int offset = 0)
+        {   long val; fixed (byte* ptr = arr) val = *(  long*)(ptr + offset); return val; }
+        public static  ulong TU64(this byte[] arr, int offset = 0)
+        {  ulong val; fixed (byte* ptr = arr) val = *( ulong*)(ptr + offset); return val; }
+        public static   Half TF16(this byte[] arr, int offset = 0)
+        {   Half val; fixed (byte* ptr = arr) val = *(  Half*)(ptr + offset); return val; }
+        public static  float TF32(this byte[] arr, int offset = 0)
+        {  float val; fixed (byte* ptr = arr) val = *( float*)(ptr + offset); return val; }
+        public static double TF64(this byte[] arr, int offset = 0)
+        { double val; fixed (byte* ptr = arr) val = *(double*)(ptr + offset); return val; }
+        public static   Vec2 TV2 (this byte[] arr, int offset = 0)
+        {   Vec2 val; fixed (byte* ptr = arr) val = *( Vec2*)(ptr + offset); return val; }
+        public static   Vec3 TV3 (this byte[] arr, int offset = 0)
+        {   Vec3 val; fixed (byte* ptr = arr) val = *( Vec3*)(ptr + offset); return val; }
+        public static   Vec4 TV4 (this byte[] arr, int offset = 0)
+        {   Vec4 val; fixed (byte* ptr = arr) val = *( Vec4*)(ptr + offset); return val; }
+        public static   Quat TQ (this byte[] arr, int offset = 0)
+        {   Quat val; fixed (byte* ptr = arr) val = *( Quat*)(ptr + offset); return val; }
 
         public static void GBy(this byte[] arr,  short val)
         { fixed (byte* ptr = arr) *( short*)ptr = val; }
@@ -145,10 +154,20 @@ namespace KKdBaseLib
         { fixed (byte* ptr = arr) *(  long*)ptr = val; }
         public static void GBy(this byte[] arr,  ulong val)
         { fixed (byte* ptr = arr) *( ulong*)ptr = val; }
+        public static void GBy(this byte[] arr,   Half val)
+        { fixed (byte* ptr = arr) *(  Half*)ptr = val; }
         public static void GBy(this byte[] arr,  float val)
         { fixed (byte* ptr = arr) *( float*)ptr = val; }
         public static void GBy(this byte[] arr, double val)
         { fixed (byte* ptr = arr) *(double*)ptr = val; }
+        public static void GBy(this byte[] arr,   Vec2 val)
+        { fixed (byte* ptr = arr) *(  Vec2*)ptr = val; }
+        public static void GBy(this byte[] arr,   Vec3 val)
+        { fixed (byte* ptr = arr) *(  Vec3*)ptr = val; }
+        public static void GBy(this byte[] arr,   Vec4 val)
+        { fixed (byte* ptr = arr) *(  Vec4*)ptr = val; }
+        public static void GBy(this byte[] arr,   Quat val)
+        { fixed (byte* ptr = arr) *(  Quat*)ptr = val; }
 
         public static  sbyte CITSB(this    int c)
         {                return ( sbyte)(c > 0x0000007F ?

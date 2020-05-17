@@ -1,4 +1,4 @@
-﻿//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
+//Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
 using System.Collections.Generic;
 using KKdBaseLib;
@@ -256,7 +256,7 @@ namespace KKdMainLib.DB
 
         private bool disposed = false;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); SpriteSets = null; disposed = true; } }
+        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; SpriteSets = null; disposed = true; } }
 
         public struct SpriteTexture
         {

@@ -1,4 +1,4 @@
-﻿namespace KKdBaseLib
+namespace KKdBaseLib
 {
     public struct KFT0 : IKF
     {

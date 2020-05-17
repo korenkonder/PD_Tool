@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
 
 namespace KKdSoundLib

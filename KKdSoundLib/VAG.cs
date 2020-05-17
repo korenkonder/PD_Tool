@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
 
 namespace KKdSoundLib
@@ -122,7 +122,7 @@ namespace KKdSoundLib
             writer.W((ushort)(HEVAG ? VAGData.Channels : 0x1));
             writer.W(name, 0x10);
             writer.P = 0x30;
-            
+
             int[] samp = new int[HEVAG ? ch * (PrNRCount > 29 ? 8 : 4) : 4];
             fixed (int* sampPtr = samp)
             fixed (int* HEVAG1 = VAG.HEVAG1)
@@ -170,7 +170,7 @@ namespace KKdSoundLib
                             }
 
                             if (h)
-                            { 
+                            {
                                 Calc4BitsHEVAG(HEVAG1, HEVAG2, HEVAG3, HEVAG4, v1 + c, v2 + c,
                                     v3 + c, v4 + c, tV1 + c, tV2 + c, tV3 + c, tV4 + c);
 
@@ -207,7 +207,7 @@ namespace KKdSoundLib
                             }
 
                             if (h)
-                            { 
+                            {
                                 Calc4BitsVAG(HEVAG1, HEVAG2, v1 + c, v2 + c, tV1 + c, tV2 + c);
 
                                 s = ((PrNR & 0xF) << 4) | (ShF & 0xF);
@@ -241,9 +241,9 @@ namespace KKdSoundLib
                             dataBuf[i] /= ch;
                             if (dataBuf[i] != 0) h = true;
                         }
-                        
+
                         if (h)
-                        { 
+                        {
                             Calc4BitsVAG(HEVAG1, HEVAG2, v1, v2, tV1, tV2);
 
                             s = ((PrNR & 0xF) << 4) | (ShF & 0xF);
@@ -287,7 +287,7 @@ namespace KKdSoundLib
             }
             writer.C();
         }
-        
+
         private fixed int dataBuf[(int)BS];
         private fixed int fourBit[(int)BS];
         private fixed int tempBuf[(int)BS];
@@ -301,7 +301,7 @@ namespace KKdSoundLib
             for (j = 0; j < PrNRCount; j++)
             {
                 PrNR = j;
-                
+
                 Calc4Bits_VAG(HEVAG1, HEVAG2, v1, v2, tV1, tV2);
 
                 s1 = *v1; s2 = *v2;
@@ -320,7 +320,7 @@ namespace KKdSoundLib
                 if (err < min) { PrNRf = j; min = err; }
             }
             PrNR = PrNRf;
-            
+
             Calc4Bits_VAG(HEVAG1, HEVAG2, v1, v2, tV1, tV2);
             * v1 =  s1; * v2 =  s2;
             *tV1 = tS1; *tV2 = tS2;
@@ -344,12 +344,12 @@ namespace KKdSoundLib
                 e = (e + g) ^ g;
                 if (e > max) max = e;
             }
-            
+
             for (ShF = 12, ShM = 0x400000; ShF > 0; ShF--, ShM >>= 1)
                 if ((ShM & (max + (ShM >> 4))) == ShM) break;
             ShFf = 8 + ShF;
             ShF = 12 - ShF;
-            
+
             tS1 = *tV1; tS2 = *tV2;
             for (i = 0; i < BS; i++)
             {
@@ -376,7 +376,7 @@ namespace KKdSoundLib
             for (j = 0; j < PrNRCount; j++)
             {
                 PrNR = j;
-                
+
                 Calc4Bits_HEVAG(HEVAG1, HEVAG2, HEVAG3, HEVAG4, v1, v2, v3, v4, tV1, tV2, tV3, tV4);
 
                 s1 = *v1; s2 = *v2; s3 = *v3; s4 = *v4;
@@ -395,7 +395,7 @@ namespace KKdSoundLib
                 if (err < min) { PrNRf = j; min = err; }
             }
             PrNR = PrNRf;
-            
+
             Calc4Bits_HEVAG(HEVAG1, HEVAG2, HEVAG3, HEVAG4, v1, v2, v3, v4, tV1, tV2, tV3, tV4);
             * v1 =  s1; * v2 =  s2; * v3 =  s3; * v4 =  s4;
             *tV1 = tS1; *tV2 = tS2; *tV3 = tS3; *tV4 = tS4;
@@ -427,7 +427,7 @@ namespace KKdSoundLib
                 if ((ShM & (max + (ShM >> 4))) == ShM) break;
             ShFf = 8 + ShF;
             ShF = 12 - ShF;
-            
+
             tS1 = *tV1; tS2 = *tV2; tS3 = *tV3; tS4 = *tV4;
             for (i = 0; i < BS; i++)
             {
@@ -741,7 +741,7 @@ namespace KKdSoundLib
             public byte[] Flags;
             public int[] Data;
         }
-        
+
         private static readonly int[] ShiftFactor =
         { 0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1 };
 

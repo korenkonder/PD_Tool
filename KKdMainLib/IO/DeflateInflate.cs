@@ -1,9 +1,11 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
 namespace KKdMainLib.IO
 {
     public static unsafe class DeflateInflate
     {
+        public static bool HasFile = false;
+
         private const string libDeflateString = "libdeflate.dll";
 
         public static byte[] Deflate(this byte[] data, long compressionLevel)

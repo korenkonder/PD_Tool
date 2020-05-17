@@ -1,4 +1,4 @@
-﻿using KKdMainLib;
+using KKdMainLib;
 using KKdMainLib.IO;
 
 namespace PD_Tool

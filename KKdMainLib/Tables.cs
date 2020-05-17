@@ -1,4 +1,4 @@
-﻿using KKdBaseLib;
+using KKdBaseLib;
 using KKdMainLib.IO;
 using TableDict = System.Collections.Generic.Dictionary<string, object>;
 
@@ -83,7 +83,7 @@ namespace KKdMainLib
                     dict.FV(out csld.     SortIndex, name +       "sort_index");
                     dict.FV(out csld.    SubSEName , name +     "sub_se_name" );
                     dict.FV(out csld.SuccessSEName , name + "success_se_name" );
-                    
+
                     csld.Start = GetStartTableDate(dict, name);
                     csld.End   =   GetEndTableDate(dict, name);
                 }
@@ -130,7 +130,7 @@ namespace KKdMainLib
                     dict.FV(out czitm.SellType , name + "sell_type" );
                     dict.FV(out czitm.ShopPrice, name + "shop_price");
                     dict.FV(out czitm.SortIndex, name + "sort_index");
-                    
+
                     czitm.ShopStart = GetStartTableDate(dict, name + "shop_");
                     czitm.ShopEnd   =   GetEndTableDate(dict, name + "shop_");
                 }
@@ -151,7 +151,7 @@ namespace KKdMainLib
                     dict.FV(out mdl.NG       , name + "ng"        );
                     dict.FV(out mdl.ShopPrice, name + "shop_price");
                     dict.FV(out mdl.SortIndex, name + "sort_index");
-                    
+
                     mdl.ShopStart = GetStartTableDate(dict, name + "shop_");
                     mdl.ShopEnd   =   GetEndTableDate(dict, name + "shop_");
                 }
@@ -190,10 +190,10 @@ namespace KKdMainLib
                     dict.FV(out pv.ID    , name + "id"    );
                     dict.FV(out pv.Ignore, name + "ignore");
                     dict.FV(out pv.Name  , name + "name"  );
-                    
+
                     pv.AdvStart = GetStartTableDate(dict, name + "adv_demo_");
                     pv.AdvEnd   =   GetEndTableDate(dict, name + "adv_demo_");
-                    
+
                     pv.Easy    = GetDifficulty(dict, name + "easy"    + c);
                     pv.Encore  = GetDifficulty(dict, name + "encore"  + c);
                     pv.Extreme = GetDifficulty(dict, name + "extreme" + c);
@@ -230,7 +230,7 @@ namespace KKdMainLib
                     dict.FV(out sld.    Name , name +      "name" );
                     dict.FV(out sld.  SEName , name +   "se_name" );
                     dict.FV(out sld.SortIndex, name + "sort_index");
-                    
+
                     sld.Start = GetStartTableDate(dict, name);
                     sld.End   =   GetEndTableDate(dict, name);
                 }
@@ -472,7 +472,7 @@ namespace KKdMainLib
                     for (int i = 0; i < length; i++)
                     {
                         ref PV.Difficulty diff = ref arr[so[i]];
-                    
+
                         WriteStartTableDate(_IO, $"{name}{i}.", diff.Start);
                         _IO.W($"{name}{i}.edition" + $"={diff.Edition}\n");
                           WriteEndTableDate(_IO, $"{name}{i}.", diff.End  );
@@ -528,14 +528,14 @@ namespace KKdMainLib
 
             static void WriteEmptyLines(Stream _IO, int count)
             { for (int i = 0; i < count; i++) _IO.W("#---------------------------------------------\n"); }
-            
+
             static void WriteStartTableDate(Stream _IO, string name, TableDate date)
             {
                 _IO.W(name + "st_day"   + "=" + date.Day   + "\n");
                 _IO.W(name + "st_month" + "=" + date.Month + "\n");
                 _IO.W(name + "st_year"  + "=" + date.Year  + "\n");
             }
-            
+
             static void WriteEndTableDate(Stream _IO, string name, TableDate date)
             {
                 _IO.W(name + "ed_day"   + "=" + date.Day   + "\n");
@@ -582,7 +582,7 @@ namespace KKdMainLib
                     ref ChainSlideSE csld = ref ChainSlideSETable[i0];
                     csld.End  .SV(csldMP.RnI32("End"  ),  true);
                     csld.Start.SV(csldMP.RnI32("Start"), false);
-                    
+
                     csldMP.R("FailureSEName" , out csld.FailureSEName );
                     csldMP.R(  "FirstSEName" , out csld.  FirstSEName );
                     csldMP.R(         "ID"   , out csld.         ID   );
@@ -601,7 +601,7 @@ namespace KKdMainLib
                     ref CollectionCard clcrd = ref CollectionCardTable[i0];
                     clcrd.End  .SV(clcrdMP.RnI32("End"  ),  true);
                     clcrd.Start.SV(clcrdMP.RnI32("Start"), false);
-                    
+
                     clcrdMP.R("Chara"       , out clcrd.Chara       );
                     clcrdMP.R("DispNum"     , out clcrd.DispNum     );
                     clcrdMP.R("DivaProParam", out clcrd.DivaProParam);
@@ -646,7 +646,7 @@ namespace KKdMainLib
                     ref Module mdl = ref ModuleTable[i0];
                     mdl.ShopEnd  .SV(mdlMP.RnI32("ShopEnd"  ),  true);
                     mdl.ShopStart.SV(mdlMP.RnI32("ShopStart"), false);
-                    
+
                     mdlMP.R("Attribute", out mdl.Attribute);
                     mdlMP.R("Costume"  , out mdl.Costume  );
                     mdlMP.R("Chara"    , out mdl.Chara    );
@@ -688,7 +688,7 @@ namespace KKdMainLib
                     ref PV pv = ref PVList[i0];
                     pv.AdvEnd  .SV(pvMP.RnI32("AdvEnd"  ),  true);
                     pv.AdvStart.SV(pvMP.RnI32("AdvStart"), false);
-                    
+
                     pvMP.R("ID"    , out pv.ID    );
                     pvMP.R("Ignore", out pv.Ignore);
                     pvMP.R("Name"  , out pv.Name  );
@@ -704,7 +704,7 @@ namespace KKdMainLib
                 {
                     MsgPack t;
                     if ((t = mp[name, true]).IsNull) return null;
-                    
+
                     PV.Difficulty[] arr = new PV.Difficulty[t.Array.Length];
                     for (int i = 0; i < arr.Length; i++)
                     {
@@ -712,7 +712,7 @@ namespace KKdMainLib
                         ref PV.Difficulty diff = ref arr[i];
                         diff.End  .SV(pvMP.RnI32("End"  ),  true);
                         diff.Start.SV(pvMP.RnI32("Start"), false);
-                    
+
                         pvMP.R("Edition", out diff.Edition);
                         pvMP.R("Version", out diff.Version);
                     }
@@ -728,7 +728,7 @@ namespace KKdMainLib
                     ref SlideSE sld = ref SlideSETable[i0];
                     sld.End  .SV(sldMP.RnI32("End"  ),  true);
                     sld.Start.SV(sldMP.RnI32("Start"), false);
-                    
+
                     sldMP.R(    "ID"   , out sld.    ID   );
                     sldMP.R(    "Name" , out sld.    Name );
                     sldMP.R(  "SEName" , out sld.  SEName );
@@ -744,7 +744,7 @@ namespace KKdMainLib
                     ref SliderTouchSE sldt = ref SliderTouchSETable[i0];
                     sldt.End  .SV(TEMP.RnI32("End"  ),  true);
                     sldt.Start.SV(TEMP.RnI32("Start"), false);
-                    
+
                     TEMP.R(    "ID"   , out sldt.    ID   );
                     TEMP.R(    "Name" , out sldt.    Name );
                     TEMP.R(  "SEName" , out sldt.  SEName );
@@ -949,7 +949,7 @@ namespace KKdMainLib
         public void Dispose()
         {
             if (disposed) return;
-            if (_IO != null) { _IO.D(); _IO = null; }
+            if (_IO != null) _IO.D(); _IO = null;
             if (dict != null) { dict.Clear(); dict = null; }
             ButtonSETable = null; ChainSlideSETable = null; SlideSETable = null; SliderTouchSETable = null;
             CollectionCardTable = null; CustomizeItemTable = null;

@@ -18,6 +18,9 @@ namespace PD_Tool
         {
             SetProcessDPIAware();
 
+            Console. InputEncoding = System.Text.Encoding.Unicode;
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
+
             Console.Title = "PD_Tool";
             if (args.Length == 0) { while (choose != "Q") MainMenu(); Exit(); }
 
@@ -43,9 +46,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console. InputEncoding = System.Text.Encoding.Unicode;
-            Console.OutputEncoding = System.Text.Encoding.Unicode;
-            Console.Title = "PD_Tool";
+            Console.Title = "PD_Tool v0.4.9.2";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -53,14 +54,13 @@ namespace PD_Tool
             ConsoleDesign(false);
             ConsoleDesign("1. Extract FARC Archive");
             ConsoleDesign("2. Create  FARC Archive");
-            ConsoleDesign("3. Decrypt from DIVAFILE");
-            ConsoleDesign("4. Encrypt to   DIVAFILE");
-            ConsoleDesign("5. DB_Tools");
-            ConsoleDesign("6. AC/DT/F/AFT Converting Tools");
-            ConsoleDesign("7. F/F2/FT     Converting Tools");
-            ConsoleDesign("8. X/XHD       Converting Tools");
-            ConsoleDesign("9. FT/M39      Converting Tools");
-            ConsoleDesign(json ? "A. MsgPack to JSON" : "A. JSON to MsgPack");
+            ConsoleDesign("3. Decrypt/Encrypt from/to DIVAFILE");
+            ConsoleDesign("4. DB_Tools");
+            ConsoleDesign("5. AC/DT/F/AFT Converting Tools");
+            ConsoleDesign("6. F/F2/FT     Converting Tools");
+            ConsoleDesign("7. X/XHD       Converting Tools");
+            ConsoleDesign("8. FT/M39      Converting Tools");
+            ConsoleDesign(json ? "9. MsgPack to JSON" : "9. JSON to MsgPack");
             ConsoleDesign(false);
             ConsoleDesign(json ? "M. MessagePack" : "J. JSON");
             ConsoleDesign("Q. Quit");
@@ -71,42 +71,51 @@ namespace PD_Tool
             choose = Console.ReadLine().ToUpper();
             bool isNumber = int.TryParse(choose, out int result);
             if (isNumber) Functions();
-                 if (choose == "M") json = false;
-            else if (choose == "J") json = true ;
+
+            if (choose == null || choose == "") return;
+                 if (choose[0] == 'M') json = false;
+            else if (choose[0] == 'J') json = true ;
         }
 
         private static void Functions()
         {
             Console.Clear();
-                 if (choose == "1" || choose == "2") FARC.Processor(choose == "1");
-            else if (choose == "3" || choose == "4")
+            if (choose == null || choose == "") return;
+
+                 if (choose[0] == '1' || choose[0] == '2') FARC.Processor(choose == "1");
+            else if (choose[0] == '3')
             {
                 Choose(1, "", out string[] FileNames);
                 foreach (string FileName in FileNames) DIVAFILE.Decrypt(FileName);
             }
-            else if (choose == "5") DataBase.Processor(json);
-            else if (choose == "6")
+            else if (choose[0] == '4') DataBase.Processor(json);
+            else if (choose[0] == '5')
             {
-                Console.Clear();
-                Console.Title = "AC/DT/F/AFT Converting Tools";
-                ConsoleDesign(true);
-                ConsoleDesign("               Choose converter:");
-                ConsoleDesign(false);
-                ConsoleDesign("1. A3DA"    );
-                ConsoleDesign("2. AET"     );
-                ConsoleDesign("3. DataBank");
-                ConsoleDesign("4. DEX"     );
-                ConsoleDesign("5. DIVA"    );
-                ConsoleDesign("6. MotHead" );
-                ConsoleDesign("7. MOT"     );
-                ConsoleDesign("8. Table"   );
-                ConsoleDesign("9. STR"     );
-                ConsoleDesign(false);
-                ConsoleDesign("R. Return to Main Menu");
-                ConsoleDesign(false);
-                ConsoleDesign(true);
-                Console.WriteLine();
-                string localChoose = Console.ReadLine().ToUpper();
+                string localChoose = "";
+                if (choose.Length == 1)
+                {
+                    Console.Clear();
+                    Console.Title = "AC/DT/F/AFT Converting Tools";
+                    ConsoleDesign(true);
+                    ConsoleDesign("               Choose converter:");
+                    ConsoleDesign(false);
+                    ConsoleDesign("1. A3DA"    );
+                    ConsoleDesign("2. AET"     );
+                    ConsoleDesign("3. DataBank");
+                    ConsoleDesign("4. DEX"     );
+                    ConsoleDesign("5. DIVA"    );
+                    ConsoleDesign("6. MotHead" );
+                    ConsoleDesign("7. MOT"     );
+                    ConsoleDesign("8. Table"   );
+                    ConsoleDesign("9. STR"     );
+                    ConsoleDesign(false);
+                    ConsoleDesign("R. Return to Main Menu");
+                    ConsoleDesign(false);
+                    ConsoleDesign(true);
+                    Console.WriteLine();
+                    localChoose = Console.ReadLine().ToUpper();
+                }
+                else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") AET.Processor(json);
                 else if (localChoose == "3") DB .Processor(json);
@@ -118,27 +127,32 @@ namespace PD_Tool
                 else if (localChoose == "9") STR.Processor(json);
                 else choose = localChoose;
             }
-            else if (choose == "7")
+            else if (choose[0] == '6')
             {
-                Console.Clear();
-                Console.Title = "F/F2/FT Converting Tools";
-                ConsoleDesign(true);
-                ConsoleDesign("               Choose converter:");
-                ConsoleDesign(false);
-                ConsoleDesign("1. A3DA"            );
-                ConsoleDesign("2. Bloom"           );
-                ConsoleDesign("3. Color Correction");
-                ConsoleDesign("4. DEX"             );
-                ConsoleDesign("5. DOF"             );
-                ConsoleDesign("6. Light"           );
-                ConsoleDesign("7. STR"             );
-                ConsoleDesign("8. VAG"             );
-                ConsoleDesign(false);
-                ConsoleDesign("R. Return to Main Menu");
-                ConsoleDesign(false);
-                ConsoleDesign(true);
-                Console.WriteLine();
-                string localChoose = Console.ReadLine().ToUpper();
+                string localChoose = "";
+                if (choose.Length == 1)
+                {
+                    Console.Clear();
+                    Console.Title = "F/F2/FT Converting Tools";
+                    ConsoleDesign(true);
+                    ConsoleDesign("               Choose converter:");
+                    ConsoleDesign(false);
+                    ConsoleDesign("1. A3DA"            );
+                    ConsoleDesign("2. Bloom"           );
+                    ConsoleDesign("3. Color Correction");
+                    ConsoleDesign("4. DEX"             );
+                    ConsoleDesign("5. DOF"             );
+                    ConsoleDesign("6. Light"           );
+                    ConsoleDesign("7. STR"             );
+                    ConsoleDesign("8. VAG"             );
+                    ConsoleDesign(false);
+                    ConsoleDesign("R. Return to Main Menu");
+                    ConsoleDesign(false);
+                    ConsoleDesign(true);
+                    Console.WriteLine();
+                    localChoose = Console.ReadLine().ToUpper();
+                }
+                else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") BLT.Processor();
                 else if (localChoose == "3") CCT.Processor();
@@ -149,28 +163,33 @@ namespace PD_Tool
                 else if (localChoose == "8") VAG.Processor();
                 else choose = localChoose;
             }
-            else if (choose == "8")
+            else if (choose[0] == '7')
             {
-                Console.Clear();
-                Console.Title = "X Converting Tools";
-                ConsoleDesign(true);
-                ConsoleDesign("               Choose converter:");
-                ConsoleDesign(false);
-                ConsoleDesign("1. A3DA"          );
-                ConsoleDesign("2. DEX"           );
-                ConsoleDesign("3. VAG"           );
-                ConsoleDesign(false);
-                ConsoleDesign("R. Return to Main Menu");
-                ConsoleDesign(false);
-                ConsoleDesign(true);
-                Console.WriteLine();
-                string localChoose = Console.ReadLine().ToUpper();
+                string localChoose = "";
+                if (choose.Length == 1)
+                {
+                    Console.Clear();
+                    Console.Title = "X Converting Tools";
+                    ConsoleDesign(true);
+                    ConsoleDesign("               Choose converter:");
+                    ConsoleDesign(false);
+                    ConsoleDesign("1. A3DA"          );
+                    ConsoleDesign("2. DEX"           );
+                    ConsoleDesign("3. VAG"           );
+                    ConsoleDesign(false);
+                    ConsoleDesign("R. Return to Main Menu");
+                    ConsoleDesign(false);
+                    ConsoleDesign(true);
+                    Console.WriteLine();
+                    localChoose = Console.ReadLine().ToUpper();
+                }
+                else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") DEX.Processor(json);
                 else if (localChoose == "3") VAG.Processor();
                 else choose = localChoose;
             }
-            else if (choose == "9")
+            else if (choose[0] == '8')
             {
                 Console.Clear();
                 Console.Title = "FT/M39 Converting Tools";
@@ -203,7 +222,7 @@ namespace PD_Tool
                 else if (localChoose == "9") STR.Processor(json);
                 else choose = localChoose;
             }
-            else if (choose == "A")
+            else if (choose == "9")
             {
                 Console.Title = json ? "MsgPack to JSON" : "JSON to MsgPack";
                 Choose(1, json ? "mp" : "json", out string[] fileNames);
