@@ -1,5 +1,5 @@
 # PD_Tool
-A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT files
+A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files
 
 # Dependencies:
 + `.NET Standard 2.0`: Required to build KKdBaseLib, KKdMainLib and KKdSoundLib C# projects.
@@ -12,15 +12,17 @@ A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT files
   - `Aet DB Converter`
   - `Auth DB Converter`
   - `Spr DB Converter`
-- `AC/DT/F/AFT/FT Converting Tools`
+- `AC/DT/F/AFT Converting Tools`
   - `A3DA Converter`
   - `AET Converter`
   - `DataBank Converter`
   - `DEX Converter`
   - `DIVA Converter`
+  - `MotHead Converter`
   - `MOT Converter`
+  - `Table Converter`
   - `STR Converter`
-- `F/F2/X/FT Converting Tools`
+- `F/F2/FT Converting Tools`
   - `A3DA Converter`
   - `Bloom Converter`
   - `Color Correction Converter`
@@ -29,3 +31,17 @@ A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT files
   - `Light Converter`
   - `STR Converter`
   - `VAG Converter`
+- `X/XHD Converting Tools`
+  - `A3DA Converter`
+  - `DEX Converter`
+  - `VAG Converter`
+- `FT/M39 Converting Tools`
+  - `A3DA Converter`
+  - `AddParam Converter`
+  - `AET Converter`
+  - `DEX Converter`
+  - `DIVA Converter`
+  - `MotHead Converter`
+  - `MOT Converter`
+  - `Table Converter`
+  - `STR Converter`
