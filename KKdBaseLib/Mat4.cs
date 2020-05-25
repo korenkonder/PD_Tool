@@ -45,9 +45,6 @@ namespace KKdBaseLib
         public Mat4(Quat q, Vec4 t)
         { Row0 = Row1 = Row2 = Row3 = default; FromQuat(q); Row3 = t; }
 
-        public Mat4(QuatTrans qt)
-        { Row0 = Row1 = Row2 = Row3 = default; FromQuat(qt.Quat); Row3 = new Vec4(qt.Trans, 1.0f); }
-
         private void FromQuat(Quat q)
         {
             float qx = q.X;

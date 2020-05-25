@@ -24,9 +24,9 @@ namespace PD_Tool
             Program.ConsoleDesign(true);
             Program.ConsoleDesign("        Choose type of exporting file:");
             Program.ConsoleDesign(false);
-            Program.ConsoleDesign("1. F/FT PS3/PS4/PSVita");
-            Program.ConsoleDesign("2. F2   PS3/PSVita");
-            Program.ConsoleDesign("3. X    PS4/PSVita");
+            Program.ConsoleDesign("1. F/AFT/FT/M39 PS3/PS4/PSV/AC/NSW");
+            Program.ConsoleDesign("2. F2           PS3/PSV");
+            Program.ConsoleDesign("3. X            PS4/PSV");
             if ( mp   && !json) Program.ConsoleDesign("9. MessagePack");
             if (_json &&  json) Program.ConsoleDesign("9. JSON");
             Program.ConsoleDesign(false);
@@ -35,27 +35,27 @@ namespace PD_Tool
             choose = Console.ReadLine().ToUpper();
 
             Format format = Format.NULL;
-                 if (choose == "1") format = Format.F   ;
-            else if (choose == "2") format = Format.F2LE;
-            else if (choose == "3") format = Format.X   ;
+                 if (choose == "1") format = Format.F ;
+            else if (choose == "2") format = Format.F2;
+            else if (choose == "3") format = Format.X ;
             else if (choose == "9" && mp && _json) format = Format.NULL;
             else return;
 
             string filepath, ext;
-            KKdDEX DEX;
+            KKdDEX dex;
             foreach (string file in fileNames)
-                using (DEX = new KKdDEX())
+                using (dex = new KKdDEX())
                 {
                     ext      = Path.GetExtension(file);
                     filepath = file.Replace(ext, "");
                     ext = ext.ToLower();
 
                     Console.Title = "DEX Converter: " + Path.GetFileNameWithoutExtension(file);
-                    if (ext == ".bin" || ext == ".dex") DEX.    DEXReader(filepath, ext );
-                    else                                DEX.MsgPackReader(filepath, json);
+                    if (ext == ".bin" || ext == ".dex") dex.    DEXReader(filepath, ext );
+                    else                                dex.MsgPackReader(filepath, json);
 
-                    if (format > Format.NULL) DEX.    DEXWriter(filepath, format);
-                    else                      DEX.MsgPackWriter(filepath, json);
+                    if (format > Format.NULL) dex.    DEXWriter(filepath, format);
+                    else                      dex.MsgPackWriter(filepath, json);
                 }
         }
     }

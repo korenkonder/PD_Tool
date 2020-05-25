@@ -28,22 +28,22 @@ namespace PD_Tool
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign("1. A3DA [DT/AC/F]");
                 Program.ConsoleDesign("2. A3DC [DT/AC/F]");
-                Program.ConsoleDesign("3. A3DA [AFT/FT] ");
-                Program.ConsoleDesign("4. A3DC [AFT/FT] ");
-                Program.ConsoleDesign("5. A3DC [F2]     ");
-                Program.ConsoleDesign("6. A3DC [MGF]    ");
-                Program.ConsoleDesign("7. A3DC [X]      ");
+                Program.ConsoleDesign("3. A3DA [AFT/FT/M39]");
+                Program.ConsoleDesign("4. A3DC [AFT/FT/M39]");
+                Program.ConsoleDesign("5. A3DC [F2]");
+                Program.ConsoleDesign("6. A3DC [MGF]");
+                Program.ConsoleDesign("7. A3DC [X]");
                 Program.ConsoleDesign(false);
                 Program.ConsoleDesign(true);
                 Console.WriteLine();
                 choose = Console.ReadLine().ToUpper();
-                     if (choose == "1") format = Format.DT  ;
-                else if (choose == "2") format = Format.F   ;
-                else if (choose == "3") format = Format.AFT ;
-                else if (choose == "4") format = Format.AFT ;
-                else if (choose == "5") format = Format.F2LE;
-                else if (choose == "6") format = Format.MGF ;
-                else if (choose == "7") format = Format.X   ;
+                     if (choose == "1") format = Format.DT ;
+                else if (choose == "2") format = Format.F  ;
+                else if (choose == "3") format = Format.AFT;
+                else if (choose == "4") format = Format.AFT;
+                else if (choose == "5") format = Format.F2;
+                else if (choose == "6") format = Format.MGF;
+                else if (choose == "7") format = Format.X  ;
                 else return;
             }
 

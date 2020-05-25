@@ -26,7 +26,6 @@ namespace KKdBaseLib
         public static    int Sign   (this double val) =>     Math.Sign   (val);
         public static double Sqrt   (this double d  ) =>     Math.Sqrt   (d  );
 
-
         public static double Atan2(this double y   , double x      ) => Math.Atan2(y   , x      );
         public static double Log  (this double val , double newBase) => Math.Log  (val , newBase);
         public static double Max  (this double val1, double val2   ) => Math.Max  (val1, val2   );
@@ -54,7 +53,6 @@ namespace KKdBaseLib
         public static float Log10  (this float d  ) => (float)     Math.Log10  (d  ) ;
         public static float Round  (this float d  ) => (float)     Math.Round  (d  ) ;
         public static float Sqrt   (this float d  ) => (float)     Math.Sqrt   (d  ) ;
-
 
         public static float Atan2(this float y   , float x      ) => (float)Math.Atan2(y   , x      );
         public static float Log  (this float val , float newBase) => (float)Math.Log  (val , newBase);
@@ -89,10 +87,29 @@ namespace KKdBaseLib
         public static byte[] E(this byte[] le, byte len, bool isBE)
         { if (isBE) { for (byte i = 0; i < len; i++) buf[i] = le[i];
                 for (byte i = 0; i < len; i++) le[len - i - 1] = buf[i]; } return le; }
+
+        public static  short E(this  short le)
+        { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 2; i++) { le = (short)((int)le | buf[i]); if (i < 1) le <<= 8; } return le; }
+        public static ushort E(this ushort le)
+        { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 2; i++) { le |= buf[i]; if (i < 1) le <<= 8; } return le; }
+        public static    int E(this    int le)
+        { for (byte i = 0; i < 4; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 4; i++) { le |= buf[i]; if (i < 3) le <<= 8; } return le; }
+        public static   uint E(this   uint le)
+        { for (byte i = 0; i < 4; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 4; i++) { le |= buf[i]; if (i < 3) le <<= 8; } return le; }
+        public static   long E(this   long le)
+        { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } return le; }
+        public static  ulong E(this  ulong le)
+        { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
+                for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } return le; }
+
         public static  short E(this  short le, bool isBE)
         { if (isBE) { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
-                for (byte i = 0; i < 2; i++) { le = (short)((int)le |
-                        buf[i]); if (i < 1) le <<= 8; } } return le; }
+                for (byte i = 0; i < 2; i++) { le = (short)((int)le | buf[i]); if (i < 1) le <<= 8; } } return le; }
         public static ushort E(this ushort le, bool isBE)
         { if (isBE) { for (byte i = 0; i < 2; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
                 for (byte i = 0; i < 2; i++) { le |= buf[i]; if (i < 1) le <<= 8; } } return le; }
@@ -289,5 +306,39 @@ namespace KKdBaseLib
         public static bool ToF64(this string s, out double? val)
         { val = null; if (s.Length < 1) return false; ulong d = 0; if (s[0] == '-') d = 0x8000000000000000;
           bool b = double.TryParse(s.Replace(".", NDS), out double t); if (b) val = (d | t.ToU64()).ToF64(); return b; }
+
+        public static T[] ReverseEndian<T>(this T[] a)
+        {
+            if (a == null || a.Length < 1) return a;
+
+            int length = a.Length;
+            T[] b = new T[length];
+            for (int i = 0; i < length; i++)
+                b[i] = (T)ReverseEndian(a[i]);
+            return b;
+        }
+
+        public static object ReverseEndian(this object a)
+        {
+            object c = default;
+            System.Reflection.FieldInfo[] d = a.GetType().GetFields();
+            foreach (System.Reflection.FieldInfo field in d)
+            {
+                object e = field.GetValue(a);
+                Type t = field.FieldType;
+                     if (t == typeof( short)) e = (( short)e).E();
+                else if (t == typeof(ushort)) e = ((ushort)e).E();
+                else if (t == typeof(   int)) e = ((   int)e).E();
+                else if (t == typeof(  uint)) e = ((  uint)e).E();
+                else if (t == typeof(  long)) e = ((  long)e).E();
+                else if (t == typeof( ulong)) e = (( ulong)e).E();
+                else if (t == typeof( float)) e = (( float)e).ToI32().E().ToF32();
+                else if (t == typeof(double)) e = ((double)e).ToI64().E().ToF64();
+                else if (t == typeof(  Half)) e = (Half)((ushort)(Half)e).E();
+                else e = ReverseEndian(e);
+                field.SetValue(a, e);
+            }
+            return c;
+        }
     }
 }

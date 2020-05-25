@@ -75,15 +75,15 @@ namespace KKdMainLib
             _IO.C();
         }
 
-        public void DEXWriter(string filepath, Format Format)
+        public void DEXWriter(string filepath, Format format)
         {
             if (Dex == null || Dex.Length < 1) return;
 
             header = new Header();
-            _IO = File.OpenWriter(filepath + (Format > Format.F && Format < Format.FT ? ".dex" : ".bin"), true);
-            header.Format = _IO.Format = Format;
+            _IO = File.OpenWriter(filepath + (format > Format.F && format < Format.FT ? ".dex" : ".bin"), true);
+            header.Format = _IO.Format = format;
 
-            _IO.O = Format > Format.F ? 0x20 : 0;
+            _IO.O = format > Format.F ? 0x20 : 0;
             _IO.W(0x64);
             _IO.W(Dex.Length);
 
@@ -147,7 +147,7 @@ namespace KKdMainLib
             _IO.P = Position0 - (header.IsX ? 8 : 4);
             _IO.W(namesPosition);
 
-            if (Format > Format.F)
+            if (format > Format.F)
             {
                 int offset = _IO.L;
                 _IO.O = 0;

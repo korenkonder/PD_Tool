@@ -46,7 +46,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.2";
+            Console.Title = "PD_Tool v0.4.9.3";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -169,7 +169,7 @@ namespace PD_Tool
                 if (choose.Length == 1)
                 {
                     Console.Clear();
-                    Console.Title = "X Converting Tools";
+                    Console.Title = "X/XHD Converting Tools";
                     ConsoleDesign(true);
                     ConsoleDesign("               Choose converter:");
                     ConsoleDesign(false);

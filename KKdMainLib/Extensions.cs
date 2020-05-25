@@ -16,13 +16,12 @@ namespace KKdMainLib
 
         public static Header ReadHeader(this Stream stream, bool readSectionSignature = true)
         {
-            Header header = new Header { Format = Format.F2LE, Signature = stream.RI32(),
+            Header header = new Header { Format = Format.F2, Signature = stream.RI32(),
                 DataSize = stream.RI32(), Length = stream.RI32(), Flags = stream.RI32(),
-                Depth = stream.RI32(), SectionSize = stream.RI32(),
-                Mode = stream.RI32() };
+                Depth = stream.RI32(), SectionSize = stream.RI32(), Mode = stream.RI32() };
             stream.RI32();
-            if ((header.Flags & 0x08000000) == 0x08000000) header.Format = Format.F2BE;
-            header.NotUseDataSizeAsSectionSize = (header.Flags & 0x10000000) != 0x10000000;
+            header.UseBigEndian   = (header.Flags & 0x08000000) != 0;
+            header.UseSectionSize = (header.Flags & 0x10000000) != 0;
             if (header.Length == 0x40)
             {
                 stream.RI64();
@@ -39,8 +38,8 @@ namespace KKdMainLib
         public static void W(this Stream stream, Header header, bool extended = false)
         {
             header.Length = (header.Format < Format.X && extended) ? 0x40 : 0x20;
-            header.Flags = (!header.NotUseDataSizeAsSectionSize ? 0x10000000 : 0) |
-                            (header.Format == Format.F2BE ? 0x08000000 : 0);
+            header.Flags = (header.UseSectionSize ? 0x10000000 : 0) |
+                           (header.UseBigEndian   ? 0x08000000 : 0);
 
             stream.W(header.Signature);
             stream.W(header.DataSize);
@@ -52,9 +51,7 @@ namespace KKdMainLib
             stream.W(0x00);
             if (header.Length == 0x40)
             {
-                stream.W(header.Format < Format.MGF ? (int)((header.SectionSignature ^
-                    (header.DataSize * (long)header.Signature)) - header.Depth + header.SectionSize) : 0);
-                stream.W(0x00);
+                stream.W(0x00L);
                 stream.W(0x00L);
                 stream.W(header.InnerSignature);
                 stream.W(0x00);
@@ -71,7 +68,7 @@ namespace KKdMainLib
         public static void W(this Stream stream, POF pof, bool shiftX = false, int depth = 0)
         {
             byte[] data = pof.Write(shiftX);
-            Header header = new Header { Depth = depth, Format = Format.F2LE,
+            Header header = new Header { Depth = depth, Format = Format.F2,
                 Length = 0x20, Signature = shiftX ? 0x31464F50 : 0x30464F50 };
             header.DataSize = header.SectionSize = data.Length;
             stream.W(header);
@@ -84,7 +81,7 @@ namespace KKdMainLib
         public static void W(this Stream stream, ENRS enrs, int depth = 0)
         {
             byte[] data = enrs.Write();
-            Header header = new Header { Depth = depth, Format = Format.F2LE,
+            Header header = new Header { Depth = depth, Format = Format.F2,
                 Length = 0x20, Signature = 0x53524E45 };
             header.DataSize = header.SectionSize = data.Length;
             stream.W(header);
@@ -105,8 +102,9 @@ namespace KKdMainLib
 
         public static Struct RSt(this Stream stream, Header header)
         {
+            int l = header.UseSectionSize ? header.SectionSize : header.DataSize;
             Struct @struct = new Struct { Header = header, DataOffset =
-                stream.P, Data = stream.RBy(header.SectionSize) };
+                stream.P, Data = stream.RBy(l) };
             int depth = header.Depth;
 
             int lastSig = 0, sig;
@@ -117,19 +115,19 @@ namespace KKdMainLib
             {
                 header = stream.ReadHeader(false);
                 sig = header.Signature;
-                position += header.Length + header.SectionSize;
+                l = header.UseSectionSize ? header.SectionSize : header.DataSize;
+                position += header.Length + l;
                 if (sig == 0x43464F45 && header.Depth == depth + 1) break;
                 else if (sig == 0x53524E45 || (sig & 0xF0FFFFFF) == 0x30464F50)
                 {
-                    byte[] Data = stream.RBy(header.SectionSize);
+                    byte[] Data = stream.RBy(l);
                     if (sig == 0x53524E45) @struct.ENRS.Read(Data);
                     else                   @struct.POF .Read(Data, sig == 0x31464F50);
                 }
                 else if (header.Depth == 0 && sig == 0x43505854)
-                { subStructs.Add(new Struct { Header = header, DataOffset =
-                    stream.P, Data = stream.RBy(header.SectionSize) }); }
-                else if (header.Depth <= depth) { stream.PI64 -= header.Length; break; }
-                else subStructs.Add(stream.RSt(header));
+                    subStructs.Add(new Struct { Header = header, DataOffset = stream.P, Data = stream.RBy(l) });
+                else if (header.Depth > depth) subStructs.Add(stream.RSt(header));
+                else { stream.PI64 -= header.Length; break; }
                 lastSig = sig;
             }
 

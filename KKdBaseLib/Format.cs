@@ -9,11 +9,11 @@ namespace KKdBaseLib
         DTe  =  4,
         F    =  5,
         AFT  =  6,
-        F2LE =  7,
-        F2BE =  8,
-        MGF  =  9,
-        X    = 10,
-        XHD  = 11,
-        FT   = 12,
+        F2   =  7,
+        MGF  =  8,
+        X    =  9,
+        XHD  = 10,
+        FT   = 11,
+        M39  = 12,
     }
 }

@@ -16,24 +16,28 @@ namespace KKdBaseLib.F2
             Offsets = KKdList<long>.New;
             fixed (byte* ptr = data)
             {
-                int i = 0, offset = 0, v = 0;
+                long offset = 0;
+                int i = 0, j = 0, v = 0;
                 byte bitShift = (byte)(shiftX ? 3 : 2);
 
                 int length = *(int*)ptr - 4;
-                byte* localPtr = ptr + 4;
+                byte* l = ptr + 4;
+                Offsets.Capacity = length;
                 while (length > i)
                 {
-                    v = *ptr & 0x3F;
-                    Val = (Value)(*ptr & 0xC0);
-                    localPtr++; i++;
-                         if (Val == Value.Int32  )
-                    { v = (v << 24) | (ptr[0] << 16) | (ptr[1] << 8) | ptr[2]; localPtr += 3; i += 3; }
-                    else if (Val == Value.Int16  )
-                    { v = (v <<  8) |  ptr[0];                                 localPtr += 1; i += 3; }
-                    else if (Val == Value.Invalid) break;
+                    v = *l & 0x3F;
+                    Val = (Value)(*l & 0xC0);
+                         if (Val == Value.Int32)
+                    { v = (v << 24) | (l[1] << 16) | (l[2] << 8) | l[3]; l += 4; i += 4; }
+                    else if (Val == Value.Int16)
+                    { v = (v <<  8) |  l[1];                             l += 2; i += 2; }
+                    else if (Val == Value.Int8 ) {                       l ++  ; i ++  ; }
+                    else break;
+                    j++;
                     offset += v;
                     Offsets.Add(offset << bitShift);
                 }
+                Offsets.Capacity = j;
             }
         }
 

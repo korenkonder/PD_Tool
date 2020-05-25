@@ -1489,7 +1489,7 @@ namespace KKdMainLib
                 _IO.WEOFC(0);
                 _IO.O   = 0;
                 _IO.P = 0;
-                Header header = new Header { Signature = 0x41443341, Format = Format.F2LE,
+                Header header = new Header { Signature = 0x41443341, Format = Format.F2,
                     DataSize = A3DCEnd, SectionSize = A3DCEnd, InnerSignature = 0x01131010 };
                 _IO.W(header, true);
             }

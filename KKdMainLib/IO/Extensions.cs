@@ -64,10 +64,10 @@ namespace KKdMainLib.IO
             return true;
         }
 
-        public static long RIX(this Stream stream           ) => stream.IsX ?
-            stream.RI64() : stream.RU32E(  );
-        public static long RIX(this Stream stream, bool isBE) => stream.IsX ?
-            stream.RI64() : stream.RU32E(isBE);
+        public static long RIX(this Stream stream           ) =>
+            stream.IsX ? stream.RI64() : stream.RI32E(  );
+        public static long RIX(this Stream stream, bool isBE) =>
+            stream.IsX ? stream.RI64() : stream.RI32E(isBE);
 
         public static void WX(this Stream stream, long val, ref POF pof)
         {   if (stream.IsX) stream.W (     val);
@@ -95,14 +95,29 @@ namespace KKdMainLib.IO
             return arr;
         }
 
-        public static string RSaO(this Stream stream, long offset = -1, long length = -1)
+        public static string RSaO(this Stream stream)
         {
-            string s = null;
+            long Position = stream.PI64 + (stream.IsX ? 8 : 4);
+            stream.PI64 = stream.RIX();
+            string s = stream.NTUTF8();
+            stream.PI64 = Position;
+            return s;
+        }
+
+        public static string RSaO(this Stream stream, long offset)
+        {
             long Position = stream.PI64;
-            if (offset == -1) { Position += stream.IsX ? 8 : 4; offset = stream.RIX(); }
             stream.PI64 = offset;
-            if (length == -1) s = stream.NTUTF8();
-            else              s = stream.RSUTF8(length);
+            string s = stream.NTUTF8();
+            stream.PI64 = Position;
+            return s;
+        }
+
+        public static string RSaO(this Stream stream, long offset, long length)
+        {
+            long Position = stream.PI64;
+            stream.PI64 = offset;
+            string s = stream.RSUTF8(length);
             stream.PI64 = Position;
             return s;
         }

@@ -13,9 +13,9 @@ namespace KKdBaseLib.F2
         public int SectionSignature;
 
         public Format Format;
-        public bool NotUseDataSizeAsSectionSize;
+        public bool UseBigEndian;
+        public bool UseSectionSize;
 
-        public bool IsBE => Format == Format.F2BE;
         public bool IsX  => Format == Format.X || Format == Format.XHD;
 
         public override string ToString() => Signature.ToString(false);

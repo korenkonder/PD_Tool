@@ -64,7 +64,7 @@ namespace KKdMainLib
 
         public void STRWriter(string filepath)
         {
-            if (Strings == null || Strings.Length == 0 || header.Format > Format.F2BE) return;
+            if (Strings == null || Strings.Length == 0 || header.Format > Format.F2) return;
             uint offset = 0;
             uint currentOffset = 0;
             _IO = File.OpenWriter(filepath + (header.Format > Format.AFT &&

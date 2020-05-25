@@ -17,9 +17,9 @@ namespace KKdBaseLib.Auth2D
         public uint Width;
         public uint Height;
         public Pointer<Vec2<CountPointer<KFT2>>> Camera;
-        public CountPointer<Composition> Compositions;
-        public CountPointer<Video      > Videos;
-        public CountPointer<Audio      > Audios;
+        public CountPointer<Composition> Composition;
+        public CountPointer<Video      > Video;
+        public CountPointer<Audio      > Audio;
     }
 
     public struct Composition
@@ -47,9 +47,9 @@ namespace KKdBaseLib.Auth2D
         public AetLayerFlags   Flags;
         public AetLayerQuality Quality;
         public AetLayerType    Type;
-        public int VideoItemOffset;
+        public int VidItmOff; //VideoItemOffset
         public int ParentLayer;
-        public CountPointer<Marker> Markers;
+        public CountPointer<Marker> Marker;
         public Pointer<VideoData> Video;
         public Pointer<AudioData> Audio;
 
@@ -210,15 +210,15 @@ namespace KKdBaseLib.Auth2D
         public ushort Width;
         public ushort Height;
         public float Frames;
-        public CountPointer<Source> Sources;
+        public CountPointer<Identifier> Identifiers;
 
-        public override string ToString() => $"Width: {Width}; Height: {Height}; Color: {Color.ToString("X2")}";
-
-        public struct Source
+        public override string ToString() => $"Width: {Width}; Height: {Height}; Color: {Color:X2)}";
+    
+        public struct Identifier
         {
             public Pointer<string> Name;
             public uint ID;
-
+        
             public override string ToString() => $"ID: {ID}; Name: {Name}";
         }
     }

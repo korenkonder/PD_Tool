@@ -24,13 +24,13 @@ namespace PD_Tool
                 Console.Title = "Add Param Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".adp")
                 {
-                    adp.MotHeadReader(filepath);
-                    adp.MsgPackWriter(filepath, json);
+                    adp.AddParamReader(filepath);
+                    adp. MsgPackWriter(filepath, json);
                 }
                 else if (ext == ".mp" || ext == ".json")
                 {
-                    adp.MsgPackReader(filepath, ext == ".json");
-                    adp.MotHeadWriter(filepath);
+                    adp. MsgPackReader(filepath, ext == ".json");
+                    adp.AddParamWriter(filepath);
                 }
                 adp.Dispose();
             }

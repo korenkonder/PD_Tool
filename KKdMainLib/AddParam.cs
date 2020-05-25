@@ -10,7 +10,7 @@ namespace KKdMainLib
 
         public HeaderData Header;
 
-        public void MotHeadReader(string file)
+        public void AddParamReader(string file)
         {
             Header = new HeaderData();
 
@@ -36,7 +36,7 @@ namespace KKdMainLib
             data = null;
         }
 
-        public void MotHeadWriter(string file)
+        public void AddParamWriter(string file)
         {
             if (Header.Data == null || Header.Data.LongLength < 1) return;
 

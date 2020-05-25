@@ -19,10 +19,8 @@ namespace KKdMainLib.IO
         private Format format = Format.NULL;
 
         public Format Format
-        {   get =>       format;
-            set {        format = value;
-                  IsBE = format == Format.F2BE;
-                  IsX  = format == Format.X || format == Format.XHD; } }
+        {   get => format;
+            set {  format = value; IsX  = format == Format.X || format == Format.XHD; } }
 
         public ENRSDict ENRSDict;
 
@@ -303,36 +301,64 @@ namespace KKdMainLib.IO
         public void WE(Quat val           ) { cW(); b.GBy(val); b.E(16, IsBE); s.Write(b, 0, 16); }
         public void WE(Quat val, bool isBE) { cW(); b.GBy(val); b.E(16, isBE); s.Write(b, 0, 16); }
 
+        public T RT<T>(long offset = -1) where T : unmanaged
+        {
+            cR();
+            int sizeOfT = sizeof(T);
+            if (offset > -1) s.Position = offset;
+            byte[] buf = new byte[sizeOfT];
+            fixed (byte* ptr = buf)
+            {
+                cR(); s.Read(buf, 0, sizeOfT);
+                return *(T*)ptr;
+            }
+        }
+
+        public void WT<T>(T val, long offset = -1) where T : unmanaged
+        {
+            cR();
+            int sizeOfT = sizeof(T);
+            if (offset > -1) s.Position = offset;
+            byte[] buf = new byte[sizeOfT];
+            fixed (byte* ptr = buf)
+            {
+                *(T*)ptr = val;
+                s.Write(buf, 0, sizeOfT);
+            }
+        }
+
         public T[] RA<T>(long length, long offset = -1) where T : unmanaged
         {
             cR();
             int sizeOfT = sizeof(T);
             if (offset > -1) s.Position = offset;
-            T[] arr = new T[length];
+            T[] array = new T[length];
             byte[] buf = new byte[sizeOfT];
             fixed (byte* ptr = buf)
                 for (i = 0; i < length; i++)
                 {
                     cR(); s.Read(buf, 0, sizeOfT);
-                    arr[i] = *(T*)ptr;
+                    array[i] = *(T*)ptr;
                 }
-            return arr;
+
+            if (IsBE) array = array.ReverseEndian();
+            return array;
         }
 
-        public T[] WA<T>(T[] array, long length, long offset = -1) where T : unmanaged
+        public void WA<T>(T[] array, long length, long offset = -1) where T : unmanaged
         {
+            if (IsBE) array = array.ReverseEndian();
+
             cW();
             int sizeOfT = sizeof(T);
             if (offset > -1) s.Position = offset;
-            T[] arr = new T[length];
             byte[] buf = new byte[sizeOfT];
             fixed (byte* ptr = buf)
                 for (i = 0; i < length; i++)
                 {
-                    *(T*)ptr = arr[i];
+                    *(T*)ptr = array[i];
                     s.Write(buf, 0, sizeOfT);
                 }
-            return arr;
         }
 
         public char RC(bool utf8 = true)
