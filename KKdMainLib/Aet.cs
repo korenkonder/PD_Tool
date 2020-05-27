@@ -129,7 +129,7 @@ namespace KKdMainLib
                             for (i1 = 0; i1 < aet.Composition.C; i1++)
                             { if (aet.Composition[i1].P == dataOffset) { obj.DataID = i1; break; } }
 
-                    ref int parentLayer = ref obj.ParentLayer;
+                    int parentLayer = obj.ParentLayer;
                     if (parentLayer > 0)
                         for (i1 = 0; i1 < aet.Composition.C; i1++)
                         {
@@ -185,7 +185,7 @@ namespace KKdMainLib
                 {
                     ref Layer obj = ref aet.Composition.E[i].E[i0];
                     ref VideoData video = ref obj.Video.V;
-                    ref VideoData.Video3DData persp = ref video.Video3D.V;
+                    ref VideoData.Video3DData video3DData = ref video.Video3D.V;
                     ref AudioData audio = ref obj.Audio.V;
                     if (obj.Marker.C > 0)
                     {
@@ -197,14 +197,14 @@ namespace KKdMainLib
 
                     if (obj.Video.V.Video3D.O > 0)
                     {
-                        W(ref persp.   AnchorZ);
-                        W(ref persp. PositionZ);
-                        W(ref persp.DirectionX);
-                        W(ref persp.DirectionY);
-                        W(ref persp.DirectionZ);
-                        W(ref persp. RotationX);
-                        W(ref persp. RotationY);
-                        W(ref persp.    ScaleZ);
+                        W(ref video3DData.   AnchorZ);
+                        W(ref video3DData. PositionZ);
+                        W(ref video3DData.DirectionX);
+                        W(ref video3DData.DirectionY);
+                        W(ref video3DData.DirectionZ);
+                        W(ref video3DData. RotationX);
+                        W(ref video3DData. RotationY);
+                        W(ref video3DData.    ScaleZ);
                     }
 
                     if (obj.Video.O > 0)
@@ -354,20 +354,20 @@ namespace KKdMainLib
                 {
                     ref Layer obj = ref aet.Composition.E[i].E[i0];
                     ref VideoData video = ref obj.Video.V;
-                    ref VideoData.Video3DData persp = ref video.Video3D.V;
+                    ref VideoData.Video3DData video3DData = ref video.Video3D.V;
                     ref AudioData audio = ref obj.Audio.V;
 
                     if (obj.Video.V.Video3D.O > 0)
                     {
                         _IO.P = video.Video3D.O;
-                        W(ref _IO, ref persp.   AnchorZ);
-                        W(ref _IO, ref persp. PositionZ);
-                        W(ref _IO, ref persp.DirectionX);
-                        W(ref _IO, ref persp.DirectionY);
-                        W(ref _IO, ref persp.DirectionZ);
-                        W(ref _IO, ref persp. RotationX);
-                        W(ref _IO, ref persp. RotationY);
-                        W(ref _IO, ref persp.    ScaleZ);
+                        W(ref _IO, ref video3DData.   AnchorZ);
+                        W(ref _IO, ref video3DData. PositionZ);
+                        W(ref _IO, ref video3DData.DirectionX);
+                        W(ref _IO, ref video3DData.DirectionY);
+                        W(ref _IO, ref video3DData.DirectionZ);
+                        W(ref _IO, ref video3DData. RotationX);
+                        W(ref _IO, ref video3DData. RotationY);
+                        W(ref _IO, ref video3DData.    ScaleZ);
                     }
 
                     if (obj.Video.O > 0)
@@ -543,25 +543,25 @@ namespace KKdMainLib
 
                     if (video.Video3D.O > 0)
                     {
-                        ref VideoData.Video3DData Persp = ref video.Video3D.V;
+                        ref VideoData.Video3DData video3DData = ref video.Video3D.V;
                         _IO.P = video.Video3D.O;
-                        Persp.AnchorZ       = _IO.ReadCountPointer<KFT2>();
-                        Persp.PositionZ       = _IO.ReadCountPointer<KFT2>();
-                        Persp.DirectionX = _IO.ReadCountPointer<KFT2>();
-                        Persp.DirectionY = _IO.ReadCountPointer<KFT2>();
-                        Persp.DirectionZ = _IO.ReadCountPointer<KFT2>();
-                        Persp. RotationX = _IO.ReadCountPointer<KFT2>();
-                        Persp. RotationY = _IO.ReadCountPointer<KFT2>();
-                        Persp.    ScaleZ = _IO.ReadCountPointer<KFT2>();
+                        video3DData.   AnchorZ = _IO.ReadCountPointer<KFT2>();
+                        video3DData. PositionZ = _IO.ReadCountPointer<KFT2>();
+                        video3DData.DirectionX = _IO.ReadCountPointer<KFT2>();
+                        video3DData.DirectionY = _IO.ReadCountPointer<KFT2>();
+                        video3DData.DirectionZ = _IO.ReadCountPointer<KFT2>();
+                        video3DData. RotationX = _IO.ReadCountPointer<KFT2>();
+                        video3DData. RotationY = _IO.ReadCountPointer<KFT2>();
+                        video3DData.    ScaleZ = _IO.ReadCountPointer<KFT2>();
 
-                        RKF(ref Persp.   AnchorZ);
-                        RKF(ref Persp. PositionZ);
-                        RKF(ref Persp.DirectionX);
-                        RKF(ref Persp.DirectionY);
-                        RKF(ref Persp.DirectionZ);
-                        RKF(ref Persp. RotationX);
-                        RKF(ref Persp. RotationY);
-                        RKF(ref Persp.    ScaleZ);
+                        RKF(ref video3DData.   AnchorZ);
+                        RKF(ref video3DData. PositionZ);
+                        RKF(ref video3DData.DirectionX);
+                        RKF(ref video3DData.DirectionY);
+                        RKF(ref video3DData.DirectionZ);
+                        RKF(ref video3DData. RotationX);
+                        RKF(ref video3DData. RotationY);
+                        RKF(ref video3DData.    ScaleZ);
                     }
                 }
 
@@ -689,7 +689,7 @@ namespace KKdMainLib
                     region.Width  = temp[i].RU16("Width" );
                     region.Height = temp[i].RU16("Height");
                     region.Frames = temp[i].RF32("Frames");
-                    
+
                     using (MsgPack identifiers = temp[i]["Identifiers", true])
                         if (identifiers.NotNull)
                         {
@@ -936,7 +936,7 @@ namespace KKdMainLib
                 if (video.Video3D.O > 0)
                 {
                     ref VideoData.Video3DData video3D = ref video.Video3D.V;
-                    MsgPack video3DData = new MsgPack("Persp");
+                    MsgPack video3DData = new MsgPack("Video3DData");
                     video3DData.Add(WMP(ref video3D.   AnchorZ,    "AnchorZ"));
                     video3DData.Add(WMP(ref video3D. PositionZ,  "PositionZ"));
                     video3DData.Add(WMP(ref video3D.DirectionX, "DirectionX"));
