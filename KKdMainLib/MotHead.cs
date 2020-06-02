@@ -127,7 +127,7 @@ RETURN:
                     Header.  EndMotionID = Header.Data[i].MotionID;
             }
 
-            _IO = File.OpenWriter(file + ".bin");
+            _IO = File.OpenWriter(file + ".bin", true);
             _IO.W(0x01);
             _IO.W(0x20);
             _IO.A(0x20, true);

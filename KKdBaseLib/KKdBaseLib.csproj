@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>korenkonder</Authors>
@@ -9,7 +9,7 @@
     <FileVersion>0.4.9.3</FileVersion>
     <PackageId>KKdBaseLib</PackageId>
     <Product>KKdBaseLib</Product>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net461</TargetFramework>
     <Title>KKdBaseLib</Title>
     <Version>0.4.9.3</Version>
   </PropertyGroup>
@@ -39,4 +39,7 @@
     <LangVersion>8.0</LangVersion>
     <NoWarn>IDE0004, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
 </Project>

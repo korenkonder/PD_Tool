@@ -177,7 +177,7 @@ namespace KKdMainLib
                      .Add(p2.WriteMP("P2")).Add(p3.WriteMP("P3"));
 
             public override string ToString() =>
-                UrlEncode($"{p1.ToString()},{p2.ToString()},{p3.ToString()},{PV_ID}");
+                UrlEncode($"{p1},{p2},{p3},{PV_ID}");
         }
 
         public struct Player

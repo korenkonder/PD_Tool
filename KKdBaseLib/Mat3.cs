@@ -154,7 +154,7 @@ namespace KKdBaseLib
 
                 if (irow != icol)
                     for (int k = 0; k < 3; k++)
-                        (inverse[irow, k], inverse[icol, k]) = (inverse[icol, k], inverse[irow, k]);
+                    { float t = inverse[irow, k]; inverse[irow, k] = inverse[icol, k]; inverse[icol, k] = t; }
 
                 rowIdx[i] = irow;
                 colIdx[i] = icol;
@@ -182,7 +182,7 @@ namespace KKdBaseLib
                 int ir = rowIdx[j];
                 int ic = colIdx[j];
                 for (int k = 0; k < 3; k++)
-                    (inverse[k, ic], inverse[k, ir]) = (inverse[k, ir], inverse[k, ic]);
+                { float t = inverse[k, ic]; inverse[k, ic] = inverse[k, ir]; inverse[k, ir] = t; }
             }
 
             result.Row0.X = inverse[0, 0]; result.Row0.Y = inverse[0, 1]; result.Row0.Z = inverse[0, 2];

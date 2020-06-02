@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>korenkonder</Authors>
@@ -9,7 +9,7 @@
     <FileVersion>0.4.9.3</FileVersion>
     <PackageId>KKdMainLib</PackageId>
     <Product>KKdMainLib</Product>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net461</TargetFramework>
     <Title>KKdMainLib</Title>
     <Version>0.4.9.3</Version>
   </PropertyGroup>
@@ -41,5 +41,18 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

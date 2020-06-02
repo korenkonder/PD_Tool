@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 using KKdMainLib;
 using KKdMainLib.IO;
@@ -46,7 +46,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.3";
+            Console.Title = "PD_Tool v0.4.9.3.2";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -191,26 +191,31 @@ namespace PD_Tool
             }
             else if (choose[0] == '8')
             {
-                Console.Clear();
-                Console.Title = "FT/M39 Converting Tools";
-                ConsoleDesign(true);
-                ConsoleDesign("               Choose converter:");
-                ConsoleDesign(false);
-                ConsoleDesign("1. A3DA"    );
-                ConsoleDesign("2. AddParam");
-                ConsoleDesign("3. AET"     );
-                ConsoleDesign("4. DEX"     );
-                ConsoleDesign("5. DIVA"    );
-                ConsoleDesign("6. MotHead" );
-                ConsoleDesign("7. MOT"     );
-                ConsoleDesign("8. Table"   );
-                ConsoleDesign("9. STR"     );
-                ConsoleDesign(false);
-                ConsoleDesign("R. Return to Main Menu");
-                ConsoleDesign(false);
-                ConsoleDesign(true);
-                Console.WriteLine();
-                string localChoose = Console.ReadLine().ToUpper();
+                string localChoose = "";
+                if (choose.Length == 1)
+                {
+                    Console.Clear();
+                    Console.Title = "FT/M39 Converting Tools";
+                    ConsoleDesign(true);
+                    ConsoleDesign("               Choose converter:");
+                    ConsoleDesign(false);
+                    ConsoleDesign("1. A3DA"    );
+                    ConsoleDesign("2. AddParam");
+                    ConsoleDesign("3. AET"     );
+                    ConsoleDesign("4. DEX"     );
+                    ConsoleDesign("5. DIVA"    );
+                    ConsoleDesign("6. MotHead" );
+                    ConsoleDesign("7. MOT"     );
+                    ConsoleDesign("8. Table"   );
+                    ConsoleDesign("9. STR"     );
+                    ConsoleDesign(false);
+                    ConsoleDesign("R. Return to Main Menu");
+                    ConsoleDesign(false);
+                    ConsoleDesign(true);
+                    Console.WriteLine();
+                    localChoose = Console.ReadLine().ToUpper();
+                }
+                else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
                 else if (localChoose == "2") ADP.Processor(json);
                 else if (localChoose == "3") AET.Processor(json);
@@ -241,7 +246,7 @@ namespace PD_Tool
         }
 
         public static void Exit() => Environment.Exit(0);
-        
+
         public static void ConsoleDesign(string text, params string[] args)
         {
             text = string.Format(text, args);
@@ -312,7 +317,7 @@ namespace PD_Tool
                         bin + GetArgs("FARC Archives", true, "farc") + json + mp;
                 else if (filetype == "vag" ) Filter = GetArgs("VAG" , "vag", "wav") +
                         GetArgs("VAG", true, "vag") + wav;
-                
+
                 using OpenFileDialog ofd = new OpenFileDialog { //InitialDirectory = Application.StartupPath,
                     Filter = Filter, Multiselect = true, Title = "Choose file(s) to open:" };
                 if (ofd.ShowDialog() == DialogResult.OK) FileNames = ofd.FileNames;

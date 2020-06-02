@@ -64,7 +64,7 @@ namespace PD_Tool
                     Console.WriteLine();
                     choose = Console.ReadLine().ToUpper();
                     if (choose == "2" || choose == "4") farc.FARCType |= KKdFARC.Type.GZip;
-                    if (choose == "3" || choose == "4") farc.FARCType |= KKdFARC.Type.ECB ;
+                    if (choose == "3" || choose == "4") farc.FARCType |= KKdFARC.Type.Enc ;
                 }
                 else if (choose == "R") return;
                 else farc.Signature = KKdFARC.Farc.FArC;

@@ -213,12 +213,12 @@ namespace KKdBaseLib.Auth2D
         public CountPointer<Identifier> Identifiers;
 
         public override string ToString() => $"Width: {Width}; Height: {Height}; Color: {Color:X2)}";
-    
+
         public struct Identifier
         {
             public Pointer<string> Name;
             public uint ID;
-        
+
             public override string ToString() => $"ID: {ID}; Name: {Name}";
         }
     }

@@ -7,7 +7,7 @@ namespace KKdBaseLib
         public static double Acos   (this double d  ) =>     Math.Acos   (d  );
         public static double Asin   (this double d  ) =>     Math.Asin   (d  );
         public static double Atan   (this double d  ) =>     Math.Atan   (d  );
-        public static double Aсtg   (this double d  ) => 1 / Math.Atan   (d  );
+        public static double Actg   (this double d  ) => 1 / Math.Atan   (d  );
         public static double  Cos   (this double d  ) =>     Math.Cos    (d  );
         public static double  Cosh  (this double val) =>     Math.Cosh   (val);
         public static double  Sin   (this double a  ) =>     Math.Sin    (a  );
@@ -36,7 +36,7 @@ namespace KKdBaseLib
         public static float Acos   (this float d  ) => (float)     Math.Acos   (d  ) ;
         public static float Asin   (this float d  ) => (float)     Math.Asin   (d  ) ;
         public static float Atan   (this float d  ) => (float)     Math.Atan   (d  ) ;
-        public static float Aсtg   (this float d  ) => (float)(1 / Math.Atan   (d  ));
+        public static float Actg   (this float d  ) => (float)(1 / Math.Atan   (d  ));
         public static float  Cos   (this float d  ) => (float)     Math.Cos    (d  ) ;
         public static float  Cosh  (this float val) => (float)     Math.Cosh   (val) ;
         public static float  Sin   (this float a  ) => (float)     Math.Sin    (a  ) ;

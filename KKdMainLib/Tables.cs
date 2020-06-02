@@ -1,5 +1,6 @@
 using KKdBaseLib;
 using KKdMainLib.IO;
+using KKdBaseLib.Tables;
 using TableDict = System.Collections.Generic.Dictionary<string, object>;
 
 namespace KKdMainLib
@@ -256,18 +257,18 @@ namespace KKdMainLib
             static TableDate GetStartTableDate(TableDict dict, string name)
             {
                 TableDate date = default; date.SDL(); int val;
-                if (dict.FV(out val, name + "st_day"  )) date.Day   = val;
-                if (dict.FV(out val, name + "st_month")) date.Month = val;
                 if (dict.FV(out val, name + "st_year" )) date.Year  = val;
+                if (dict.FV(out val, name + "st_month")) date.Month = val;
+                if (dict.FV(out val, name + "st_day"  )) date.Day   = val;
                 return date;
             }
 
             static TableDate GetEndTableDate(TableDict dict, string name)
             {
                 TableDate date = default; date.SDU(); int val;
-                if (dict.FV(out val, name + "ed_day"  )) date.Day   = val;
-                if (dict.FV(out val, name + "ed_month")) date.Month = val;
                 if (dict.FV(out val, name + "ed_year" )) date.Year  = val;
+                if (dict.FV(out val, name + "ed_month")) date.Month = val;
+                if (dict.FV(out val, name + "ed_day"  )) date.Day   = val;
                 return date;
             }
         }
@@ -458,14 +459,14 @@ namespace KKdMainLib
                     W(name + "id"    , pv.ID    );
                     W(name + "ignore", pv.Ignore);
                     W(name + "name"  , pv.Name  );
-                    WriteDifficulty(_IO, name + "extreme.", pv.Normal );
+                    WriteDifficulty(_IO, name +  "normal.", pv.Normal );
                 }
                 W("pv_list.data_list.length", length);
                 _IO.D();
 
                 static void WriteDifficulty(Stream _IO, string name, PV.Difficulty[] arr)
                 {
-                    if (arr == null) { _IO.W($"{name}.length=0\n"); return; }
+                    if (arr == null) { _IO.W($"{name}length=0\n"); return; }
 
                     int length = arr.Length;
                     int[] so = length.SW();
@@ -473,12 +474,12 @@ namespace KKdMainLib
                     {
                         ref PV.Difficulty diff = ref arr[so[i]];
 
-                        WriteStartTableDate(_IO, $"{name}{i}.", diff.Start);
-                        _IO.W($"{name}{i}.edition" + $"={diff.Edition}\n");
                           WriteEndTableDate(_IO, $"{name}{i}.", diff.End  );
+                        _IO.W($"{name}{i}.edition" + $"={diff.Edition}\n");
+                        WriteStartTableDate(_IO, $"{name}{i}.", diff.Start);
                         _IO.W($"{name}{i}.ver"     + $"={diff.Version}\n");
                     }
-                    _IO.W($"{name}.length={length}\n");
+                    _IO.W($"{name}length={length}\n");
                 }
             }
             else if (SlideSETable != null)
@@ -679,7 +680,7 @@ namespace KKdMainLib
                     pltMP.R("ShadowColorR", out plt.ShadowColorR);
                 }
             }
-            else if ((temp = msgPack["PV", true]).NotNull)
+            else if ((temp = msgPack["PVList", true]).NotNull)
             {
                 PVList = new PV[temp.Array.Length];
                 for (i0 = 0; i0 < PVList.Length; i0++)

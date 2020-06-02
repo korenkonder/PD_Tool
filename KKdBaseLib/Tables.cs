@@ -1,4 +1,4 @@
-namespace KKdBaseLib
+namespace KKdBaseLib.Tables
 {
     public struct ButtonSE
     {

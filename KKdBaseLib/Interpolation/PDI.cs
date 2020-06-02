@@ -124,7 +124,7 @@ namespace KKdBaseLib.Interpolation
             else result = frame > c.F ? n.V : c.V;
             return result;
         }
-        
+
         public void ResetFrameCount() { f = -df; t = f / rf; }
 
         public override string ToString() => $"F: {f}; T: {t}; V: {v}";

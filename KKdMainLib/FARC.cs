@@ -57,9 +57,9 @@ namespace KKdMainLib
                 reader.RI32();
                 int farcMode = reader.RI32E(true);
 
-                Format = (FARCType & Type.ECB) != 0 && (farcMode & (farcMode - 1)) != 0 ? Format.FT : Format.DT;
+                Format = (FARCType & Type.Enc) != 0 && (farcMode & (farcMode - 1)) != 0 ? Format.FT : Format.DT;
 
-                if (Format == Format.FT && (FARCType & Type.ECB) != 0)
+                if (Format == Format.FT && (FARCType & Type.Enc) != 0)
                 {
                     reader.Dispose();
                     byte[] header = new byte[headerLength - 0x08];
@@ -155,18 +155,17 @@ namespace KKdMainLib
                 return file.Data;
             }
 
-            int FileSize = (FARCType & Type.ECB) != 0 || (file.Type & Type.ECB) != 0 ?
-                file.SizeComp.A(0x10) : ((FARCType & Type.GZip) != 0 || (file.Type & Type.GZip) != 0 ? file.SizeComp : file.SizeUnc);
+            int FileSize = ((FARCType | file.Type) & Type.Enc) != 0 ? file.SizeComp.A(0x10)
+                : (((FARCType | file.Type) & Type.GZip) != 0 ? file.SizeComp : file.SizeUnc);
             using (Stream stream = File.OpenReader(FilePath))
             {
                 stream.S(file.Offset, 0);
                 file.Data = stream.RBy(FileSize);
             }
 
-
-            if ((FARCType & Type.ECB) != 0)
+            if ((FARCType & Type.Enc) != 0)
             {
-                if (Format == Format.FT && (file.Type & Type.ECB) != 0)
+                if (Format == Format.FT && (file.Type & Type.Enc) != 0)
                 {
                     using (AesManaged aes = GetAes(true, null))
                     using (CryptoStream cryptoStream = new CryptoStream(new MSIO.MemoryStream(file.Data),
@@ -181,8 +180,7 @@ namespace KKdMainLib
                         cryptoStream.Read(file.Data, 0, FileSize);
             }
 
-            if (((Format == Format.FT && (file.Type & Type.GZip) != 0) ||
-                (FARCType & Type.GZip) != 0) && file.SizeUnc > 0)
+            if (((file.Type | FARCType) & Type.GZip) != 0 && file.SizeUnc > 0)
                 file.Data = file.Data.InflateGZip(file.SizeUnc);
 
             Files[i] = file;
@@ -223,7 +221,7 @@ namespace KKdMainLib
 
         public void Save()
         {
-            if (!HasFiles) return;
+            if (!HasFiles || (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)) return;
 
             for (int i = 0; i < Files.Count; i++)
             {
@@ -292,7 +290,7 @@ namespace KKdMainLib
                 file.SizeComp = data.Length;
             }
 
-            if (Signature == Farc.FARC && (FARCType & Type.ECB) != 0)
+            if (Signature == Farc.FARC && (FARCType & Type.Enc) != 0)
             {
                 int alignLength = data.Length.A(0x40);
                 byte[] tempData = new byte[alignLength];
@@ -347,7 +345,7 @@ namespace KKdMainLib
         {
             None = 0b000,
             GZip = 0b010,
-            ECB  = 0b100,
+            Enc  = 0b100,
         }
     }
 }
