@@ -175,18 +175,19 @@ namespace KKdMainLib.IO
         { string s = ""; while (char.IsDigit(_IO.SW().
             PCUTF8())) s += _IO.RCUTF8(); return s; }
 
-        public JSON W(MsgPack msgPack, string end = "\n", string tabChar = "  ") =>
-            W(msgPack, end, tabChar, "", true);
+        public JSON W(MsgPack msgPack, bool ignoreNull, string end = "\n", string tabChar = "  ") =>
+            W(msgPack, ignoreNull, end, tabChar, "", true);
 
-        public JSON W(MsgPack msgPack, bool style = false) =>
-                W(msgPack, "\n", "  ", "", style);
+        public JSON W(MsgPack msgPack, bool ignoreNull, bool style = false) =>
+            W(msgPack, ignoreNull, "\n", "  ", "", style);
 
-        private JSON W(MsgPack msgPack, string end, string tabChar, string tab, bool style, bool isArray = false)
+        private JSON W(MsgPack msgPack, bool ignoreNull, string end,
+            string tabChar, string tab, bool style, bool isArray = false)
         {
             string oldTab = tab;
             tab += tabChar;
-            if (msgPack.Name   != null && !isArray) _IO.W("\"" + msgPack.Name + "\":" + (style ? " " : ""));
-            if (msgPack.Object == null) { WN(); return this; }
+            if (msgPack.Name   != null && !isArray   ) _IO.W("\"" + msgPack.Name + "\":" + (style ? " " : ""));
+            if (msgPack.Object == null) { if (!ignoreNull) WN(); return this; }
 
             if (msgPack.List.NotNull)
             {
@@ -196,14 +197,14 @@ namespace KKdMainLib.IO
                     for (int i = 0; i < msgPack.List.Count; i++)
                     {
                         if (style) _IO.W(tab);
-                        W(msgPack.List[i], end, tabChar, tab, style);
+                        W(msgPack.List[i], ignoreNull, end, tabChar, tab, style);
                         if (i + 1 < msgPack.List.Count) _IO.W(',');
                         if (style) _IO.W(end);
                     }
                 else if (msgPack.List.Count == 1)
                 {
                     if (style) _IO.W(tab);
-                    W(msgPack.List[0], end, tabChar, tab, style);
+                    W(msgPack.List[0], ignoreNull, end, tabChar, tab, style);
                     if (style) _IO.W(end);
                 }
                 if (style) _IO.W(oldTab);
@@ -217,20 +218,20 @@ namespace KKdMainLib.IO
                     for (int i = 0; i < msgPack.Array.Length; i++)
                     {
                         if (style) _IO.W(tab);
-                        W(msgPack.Array[i], end, tabChar, tab, style, true);
+                        W(msgPack.Array[i], ignoreNull, end, tabChar, tab, style, true);
                         if (i + 1 < msgPack.Array.Length) _IO.W(',');
                         if (style) _IO.W(end);
                     }
                 else if (msgPack.Array.Length == 1)
                 {
                     if (style) _IO.W(tab);
-                    W(msgPack.Array[0], end, tabChar, tab, style, true);
+                    W(msgPack.Array[0], ignoreNull, end, tabChar, tab, style, true);
                     if (style) _IO.W(end);
                 }
                 if (style) _IO.W(oldTab);
                 WA(true);
             }
-            else if (msgPack.Object is MsgPack msg) W(msg, end, tabChar, tab, style);
+            else if (msgPack.Object is MsgPack msg) W(msg, ignoreNull, end, tabChar, tab, style);
             else if (msgPack.Object is  string str) W(str);
             else _IO.W(BaseExtensions.ToS(msgPack.Object));
 

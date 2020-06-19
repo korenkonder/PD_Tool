@@ -1487,10 +1487,10 @@ namespace KKdMainLib
             {
                 _IO.P = A3DCEnd;
                 _IO.WEOFC(0);
-                _IO.O   = 0;
+                _IO.O = 0;
                 _IO.P = 0;
-                Header header = new Header { Signature = 0x41443341, Format = Format.F2,
-                    DataSize = A3DCEnd, SectionSize = A3DCEnd, InnerSignature = 0x01131010 };
+                Header header = new Header { Signature = 0x41443341, InnerSignature = 0x01131010,
+                    Format = Format.F2, DataSize = A3DCEnd, SectionSize = A3DCEnd, UseSectionSize = true };
                 _IO.W(header, true);
             }
 
@@ -1625,14 +1625,16 @@ namespace KKdMainLib
                 if (!a3dcOpt)
                 {
                     key.BinOffset = _IO.P;
-                    _IO.W((  int)key.Type );
-                    _IO.W((float)key.Value);
+                    if (key.Type == KeyType.Null) _IO.W(0x00L);
+                    else { _IO.W((  int)key.Type );
+                           _IO.W((float)key.Value); }
                 }
                 else if (!usedValues.ContainsValue(key.Value))
                 {
                     key.BinOffset = _IO.P;
-                    _IO.W((  int)key.Type );
-                    _IO.W((float)key.Value);
+                    if (key.Type == KeyType.Null) _IO.W(0x00L);
+                    else { _IO.W((  int)key.Type );
+                           _IO.W((float)key.Value); }
                     usedValues.Add(key.BinOffset, key.Value);
                 }
                 else key.BinOffset = usedValues.GK(key.Value);
@@ -1861,7 +1863,7 @@ namespace KKdMainLib
         }
 
         public void MsgPackWriter(string file, bool json) =>
-            MsgPackWriter().Write(true, file, json);
+            MsgPackWriter().Write(false, true, file, json);
 
         private void MsgPackReader(MsgPack a3d)
         {

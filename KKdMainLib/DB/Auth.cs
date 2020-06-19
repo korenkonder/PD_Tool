@@ -146,7 +146,7 @@ namespace KKdMainLib.DB
                 authDB.Add(uid);
             }
 
-            authDB.Write(true, file, json);
+            authDB.Write(false, true, file, json);
         }
 
         private bool disposed = false;

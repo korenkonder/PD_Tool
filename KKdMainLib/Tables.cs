@@ -943,7 +943,7 @@ namespace KKdMainLib
                 }
                 msgPack.Add(sliderTouchSETable);
             }
-            if (msgPack.List.Count == 1) msgPack.Write(file, json);
+            if (msgPack.List.Count == 1) msgPack.Write(file, false, json);
         }
 
         private bool disposed;

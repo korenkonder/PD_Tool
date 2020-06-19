@@ -73,7 +73,7 @@ namespace KKdBaseLib
 
         public void Add(KeyValuePair<TKey, TValue> pair)
         {
-            if (IsNull) return;
+            if (IsNull || ContainsKey(pair.Key)) return;
 
             count++;
             if (keyArray.Length < count) System.Array.Resize(ref keyArray, count);
@@ -84,7 +84,7 @@ namespace KKdBaseLib
 
         public void Add(TKey key, TValue val)
         {
-            if (IsNull) return;
+            if (IsNull || ContainsKey(key)) return;
 
             count++;
             if (keyArray.Length < count) System.Array.Resize(ref keyArray, count);
@@ -231,6 +231,6 @@ namespace KKdBaseLib
         { Key = key; Value = value; }
 
         public override string ToString() =>
-            $"(Key: {Key}; value: {Value})";
+            $"(Key: {Key}; Value: {Value})";
     }
 }

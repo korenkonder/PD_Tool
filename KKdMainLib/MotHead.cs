@@ -674,7 +674,7 @@ RETURN:
                 I++;
             }
             motHead.Add(motions);
-            motHead.WriteAfterAll(true, file, json);
+            motHead.WriteAfterAll(false, true, file, json);
         }
 
         private static int GetSize(int Type) =>

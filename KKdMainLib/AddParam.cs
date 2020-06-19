@@ -116,7 +116,7 @@ namespace KKdMainLib
                         addParam[i] = addParam[i].Add("Value", sub.Value);
 
                 }
-            addParam.WriteAfterAll(true, file, json);
+            addParam.WriteAfterAll(false, true, file, json);
         }
 
         public void Dispose()

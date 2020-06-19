@@ -251,7 +251,7 @@ namespace KKdMainLib.DB
             for (i = 0; i < SpriteSets.Length; i++)
                 sprDB[i] = SpriteSets[i].WriteMsgPack();
 
-            sprDB.Write(true, file, json);
+            sprDB.Write(false, true, file, json);
         }
 
         private bool disposed = false;

@@ -646,7 +646,7 @@ namespace KKdMainLib
             MsgPack aet = new MsgPack(AET.Scenes.Length, "Aet");
             for (int i = 0; i < AET.Scenes.Length; i++)
                 aet[i] = MsgPackWriter(ref AET.Scenes[i]);
-            aet.WriteAfterAll(true, file, json);
+            aet.WriteAfterAll(false, true, file, json);
         }
 
         public void MsgPackReader(MsgPack msgPack, ref Pointer<Scene> aetData)

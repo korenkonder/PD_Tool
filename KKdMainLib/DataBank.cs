@@ -133,7 +133,7 @@ namespace KKdMainLib
                 }
                 else msgPack.Add(new MsgPack("PvList", null));
             }
-            msgPack.Write(file, json).Dispose();
+            msgPack.Write(file, false, json).Dispose();
         }
 
         public static string UrlEncode(string value) =>

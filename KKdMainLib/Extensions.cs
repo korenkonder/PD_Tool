@@ -60,7 +60,7 @@ namespace KKdMainLib
         }
 
         public static void WEOFC(this Stream stream, int depth = 0) =>
-            stream.W(new Header { Depth = depth, Length = 0x20, Signature = 0x43464F45 });
+            stream.W(new Header { Depth = depth, Length = 0x20, Signature = 0x43464F45, UseSectionSize = true });
     }
 
     public static class POFExtensions
@@ -68,11 +68,13 @@ namespace KKdMainLib
         public static void W(this Stream stream, POF pof, bool shiftX = false, int depth = 0)
         {
             byte[] data = pof.Write(shiftX);
-            Header header = new Header { Depth = depth, Format = Format.F2,
-                Length = 0x20, Signature = shiftX ? 0x31464F50 : 0x30464F50 };
-            header.DataSize = header.SectionSize = data.Length;
+            Header header = new Header { Depth = depth, Format = Format.F2, Length = 0x20,
+                Signature = shiftX ? 0x31464F50 : 0x30464F50, UseSectionSize = true };
+            header.DataSize = header.SectionSize = data.Length.A(0x10);
             stream.W(header);
             stream.W(data);
+            for (int c = data.Length.A(0x10) - data.Length; c > 0; c--)
+                stream.W((byte)0);
         }
     }
 
@@ -82,7 +84,7 @@ namespace KKdMainLib
         {
             byte[] data = enrs.Write();
             Header header = new Header { Depth = depth, Format = Format.F2,
-                Length = 0x20, Signature = 0x53524E45 };
+                Length = 0x20, Signature = 0x53524E45, UseSectionSize = true };
             header.DataSize = header.SectionSize = data.Length;
             stream.W(header);
             stream.W(data);
@@ -184,35 +186,35 @@ namespace KKdMainLib
             return MsgPack;
         }
 
-        public static void Write(this MsgPack mp, bool temp, string file, bool json = false)
-        { if (temp) MsgPack.New.Add(mp).Write(file, json).Dispose();
-          else                      mp .Write(file, json); }
+        public static void Write(this MsgPack mp, bool ignoreNull, bool temp, string file, bool json = false)
+        { if (temp) MsgPack.New.Add(mp).Write(file, ignoreNull, json).Dispose();
+          else                      mp .Write(file, ignoreNull, json); }
 
-        public static MsgPack Write(this MsgPack mp, string file, bool json = false)
+        public static MsgPack Write(this MsgPack mp, string file, bool ignoreNull, bool json = false)
         {
-            if (json) using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true))) _IO.W(mp, "\n", "  ");
-            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".mp"  , true))) _IO.W(mp);
+            if (json) using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true))) _IO.W(mp, ignoreNull, "\n", "  ");
+            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".mp"  , true))) _IO.W(mp, ignoreNull);
             return mp;
         }
 
-        public static void WriteAfterAll(this MsgPack mp, bool temp, string file, bool json = false)
-        { if (temp) MsgPack.New.Add(mp).WriteAfterAll(file, json).Dispose();
-          else                      mp .WriteAfterAll(file, json); }
+        public static void WriteAfterAll(this MsgPack mp, bool ignoreNull, bool temp, string file, bool json = false)
+        { if (temp) MsgPack.New.Add(mp).WriteAfterAll(file, ignoreNull, json).Dispose();
+          else                      mp .WriteAfterAll(file, ignoreNull, json); }
 
-        public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool json = false)
+        public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool ignoreNull, bool json = false)
         {
             byte[] data = null;
-            if (json) using (JSON _IO = new JSON(File.OpenWriter())) { _IO.W(mp, true); data = _IO.ToArray(); }
-            else      using (  MP _IO = new   MP(File.OpenWriter())) { _IO.W(mp      ); data = _IO.ToArray(); }
+            if (json) using (JSON _IO = new JSON(File.OpenWriter())) { _IO.W(mp, ignoreNull, true); data = _IO.ToArray(); }
+            else      using (  MP _IO = new   MP(File.OpenWriter())) { _IO.W(mp, ignoreNull      ); data = _IO.ToArray(); }
             File.WriteAllBytes(file + (json ? ".json" : ".mp"), data);
             return mp;
         }
 
         public static void ToJSON   (this string file) =>
-            file.ReadMP(    ).Write(file, true).Dispose();
+            file.ReadMP(    ).Write(file, false, true).Dispose();
 
         public static void ToMsgPack(this string file) =>
-            file.ReadMP(true).Write(file      ).Dispose();
+            file.ReadMP(true).Write(file, false      ).Dispose();
     }
 
     public static class IKFExt

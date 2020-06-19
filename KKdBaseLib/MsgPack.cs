@@ -47,7 +47,12 @@ namespace KKdBaseLib
 
         public MsgPack this[string key, bool array]
         {   get { if (!array) return this[key];
-                if (Object is KKdList<MsgPack> List) { MsgPack MsgPack = List[ElementIndex(key)];
+                  if (Object is KKdList<MsgPack> List) { MsgPack MsgPack = List[ElementIndex(key)];
+                    return MsgPack.Object is MsgPack[] ? MsgPack : default; } return default; } }
+
+        public MsgPack this[bool startsWith, string key]
+        {   get { if (Object is KKdList<MsgPack> List) { MsgPack MsgPack =
+                        List[startsWith ? ElementIndexStartsWith(key) : ElementIndex(key)];
                     return MsgPack.Object is MsgPack[] ? MsgPack : default; } return default; } }
 
         public MsgPack Add(MsgPack obj)
@@ -377,11 +382,28 @@ namespace KKdBaseLib
             return -1;
         }
 
+        public bool ContainsKeyStartsWith(string name) => ElementIndexStartsWith(name) > -1;
+
+        public int ElementIndexStartsWith(string name)
+        {
+            if (List.IsNull) return -1;
+
+            for (int i = 0; i < List.Count; i++)
+                if (List[i].Name.StartsWith(name)) return i;
+            return -1;
+        }
+
 
         public struct Ext
         {
             public sbyte   Type;
             public  byte[] Data;
         }
+    }
+
+    public interface IMsgPack : INull
+    {
+        //public    void  ReadMsgPack();
+        public MsgPack WriteMsgPack(string name);
     }
 }

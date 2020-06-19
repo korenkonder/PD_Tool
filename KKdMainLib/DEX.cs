@@ -83,7 +83,9 @@ namespace KKdMainLib
             _IO = File.OpenWriter(filepath + (format > Format.F && format < Format.FT ? ".dex" : ".bin"), true);
             header.Format = _IO.Format = format;
 
+            _IO.Format = format;
             _IO.O = format > Format.F ? 0x20 : 0;
+            _IO.P = 0;
             _IO.W(0x64);
             _IO.W(Dex.Length);
 
@@ -157,7 +159,8 @@ namespace KKdMainLib
                 header.DataSize = offset;
                 header.SectionSize = offset;
                 header.Signature = 0x43505845;
-                _IO.W(header, true);
+                header.UseSectionSize = true;
+                _IO.W(header);
             }
             _IO.C();
         }
@@ -218,7 +221,7 @@ namespace KKdMainLib
                 dex[i0] = exp;
             }
 
-            dex.Write(true, file, json);
+            dex.Write(false, true, file, json);
         }
 
         private bool disposed;

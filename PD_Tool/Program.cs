@@ -29,7 +29,8 @@ namespace PD_Tool
             foreach (string arg in args)
             {
                 GC.Collect();
-                     if (Directory.Exists(arg)) using (KKdFARC FARC = new KKdFARC(arg, true)) FARC.Pack();
+                if (Directory.Exists(arg))
+                    using (KKdFARC FARC = new KKdFARC(arg, true) { CompressionLevel = 9 }) FARC.Pack();
                 else if (File.Exists(arg) && Path.GetExtension(arg) == ".farc")
                     using (KKdFARC farc = new KKdFARC(arg)) farc.Unpack(true);
                 else if (File.Exists(arg))
@@ -46,7 +47,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.3.2";
+            Console.Title = "PD_Tool v0.4.9.4";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -106,8 +107,8 @@ namespace PD_Tool
                     ConsoleDesign("5. DIVA"    );
                     ConsoleDesign("6. MotHead" );
                     ConsoleDesign("7. MOT"     );
-                    ConsoleDesign("8. Table"   );
-                    ConsoleDesign("9. STR"     );
+                    ConsoleDesign("8. STR"     );
+                    ConsoleDesign("9. Table"   );
                     ConsoleDesign(false);
                     ConsoleDesign("R. Return to Main Menu");
                     ConsoleDesign(false);
@@ -123,8 +124,8 @@ namespace PD_Tool
                 else if (localChoose == "5") DIV.Processor();
                 else if (localChoose == "6") MHD.Processor(json);
                 else if (localChoose == "7") MOT.Processor(json);
-                else if (localChoose == "8") TBL.Processor(json);
-                else if (localChoose == "9") STR.Processor(json);
+                else if (localChoose == "8") STR.Processor(json);
+                else if (localChoose == "9") TBL.Processor(json);
                 else choose = localChoose;
             }
             else if (choose[0] == '6')
@@ -206,8 +207,8 @@ namespace PD_Tool
                     ConsoleDesign("5. DIVA"    );
                     ConsoleDesign("6. MotHead" );
                     ConsoleDesign("7. MOT"     );
-                    ConsoleDesign("8. Table"   );
-                    ConsoleDesign("9. STR"     );
+                    ConsoleDesign("8. STR"     );
+                    ConsoleDesign("9. Table"   );
                     ConsoleDesign(false);
                     ConsoleDesign("R. Return to Main Menu");
                     ConsoleDesign(false);
@@ -223,8 +224,8 @@ namespace PD_Tool
                 else if (localChoose == "5") DIV.Processor();
                 else if (localChoose == "6") MHD.Processor(json);
                 else if (localChoose == "7") MOT.Processor(json);
-                else if (localChoose == "8") TBL.Processor(json);
-                else if (localChoose == "9") STR.Processor(json);
+                else if (localChoose == "8") STR.Processor(json);
+                else if (localChoose == "9") TBL.Processor(json);
                 else choose = localChoose;
             }
             else if (choose == "9")
@@ -294,6 +295,8 @@ namespace PD_Tool
                 string Filter = GetArgs("All;", false, "*");
                      if (filetype == "a3da") Filter = GetArgs("A3DA", "a3da", "farc", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") +   GetArgs("FARC", true, "farc") + json + mp;
+                else if (filetype == "adp" ) Filter = GetArgs("ADP" , "adp", "json", "mp") +
+                        GetArgs("ADP", true, "adp" ) + json + mp;
                 else if (filetype == "bin" ) Filter = GetArgs("BIN" , "bin", "json", "mp") +
                         bin + json + mp;
                 else if (filetype == "blt" ) Filter = GetArgs("BLT" , "blt");

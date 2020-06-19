@@ -77,7 +77,7 @@ namespace KKdBaseLib.F2
 
         private int length(bool shiftX = false)
         {
-            int length = 5;
+            int length = 6;
             long offset = 0;
             byte bitShift = (byte)(shiftX ? 3 : 2);
             int max1 = 0x00100 >> bitShift;

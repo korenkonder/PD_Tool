@@ -213,7 +213,7 @@ namespace KKdMainLib.DB
             for (i = 0; i < AetSets.Length; i++)
                 AetDB[i] = AetSets[i].WriteMsgPack();
 
-            AetDB.Write(true, file, json);
+            AetDB.Write(false, true, file, json);
         }
 
         private bool disposed = false;

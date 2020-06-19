@@ -4,14 +4,14 @@
     <Authors>korenkonder</Authors>
     <Company></Company>
     <Configuration></Configuration>
-    <Copyright>korenkonder Â© 2019-2020</Copyright>
+    <Copyright>korenkonder © 2019-2020</Copyright>
     <Description>A base library</Description>
-    <FileVersion>0.4.9.3</FileVersion>
+    <FileVersion>0.4.9.4</FileVersion>
     <PackageId>KKdBaseLib</PackageId>
     <Product>KKdBaseLib</Product>
     <TargetFramework>net461</TargetFramework>
     <Title>KKdBaseLib</Title>
-    <Version>0.4.9.3</Version>
+    <Version>0.4.9.4</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

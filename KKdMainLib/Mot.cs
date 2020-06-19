@@ -184,7 +184,7 @@ namespace KKdMainLib
             MsgPack mot = new MsgPack(motCount, "MOT");
             for (i = 0; i < motCount; i++)
                 mot[i] = MsgPackWriter(ref MOT[i]);
-            mot.Write(true, file, json);
+            mot.Write(false, true, file, json);
         }
 
         public void MsgPackReader(MsgPack msgPack, ref MotHeader mot)

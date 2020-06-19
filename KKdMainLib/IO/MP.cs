@@ -166,23 +166,23 @@ namespace KKdMainLib.IO
             return true;
         }
 
-        public MP W(MsgPack msgPack, bool IsArray = false)
+        public MP W(MsgPack msgPack, bool ignoreNull, bool IsArray = false)
         {
             if   (msgPack.Name != null && !IsArray) W(msgPack.Name);
-            Write(msgPack.Object);
+            Write(msgPack.Object, ignoreNull);
             return this;
         }
 
-        private void Write(object obj)
+        private void Write(object obj, bool ignoreNull)
         {
-            if (obj == null) { WN(); return; }
+            if (obj == null) { if (!ignoreNull) WN(); return; }
             switch (obj)
             {
                 case KKdList<MsgPack>  val: WM(val.Count );
-                    for (int i = 0; i < val.Count ; i++) W(val[i]); break;
+                    for (int i = 0; i < val.Count ; i++) W(val[i], ignoreNull); break;
                 case         MsgPack[] val: WA(val.Length);
-                    for (int i = 0; i < val.Length; i++) W(val[i]); break;
-                case     MsgPack val: W(val); break;
+                    for (int i = 0; i < val.Length; i++) W(val[i], ignoreNull); break;
+                case     MsgPack val: W(val, ignoreNull); break;
                 case      byte[] val: W(val); break;
                 case        bool val: W(val); break;
                 case       sbyte val: W(val); break;

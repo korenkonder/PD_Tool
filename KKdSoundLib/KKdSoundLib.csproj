@@ -4,7 +4,7 @@
     <Authors>korenkonder</Authors>
     <Company></Company>
     <Configuration></Configuration>
-    <Copyright>korenkonder Â© 2019-2020</Copyright>
+    <Copyright>korenkonder © 2019-2020</Copyright>
     <Description>A simple library for working with Project Diva F/AFT/F2/X/FT audio files</Description>
     <FileVersion>0.1.2.0</FileVersion>
     <PackageId>KKdSoundLib</PackageId>

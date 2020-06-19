@@ -4,14 +4,14 @@
     <Authors>korenkonder</Authors>
     <Company></Company>
     <Configuration></Configuration>
-    <Copyright>korenkonder Â© 2018-2020</Copyright>
+    <Copyright>korenkonder © 2018-2020</Copyright>
     <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files</Description>
-    <FileVersion>0.4.9.3</FileVersion>
+    <FileVersion>0.4.9.4</FileVersion>
     <PackageId>KKdMainLib</PackageId>
     <Product>KKdMainLib</Product>
     <TargetFramework>net461</TargetFramework>
     <Title>KKdMainLib</Title>
-    <Version>0.4.9.3</Version>
+    <Version>0.4.9.4</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
