@@ -71,6 +71,7 @@ namespace KKdMainLib
             _IO = File.OpenWriter(filepath + (header.Format > Format.AFT &&
                 header.Format < Format.FT ? ".str" : ".bin"), true);
             _IO.Format = header.Format;
+            _IO.IsBE = header.UseBigEndian;
             pof.Offsets = KKdList<long>.New;
 
             long count = Strings.LongLength;
@@ -153,6 +154,8 @@ namespace KKdMainLib
 
             header = new Header();
             if (!System.Enum.TryParse(temp.RS("Format"), out header.Format)) return;
+            bool? isBE = temp.RnB("UseBigEndian");
+            if (isBE.HasValue) header.UseBigEndian = isBE.Value;
 
             if ((temp = temp["Strings", true]).IsNull) return;
 
@@ -171,6 +174,7 @@ namespace KKdMainLib
         {
             if (Strings == null || Strings.Length == 0) return;
             MsgPack str = new MsgPack("STR").Add("Format", header.Format.ToString());
+            if (header.UseBigEndian) str.Add("UseBigEndian", header.UseBigEndian);
             MsgPack strings = new MsgPack(Strings.Length, "Strings");
             for (int i = 0; i < Strings.Length; i++)
             {
