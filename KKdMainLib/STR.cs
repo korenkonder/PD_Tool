@@ -22,6 +22,8 @@ namespace KKdMainLib
             if (header.Signature == 0x41525453)
             {
                 header = _IO.ReadHeader(true, false);
+                _IO.IsBE = header.UseBigEndian;
+                _IO.Format = header.Format;
 
                 int count = _IO.RI32E();
                 int offset = _IO.RI32E();
