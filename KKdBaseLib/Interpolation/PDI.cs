@@ -20,8 +20,8 @@ namespace KKdBaseLib.Interpolation
         public float Frame => f;
         public float Time  => t;
         public float Value => v;
-        public bool  IsNull => array == null ?  true : array.Length < 1;
-        public bool NotNull => array == null ? false : array.Length > 0;
+        public bool  IsNull => array == null || array.Length < 1;
+        public bool NotNull => array != null && array.Length > 0;
 
         public PDI(KFT2[] array, float interpolationFramerate = 60, float requestedFramerate = 60)
         {

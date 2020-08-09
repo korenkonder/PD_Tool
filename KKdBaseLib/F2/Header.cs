@@ -2,15 +2,15 @@ namespace KKdBaseLib.F2
 {
     public struct Header
     {
-        public int Signature;
-        public int DataSize;
-        public int Length;
-        public int Flags;
-        public int Depth;
-        public int SectionSize;
-        public int Mode;
-        public int InnerSignature;
-        public int SectionSignature;
+        public uint Signature;        // 0x00
+        public uint DataSize;         // 0x04
+        public uint Length;           // 0x08
+        public uint Flags;            // 0x0C
+        public uint Depth;            // 0x10
+        public uint SectionSize;      // 0x14
+        public uint Version;          // 0x18
+        public uint   InnerSignature; // 0x30
+        public uint SectionSignature; // 0x40
 
         public Format Format;
         public bool UseBigEndian;
@@ -18,6 +18,6 @@ namespace KKdBaseLib.F2
 
         public bool IsX  => Format == Format.X || Format == Format.XHD;
 
-        public override string ToString() => Signature.ToString(false);
+        public override string ToString() => Signature.ToS(false);
     }
 }

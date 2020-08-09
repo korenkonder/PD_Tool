@@ -190,6 +190,6 @@ namespace KKdBaseLib.Tables
         }
 
         public override string ToString() =>
-                $"{Year.ToString("d4")}-{Month.ToString("d2")}-{Day.ToString("d2")}";
+                $"{Year:d4}-{Month:d2}-{Day:d2}";
     }
 }

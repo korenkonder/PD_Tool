@@ -8,57 +8,57 @@ namespace KKdMainLib
     {
         private POF pof;
         private Header header;
-        private Stream _IO;
+        private Stream s;
 
         public String[] Strings;
 
         public int STRReader(string filepath, string ext)
         {
-            _IO =  File.OpenReader(filepath + ext);
+            s =  File.OpenReader(filepath + ext);
 
             header = new Header();
-            _IO.Format = Format.F;
-            header.Signature = _IO.RI32();
+            s.Format = Format.F;
+            header.Signature = s.RU32();
             if (header.Signature == 0x41525453)
             {
-                header = _IO.ReadHeader(true, false);
-                _IO.IsBE = header.UseBigEndian;
-                _IO.Format = header.Format;
+                header = s.ReadHeader(true, false);
+                s.IsBE = header.UseBigEndian;
+                s.Format = header.Format;
 
-                int count = _IO.RI32E();
-                int offset = _IO.RI32E();
+                int count = s.RI32E();
+                int offset = s.RI32E();
 
-                _IO.P = offset;
+                s.P = offset;
                 Strings = new String[count];
                 for (int i = 0; i < count; i++)
                 {
-                    Strings[i].Str.O = _IO.RI32E();
-                    Strings[i].ID    = _IO.RI32E();
+                    Strings[i].Str.O = s.RI32E();
+                    Strings[i].ID    = s.RI32E();
                 }
 
-                _IO.O = 0;
+                s.O = 0;
                 for (int i = 0; i < count; i++)
                     Strings[i].Str.V = Strings[i].Str.O > 0 ?
-                        _IO.RSaO(Strings[i].Str.O) : null;
+                        s.RSaO(Strings[i].Str.O) : null;
             }
             else
             {
-                if ((header.Signature >> 24) > 0) { header.Format = Format.DT; _IO.IsBE = true; }
+                if ((header.Signature >> 24) > 0) { header.Format = Format.DT; s.IsBE = true; }
                 else header.Format = Format.F;
                 int count = 0;
-                for (int i = header.Signature; i != 0 && _IO.P >= 0 && _IO.P < _IO.L; count++)
-                    i = _IO.RI32();
+                for (uint i = header.Signature; i != 0 && s.P >= 0 && s.P < s.L; count++)
+                    i = s.RU32();
                 Strings = new String[count];
 
-                _IO.P = 0;
+                s.P = 0;
                 for (int i = 0; i < count; i++)
                 {
                     Strings[i].ID = i;
-                    Strings[i].Str.V = _IO.RSaO();
+                    Strings[i].Str.V = s.RSaO();
                 }
             }
 
-            _IO.C();
+            s.C();
             return 1;
         }
 
@@ -68,24 +68,24 @@ namespace KKdMainLib
             uint offset = 0;
             uint currentOffset = 0;
             Format format = header.Format;
-            _IO = File.OpenWriter(filepath + (header.Format > Format.AFT &&
+            s = File.OpenWriter(filepath + (header.Format > Format.AFT &&
                 header.Format < Format.FT ? ".str" : ".bin"), true);
-            _IO.Format = header.Format;
-            _IO.IsBE = header.UseBigEndian;
+            s.Format = header.Format;
+            s.IsBE = header.UseBigEndian;
             pof.Offsets = KKdList<long>.New;
 
             long count = Strings.LongLength;
-            if (_IO.Format > Format.AFT && _IO.Format < Format.FT)
+            if (s.Format > Format.AFT && s.Format < Format.FT)
             {
-                _IO.P = 0x40;
-                _IO.WX(count, ref pof);
-                _IO.WX(0x80);
-                _IO.P = 0x80;
-                for (int i = 0; i < count; i++) _IO.W(0x00L);
+                s.P = 0x40;
+                s.WX(count, ref pof);
+                s.WX(0x80);
+                s.P = 0x80;
+                for (int i = 0; i < count; i++) s.W(0x00L);
             }
             else
-                for (int i = 0; i < count; i++) _IO.W(0x00);
-            _IO.A(0x10);
+                for (int i = 0; i < count; i++) s.W(0x00);
+            s.A(0x10);
 
             KKdList<string> usedSTR = KKdList<string>.New;
             KKdList<int> usedSTRPos = KKdList<int>.New;
@@ -101,47 +101,47 @@ namespace KKdMainLib
                 }
                 else
                 {
-                    usedSTRPos.Add(STRPos[i] = _IO.P);
+                    usedSTRPos.Add(STRPos[i] = s.P);
                     usedSTR.Add(Strings[i].Str.V);
-                    _IO.W(Strings[i].Str.V);
-                    _IO.W((byte)0);
-                    if (format < Format.F) _IO.A(0x8);
+                    s.W(Strings[i].Str.V);
+                    s.W((byte)0);
+                    if (format < Format.F) s.A(0x8);
                 }
             }
-            _IO.A(0x4);
-            _IO.L = _IO.P;
+            s.A(0x4);
+            s.L = s.P;
 
-            if (_IO.Format > Format.AFT)
+            if (s.Format > Format.AFT)
             {
-                _IO.A(0x10);
-                offset = _IO.PU32;
-                _IO.P = 0x80;
+                s.A(0x10);
+                offset = s.PU32;
+                s.P = 0x80;
                 for (int i = 0; i < count; i++)
                 {
-                    pof.Offsets.Add(_IO.P);
-                    _IO.WE(STRPos[i]);
-                    _IO.WE(Strings[i].ID);
+                    pof.Offsets.Add(s.P);
+                    s.WE(STRPos[i]);
+                    s.WE(Strings[i].ID);
                 }
 
-                _IO.PU32 = offset;
-                _IO.W(pof, false, 1);
-                _IO.WEOFC(1);
-                currentOffset = _IO.PU32;
-                _IO.WEOFC();
-                header.DataSize = (int)(currentOffset - 0x40);
+                s.PU32 = offset;
+                s.W(pof, false, 1);
+                s.WEOFC(1);
+                currentOffset = s.PU32;
+                s.WEOFC();
+                header.DataSize = currentOffset - 0x40;
                 header.Signature = 0x41525453;
-                header.SectionSize = (int)(offset - 0x40);
+                header.SectionSize = offset - 0x40;
                 header.UseSectionSize = true;
-                _IO.P = 0;
-                _IO.W(header, true);
+                s.P = 0;
+                s.W(header, true);
             }
             else
             {
-                _IO.P = 0;
-                _IO.IsBE = header.Format < Format.F;
-                for (int i = 0; i < count; i++) _IO.WE(STRPos[i]);
+                s.P = 0;
+                s.IsBE = header.Format < Format.F;
+                for (int i = 0; i < count; i++) s.WE(STRPos[i]);
             }
-            _IO.C();
+            s.C();
         }
 
         public void MsgPackReader(string file, bool json)
@@ -190,7 +190,7 @@ namespace KKdMainLib
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; Strings = default;
+        { if (!disposed) { if (s != null) s.D(); s = null; Strings = default;
                 pof = default; header = default; disposed = true; } }
 
         public struct String

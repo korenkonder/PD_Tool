@@ -36,17 +36,17 @@ namespace KKdBaseLib.Auth3D
     public struct Ambient
     {
         public string Name;
-        public Vec4<Key>    LightDiffuse;
-        public Vec4<Key> RimLightDiffuse;
+        public Vec4<Key>?    LightDiffuse;
+        public Vec4<Key>? RimLightDiffuse;
     }
 
     public struct CameraAuxiliary
     {
-        public Key Gamma;
-        public Key Exposure;
-        public Key Saturate;
-        public Key GammaRate;
-        public Key AutoExposure;
+        public Key? Gamma;
+        public Key? Exposure;
+        public Key? Saturate;
+        public Key? GammaRate;
+        public Key? AutoExposure;
     }
 
     public struct CameraRoot
@@ -99,7 +99,7 @@ namespace KKdBaseLib.Auth3D
         public Key End;
         public Key Start;
         public Key Density;
-        public Vec4<Key> Diffuse;
+        public Vec4<Key>? Diffuse;
     }
 
     public enum CompressF16 : int
@@ -127,15 +127,40 @@ namespace KKdBaseLib.Auth3D
 
     public struct Key
     {
-        public KeyType? Type;
+        public KeyType Type;
         public int Length;
         public int? BinOffset;
         public EPType EPTypePre;
         public EPType EPTypePost;
         public float? Max;
-        public float? Value;
+        public float Value;
         public RawD RawData;
         public KFT3[] Keys;
+
+        public Key(A3DAKey k)
+        {
+            Type = 0;
+            Value = 0;
+            Length = 0;
+            BinOffset = null;
+            RawData = default;
+            Keys = null;
+
+            EPTypePost = k.EPTypePost;
+            EPTypePre = k.EPTypePre;
+            Max = k.MaxFrames;
+            if (k.Length > 1)
+            {
+                Type = k.Type;
+                Length = (int)k.Length;
+                Keys = k.Keys;
+            }
+            else if (k.Length == 1)
+            {
+                Type = KeyType.Value;
+                Value = k.Keys[0].V;
+            }
+        }
 
         public struct RawD
         {
@@ -144,58 +169,6 @@ namespace KKdBaseLib.Auth3D
             public string ValueType;
             public string[] ValueList;
         }
-
-        public static Vec3<A3DAKey> ToA3DAKey(Vec3<     Key> k) =>
-            new Vec3<A3DAKey> { X = (A3DAKey)k.X, Y = (A3DAKey)k.Y, Z = (A3DAKey)k.Z };
-        public static Vec3<    Key> ToKey    (Vec3<A3DAKey> k) =>
-            new Vec3<    Key> { X = (    Key)k.X, Y = (    Key)k.Y, Z = (    Key)k.Z };
-
-        public static explicit operator Key(A3DAKey k)
-        {
-            Key key = default;
-            key.EPTypePost = k.EPTypePost;
-            key.EPTypePre = k.EPTypePre;
-            key.Max = k.MaxFrames;
-            if (k.Length > 1)
-            {
-                key.Type = k.Type;
-                key.Length = (int)k.Length;
-                key.Keys = k.Keys;
-            }
-            else if (k.Length == 1)
-            {
-                key.Type = KeyType.Value;
-                key.Value = k.Keys[0].V;
-            }
-            return key;
-        }
-
-        public static explicit operator A3DAKey(Key k)
-        {
-            A3DAKey key = default;
-            key.EPTypePost = k.EPTypePost;
-            key.EPTypePre = k.EPTypePre;
-            key.MaxFrames = k.Max ?? 0;
-            if (k.Type != null && k.Length > 1)
-            {
-                key.Type = k.Type.Value;
-                key.Length = k.Length;
-                key.Keys = k.Keys;
-                key.FrameDelta = k.Keys[k.Length - 1].F - k.Keys[0].F;
-                key.ValueDelta = k.Keys[k.Length - 1].V - k.Keys[0].V;
-            }
-            else
-            {
-                key.Type = 0;
-                key.Value = 0.0f;
-                if (k.Type.HasValue && k.Value.HasValue)
-                {
-                    key.Type = k.Type.Value;
-                    key.Value = k.Value.Value;
-                }
-            }
-            return key;
-        }
     }
 
     public struct Light
@@ -203,10 +176,10 @@ namespace KKdBaseLib.Auth3D
         public int? Id;
         public string Name;
         public string Type;
-        public Vec4<Key> Ambient;
-        public Vec4<Key> Diffuse;
-        public Vec4<Key> Specular;
-        public Vec4<Key> Incandescence;
+        public Vec4<Key>? Ambient;
+        public Vec4<Key>? Diffuse;
+        public Vec4<Key>? Specular;
+        public Vec4<Key>? Incandescence;
         public ModelTransform Position;
         public ModelTransform SpotDirection;
     }
@@ -216,8 +189,8 @@ namespace KKdBaseLib.Auth3D
         public string Name;
         public string HashName;
         public Key GlowIntensity;
-        public Vec4<Key> BlendColor;
-        public Vec4<Key> Incandescence;
+        public Vec4<Key>? BlendColor;
+        public Vec4<Key>? Incandescence;
     }
 
     public struct MObjectHRC
@@ -275,12 +248,12 @@ namespace KKdBaseLib.Auth3D
         public struct TextureTransform
         {
             public string Name;
-            public Key Rotate;
-            public Key RotateFrame;
-            public Vec2<Key> Offset;
-            public Vec2<Key> Repeat;
-            public Vec2<Key> Coverage;
-            public Vec2<Key> TranslateFrame;
+            public Key? Rotate;
+            public Key? RotateFrame;
+            public Vec2<Key?> Offset;
+            public Vec2<Key?> Repeat;
+            public Vec2<Key?> Coverage;
+            public Vec2<Key?> TranslateFrame;
         }
     }
 
@@ -304,11 +277,11 @@ namespace KKdBaseLib.Auth3D
 
     public struct PostProcess
     {
-        public Key LensFlare;
-        public Key LensGhost;
-        public Key LensShaft;
-        public Vec4<Key> Ambient;
-        public Vec4<Key> Diffuse;
-        public Vec4<Key> Specular;
+        public Key? LensFlare;
+        public Key? LensGhost;
+        public Key? LensShaft;
+        public Vec4<Key>? Ambient;
+        public Vec4<Key>? Diffuse;
+        public Vec4<Key>? Specular;
     }
 }

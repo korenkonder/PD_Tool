@@ -23,7 +23,7 @@ namespace PD_Tool
                     Console.Title = "STR Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".str" || ext == ".bin")
                     {
-                        str.STRReader    (filepath, ext);
+                        str.STRReader    (filepath,  ext);
                         str.MsgPackWriter(filepath, json);
                     }
                     else if (ext == ".json" || ext == ".mp")

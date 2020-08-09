@@ -14,9 +14,7 @@ namespace KKdMainLib
         public FARC(string file, bool isDirectory = false)
         { if (isDirectory) DirectoryPath = file; else FilePath = file; NewFARC(); }
 
-        private void NewFARC() { if (!MSIO.File.Exists("libdeflate.dll"))
-                File.WriteAllBytes("libdeflate.dll", Properties.Resources.libdeflate);
-            Files = KKdList<FARCFile>.New; Signature = Farc.FArC; Format = Format.DT; }
+        private void NewFARC() { Files = KKdList<FARCFile>.New; Signature = Farc.FArC; Format = Format.DT; }
 
         public KKdList<FARCFile> Files = KKdList<FARCFile>.New;
         public Type FARCType;
@@ -26,7 +24,7 @@ namespace KKdMainLib
         public bool HasFiles => Files.IsNull ? false : Files.Count > 0;
         public int CompressionLevel = 12;
 
-        private readonly byte[] key = Text.ToASCII("project_diva.bin");
+        private readonly byte[] key = "project_diva.bin".ToASCII();
 
         private readonly byte[] keyFT = { 0x13, 0x72, 0xD5, 0x7B, 0x6E, 0x9E,
             0x31, 0xEB, 0xA2, 0x39, 0xB8, 0x3C, 0x15, 0x57, 0xC6, 0xBB };

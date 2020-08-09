@@ -4,8 +4,8 @@ namespace KKdBaseLib
     {
         public static KKdDict<TKey, TValue> Null => new KKdDict<TKey, TValue>();
         public static KKdDict<TKey, TValue> New  => new KKdDict<TKey, TValue>() { count = 0, Capacity = 0 };
-        public static KKdDict<TKey, TValue> NewReserve(int Capacity) =>
-            new KKdDict<TKey, TValue>() { count = 0, Capacity = Capacity };
+        public static KKdDict<TKey, TValue> NewReserve(int capacity) =>
+            new KKdDict<TKey, TValue>() { count = 0, Capacity = capacity };
 
         private int count;
         private int index;
@@ -76,8 +76,8 @@ namespace KKdBaseLib
             if (IsNull || ContainsKey(pair.Key)) return;
 
             count++;
-            if (keyArray.Length < count) System.Array.Resize(ref keyArray, count);
-            if (valArray.Length < count) System.Array.Resize(ref valArray, count);
+            if (keyArray.Length < count) System.Array.Resize(ref keyArray, keyArray.Length * 2 + 1);
+            if (valArray.Length < count) System.Array.Resize(ref valArray, valArray.Length * 2 + 1);
             keyArray[count - 1] = pair.Key;
             valArray[count - 1] = pair.Value;
         }
@@ -87,8 +87,8 @@ namespace KKdBaseLib
             if (IsNull || ContainsKey(key)) return;
 
             count++;
-            if (keyArray.Length < count) System.Array.Resize(ref keyArray, count);
-            if (valArray.Length < count) System.Array.Resize(ref valArray, count);
+            if (keyArray.Length < count) System.Array.Resize(ref keyArray, keyArray.Length * 2 + 1);
+            if (valArray.Length < count) System.Array.Resize(ref valArray, valArray.Length * 2 + 1);
             keyArray[count - 1] = key;
             valArray[count - 1] = val;
         }
@@ -101,8 +101,8 @@ namespace KKdBaseLib
             if (index == -1) return false;
 
             if (index + 1 < count)
-            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index);
-              System.Array.Copy(valArray, index + 1, valArray, index, count - index); }
+            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index - 1);
+              System.Array.Copy(valArray, index + 1, valArray, index, count - index - 1); }
             count--;
             return true;
         }
@@ -115,8 +115,8 @@ namespace KKdBaseLib
             if (index == -1) return false;
 
             if (index + 1 < count)
-            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index);
-              System.Array.Copy(valArray, index + 1, valArray, index, count - index); }
+            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index - 1);
+              System.Array.Copy(valArray, index + 1, valArray, index, count - index - 1); }
             count--;
             return true;
         }
@@ -126,8 +126,8 @@ namespace KKdBaseLib
             if (IsNull || index < 0 || index >= count) return;
 
             if (index + 1 < count)
-            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index);
-              System.Array.Copy(valArray, index + 1, valArray, index, count - index); }
+            { System.Array.Copy(keyArray, index + 1, keyArray, index, count - index - 1);
+              System.Array.Copy(valArray, index + 1, valArray, index, count - index - 1); }
             count--;
         }
 
@@ -192,9 +192,9 @@ namespace KKdBaseLib
         {
             if (IsNull) return default;
             for (int i = 0; i < count; i++)
-                     if (keyArray[i] == null && val == null) return keyArray[i];
-                else if (keyArray[i] == null || val == null) continue;
-                else if (keyArray[i].Equals(val)) return keyArray[i];
+                     if (valArray[i] == null && val == null) return keyArray[i];
+                else if (valArray[i] == null || val == null) continue;
+                else if (valArray[i].Equals(val)) return keyArray[i];
             return default;
         }
 

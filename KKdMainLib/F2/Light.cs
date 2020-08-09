@@ -7,7 +7,7 @@ namespace KKdMainLib.F2
     public struct Light : System.IDisposable
     {
         private int i, i0;
-        private Stream _IO;
+        private Stream s;
         private Header header;
 
         public CountPointer<CountPointer<LIT>> LITs;
@@ -15,19 +15,19 @@ namespace KKdMainLib.F2
         public void LITReader(string file)
         {
             LITs = default;
-            _IO = File.OpenReader(file + ".lit", true);
-            header = _IO.ReadHeader();
+            s = File.OpenReader(file + ".lit", true);
+            header = s.ReadHeader();
             if (header.Signature != 0x4354494C || header.InnerSignature != 0x2 ||
                 header.SectionSignature != 0x2) return;
 
-            LITs = _IO.RCPE<CountPointer<LIT>>();
-            if (LITs.C < 1) { _IO.C(); LITs.C = -1; return; }
+            LITs = s.RCPE<CountPointer<LIT>>();
+            if (LITs.C < 1) { s.C(); LITs.C = -1; return; }
 
-            _IO.P = LITs.O;
+            s.P = LITs.O;
             for (i = 0; i < LITs.C; i++)
             {
-                LITs[i] = _IO.RCPX<LIT>();
-                if ((LITs[i].C > 0 || LITs[i].O == 0) && !_IO.IsX) { _IO.C(); LITs.C = -1; return; }
+                LITs[i] = s.RCPX<LIT>();
+                if ((LITs[i].C > 0 || LITs[i].O == 0) && !s.IsX) { s.C(); LITs.C = -1; return; }
                 /*{
                     _IO.Format = Header.Format = Format.X;
                     _IO.Offset = Header.Length;
@@ -39,37 +39,37 @@ namespace KKdMainLib.F2
 
             for (i = 0; i < LITs.C; i++)
             {
-                _IO.P = LITs[i].O;
+                s.P = LITs[i].O;
                 for (i0 = 0; i0 < LITs[i].C; i0++)
                 {
                     ref LIT lit = ref LITs.E[i].E[i0];
-                    lit.Id    = (Id   )_IO.RI32E();
-                    lit.Flags = (Flags)_IO.RI32E();
-                    lit.Type  = (Type )_IO.RI32E();
-                    if (_IO.IsX) { _IO.RI64(); _IO.RI64(); _IO.RI64(); }
-                    lit.Ambient  .X = _IO.RF32E();
-                    lit.Ambient  .Y = _IO.RF32E();
-                    lit.Ambient  .Z = _IO.RF32E();
-                    lit.Ambient  .W = _IO.RF32E();
-                    lit.Diffuse  .X = _IO.RF32E();
-                    lit.Diffuse  .Y = _IO.RF32E();
-                    lit.Diffuse  .Z = _IO.RF32E();
-                    lit.Diffuse  .W = _IO.RF32E();
-                    lit.Specular .X = _IO.RF32E();
-                    lit.Specular .Y = _IO.RF32E();
-                    lit.Specular .Z = _IO.RF32E();
-                    lit.Specular .W = _IO.RF32E();
-                    lit.Position .X = _IO.RF32E();
-                    lit.Position .Y = _IO.RF32E();
-                    lit.Position .Z = _IO.RF32E();
-                    lit.ToneCurve.X = _IO.RF32E();
-                    lit.ToneCurve.Y = _IO.RF32E();
-                    lit.ToneCurve.Z = _IO.RF32E();
-                    if (_IO.IsX) { _IO.RI64(); _IO.RI64(); _IO.RI64();
-                                  _IO.RI64(); _IO.RI64(); _IO.RI32(); }
+                    lit.Id    = (Id   )s.RI32E();
+                    lit.Flags = (Flags)s.RI32E();
+                    lit.Type  = (Type )s.RI32E();
+                    if (s.IsX) { s.RI64(); s.RI64(); s.RI64(); }
+                    lit.Ambient  .X = s.RF32E();
+                    lit.Ambient  .Y = s.RF32E();
+                    lit.Ambient  .Z = s.RF32E();
+                    lit.Ambient  .W = s.RF32E();
+                    lit.Diffuse  .X = s.RF32E();
+                    lit.Diffuse  .Y = s.RF32E();
+                    lit.Diffuse  .Z = s.RF32E();
+                    lit.Diffuse  .W = s.RF32E();
+                    lit.Specular .X = s.RF32E();
+                    lit.Specular .Y = s.RF32E();
+                    lit.Specular .Z = s.RF32E();
+                    lit.Specular .W = s.RF32E();
+                    lit.Position .X = s.RF32E();
+                    lit.Position .Y = s.RF32E();
+                    lit.Position .Z = s.RF32E();
+                    lit.ToneCurve.X = s.RF32E();
+                    lit.ToneCurve.Y = s.RF32E();
+                    lit.ToneCurve.Z = s.RF32E();
+                    if (s.IsX) { s.RI64(); s.RI64(); s.RI64();
+                                 s.RI64(); s.RI64(); s.RI32(); }
                 }
             }
-            _IO.C();
+            s.C();
         }
 
         public void TXTWriter(string file)
@@ -77,13 +77,13 @@ namespace KKdMainLib.F2
             i = 0;
             if (LITs.C < 1) return;
 
-            _IO = File.OpenWriter();
-            _IO.WPSSJIS("Type,AmbientR,AmbientG,AmbientB,DiffuseR,DiffuseG,DiffuseB,SpecularR,SpecularG," +
+            s = File.OpenWriter();
+            s.WPSSJIS("Type,AmbientR,AmbientG,AmbientB,DiffuseR,DiffuseG,DiffuseB,SpecularR,SpecularG," +
                 "SpecularB,SpecularA,PosX,PosY,PosZ,ToneCurveBegin,ToneCurveEnd,ToneCurveBlendRate," +
                 (file.EndsWith("_chara") ? "コメント" : "ID") + "\n");
             for (i0 = 0; i0 < LITs[i].C; i0++)
-                _IO.W(LITs[i][i0] + "," + i + "\n");
-            File.WriteAllBytes(file + "_light.txt", _IO.ToArray(true));
+                s.W(LITs[i][i0] + "," + i + "\n");
+            File.WriteAllBytes(file + "_light.txt", s.ToArray(true));
         }
 
         public struct LIT
@@ -107,7 +107,7 @@ namespace KKdMainLib.F2
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; LITs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; LITs = default; header = default; disposed = true; } }
 
         public enum Id : int
         {

@@ -51,22 +51,22 @@ namespace KKdBaseLib
                 string[] newArgs = new string[args.Length - 1];
                 for (int i = 0; i < args.Length - 1; i++)
                     newArgs[i] = args[i + 1];
-                return dict.ContainsKey(args[0]) ? SW((A3DADict)dict[args[0]], newArgs) : false;
+                return dict.ContainsKey(args[0]) && SW((A3DADict)dict[args[0]], newArgs);
             }
             return dict.ContainsKey(args[0]);
         }
 
         public static bool FV   (this A3DADict dict, ref   bool value, char split, string args) =>
-              dict.FV(out string val, args.Split(split)) ? bool.TryParse(val, out value) : false;
+              dict.FV(out string val, args.Split(split)) && bool.TryParse(val, out value);
 
         public static bool FV   (this A3DADict dict, ref    int value, char split, string args) =>
-              dict.FV(out string val, args.Split(split)) ? int.TryParse(val, out value) : false;
+              dict.FV(out string val, args.Split(split)) && int.TryParse(val, out value);
 
         public static bool FV   (this A3DADict dict, ref  float value, char split, string args) =>
-              dict.FV(out string val, args.Split(split)) ? val.ToF32(out value) : false;
+              dict.FV(out string val, args.Split(split)) && val.ToF32(out value);
 
         public static bool FV   (this A3DADict dict, ref double value, char split, string args) =>
-              dict.FV(out string val, args.Split(split)) ? val.ToF64(out value) : false;
+              dict.FV(out string val, args.Split(split)) && val.ToF64(out value);
 
         public static bool FV   (this A3DADict dict, ref string value, char split, string args)
         { if (dict.FV(out string val  , args.Split(split)))

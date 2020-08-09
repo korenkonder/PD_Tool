@@ -22,5 +22,29 @@ namespace KKdBaseLib
         public long DataOffset; //Used only in-game and points to KFT3 Array
 
         public KFT3[] Keys;
+
+        public A3DAKey(Key k)
+        {
+            Type = 0; Value = MaxFrames = FrameDelta = ValueDelta = 0; EPTypePre = EPTypePost = 0;
+            Unk1C = Unk20 = Unk24 = Unk28 = Unk2C = Unk30 = Unk34 = 0;
+            Length = DataOffset = 0; Keys = null;
+
+            EPTypePost = k.EPTypePost;
+            EPTypePre = k.EPTypePre;
+            MaxFrames = k.Max ?? 0;
+            if (k.Type > KeyType.Value && k.Length > 1)
+            {
+                Type = k.Type;
+                Length = k.Length;
+                Keys = k.Keys;
+                FrameDelta = k.Keys[k.Length - 1].F - k.Keys[0].F;
+                ValueDelta = k.Keys[k.Length - 1].V - k.Keys[0].V;
+            }
+            else
+            {
+                Type = k.Type;
+                Value = k.Type > 0 ? k.Value : 0.0f;
+            }
+        }
     }
 }

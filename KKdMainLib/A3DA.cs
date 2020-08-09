@@ -14,7 +14,7 @@ namespace KKdMainLib
         public Data Data;
         public A3DAHeader Head;
 
-        private Stream _IO;
+        private Stream s;
         private bool a3dc;
         private bool a3dcOpt;
         private int i, i0, i1;
@@ -38,20 +38,20 @@ namespace KKdMainLib
         public A3DA(bool a3dcOpt = true)
         { a3dc = false; i = i0 = i1 = soi = soi0 = soi1 = 0; value = null;
             name = null; nameView = null; so = null; so0 = null; so1 = null;
-            dataArray = null; _IO = null; Head = default; Data = default;
+            dataArray = null; s = null; Head = default; Data = default;
             dict = null; usedValues = null; this.a3dcOpt = a3dcOpt; }
 
         public int A3DAReader(string file)
-        { using (_IO = File.OpenReader(file + ".a3da"))
-              return A3DAReader(ref _IO); }
+        { using (s = File.OpenReader(file + ".a3da"))
+              return A3DAReader(ref s); }
 
         public int A3DAReader(byte[] data)
-        { using (_IO = File.OpenReader(data))
-              return A3DAReader(ref _IO); }
+        { using (s = File.OpenReader(data))
+              return A3DAReader(ref s); }
 
         public byte[] A3DAWriter() => A3DAWriter(false);
 
-        private int A3DAReader(ref Stream _IO)
+        private int A3DAReader(ref Stream s)
         {
             name = "";
             nameView = "";
@@ -61,44 +61,44 @@ namespace KKdMainLib
             Head = new A3DAHeader();
             Header header = new Header();
 
-            Head.Format = _IO.Format = Format.F;
-            header.SectionSignature = _IO.RI32();
+            Head.Format = s.Format = Format.F;
+            header.SectionSignature = s.RU32();
             if (header.SectionSignature == 0x41443341)
-            { header = _IO.ReadHeader(true, true); Head.Format = header.Format; }
+            { header = s.ReadHeader(true, true); Head.Format = header.Format; }
             if (header.SectionSignature != 0x44334123) return 0;
 
-            _IO.O = _IO.P - 4;
-            header.SectionSignature = _IO.RI32();
+            s.O = s.P - 4;
+            header.SectionSignature = s.RU32();
 
             if (header.SectionSignature == 0x5F5F5F41)
             {
-                _IO.P = 0x10;
-                header.Format = _IO.Format = Format.DT;
+                s.P = 0x10;
+                header.Format = s.Format = Format.DT;
             }
             else if (header.SectionSignature == 0x5F5F5F43)
             {
-                _IO.P = 0x10;
-                _IO.RI32();
-                _IO.RI32();
-                Head.HeaderOffset = _IO.RI32E(true);
+                s.P = 0x10;
+                s.RI32();
+                s.RI32();
+                Head.HeaderOffset = s.RI32E(true);
 
-                _IO.P = Head.HeaderOffset;
-                if (_IO.RI32() != 0x50) return 0;
-                Head.StringOffset = _IO.RI32E(true);
-                Head.StringLength = _IO.RI32E(true);
-                Head.Count = _IO.RI32E(true);
-                if (_IO.RI32() != 0x4C42) return 0;
-                Head.BinaryOffset = _IO.RI32E(true);
-                Head.BinaryLength = _IO.RI32E(true);
+                s.P = Head.HeaderOffset;
+                if (s.RI32() != 0x50) return 0;
+                Head.StringOffset = s.RI32E(true);
+                Head.StringLength = s.RI32E(true);
+                Head.Count = s.RI32E(true);
+                if (s.RI32() != 0x4C42) return 0;
+                Head.BinaryOffset = s.RI32E(true);
+                Head.BinaryLength = s.RI32E(true);
 
-                _IO.P = Head.StringOffset;
+                s.P = Head.StringOffset;
             }
             else return 0;
 
             if (header.Format == Format.DT)
-                Head.StringLength = _IO.L - 0x10;
+                Head.StringLength = s.L - 0x10;
 
-            string[] strData = _IO.RS(Head.StringLength).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
+            string[] strData = s.RS(Head.StringLength).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             for (i = 0; i < strData.Length; i++)
                 dict.GD(strData[i]);
             strData = null;
@@ -107,12 +107,12 @@ namespace KKdMainLib
 
             if (header.SectionSignature == 0x5F5F5F43)
             {
-                _IO.P = _IO.O + Head.BinaryOffset;
-                _IO.O = _IO.P;
-                _IO.P = 0;
-                byte[] data = _IO.RBy(Head.BinaryLength);
-                _IO.C();
-                _IO = File.OpenReader(data);
+                s.P = s.O + Head.BinaryOffset;
+                s.O = s.P;
+                s.P = 0;
+                byte[] data = s.RBy(Head.BinaryLength);
+                s.C();
+                s = File.OpenReader(data);
                 A3DCReader();
             }
 
@@ -142,13 +142,13 @@ namespace KKdMainLib
 
                 Data.CameraAuxiliary = new CameraAuxiliary
                 {
-                    AutoExposure = RK(name + "auto_exposure" + d),
-                        Exposure = RK(name +      "exposure" + d),
-                    Gamma        = RK(name + "gamma"         + d),
-                    GammaRate    = RK(name + "gamma_rate"    + d),
-                    Saturate     = RK(name + "saturate"      + d)
+                    AutoExposure = RKN(name + "auto_exposure" + d),
+                        Exposure = RKN(name +      "exposure" + d),
+                    Gamma        = RKN(name + "gamma"         + d),
+                    GammaRate    = RKN(name + "gamma_rate"    + d),
+                    Saturate     = RKN(name + "saturate"      + d),
                 };
-                if (Data.CameraAuxiliary.Value.GammaRate.Type != null)
+                if (Data.CameraAuxiliary.Value.GammaRate.HasValue)
                     if (Head.Format < Format.F || Head.Format == Format.AFT || Head.Format >= Format.FT)
                         Head.Format = Format.F;
             }
@@ -174,9 +174,9 @@ namespace KKdMainLib
                     Ambient   = RRGBAK(name + "Ambient"    + d),
                     Diffuse   = RRGBAK(name + "Diffuse"    + d),
                     Specular  = RRGBAK(name + "Specular"   + d),
-                    LensFlare = RK    (name + "lens_flare" + d),
-                    LensGhost = RK    (name + "lens_ghost" + d),
-                    LensShaft = RK    (name + "lens_shaft" + d),
+                    LensFlare = RKN   (name + "lens_flare" + d),
+                    LensGhost = RKN   (name + "lens_ghost" + d),
+                    LensShaft = RKN   (name + "lens_shaft" + d),
                 };
             }
 
@@ -418,18 +418,12 @@ namespace KKdMainLib
                             nameView = name + "tex_transform" + d + i1 + d;
 
                             dict.FV(out Data.Object[i0].TexTrans[i1].Name, nameView + "name");
-                            Data.Object[i0].TexTrans[i1].Coverage       =
-                                RKUV(nameView + "coverage"      );
-                            Data.Object[i0].TexTrans[i1].Offset         =
-                                RKUV(nameView + "offset"        );
-                            Data.Object[i0].TexTrans[i1].Repeat         =
-                                RKUV(nameView + "repeat"        );
-                            Data.Object[i0].TexTrans[i1].   Rotate      =
-                                RK  (nameView + "rotate"     + d);
-                            Data.Object[i0].TexTrans[i1].   RotateFrame =
-                                RK  (nameView + "rotateFrame"+ d);
-                            Data.Object[i0].TexTrans[i1].TranslateFrame =
-                                RKUV(nameView + "translateFrame");
+                            Data.Object[i0].TexTrans[i1].Coverage       = RKUV(nameView + "coverage"      );
+                            Data.Object[i0].TexTrans[i1].Offset         = RKUV(nameView + "offset"        );
+                            Data.Object[i0].TexTrans[i1].Repeat         = RKUV(nameView + "repeat"        );
+                            Data.Object[i0].TexTrans[i1].   Rotate      = RKN (nameView + "rotate"     + d);
+                            Data.Object[i0].TexTrans[i1].   RotateFrame = RKN (nameView + "rotateFrame"+ d);
+                            Data.Object[i0].TexTrans[i1].TranslateFrame = RKUV(nameView + "translateFrame");
                         }
                     }
 
@@ -495,13 +489,13 @@ namespace KKdMainLib
         private byte[] A3DAWriter(bool a3dc)
         {
             this.a3dc = a3dc;
-            _IO = File.OpenWriter();
+            s = File.OpenWriter();
             DateTime date = DateTime.Now;
             if (a3dc && Data._.CompressF16 != 0)
-                W("", "#-compress_f16");
+                s.W("#-compress_f16\n");
             if (!a3dc)
-                _IO.W("#A3DA__________\n");
-            _IO.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
+                s.W("#A3DA__________\n");
+            s.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
                 System.Globalization.CultureInfo.InvariantCulture) + "\n");
             if (a3dc && Data._.CompressF16 != 0)
                 W("_.compress_f16", (int)Data._.CompressF16);
@@ -530,12 +524,12 @@ namespace KKdMainLib
             {
                 name = "camera_auxiliary" + d;
                 CameraAuxiliary ca = Data.CameraAuxiliary.Value;
-                W(ref ca.AutoExposure, name + "auto_exposure", true);
-                W(ref ca.    Exposure, name +      "exposure", true);
-                W(ref ca.Gamma       , name + "gamma"        , true);
+                W(ref ca.AutoExposure, name + "auto_exposure");
+                W(ref ca.    Exposure, name +      "exposure");
+                W(ref ca.Gamma       , name + "gamma"        );
                 if (Head.Format == Format.F || (Head.Format > Format.AFT && Head.Format < Format.FT))
-                    W(ref ca.GammaRate   , name + "gamma_rate"   , true);
-                W(ref ca.Saturate    , name + "saturate"     , true);
+                    W(ref ca.GammaRate   , name + "gamma_rate"   );
+                W(ref ca.Saturate    , name + "saturate"     );
                 Data.CameraAuxiliary = ca;
             }
 
@@ -629,11 +623,11 @@ namespace KKdMainLib
                     name = "fog" + d + soi0 + d;
                     ref Fog fog = ref Data.Fog[soi0];
 
-                    W(ref fog.Diffuse, name + "Diffuse"      );
-                    W(ref fog.Density, name + "density", true);
-                    W(ref fog.End    , name + "end"    , true);
+                    W(ref fog.Diffuse, name + "Diffuse");
+                    W(ref fog.Density, name + "density");
+                    W(ref fog.End    , name + "end"    );
                     W(name + "id", fog.Id);
-                    W(ref fog.Start  , name + "start"  , true);
+                    W(ref fog.Start  , name + "start"  );
                 }
                 W("fog.length", Data.Fog.Length);
             }
@@ -893,12 +887,12 @@ namespace KKdMainLib
             {
                 PostProcess pp = Data.PostProcess.Value;
                 name = "post_process" + d;
-                W(ref pp.Ambient  , name + "Ambient"         );
-                W(ref pp.Diffuse  , name + "Diffuse"         );
-                W(ref pp.Specular , name + "Specular"        );
-                W(ref pp.LensFlare, name + "lens_flare", true);
-                W(ref pp.LensGhost, name + "lens_ghost", true);
-                W(ref pp.LensShaft, name + "lens_shaft", true);
+                W(ref pp.Ambient  , name + "Ambient"   );
+                W(ref pp.Diffuse  , name + "Diffuse"   );
+                W(ref pp.Specular , name + "Specular"  );
+                W(ref pp.LensFlare, name + "lens_flare");
+                W(ref pp.LensGhost, name + "lens_ghost");
+                W(ref pp.LensShaft, name + "lens_shaft");
                 Data.PostProcess = pp;
             }
 
@@ -910,9 +904,9 @@ namespace KKdMainLib
                 W("point.length", Data.Point.Length);
             }
 
-            _IO.A(0x1, true);
-            byte[] data = _IO.ToArray();
-            _IO.Dispose();
+            s.A(0x1, true);
+            byte[] data = s.ToArray();
+            s.Dispose();
             return data;
         }
 
@@ -928,15 +922,19 @@ namespace KKdMainLib
             return mt;
         }
 
-        private Vec4<Key> RRGBAK(string str) =>
-            new Vec4<Key> { W = RK(str + "a" + d), Z = RK(str + "b" + d),
-                               Y = RK(str + "g" + d), X = RK(str + "r" + d) };
+        private Vec4<Key>? RRGBAK(string str) =>
+            dict.FV(out bool b, str) ? b ?
+            (Vec4<Key>?)new Vec4<Key> { W = RK(str + "a" + d), Z = RK(str + "b" + d),
+                                        Y = RK(str + "g" + d), X = RK(str + "r" + d) }: null : null;
 
         private Vec3<Key> RV3(string str) =>
             new Vec3<Key> { X = RK(str + "x" + d), Y = RK(str + "y" + d), Z = RK(str + "z" + d) };
 
-        private Vec2<Key> RKUV(string str) =>
-            new Vec2<Key> { X = RK(str + "U" + d), Y = RK(str + "V" + d) };
+        private Vec2<Key?> RKUV(string str) =>
+            new Vec2<Key?> { X = RKN(str + "U" + d), Y = RKN(str + "V" + d) };
+
+        private Key? RKN(string str) =>
+            dict.FV(out bool b, str) ? b ? (Key?)RK(str) : null : null;
 
         private Key RK(string str)
         {
@@ -972,18 +970,18 @@ namespace KKdMainLib
                 key.Keys = new KFT3[key.Length];
                      if (key.RawData.KeyType == 0)
                     for (i = 0; i < key.Length; i++)
-                        key.Keys[i] = new KFT3 (VL[i * ds + 0].ToF32());
+                        key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32());
                 else if (key.RawData.KeyType == 1)
                     for (i = 0; i < key.Length; i++)
-                        key.Keys[i] = new KFT3 (VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32());
+                        key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32());
                 else if (key.RawData.KeyType == 2)
                     for (i = 0; i < key.Length; i++)
-                        key.Keys[i] = new KFT3 (VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
-                                                VL[i * ds + 2].ToF32(), VL[i * ds + 2].ToF32());
+                        key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
+                                               VL[i * ds + 2].ToF32());
                 else if (key.RawData.KeyType == 3)
                     for (i = 0; i < key.Length; i++)
-                        key.Keys[i] = new KFT3 (VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
-                                                VL[i * ds + 2].ToF32(), VL[i * ds + 3].ToF32());
+                        key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
+                                               VL[i * ds + 2].ToF32(), VL[i * ds + 3].ToF32());
 
                 key.RawData.ValueList = null;
             }
@@ -1001,11 +999,9 @@ namespace KKdMainLib
                     else if (type == 1) key.Keys[i] = new KFT3
                         (dataArray[0].ToF32(), dataArray[1].ToF32());
                     else if (type == 2) key.Keys[i] = new KFT3
-                        (dataArray[0].ToF32(), dataArray[1].ToF32(),
-                         dataArray[2].ToF32(), dataArray[2].ToF32());
+                        (dataArray[0].ToF32(), dataArray[1].ToF32(), dataArray[2].ToF32());
                     else if (type == 3)  key.Keys[i] = new KFT3
-                        (dataArray[0].ToF32(), dataArray[1].ToF32(),
-                         dataArray[2].ToF32(), dataArray[3].ToF32());
+                        (dataArray[0].ToF32(), dataArray[1].ToF32(), dataArray[2].ToF32(), dataArray[3].ToF32());
                 }
             }
             return key;
@@ -1025,43 +1021,42 @@ namespace KKdMainLib
             }
         }
 
-        private void W(ref Vec4<Key> rgba, string str)
+        private void W(ref Vec4<Key>? rgba, string str)
         {
-            if (rgba.X.Type == null && rgba.Y.Type == null &&
-                rgba.Z.Type == null && rgba.W.Type == null) return;
+            if (!rgba.HasValue) return;
+
             W(str, "true");
-            W(ref rgba.W, str + d + "a" + d);
-            W(ref rgba.Z, str + d + "b" + d);
-            W(ref rgba.Y, str + d + "g" + d);
-            W(ref rgba.X, str + d + "r" + d);
+            Vec4<Key> rgbav = rgba.Value;
+            W(ref rgbav.W, str + d + "a" + d);
+            W(ref rgbav.Z, str + d + "b" + d);
+            W(ref rgbav.Y, str + d + "g" + d);
+            W(ref rgbav.X, str + d + "r" + d);
+            rgba = rgbav;
         }
 
         private void W(ref Vec3<Key> key, string str)
         { W(ref key.X, str + "x" + d); W(ref key.Y, str + "y" + d); W(ref key.Z, str + "z" + d); }
 
-        private void W(ref Vec2<Key> uv, string str)
-        { W(ref uv.X, str + "U", true); W(ref uv.Y, str + "V", true); }
+        private void W(ref Vec2<Key?> uv, string str)
+        { W(ref uv.X, str + "U"); W(ref uv.Y, str + "V"); }
 
-        private void W(ref Key Key, string Temp, bool setBoolean)
-        { if (Key.Type == null) return; if (setBoolean) W(Temp + "", "true"); W(ref Key, Temp + d); }
+        private void W(ref Key? key, string str)
+        { if (!key.HasValue) return; Key k = key.Value; W(str, "true"); W(ref k, str + d); key = k; }
 
         private void W(ref Key key, string str)
         {
-            if (key.Type == null) return;
-
             if (a3dc) { W(str + BO + "", key.BinOffset); return; }
 
             int i = 0;
-            if (key.Keys != null)
-                if (key.Keys.Length == 0)
-                {
-                    W(str + "type", (int)key.Type);
-                    if (key.Type > 0) W(str + "value", key.Value);
-                    return;
-                }
+            if (key.Type < KeyType.Lerp || key.Keys == null || (key.Keys != null && key.Keys.Length == 0))
+            {
+                W(str + "type", (int)key.Type);
+                if (key.Type > 0) W(str + "value", key.Value);
+                return;
+            }
 
-            if ((int)key.EPTypePost > 0) W(str + "ep_type_post", (int)key.EPTypePost);
-            if ((int)key.EPTypePre  > 0) W(str + "ep_type_pre" , (int)key.EPTypePre );
+            if (key.EPTypePost > 0) W(str + "ep_type_post", (int)key.EPTypePost);
+            if (key.EPTypePre  > 0) W(str + "ep_type_pre" , (int)key.EPTypePre );
             if (key.RawData.KeyType == 0 && key.Keys != null)
             {
                 IKF kf;
@@ -1080,6 +1075,7 @@ namespace KKdMainLib
                 }
                 W(str + "key.length", key.Length);
                 if (key.Max != null) W(str + "max", key.Max);
+                W(str + "type", (int)key.Type);
             }
             else if (key.Keys != null)
             {
@@ -1097,25 +1093,23 @@ namespace KKdMainLib
                     else if (kf is KFT3 && keyType < 3) keyType = 3;
                 }
                 key.RawData.ValueListSize = length * keyType + length;
-                _IO.W(str + "raw_data.value_list");
+                s.W(str + "raw_data.value_list");
                      if (keyType == 0) for (i = 0; i < length; i++)
-                        _IO.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
+                        s.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
                 else if (keyType == 1) for (i = 0; i < length; i++)
-                        _IO.W(key.Keys[i].ToT1().ToString(false) + (i + 1 < length ? "," : ""));
+                        s.W(key.Keys[i].ToT1().ToString(false) + (i + 1 < length ? "," : ""));
                 else if (keyType == 2) for (i = 0; i < length; i++)
-                        _IO.W(key.Keys[i].ToT2().ToString(false) + (i + 1 < length ? "," : ""));
+                        s.W(key.Keys[i].ToT2().ToString(false) + (i + 1 < length ? "," : ""));
                 else if (keyType == 3) for (i = 0; i < length; i++)
-                        _IO.W(key.Keys[i]       .ToString(false) + (i + 1 < length ? "," : ""));
-                _IO.P--;
-                _IO.W('\n');
+                        s.W(key.Keys[i]       .ToString(false) + (i + 1 < length ? "," : ""));
+                s.P--;
+                s.W('\n');
                 W(str + "raw_data.value_list_size", key.RawData.ValueListSize);
                 W(str + "raw_data.value_type"     , key.RawData.ValueType    );
                 W(str + "raw_data_key_type"       , key.RawData.  KeyType    );
+                W(str + "type", (int)key.Type);
             }
             W(str + "type", (int)key.Type);
-            if (key.RawData.KeyType == 0 && key.Keys == null && key.Type != null &&
-                key.Type.Value != 0 && key.Value != null && key.Value != 0)
-                W(str + "value", key.Value);
         }
 
         private void W(string Data,   long? val)
@@ -1127,7 +1121,7 @@ namespace KKdMainLib
         private void W(string Data,  float  val) =>
                            W(Data,        val.ToS());
         private void W(string Data, string  val)
-        { if (val != null) _IO.W(Data + "=" + val + "\n"); }
+        { if (val != null) s.W(Data + "=" + val + "\n"); }
 
         private void A3DCReader()
         {
@@ -1263,11 +1257,11 @@ namespace KKdMainLib
             Data._.CompressF16 = Head.Format > Format.AFT && Head.Format < Format.FT ?
                 (Head.Format == Format.MGF ? CompressF16.I16F16F16F16 : CompressF16.I16F16F32F32) : 0;
 
-            _IO = File.OpenWriter();
+            s = File.OpenWriter();
             for (byte i = 0; i < 2; i++)
             {
                 bool ReturnToOffset = i == 1;
-                _IO.P = 0;
+                s.P = 0;
 
                 if (Data.CameraRoot != null)
                     for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
@@ -1447,55 +1441,55 @@ namespace KKdMainLib
                     Data.PostProcess = pp;
                 }
 
-                _IO.A(0x10, true);
+                s.A(0x10, true);
             }
-            byte[] A3DCData = _IO.ToArray(); _IO.Dispose();
+            byte[] A3DCData = s.ToArray(); s.Dispose();
             byte[] A3DAData = A3DAWriter(true);
 
-            _IO = File.OpenWriter();
-            _IO.O = Head.Format > Format.AFT && Head.Format < Format.FT ? 0x40 : 0;
-            _IO.P = 0x40;
+            s = File.OpenWriter();
+            s.O = Head.Format > Format.AFT && Head.Format < Format.FT ? 0x40 : 0;
+            s.P = 0x40;
 
-            Head.StringOffset = _IO.P;
+            Head.StringOffset = s.P;
             Head.StringLength = A3DAData.Length;
-            _IO.W(A3DAData);
-            _IO.A(0x20, true);
+            s.W(A3DAData);
+            s.A(0x20, true);
 
-            Head.BinaryOffset = _IO.P;
+            Head.BinaryOffset = s.P;
             Head.BinaryLength = A3DCData.Length;
-            _IO.W(A3DCData);
-            _IO.A(0x10, true);
+            s.W(A3DCData);
+            s.A(0x10, true);
 
-            int A3DCEnd = _IO.P;
+            uint A3DCEnd = s.PU32;
 
-            _IO.P = 0;
-            _IO.W("#A3DC__________\n");
-            _IO.W(0x2000);
-            _IO.W(0x00);
-            _IO.WE(0x20, true);
-            _IO.W(0x10000200);
-            _IO.W(0x50);
-            _IO.WE(Head.StringOffset, true);
-            _IO.WE(Head.StringLength, true);
-            _IO.WE(0x01, true);
-            _IO.W(0x4C42);
-            _IO.WE(Head.BinaryOffset, true);
-            _IO.WE(Head.BinaryLength, true);
-            _IO.WE(0x20, true);
+            s.P = 0;
+            s.W("#A3DC__________\n");
+            s.W(0x2000);
+            s.W(0x00);
+            s.WE(0x20, true);
+            s.W(0x10000200);
+            s.W(0x50);
+            s.WE(Head.StringOffset, true);
+            s.WE(Head.StringLength, true);
+            s.WE(0x01, true);
+            s.W(0x4C42);
+            s.WE(Head.BinaryOffset, true);
+            s.WE(Head.BinaryLength, true);
+            s.WE(0x20, true);
 
             if (Head.Format > Format.AFT && Head.Format < Format.FT)
             {
-                _IO.P = A3DCEnd;
-                _IO.WEOFC(0);
-                _IO.O = 0;
-                _IO.P = 0;
+                s.PU32 = A3DCEnd;
+                s.WEOFC(0);
+                s.O = 0;
+                s.P = 0;
                 Header header = new Header { Signature = 0x41443341, InnerSignature = 0x01131010,
                     Format = Format.F2, DataSize = A3DCEnd, SectionSize = A3DCEnd, UseSectionSize = true };
-                _IO.W(header, true);
+                s.W(header, true);
             }
 
-            byte[] data = _IO.ToArray();
-            _IO.Dispose();
+            byte[] data = s.ToArray();
+            s.Dispose();
             return data;
         }
 
@@ -1503,12 +1497,12 @@ namespace KKdMainLib
         {
             if (mt.BinOffset == null) return;
 
-            _IO.P = (int)mt.BinOffset;
+            s.P = (int)mt.BinOffset;
 
             ReadOffset(out mt.Scale);
             ReadOffset(out mt.Rot  );
             ReadOffset(out mt.Trans);
-            mt.Visibility = new Key { BinOffset = _IO.RI32() };
+            mt.Visibility = new Key { BinOffset = s.RI32() };
 
             RV3(ref mt.Scale     );
             RV3(ref mt.Rot       , true);
@@ -1516,27 +1510,35 @@ namespace KKdMainLib
             RK (ref mt.Visibility);
         }
 
-        private void RRGBAK(ref Vec4<Key> rgba)
-        { RK(ref rgba.X); RK(ref rgba.Y);
-          RK(ref rgba.Z); RK(ref rgba.W); }
+        private void RRGBAK(ref Vec4<Key>? rgba)
+        {
+            if (!rgba.HasValue) return;
+            Vec4<Key> rgbav = rgba.Value;
+            RK(ref rgbav.X); RK(ref rgbav.Y);
+            RK(ref rgbav.Z); RK(ref rgbav.W);
+            rgba = rgbav;
+        }
 
         private void RV3(ref Vec3<Key> key, bool f16 = false)
         { RK(ref key.X, f16); RK(ref key.Y, f16); RK(ref key.Z, f16); }
 
-        private void RKUV(ref Vec2<Key> uv)
+        private void RKUV(ref Vec2<Key?> uv)
         { RK(ref uv.X); RK(ref uv.Y); }
+
+        private void RK(ref Key? key)
+        { if (!key.HasValue) return; Key k = key.Value; RK(ref k); key = k; }
 
         private void RK(ref Key key, bool f16 = false)
         {
             if (key.BinOffset == null || key.BinOffset < 0) return;
 
-            _IO.P = (int)key.BinOffset;
-            int Type = _IO.RI32();
-            key.Value = _IO.RF32();
+            s.P = (int)key.BinOffset;
+            int Type = s.RI32();
+            key.Value = s.RF32();
             key.Type = (KeyType)(Type & 0xFF);
             if (key.Type < KeyType.Lerp) return;
-            key.Max    = _IO.RF32();
-            key.Length = _IO.RI32 ();
+            key.Max    = s.RF32();
+            key.Length = s.RI32 ();
             if (Type >> 8 != 0)
             {
                 key.EPTypePost = (EPType)((Type >> 12) & 0xF);
@@ -1546,95 +1548,101 @@ namespace KKdMainLib
 
             if (f16 && Data._.CompressF16 == CompressF16.I16F16F16F16)
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = _IO.RU16(); kf.V  = _IO.RF16();
-                                                 kf.T1 = _IO.RF16(); kf.T2 = _IO.RF16(); }
+                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RU16(); kf.V  = s.RF16();
+                                                 kf.T1 = s.RF16(); kf.T2 = s.RF16(); }
             else if (f16 && Data._.CompressF16 > 0)
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = _IO.RU16(); kf.V  = _IO.RF16();
-                                                 kf.T1 = _IO.RF32(); kf.T2 = _IO.RF32(); }
+                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RU16(); kf.V  = s.RF16();
+                                                 kf.T1 = s.RF32(); kf.T2 = s.RF32(); }
             else
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = _IO.RF32(); kf.V  = _IO.RF32();
-                                                 kf.T1 = _IO.RF32(); kf.T2 = _IO.RF32(); }
+                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RF32(); kf.V  = s.RF32();
+                                                 kf.T1 = s.RF32(); kf.T2 = s.RF32(); }
         }
 
         private void ReadOffset(out Vec3<Key> key)
-        { key = new Vec3<Key> { X = new Key { BinOffset = _IO.RI32() },
-                                   Y = new Key { BinOffset = _IO.RI32() },
-                                   Z = new Key { BinOffset = _IO.RI32() }, }; }
+        { key = new Vec3<Key> { X = new Key { BinOffset = s.RI32() },
+                                   Y = new Key { BinOffset = s.RI32() },
+                                   Z = new Key { BinOffset = s.RI32() }, }; }
 
         private void WO(ref ModelTransform mt, bool ReturnToOffset)
         {
             if (ReturnToOffset)
             {
-                _IO.P = (int)mt.BinOffset;
+                s.P = (int)mt.BinOffset;
                 WriteOffset(mt.Scale);
                 WriteOffset(mt.Rot  );
                 WriteOffset(mt.Trans);
-                _IO.W(mt.Visibility.BinOffset);
+                s.W(mt.Visibility.BinOffset);
             }
-            else { mt.BinOffset = _IO.P; _IO.P += 0x30; _IO.L += 0x30; }
+            else { mt.BinOffset = s.P; s.P += 0x30; s.L += 0x30; }
         }
 
         private void WriteOffset(Vec3<Key> key)
-        { _IO.W(key.X.BinOffset); _IO.W(key.Y.BinOffset); _IO.W(key.Z.BinOffset); }
+        { s.W(key.X.BinOffset); s.W(key.Y.BinOffset); s.W(key.Z.BinOffset); }
 
         private void W(ref ModelTransform mt)
         { W(ref mt.Scale); W(ref mt.Rot, true); W(ref mt.Trans); W(ref mt.Visibility); }
 
-        private void W(ref Vec4<Key> rgba)
-        { W(ref rgba.X); W(ref rgba.Y); W(ref rgba.Z); W(ref rgba.W); }
+        private void W(ref Vec4<Key>? rgba)
+        {
+            if (!rgba.HasValue) return;
+
+            Vec4<Key> rgbav = rgba.Value;
+            W(ref rgbav.X); W(ref rgbav.Y);
+            W(ref rgbav.Z); W(ref rgbav.W);
+            rgba = rgbav;
+        }
 
         private void W(ref Vec3<Key> key, bool f16 = false)
         { W(ref key.X, f16); W(ref key.Y, f16); W(ref key.Z, f16); }
 
-        private void W(ref Vec2<Key> uv)
+        private void W(ref Vec2<Key?> uv)
         { W(ref uv.X); W(ref uv.Y); }
+
+        private void W(ref Key? key)
+        { if (!key.HasValue) return; Key k = key.Value; W(ref k); key = k; }
 
         private void W(ref Key key, bool f16 = false)
         {
-            if (key.Type == null) return;
-
             int i = 0;
-            if (key.Keys != null)
+            if (key.Type > KeyType.Value && key.Keys != null)
             {
-                key.BinOffset = _IO.P;
+                key.BinOffset = s.P;
                 int Type = (int)key.Type & 0xFF;
                 Type |= ((int)key.EPTypePost & 0xF) << 12;
                 Type |= ((int)key.EPTypePre  & 0xF) <<  8;
-                _IO.W(Type);
-                _IO.W(0x00);
-                _IO.W((float)key.Max);
-                _IO.W(key.Keys.Length);
+                s.W(Type);
+                s.W(0x00);
+                s.W((float)key.Max);
+                s.W(key.Keys.Length);
 
                 if (f16 && Data._.CompressF16 == CompressF16.I16F16F16F16)
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; _IO.W((ushort)kf.F ); _IO.W((Half)kf.V );
-                                                     _IO.W((  Half)kf.T1); _IO.W((Half)kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W((ushort)kf.F ); s.W((Half)kf.V );
+                                                     s.W((  Half)kf.T1); s.W((Half)kf.T2); }
                 else if (f16 && Data._.CompressF16 > 0)
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; _IO.W((ushort)kf.F ); _IO.W((Half)kf.V );
-                                                     _IO.W(        kf.T1); _IO.W(      kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W((ushort)kf.F ); s.W((Half)kf.V );
+                                                     s.W(        kf.T1); s.W(      kf.T2); }
                 else
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; _IO.W(        kf.F ); _IO.W(      kf.V );
-                                                     _IO.W(        kf.T1); _IO.W(      kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W(        kf.F ); s.W(      kf.V );
+                                                     s.W(        kf.T1); s.W(      kf.T2); }
             }
             else
             {
                 if (!a3dcOpt)
                 {
-                    key.BinOffset = _IO.P;
-                    if (key.Type == KeyType.Null) _IO.W(0x00L);
-                    else { _IO.W((  int)key.Type );
-                           _IO.W((float)key.Value); }
+                    key.BinOffset = s.P;
+                    if (key.Type == 0) s.W(0x00L);
+                    else { s.W((int)key.Type); s.W((float)key.Value); }
                 }
                 else if (!usedValues.ContainsValue(key.Value))
                 {
-                    key.BinOffset = _IO.P;
-                    if (key.Type == KeyType.Null) _IO.W(0x00L);
-                    else { _IO.W((  int)key.Type );
-                           _IO.W((float)key.Value); }
+                    key.BinOffset = s.P;
+                    if (key.Type == 0) s.W(0x00L);
+                    else { s.W((int)key.Type); s.W((float)key.Value); }
                     usedValues.Add(key.BinOffset, key.Value);
                 }
                 else key.BinOffset = usedValues.GK(key.Value);
@@ -1800,15 +1808,25 @@ namespace KKdMainLib
             MK (ref mt.Visibility, ref mMT.Visibility);
         }
 
-        private void MRGBAK(ref Vec4<Key> rgba, ref Vec4<Key> mRGBA)
-        { MK(ref rgba.X, ref mRGBA.X); MK(ref rgba.Y, ref mRGBA.Y);
-          MK(ref rgba.Z, ref mRGBA.Z); MK(ref rgba.W, ref mRGBA.W); }
+        private void MRGBAK(ref Vec4<Key>? rgba, ref Vec4<Key>? mRGBA)
+        {
+            if (!rgba.HasValue) return;
+
+            Vec4<Key> rgbav = rgba.Value;
+            Vec4<Key> mrgbav = mRGBA.Value;
+            MK(ref rgbav.X, ref mrgbav.X); MK(ref rgbav.Y, ref mrgbav.Y);
+            MK(ref rgbav.Z, ref mrgbav.Z); MK(ref rgbav.W, ref mrgbav.W);
+            mRGBA = mrgbav;
+        }
 
         private void MV3(ref Vec3<Key> key, ref Vec3<Key> mKey)
         { MK(ref key.X, ref mKey.X); MK(ref key.Y, ref mKey.Y); MK(ref key.Z, ref mKey.Z); }
 
-        private void MKUV(ref Vec2<Key> uv, ref Vec2<Key> mUV)
+        private void MKUV(ref Vec2<Key?> uv, ref Vec2<Key?> mUV)
         { MK(ref uv.X, ref mUV.X); MK(ref uv.Y, ref mUV.Y); }
+        
+        private void MK(ref Key? key, ref Key? mKey)
+        { if (!key.HasValue || !mKey.HasValue) return; Key k = key.Value; Key mk = mKey.Value; MK(ref k, ref mk); key = k; mKey = mk; }
 
         private void MK(ref Key key, ref Key mKey)
         {
@@ -1894,11 +1912,11 @@ namespace KKdMainLib
             if ((temp = a3d["CameraAuxiliary"]).NotNull)
                 Data.CameraAuxiliary = new CameraAuxiliary
                 {
-                    AutoExposure = temp.RK("AutoExposure"),
-                        Exposure = temp.RK(    "Exposure"),
-                    Gamma        = temp.RK("Gamma"       ),
-                    GammaRate    = temp.RK("GammaRate"   ),
-                    Saturate     = temp.RK("Saturate"    ),
+                    AutoExposure = temp.RKN("AutoExposure"),
+                        Exposure = temp.RKN(    "Exposure"),
+                    Gamma        = temp.RKN("Gamma"       ),
+                    GammaRate    = temp.RKN("GammaRate"   ),
+                    Saturate     = temp.RKN("Saturate"    ),
                 };
 
             if ((temp = a3d["CameraRoot", true]).NotNull)
@@ -2113,8 +2131,8 @@ namespace KKdMainLib
                                 Coverage       = temp1[i1].RKUV("Coverage"      ),
                                 Offset         = temp1[i1].RKUV("Offset"        ),
                                 Repeat         = temp1[i1].RKUV("Repeat"        ),
-                                   Rotate      = temp1[i1].RK  (   "Rotate"     ),
-                                   RotateFrame = temp1[i1].RK  (   "RotateFrame"),
+                                   Rotate      = temp1[i1].RKN (   "Rotate"     ),
+                                   RotateFrame = temp1[i1].RKN (   "RotateFrame"),
                                 TranslateFrame = temp1[i1].RKUV("TranslateFrame"),
                             };
                     }
@@ -2191,9 +2209,9 @@ namespace KKdMainLib
                 {
                     Ambient   = temp.RRGBAK("Ambient"  ),
                     Diffuse   = temp.RRGBAK("Diffuse"  ),
-                    LensFlare = temp.RK    ("LensFlare"),
-                    LensGhost = temp.RK    ("LensGhost"),
-                    LensShaft = temp.RK    ("LensShaft"),
+                    LensFlare = temp.RKN   ("LensFlare"),
+                    LensGhost = temp.RKN   ("LensGhost"),
+                    LensShaft = temp.RKN   ("LensShaft"),
                     Specular  = temp.RRGBAK("Specular" ),
                 };
 
@@ -2508,7 +2526,7 @@ namespace KKdMainLib
             dataArray = null;
             usedValues = null;
             dict = null;
-            _IO = null;
+            s = null;
             Data = default;
             Head = default;
         }
@@ -2536,23 +2554,26 @@ namespace KKdMainLib
         public static Vec3<Key> RV3(this MsgPack msgPack) =>
             new Vec3<Key> { X = msgPack.RK("X"), Y = msgPack.RK("Y"), Z = msgPack.RK("Z") };
 
-        public static Vec2<Key> RKUV(this MsgPack msgPack, string name) =>
+        public static Vec2<Key?> RKUV(this MsgPack msgPack, string name) =>
             msgPack[name].RKUV();
 
-        public static Vec2<Key> RKUV(this MsgPack msgPack) =>
-            new Vec2<Key> { X = msgPack.RK("U"), Y = msgPack.RK("V") };
+        public static Vec2<Key?> RKUV(this MsgPack msgPack) =>
+            new Vec2<Key?> { X = msgPack.RKN("U"), Y = msgPack.RKN("V") };
+
+        public static Key? RKN(this MsgPack msgPack, string name) =>
+            msgPack[name].Object != null ? (Key?)msgPack[name].RK() : default;
 
         public static Key RK(this MsgPack msgPack, string name) =>
-            msgPack[name].ReadKey();
+            msgPack[name].RK();
 
-        public static Key ReadKey(this MsgPack msgPack)
+        public static Key RK(this MsgPack msgPack)
         {
             if (msgPack.Object == null) return default;
 
-            Key key = new Key { Max = msgPack.RnF32("Max"), Value = msgPack.RnF32("Value") };
+            Key key = new Key { Max = msgPack.RnF32("Max"), Value = msgPack.RF32("Value") };
             if (Enum.TryParse(msgPack.RS("EPTypePost"), out EPType EPTypePost)) key.EPTypePost = EPTypePost;
             if (Enum.TryParse(msgPack.RS("EPTypePre" ), out EPType EPTypePre )) key.EPTypePre  = EPTypePre;
-            if (!Enum.TryParse(msgPack.RS("Type"), out KeyType KeyType)) { key.Value = null; return key; }
+            if (!Enum.TryParse(msgPack.RS("Type"), out KeyType KeyType)) { key.Value = 0; return key; }
             key.Type = KeyType;
             if (key.Type == 0) { key.Value = 0; return key; }
             else if (key.Type < KeyType.Lerp) return key;
@@ -2575,12 +2596,10 @@ namespace KKdMainLib
                         (trans[i][0].RF32(), trans[i][1].RF32());
                 else if (trans[i].Array.Length == 3)
                     key.Keys[i] = new KFT3
-                        (trans[i][0].RF32(), trans[i][1].RF32(),
-                         trans[i][2].RF32(), trans[i][2].RF32());
+                        (trans[i][0].RF32(), trans[i][1].RF32(), trans[i][2].RF32());
                 else if (trans[i].Array.Length == 4)
                     key.Keys[i] = new KFT3
-                        (trans[i][0].RF32(), trans[i][1].RF32(),
-                         trans[i][2].RF32(), trans[i][3].RF32());
+                        (trans[i][0].RF32(), trans[i][1].RF32(), trans[i][2].RF32(), trans[i][3].RF32());
             }
             return key;
         }
@@ -2597,23 +2616,41 @@ namespace KKdMainLib
                                          .Add("Trans"     , ref mt.Trans     )
                                          .Add("Visibility", ref mt.Visibility));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec4<Key> rgba) =>
-            (rgba.X.Type == null && rgba.Y.Type == null &&
-             rgba.Z.Type == null && rgba.W.Type == null) ? msgPack :
-           msgPack.Add(new MsgPack(name).Add("R", ref rgba.X).Add("G", ref rgba.Y)
-                                        .Add("B", ref rgba.Z).Add("A", ref rgba.W));
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec4<Key>? rgba)
+        {
+            if (!rgba.HasValue) return msgPack;
+
+            Vec4<Key> rgbav = rgba.Value;
+            msgPack = msgPack.Add(new MsgPack(name).Add("R", ref rgbav.X).Add("G", ref rgbav.Y)
+                                                   .Add("B", ref rgbav.Z).Add("A", ref rgbav.W));
+            rgba = rgbav;
+            return msgPack;
+        }
 
         public static MsgPack Add(this MsgPack msgPack, string name, ref Vec3<Key> key) =>
             msgPack.Add(new MsgPack(name).Add("X", ref key.X).Add("Y", ref key.Y).Add("Z", ref key.Z));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec2<Key> uv) =>
-            (uv.X.Type == null && uv.Y.Type == null) ? msgPack :
-            msgPack.Add(new MsgPack(name).Add("U", ref uv.X).Add("V", ref uv.Y));
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec2<Key?> uv)
+        { 
+            if (!uv.X.HasValue && !uv.Y.HasValue) return msgPack;
+            MsgPack m = new MsgPack(name);
+            if (uv.X.HasValue) m = m.Add("U", ref uv.X);
+            if (uv.Y.HasValue) m = m.Add("V", ref uv.Y);
+            return msgPack.Add(m);
+        }
+
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Key? key)
+        {
+            if (!key.HasValue) return msgPack;
+
+            Key k = key.Value;
+            msgPack = msgPack.Add(name, ref k);
+            key = k;
+            return msgPack;
+        }
 
         public static MsgPack Add(this MsgPack msgPack, string name, ref Key key)
         {
-            if (key.Type == null) return msgPack;
-
             MsgPack keys = new MsgPack(name).Add("Type", key.Type.ToString());
             if (key.Keys != null && key.Type != KeyType.Null)
             {
@@ -2641,7 +2678,8 @@ namespace KKdMainLib
                 keys.Add(Trans);
             }
             else if (key.Value != 0) keys.Add("Value", key.Value);
-            return msgPack.Add(keys);
+            msgPack.Add(keys);
+            return msgPack;
         }
     }
 

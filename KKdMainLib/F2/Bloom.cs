@@ -7,7 +7,7 @@ namespace KKdMainLib.F2
     public struct Bloom : System.IDisposable
     {
         private int i;
-        private Stream _IO;
+        private Stream s;
         private Header header;
 
         public CountPointer<BLT> BLTs;
@@ -15,15 +15,15 @@ namespace KKdMainLib.F2
         public void BLTReader(string file)
         {
             BLTs = default;
-            _IO = File.OpenReader(file + ".blt", true);
-            header = _IO.ReadHeader();
+            s = File.OpenReader(file + ".blt", true);
+            header = s.ReadHeader();
             if (header.Signature != 0x544D4C42 || header.InnerSignature != 0x3) return;
-            _IO.P -= 0x4;
+            s.P -= 0x4;
 
-            BLTs = _IO.RCPE<BLT>();
-            if (BLTs.C < 1) { _IO.C(); BLTs.C = -1; return; }
+            BLTs = s.RCPE<BLT>();
+            if (BLTs.C < 1) { s.C(); BLTs.C = -1; return; }
 
-            if (BLTs.C > 0 && BLTs.O == 0) { _IO.C(); BLTs.C = -1; return; }
+            if (BLTs.C > 0 && BLTs.O == 0) { s.C(); BLTs.C = -1; return; }
             /*{
                 _IO.Format = Header.Format = Format.X;
                 _IO.Offset = Header.Length;
@@ -31,36 +31,36 @@ namespace KKdMainLib.F2
                 BLTs = _IO.ReadCountPointerX<BLT>();
             }*/
 
-            _IO.P = BLTs.O;
+            s.P = BLTs.O;
             for (i = 0; i < BLTs.C; i++)
             {
                 ref BLT blt = ref BLTs.E[i];
-                _IO.RI32E();
-                blt.Color     .X = _IO.RF32E();
-                blt.Color     .Y = _IO.RF32E();
-                blt.Color     .Z = _IO.RF32E();
-                blt.Brightpass.X = _IO.RF32E();
-                blt.Brightpass.Y = _IO.RF32E();
-                blt.Brightpass.Z = _IO.RF32E();
-                blt.Range        = _IO.RF32E();
+                s.RI32E();
+                blt.Color     .X = s.RF32E();
+                blt.Color     .Y = s.RF32E();
+                blt.Color     .Z = s.RF32E();
+                blt.Brightpass.X = s.RF32E();
+                blt.Brightpass.Y = s.RF32E();
+                blt.Brightpass.Z = s.RF32E();
+                blt.Range        = s.RF32E();
             }
-            _IO.C();
+            s.C();
         }
 
         public void TXTWriter(string file)
         {
             if (BLTs.C < 1) return;
 
-            _IO = File.OpenWriter();
-            _IO.WPSSJIS("ID,ColorR,ColorG,ColorB,BrightpassR,BrightpassG,BrightpassB,Range\n");
+            s = File.OpenWriter();
+            s.WPSSJIS("ID,ColorR,ColorG,ColorB,BrightpassR,BrightpassG,BrightpassB,Range\n");
             for (i = 0; i < BLTs.C; i++)
-                _IO.W(i + "," + BLTs[i] + "\n");
-            File.WriteAllBytes(file + "_bloom.txt", _IO.ToArray(true));
+                s.W(i + "," + BLTs[i] + "\n");
+            File.WriteAllBytes(file + "_bloom.txt", s.ToArray(true));
         }
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; BLTs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; BLTs = default; header = default; disposed = true; } }
 
         public struct BLT
         {

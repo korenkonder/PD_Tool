@@ -15,25 +15,24 @@ namespace PD_Tool
             string filepath, ext;
             AddParam adp;
             foreach (string file in fileNames)
-            {
-                adp = new AddParam();
-                ext = Path.GetExtension(file);
-                filepath = file.Replace(ext, "");
-                ext = ext.ToLower();
+                using (adp = new AddParam())
+                {
+                    ext = Path.GetExtension(file);
+                    filepath = file.Replace(ext, "");
+                    ext = ext.ToLower();
 
-                Console.Title = "Add Param Converter: " + Path.GetFileNameWithoutExtension(file);
-                if (ext == ".adp")
-                {
-                    adp.AddParamReader(filepath);
-                    adp. MsgPackWriter(filepath, json);
+                    Console.Title = "Add Param Converter: " + Path.GetFileNameWithoutExtension(file);
+                    if (ext == ".adp")
+                    {
+                        adp.AddParamReader(filepath);
+                        adp. MsgPackWriter(filepath, json);
+                    }
+                    else if (ext == ".mp" || ext == ".json")
+                    {
+                        adp. MsgPackReader(filepath, ext == ".json");
+                        adp.AddParamWriter(filepath);
+                    }
                 }
-                else if (ext == ".mp" || ext == ".json")
-                {
-                    adp. MsgPackReader(filepath, ext == ".json");
-                    adp.AddParamWriter(filepath);
-                }
-                adp.Dispose();
-            }
         }
     }
 }

@@ -15,25 +15,24 @@ namespace PD_Tool
             string filepath, ext;
             MotHead mhd;
             foreach (string file in fileNames)
-            {
-                mhd = new MotHead();
-                ext = Path.GetExtension(file);
-                filepath = file.Replace(ext, "");
-                ext = ext.ToLower();
+                using (mhd = new MotHead())
+                {
+                    ext = Path.GetExtension(file);
+                    filepath = file.Replace(ext, "");
+                    ext = ext.ToLower();
 
-                Console.Title = "MotHead Converter: " + Path.GetFileNameWithoutExtension(file);
-                if (ext == ".bin")
-                {
-                    mhd.MotHeadReader(filepath);
-                    mhd.MsgPackWriter(filepath, json);
+                    Console.Title = "MotHead Converter: " + Path.GetFileNameWithoutExtension(file);
+                    if (ext == ".bin")
+                    {
+                        mhd.MotHeadReader(filepath);
+                        mhd.MsgPackWriter(filepath, json);
+                    }
+                    else if (ext == ".mp" || ext == ".json")
+                    {
+                        mhd.MsgPackReader(filepath, ext == ".json");
+                        mhd.MotHeadWriter(filepath);
+                    }
                 }
-                else if (ext == ".mp" || ext == ".json")
-                {
-                    mhd.MsgPackReader(filepath, ext == ".json");
-                    mhd.MotHeadWriter(filepath);
-                }
-                mhd.Dispose();
-            }
         }
     }
 }

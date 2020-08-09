@@ -7,8 +7,8 @@ namespace KKdMainLib
 {
     public struct DataBank : IDisposable
     {
-        private Stream _IO;
         private int i;
+        private Stream s;
 
         public PvList[] pvList;
         public PsrData[] psrData;
@@ -44,29 +44,41 @@ namespace KKdMainLib
             else if (file.Contains("PvList")) Success = true;
         }
 
-        public void DBWriter(string file, uint num2)
+        public byte[] DBWriter(string file)
         {
-            if (!Success) return;
+            if (!Success) return null;
 
-            _IO = File.OpenWriter();
+            s = File.OpenWriter();
             if (file.Contains("psrData"))
             {
                 if (psrData != null && psrData.Length > 0)
                     for (i = 0; i < psrData.Length; i++)
-                        _IO.W(psrData[i].ToString() + c);
+                        if (psrData[i].PV_ID == 92)
+                            s.W(psrData[i].ToString() + c);
+                        else
+                            s.W(psrData[i].ToString() + c);
             }
             else if (file.Contains("PvList"))
             {
                 if (pvList != null && pvList.Length > 0)
                 {
                     for (i = 0; i < pvList.Length - 1; i++)
-                        _IO.W(UrlEncode(pvList[i].ToString() + c));
-                    _IO.W(UrlEncode(pvList[i].ToString()));
+                        s.W(UrlEncode(pvList[i].ToString() + c));
+                    s.W(UrlEncode(pvList[i].ToString()));
                 }
-                else _IO.W("%2A%2A%2A");
+                else s.W("%2A%2A%2A");
             }
+            
+            return s.ToArray(true);
+        }
 
-            byte[] data = _IO.ToArray(true);
+        public void DBWriter(string file, uint num2)
+        {
+            if (!Success) return;
+
+            byte[] data = DBWriter(file);
+            if (data == null) return;
+
             ushort num = DCC.CalculateChecksum(data);
             File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
         }
@@ -137,11 +149,11 @@ namespace KKdMainLib
         }
 
         public static string UrlEncode(string value) =>
-            WebUtility.UrlEncode(value).Replace("+", "%20");
+            WebUtility.UrlEncode(value).Replace("+", "%20").Replace("!", "%21").Replace("*", "%2A");
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; psrData = null;
+        { if (!disposed) { if (s != null) s.D(); s = null; psrData = null;
                 pvList = null; Success = false; disposed = true; } }
 
         public struct PsrData
@@ -166,9 +178,9 @@ namespace KKdMainLib
                 else { id = msg.RnI32("ID"); if (id != null) PV_ID = (int)id; }
 
                 MsgPack temp;
-                if ((temp = msg["P1", true]).NotNull) p1.SetValue(temp);
-                if ((temp = msg["P2", true]).NotNull) p2.SetValue(temp);
-                if ((temp = msg["P3", true]).NotNull) p3.SetValue(temp);
+                if ((temp = msg["P1"]).NotNull) p1.SetValue(temp);
+                if ((temp = msg["P2"]).NotNull) p2.SetValue(temp);
+                if ((temp = msg["P3"]).NotNull) p3.SetValue(temp);
                 temp.Dispose();
             }
 
@@ -182,30 +194,30 @@ namespace KKdMainLib
 
         public struct Player
         {
-            public int Score0;
-            public int Score1;
-            public string Name0;
-            public string Name1;
+            public string Name;
+            public string NameExtra;
+            public int Score;
+            public int ScoreExtra;
             public Difficulty Diff;
-            public bool Has2P => Name1 != null;
+            public bool HasExtra => NameExtra != null;
 
             public void SetValue(string[] data, int i = 0, int offset = 0)
             {
                 string[] array = data[i * 13 + offset * 4].Split('.');
-                Score0 = int.Parse(array[0]);
-                if (array.Length > 1) Score1 = int.Parse(array[1]);
+                Score = int.Parse(array[0]);
+                if (array.Length > 1) ScoreExtra = int.Parse(array[1]);
                 string text = "";
                 for (int j = 0; j < data[i * 13 + 1 + offset * 4].Length; j++)
                 {
                     text += data[i * 13 + 1 + offset * 4][j].ToString();
                     if (text.EndsWith("xxx"))
                     {
-                        Name0 = text.Remove(text.Length - 3);
+                        Name = text.Remove(text.Length - 3);
                         text = "";
                     }
                 }
-                if (array.Length == 1) Name0 = text;
-                else Name1 = text;
+                if (array.Length == 1) Name = text;
+                else NameExtra = text;
                 if (int.TryParse(data[i * 13 + 2 + offset * 4], out int Diff))
                     this.Diff = (Difficulty)Diff;
                 else
@@ -215,28 +227,29 @@ namespace KKdMainLib
             public void SetValue(MsgPack msg)
             {
                  Diff  = (Difficulty)msg.RI32("Diff");
-                Score0 = msg.RI32 ("Score");
-                 Name0 = msg.RS( "Name");
-                if (Name0 == null)
+                 Name      = msg.RS  ( "Name");
+                 NameExtra = msg.RS  ( "NameExtra");
+                Score      = msg.RI32("Score");
+                ScoreExtra = msg.RI32("ScoreExtra");
+                
+                if (Name == null)
                 {
-                    Score0 = msg.RI32("Score0");
-                    Score1 = msg.RI32("Score1");
-                     Name0 = msg.RS  ( "Name0");
-                     Name1 = msg.RS  ( "Name1");
+                     Name      = msg.RS  ( "Name0");
+                     NameExtra = msg.RS  ( "Name1");
+                    Score      = msg.RI32("Score0");
+                    ScoreExtra = msg.RI32("Score1");
                 }
-                else Name1 = null;
             }
 
             public MsgPack WriteMP(string name) =>
-                Has2P ? new MsgPack(name).Add("Diff", (int)Diff).Add("Score0", Score0)
-                .Add("Score1", Score1).Add("Name0", Name0).Add("Name1", Name1) :
-                        new MsgPack(name).Add("Diff", (int)Diff)
-                .Add("Score" , Score0).Add("Name" , Name0);
+                HasExtra ? new MsgPack(name).Add("Diff", (int)Diff).Add("Name", Name)
+                .Add("NameExtra", NameExtra).Add("Score", Score).Add("ScoreExtra", ScoreExtra) :
+                new MsgPack(name).Add("Diff", (int)Diff).Add("Name" , Name) .Add("Score" , Score);
 
             public override string ToString() =>
-                (Score0 + (Has2P ? (d + Score1) : "") + c + UrlEncode(Name0) +
-                (Has2P ? ("xxx" + UrlEncode(Name1)) : "") + c +
-                Diff + c + (Has2P ? "0.1" : "0")).Replace("*", "%2A");
+                Score + (HasExtra ? (d + ScoreExtra) : "") + c + UrlEncode(Name) +
+                (HasExtra ? ("xxx" + UrlEncode(NameExtra)) : "") + c +
+                (int)Diff + c + (HasExtra ? "0.1" : "0");
         }
 
         public struct PvList
@@ -290,9 +303,9 @@ namespace KKdMainLib
 
             public MsgPack WriteMP()
             {
-                MsgPack msgPack = MsgPack.New.Add("ID"     , PV_ID  )
-                                             .Add("Version", Version)
-                                             .Add("Edition", Edition);
+                MsgPack msgPack = MsgPack.New.Add("ID"     , PV_ID  );
+                if (Version != 1) msgPack.Add("Version", Version);
+                if (Edition != 0) msgPack.Add("Edition", Edition);
                 if (AdvDemoStart.WU) msgPack.Add("AdvDemoStart", AdvDemoStart.Int);
                 if (AdvDemoEnd  .WL) msgPack.Add("AdvDemoEnd"  , AdvDemoEnd  .Int);
                 if (StartShow   .WL) msgPack.Add("StartShow"   , StartShow   .Int);
@@ -375,7 +388,7 @@ namespace KKdMainLib
             }
 
             public override string ToString() =>
-                $"{Year.ToString("d4")}-{Month.ToString("d2")}-{Day.ToString("d2")}";
+                $"{Year:d4}-{Month:d2}-{Day:d2}";
         }
 
         public enum Difficulty

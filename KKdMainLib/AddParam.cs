@@ -6,7 +6,7 @@ namespace KKdMainLib
     public unsafe struct AddParam : System.IDisposable
     {
         private long i;
-        private Stream _IO;
+        private Stream s;
 
         public HeaderData Header;
 
@@ -14,17 +14,17 @@ namespace KKdMainLib
         {
             Header = new HeaderData();
 
-            _IO = File.OpenReader(file + ".adp");
-            Header.Count      = _IO.RI64();
-            Header.DataLength = _IO.RI64();
-            Header.DataOffset = _IO.RI64();
+            s = File.OpenReader(file + ".adp");
+            Header.Count      = s.RI64();
+            Header.DataLength = s.RI64();
+            Header.DataOffset = s.RI64();
 
-            if (Header.Count < 1 || Header.DataOffset > _IO.P || Header.DataLength > _IO.LI64
-                - Header.DataOffset || Header.Count * 0x20 > _IO.LI64 - Header.DataOffset) { _IO.C(); return; }
+            if (Header.Count < 1 || Header.DataOffset > s.P || Header.DataLength > s.LI64
+                - Header.DataOffset || Header.Count * 0x20 > s.LI64 - Header.DataOffset) { s.C(); return; }
 
             Header.Data = new HeaderData.Sub[Header.Count];
-            byte[] data = _IO.RBy(Header.DataLength, Header.DataOffset);
-            _IO.C();
+            byte[] data = s.RBy(Header.DataLength, Header.DataOffset);
+            s.C();
 
             fixed (byte* ptr = data)
             {
@@ -52,12 +52,12 @@ namespace KKdMainLib
                     hPtr[i] = Header.Data[i];
             }
 
-            _IO = File.OpenWriter(file + ".adp", true);
-            _IO.W(Header.Count);
-            _IO.W(Header.DataLength);
-            _IO.W(Header.DataOffset);
-            _IO.W(data);
-            _IO.C();
+            s = File.OpenWriter(file + ".adp", true);
+            s.W(Header.Count);
+            s.W(Header.DataLength);
+            s.W(Header.DataOffset);
+            s.W(data);
+            s.C();
             data = null;
         }
 
@@ -120,7 +120,7 @@ namespace KKdMainLib
         }
 
         public void Dispose()
-        { if (_IO != null) _IO.D(); _IO = null; Header = default; }
+        { if (s != null) s.D(); s = null; Header = default; }
 
         public struct HeaderData
         {

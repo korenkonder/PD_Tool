@@ -7,7 +7,7 @@ namespace KKdMainLib.F2
     public struct ColorCorrection : System.IDisposable
     {
         private int i;
-        private Stream _IO;
+        private Stream s;
         private Header header;
 
         public CountPointer<CCT> CCTs;
@@ -15,15 +15,15 @@ namespace KKdMainLib.F2
         public void CCTReader(string file)
         {
             CCTs = default;
-            _IO = File.OpenReader(file + ".cct", true);
-            header = _IO.ReadHeader();
+            s = File.OpenReader(file + ".cct", true);
+            header = s.ReadHeader();
             if (header.Signature != 0x54524343 || header.InnerSignature != 0x3) return;
-            _IO.P -= 0x4;
+            s.P -= 0x4;
 
-            CCTs = _IO.RCPE<CCT>();
-            if (CCTs.C < 1) { _IO.C(); CCTs.C = -1; return; }
+            CCTs = s.RCPE<CCT>();
+            if (CCTs.C < 1) { s.C(); CCTs.C = -1; return; }
 
-            if (CCTs.C > 0 && CCTs.O == 0) { _IO.C(); CCTs.C = -1; return; }
+            if (CCTs.C > 0 && CCTs.O == 0) { s.C(); CCTs.C = -1; return; }
             /*{
                 _IO.Format = Header.Format = Format.X;
                 _IO.Offset = Header.Length;
@@ -31,38 +31,38 @@ namespace KKdMainLib.F2
                 CCTs = _IO.ReadCountPointerX<CCT>();
             }*/
 
-            _IO.P = CCTs.O;
+            s.P = CCTs.O;
             for (i = 0; i < CCTs.C; i++)
             {
                 ref CCT cct = ref CCTs.E[i];
-                _IO.RI32E();
-                cct.Hue        = _IO.RF32E();
-                cct.Saturation = _IO.RF32E();
-                cct.Lightness  = _IO.RF32E();
-                cct.Exposure   = _IO.RF32E();
-                cct.Gamma.X    = _IO.RF32E();
-                cct.Gamma.Y    = _IO.RF32E();
-                cct.Gamma.Z    = _IO.RF32E();
-                cct.Contrast   = _IO.RF32E();
+                s.RI32E();
+                cct.Hue        = s.RF32E();
+                cct.Saturation = s.RF32E();
+                cct.Lightness  = s.RF32E();
+                cct.Exposure   = s.RF32E();
+                cct.Gamma.X    = s.RF32E();
+                cct.Gamma.Y    = s.RF32E();
+                cct.Gamma.Z    = s.RF32E();
+                cct.Contrast   = s.RF32E();
             }
 
-            _IO.C();
+            s.C();
         }
 
         public void TXTWriter(string file)
         {
             if (CCTs.C < 1) return;
 
-            _IO = File.OpenWriter();
-            _IO.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
+            s = File.OpenWriter();
+            s.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
             for (i = 0; i < CCTs.C; i++)
-                _IO.W(i + "," + CCTs[i] + "\n");
-            File.WriteAllBytes(file + "_cc.txt", _IO.ToArray(true));
+                s.W(i + "," + CCTs[i] + "\n");
+            File.WriteAllBytes(file + "_cc.txt", s.ToArray(true));
         }
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; CCTs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; CCTs = default; header = default; disposed = true; } }
 
         public struct CCT
         {

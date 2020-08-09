@@ -20,36 +20,36 @@ namespace PD_Tool
 
             Format format = Format.NULL;
             string choose = "";
-            if (mp)
-            {
-                Console.Clear();
-                Program.ConsoleDesign(true);
-                Program.ConsoleDesign("          Choose type of format to export:");
-                Program.ConsoleDesign(false);
-                Program.ConsoleDesign("1. A3DA [DT/AC/F]");
-                Program.ConsoleDesign("2. A3DC [DT/AC/F]");
-                Program.ConsoleDesign("3. A3DA [AFT/FT/M39]");
-                Program.ConsoleDesign("4. A3DC [AFT/FT/M39]");
-                Program.ConsoleDesign("5. A3DC [F2]");
-                Program.ConsoleDesign("6. A3DC [MGF]");
-                Program.ConsoleDesign("7. A3DC [X]");
-                Program.ConsoleDesign(false);
-                Program.ConsoleDesign(true);
-                Console.WriteLine();
-                choose = Console.ReadLine().ToUpper();
-                     if (choose == "1") format = Format.DT ;
-                else if (choose == "2") format = Format.F  ;
-                else if (choose == "3") format = Format.AFT;
-                else if (choose == "4") format = Format.AFT;
-                else if (choose == "5") format = Format.F2;
-                else if (choose == "6") format = Format.MGF;
-                else if (choose == "7") format = Format.X  ;
-                else return;
-            }
+            Console.Clear();
+            Program.ConsoleDesign(true);
+            Program.ConsoleDesign("          Choose type of format to export:");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign("1. A3DA [DT/AC/F]");
+            Program.ConsoleDesign("2. A3DC [DT/AC/F]");
+            Program.ConsoleDesign("3. A3DA [AFT/FT/M39]");
+            Program.ConsoleDesign("4. A3DC [AFT/FT/M39]");
+            Program.ConsoleDesign("5. A3DC [F2]");
+            Program.ConsoleDesign("6. A3DC [MGF]");
+            Program.ConsoleDesign("7. A3DC [X]");
+            if (!mp) Program.ConsoleDesign($"8. {(json ? "JSON" : "MsgPack")}");
+            Program.ConsoleDesign(false);
+            Program.ConsoleDesign(true);
+            Console.WriteLine();
+            choose = Console.ReadLine().ToUpper();
+                 if (choose == "1") format = Format.DT ;
+            else if (choose == "2") format = Format.F  ;
+            else if (choose == "3") format = Format.AFT;
+            else if (choose == "4") format = Format.AFT;
+            else if (choose == "5") format = Format.F2;
+            else if (choose == "6") format = Format.MGF;
+            else if (choose == "7") format = Format.X  ;
+            else if (choose == "8") format = Format.NULL;
+            else return;
 
             int state;
             string filepath, ext;
             KKdA3DA a3da;
+            KKdFARC farc;
             foreach (string file in fileNames)
             {
                 ext      = Path.GetExtension(file);
@@ -58,13 +58,21 @@ namespace PD_Tool
 
                 Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".farc")
-                    using (KKdFARC farc = new KKdFARC(file))
+                    using (farc = new KKdFARC(file))
                         FARCProcessor(farc, choose, format);
                 else if (ext == ".a3da")
                     using (a3da = new KKdA3DA(true))
                     {
                         state = a3da.A3DAReader(filepath);
-                        if (state == 1) a3da.MsgPackWriter(filepath, json);
+                        if (state == 1)
+                            if (choose == "8") a3da.MsgPackWriter(filepath, json);
+                            else
+                            {
+                                a3da.Head.Format = format;
+                                
+                                File.WriteAllBytes(filepath + ".a3da", (choose == "1" ||
+                                    choose == "3") ? a3da.A3DAWriter() : a3da.A3DCWriter());
+                            }
                     }
                 else if (ext == ".mp" || ext == ".json")
                     using (a3da = new KKdA3DA(true))
@@ -72,26 +80,21 @@ namespace PD_Tool
                         a3da.MsgPackReader(filepath, ext == ".json");
                         a3da.Head.Format = format;
 
-                        File.WriteAllBytes(filepath + ".a3da", (choose != "1" &&
-                            choose != "3") ? a3da.A3DCWriter() : a3da.A3DAWriter());
+                        File.WriteAllBytes(filepath + ".a3da", (choose == "1" ||
+                            choose == "3") ? a3da.A3DAWriter() : a3da.A3DCWriter());
                     }
             }
         }
 
         private static void FARCProcessor(KKdFARC farc, string choose, Format format)
         {
-            if (!farc.HeaderReader()) return;
-            if (!farc.HasFiles) return;
+            if (!farc.HeaderReader() || !farc.HasFiles) return;
 
             KKdList<string> list = KKdList<string>.New;
             for (int i = 0; i < farc.Files.Count; i++)
             {
                 string file = farc.Files[i].Name.ToLower();
-                bool div = false;
-                for (int i0 = 0; i0 < 159 && !div; i0++)
-                    if (file.Contains("div_" + i0)) div = true;
-
-                if (!div && file.EndsWith(".a3da")) list.Add(file);
+                if (!file.Contains("_div_") && file.EndsWith(".a3da")) list.Add(file);
             }
 
             KKdList<string> A3DAlist = KKdList<string>.New;
@@ -100,7 +103,7 @@ namespace PD_Tool
                     A3DAlist.Add(farc.Files[i].Name);
 
             byte[] data = null;
-            if (list.Count == A3DAlist.Count || (format > Format.AFT && format < Format.FT))
+            if (list.Count == A3DAlist.Count)
             {
                 KKdA3DA a3da;
                 for (int i = 0; i < A3DAlist.Count; i++)
@@ -112,7 +115,7 @@ namespace PD_Tool
                         {
                             KKdFARC.FARCFile file = farc.Files[i];
                             a3da.Head.Format = format;
-                            file.Data = (choose != "1" && choose != "3") ? a3da.A3DCWriter() : a3da.A3DAWriter();
+                            file.Data = (choose == "1"|| choose == "3") ? a3da.A3DAWriter() : a3da.A3DCWriter();
                             farc.Files[i] = file;
                         }
                     }
@@ -121,7 +124,7 @@ namespace PD_Tool
             }
 
             KKdA3DA[] a3daArray;
-            using (KKdList<KKdA3DA> a3daList = KKdList<KKdA3DA>.New)
+            using (KKdList<KKdA3DA> a3daList = KKdList<KKdA3DA>.NewReserve(list.Count))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -139,27 +142,29 @@ namespace PD_Tool
             for (int i = 0; i < list.Count; i++)
             {
                 if (a3daArray[i].Data.PlayControl.Div == null) continue;
-                float Div = a3daArray[i].Data.PlayControl.Div.Value;
+                int div = a3daArray[i].Data.PlayControl.Div.Value;
+                string filename = Path.GetFileNameWithoutExtension(list[i]);
+                string ext = Path.GetExtension(list[i]);
                 KKdA3DA a3da;
-                for (int i1 = 1; i1 < Div; i1++)
+                for (int i1 = 1; i1 < div; i1++)
                     using (a3da = new KKdA3DA(true))
                     {
-                        string file = Path.GetFileNameWithoutExtension(list[i]) +
-                            "_div_" + i1 + Path.GetExtension(list[i]);
+                        string file = filename + "_div_" + i1 + ext;
                         data = farc.FileReader(file);
                         int state = a3da.A3DAReader(data);
                         if (state == 1) a3daArray[i].A3DAMerger(ref a3da.Data);
                     }
                 a3daArray[i].Data.PlayControl.Div = null;
             }
-
+            
+            farc.Files.Capacity = 0;
             farc.Files.Capacity = list.Count;
             for (int i = 0; i < list.Count; i++)
             {
                 KKdFARC.FARCFile file = default;
                 file.Name = list[i];
                 a3daArray[i].Head.Format = format;
-                file.Data = (choose != "1" && choose != "3") ? a3daArray[i].A3DCWriter() : a3daArray[i].A3DAWriter();
+                file.Data = (choose == "1" || choose == "3") ? a3daArray[i].A3DAWriter() : a3daArray[i].A3DCWriter();
                 farc.Files.Add(file);
             }
             farc.Save();

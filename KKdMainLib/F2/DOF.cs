@@ -7,7 +7,7 @@ namespace KKdMainLib.F2
     public struct DOF : System.IDisposable
     {
         private int i;
-        private Stream _IO;
+        private Stream s;
         private Header header;
 
         public CountPointer<DFT> DFTs;
@@ -15,15 +15,15 @@ namespace KKdMainLib.F2
         public void DFTReader(string file)
         {
             DFTs = default;
-            _IO = File.OpenReader(file + ".dft", true);
-            header = _IO.ReadHeader();
+            s = File.OpenReader(file + ".dft", true);
+            header = s.ReadHeader();
             if (header.Signature != 0x54464F44 || header.InnerSignature != 0x3) return;
-            _IO.P -= 0x4;
+            s.P -= 0x4;
 
-            DFTs = _IO.RCPE<DFT>();
-            if (DFTs.C < 1) { _IO.C(); DFTs.C = -1; return; }
+            DFTs = s.RCPE<DFT>();
+            if (DFTs.C < 1) { s.C(); DFTs.C = -1; return; }
 
-            if (DFTs.C > 0 && DFTs.O == 0) { _IO.C(); DFTs.C = -1; return; }
+            if (DFTs.C > 0 && DFTs.O == 0) { s.C(); DFTs.C = -1; return; }
             /*{
                 _IO.Format = Header.Format = Format.X;
                 _IO.Offset = Header.Length;
@@ -31,36 +31,36 @@ namespace KKdMainLib.F2
                 DFTs = _IO.ReadCountPointerX<DFT>();
             }*/
 
-            _IO.P = DFTs.O;
+            s.P = DFTs.O;
             for (i = 0; i < DFTs.C; i++)
             {
                 ref DFT DFT = ref DFTs.E[i];
-                _IO.RI32E();
-                DFT.  Focus      = _IO.RF32E();
-                DFT.  FocusRange = _IO.RF32E();
-                DFT.FuzzingRange = _IO.RF32E();
-                DFT.Ratio        = _IO.RF32E();
-                DFT.Quality      = _IO.RF32E();
-                if (_IO.IsX) _IO.RI32();
+                s.RI32E();
+                DFT.  Focus      = s.RF32E();
+                DFT.  FocusRange = s.RF32E();
+                DFT.FuzzingRange = s.RF32E();
+                DFT.Ratio        = s.RF32E();
+                DFT.Quality      = s.RF32E();
+                if (s.IsX) s.RI32();
             }
 
-            _IO.C();
+            s.C();
         }
 
         public void TXTWriter(string file)
         {
             if (DFTs.C < 1) return;
 
-            _IO = File.OpenWriter();
-            _IO.WPSSJIS("ID,Focus,FocusRange,FuzzingRange,Ratio,Quality\n");
+            s = File.OpenWriter();
+            s.WPSSJIS("ID,Focus,FocusRange,FuzzingRange,Ratio,Quality\n");
             for (i = 0; i < DFTs.C; i++)
-                _IO.W(i + "," + DFTs[i] + "\n");
-            File.WriteAllBytes(file + "_dof.txt", _IO.ToArray(true));
+                s.W(i + "," + DFTs[i] + "\n");
+            File.WriteAllBytes(file + "_dof.txt", s.ToArray(true));
         }
 
         private bool disposed;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; DFTs = default; header = default; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; DFTs = default; header = default; disposed = true; } }
 
         public struct DFT
         {

@@ -159,32 +159,32 @@ namespace KKdBaseLib
         public static   Quat TQ (this byte[] arr, int offset = 0)
         {   Quat val; fixed (byte* ptr = arr) val = *( Quat*)(ptr + offset); return val; }
 
-        public static void GBy(this byte[] arr,  short val)
-        { fixed (byte* ptr = arr) *( short*)ptr = val; }
-        public static void GBy(this byte[] arr, ushort val)
-        { fixed (byte* ptr = arr) *(ushort*)ptr = val; }
-        public static void GBy(this byte[] arr,    int val)
-        { fixed (byte* ptr = arr) *(   int*)ptr = val; }
-        public static void GBy(this byte[] arr,   uint val)
-        { fixed (byte* ptr = arr) *(  uint*)ptr = val; }
-        public static void GBy(this byte[] arr,   long val)
-        { fixed (byte* ptr = arr) *(  long*)ptr = val; }
-        public static void GBy(this byte[] arr,  ulong val)
-        { fixed (byte* ptr = arr) *( ulong*)ptr = val; }
-        public static void GBy(this byte[] arr,   Half val)
-        { fixed (byte* ptr = arr) *(  Half*)ptr = val; }
-        public static void GBy(this byte[] arr,  float val)
-        { fixed (byte* ptr = arr) *( float*)ptr = val; }
-        public static void GBy(this byte[] arr, double val)
-        { fixed (byte* ptr = arr) *(double*)ptr = val; }
-        public static void GBy(this byte[] arr,   Vec2 val)
-        { fixed (byte* ptr = arr) *(  Vec2*)ptr = val; }
-        public static void GBy(this byte[] arr,   Vec3 val)
-        { fixed (byte* ptr = arr) *(  Vec3*)ptr = val; }
-        public static void GBy(this byte[] arr,   Vec4 val)
-        { fixed (byte* ptr = arr) *(  Vec4*)ptr = val; }
-        public static void GBy(this byte[] arr,   Quat val)
-        { fixed (byte* ptr = arr) *(  Quat*)ptr = val; }
+        public static void GBy(this byte[] arr,  short val, int offset = 0)
+        { fixed (byte* ptr = arr) *( short*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr, ushort val, int offset = 0)
+        { fixed (byte* ptr = arr) *(ushort*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,    int val, int offset = 0)
+        { fixed (byte* ptr = arr) *(   int*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   uint val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  uint*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   long val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  long*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,  ulong val, int offset = 0)
+        { fixed (byte* ptr = arr) *( ulong*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   Half val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  Half*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,  float val, int offset = 0)
+        { fixed (byte* ptr = arr) *( float*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr, double val, int offset = 0)
+        { fixed (byte* ptr = arr) *(double*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   Vec2 val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  Vec2*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   Vec3 val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  Vec3*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   Vec4 val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  Vec4*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   Quat val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  Quat*)(ptr + offset) = val; }
 
         public static  sbyte CITSB(this    int c)
         {                return ( sbyte)(c > 0x0000007F ?
@@ -239,7 +239,10 @@ namespace KKdBaseLib
         public static double ToF64(this  long i) => *(double*)&i;
         public static double ToF64(this ulong i) => *(double*)&i;
 
-        public static string ToString(this     int d, bool BE) =>
+        public static string ToS(this  int d, bool BE) =>
+            BitConverter.GetBytes(d.E(BE)).ToASCII();
+
+        public static string ToS(this uint d, bool BE) =>
             BitConverter.GetBytes(d.E(BE)).ToASCII();
 
         public static string ToS(this  object d)

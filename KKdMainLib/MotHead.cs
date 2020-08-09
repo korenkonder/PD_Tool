@@ -6,58 +6,58 @@ namespace KKdMainLib
     public struct MotHead : System.IDisposable
     {
         private int i, i0, i1;
-        private Stream _IO;
+        private Stream s;
 
         public HeaderData Header;
 
         public void MotHeadReader(string file)
         {
-            _IO = File.OpenReader(file + ".bin");
-            _IO.RI32();
+            s = File.OpenReader(file + ".bin");
+            s.RI32();
             Header = new HeaderData();
 
-            int offset = _IO.RI32();
+            int offset = s.RI32();
             if (offset < 0x10) goto RETURN;
-            _IO.O = offset;
-            _IO.P = 0;
+            s.O = offset;
+            s.P = 0;
 
-            Header.  MotionSetID   = _IO.RI32();
-            Header.StartMotionID   = _IO.RI32();
-            Header.  EndMotionID   = _IO.RI32();
-            Header.SubHeaderOffset = _IO.RI32();
+            Header.  MotionSetID   = s.RI32();
+            Header.StartMotionID   = s.RI32();
+            Header.  EndMotionID   = s.RI32();
+            Header.SubHeaderOffset = s.RI32();
 
             if (Header.SubHeaderOffset < 0x10) goto RETURN;
             i0 = Header.EndMotionID - Header.StartMotionID;
             if (i0 < 0) goto RETURN;
 
-            _IO.P = Header.SubHeaderOffset;
+            s.P = Header.SubHeaderOffset;
             Header.Data = new HeaderData.Sub[++i0];
-            for (i = 0; i < Header.Data.Length; i++) Header.Data[i].Offset = _IO.RI32();
+            for (i = 0; i < Header.Data.Length; i++) Header.Data[i].Offset = s.RI32();
             for (i = 0; i < Header.Data.Length; i++)
             {
                 if (Header.Data[i].Offset < 0x10) continue;
 
-                _IO.P = Header.Data[i].Offset;
+                s.P = Header.Data[i].Offset;
 
                 Header.Data[i].MotionID = Header.StartMotionID + i;
-                Header.Data[i].SomeData = _IO.RI32();
-                _IO.RI64();
-                _IO.RI64();
-                Header.Data[i].Offset2 = _IO.RI32();
-                Header.Data[i].DataHeaderOffset = _IO.RI32();
+                Header.Data[i].SomeData = s.RI32();
+                s.RI64();
+                s.RI64();
+                Header.Data[i].Offset2 = s.RI32();
+                Header.Data[i].DataHeaderOffset = s.RI32();
 
                 if (Header.Data[i].DataHeaderOffset < 0x10) goto RETURN;
-                _IO.P = Header.Data[i].DataHeaderOffset;
+                s.P = Header.Data[i].DataHeaderOffset;
                 i0 = 0;
-                while (_IO.RI32() != -1) { _IO.RI32(); _IO.RI32(); i0++; }
-                _IO.P = Header.Data[i].DataHeaderOffset;
+                while (s.RI32() != -1) { s.RI32(); s.RI32(); i0++; }
+                s.P = Header.Data[i].DataHeaderOffset;
 
                 Header.Data[i].Array = new HeaderData.Sub.Data[i0];
                 for (i0 = 0; i0 < Header.Data[i].Array.Length; i0++)
                 {
-                    Header.Data[i].Array[i0].Type   = _IO.RI32();
-                    Header.Data[i].Array[i0].Frame  = _IO.RI32();
-                    Header.Data[i].Array[i0].Offset = _IO.RI32();
+                    Header.Data[i].Array[i0].Type   = s.RI32();
+                    Header.Data[i].Array[i0].Frame  = s.RI32();
+                    Header.Data[i].Array[i0].Offset = s.RI32();
                 }
             }
 
@@ -65,25 +65,25 @@ namespace KKdMainLib
             {
                 if (Header.Data[i].Offset2 > 0x10)
                 {
-                    _IO.P = Header.Data[i].Offset2;
+                    s.P = Header.Data[i].Offset2;
                     i0 = 0;
-                    while (_IO.RI32() != -1) { _IO.RI32(); i0++; }
-                    _IO.P = Header.Data[i].Offset2;
+                    while (s.RI32() != -1) { s.RI32(); i0++; }
+                    s.P = Header.Data[i].Offset2;
 
                     Header.Data[i].Array2 = new HeaderData.Sub.Data2[i0];
                     for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
                     {
-                        Header.Data[i].Array2[i0].Frame  = _IO.RI32();
-                        Header.Data[i].Array2[i0].Offset = _IO.RI32();
+                        Header.Data[i].Array2[i0].Frame  = s.RI32();
+                        Header.Data[i].Array2[i0].Offset = s.RI32();
                     }
 
                     for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
                     {
                         if (Header.Data[i].Array2[i0].Offset < 0x10) goto RETURN;
-                        _IO.P = Header.Data[i].Array2[i0].Offset;
+                        s.P = Header.Data[i].Array2[i0].Offset;
                         Header.Data[i].Array2[i0].Array = new int[7];
                         for (i1 = 0; i1 < Header.Data[i].Array2[i0].Array.Length; i1++)
-                            Header.Data[i].Array2[i0].Array[i1] = _IO.RI32();
+                            Header.Data[i].Array2[i0].Array[i1] = s.RI32();
                     }
                 }
 
@@ -97,20 +97,20 @@ namespace KKdMainLib
 
                     if (Data.Offset > 0)
                     {
-                    _IO.P = Data.Offset;
-                             if (i1 == 0x01) Data.Array = new int[] { _IO.RU8 () };
-                        else if (i1 == 0x02) Data.Array = new int[] { _IO.RU16() };
+                    s.P = Data.Offset;
+                             if (i1 == 0x01) Data.Array = new int[] { s.RU8 () };
+                        else if (i1 == 0x02) Data.Array = new int[] { s.RU16() };
                         else
                         {
                             Data.Array = new int[i1 / 4];
-                            for (i1 = 0; i1 < Data.Array.Length; i1++) Data.Array[i1] = _IO.RI32();
+                            for (i1 = 0; i1 < Data.Array.Length; i1++) Data.Array[i1] = s.RI32();
                         }
                     }
                 }
             }
 
 RETURN:
-            _IO.C();
+            s.C();
         }
 
         public void MotHeadWriter(string file)
@@ -127,28 +127,28 @@ RETURN:
                     Header.  EndMotionID = Header.Data[i].MotionID;
             }
 
-            _IO = File.OpenWriter(file + ".bin", true);
-            _IO.W(0x01);
-            _IO.W(0x20);
-            _IO.A(0x20, true);
-            _IO.O = 0x20;
-            _IO.P = 0;
-            _IO.W(0);
+            s = File.OpenWriter(file + ".bin", true);
+            s.W(0x01);
+            s.W(0x20);
+            s.A(0x20, true);
+            s.O = 0x20;
+            s.P = 0;
+            s.W(0);
             for (int I = Header.EndMotionID - Header.StartMotionID; I > -1; I--)
                 for (i = 0; i < Header.Data.Length; i++)
                     if (Header.StartMotionID + I == Header.Data[i].MotionID)
                     {
-                        _IO.A(0x20, true);
-                        Header.Data[i].Offset = _IO.P;
+                        s.A(0x20, true);
+                        Header.Data[i].Offset = s.P;
                         Header.Data[i].DataHeaderOffset = Header.Data[i].Offset + 0x20;
-                        _IO.W(0L);
-                        _IO.W(0L);
-                        _IO.W(0L);
-                        _IO.W(0L);
+                        s.W(0L);
+                        s.W(0L);
+                        s.W(0L);
+                        s.W(0L);
 
                         for (i0 = 0; i0 < Header.Data[i].Array.Length; i0++)
-                        { _IO.W( 0); _IO.W( 0); _IO.W(0); }
-                          _IO.W(-1); _IO.W(-1); _IO.W(0);
+                        { s.W( 0); s.W( 0); s.W(0); }
+                          s.W(-1); s.W(-1); s.W(0);
 
                         for (i0 = Header.Data[i].Array.Length - 1; i0 > -1; i0--)
                         {
@@ -156,46 +156,46 @@ RETURN:
                             int Size = GetSize(data.Type);
                             if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
 
-                            if (data.Type == 0x3E) _IO.A(0x20, true);
-                            data.Offset = _IO.P;
+                            if (data.Type == 0x3E) s.A(0x20, true);
+                            data.Offset = s.P;
 
-                                 if (Size == 0x01) _IO.W(( byte)data.Array[0]);
-                            else if (Size == 0x02) _IO.W((short)data.Array[0]);
+                                 if (Size == 0x01) s.W(( byte)data.Array[0]);
+                            else if (Size == 0x02) s.W((short)data.Array[0]);
                             else
                             {
-                                if (_IO.P % 0x4 != 0) _IO.A(0x04, true);
+                                if (s.P % 0x4 != 0) s.A(0x04, true);
                                 Size /= 4;
 
-                                data.Offset = _IO.P;
+                                data.Offset = s.P;
                                 for (i1 = 0; i1 < data.Array.Length && i1 < Size; i1++)
-                                    _IO.W(data.Array[i1]);
+                                    s.W(data.Array[i1]);
 
-                                for (; i1 < Size; i1++) _IO.W(0);
+                                for (; i1 < Size; i1++) s.W(0);
                             }
                         }
 
                         if (Header.Data[i].Array2 != null)
                             if (Header.Data[i].Array2.Length > 0)
                             {
-                                Header.Data[i].Offset2 = _IO.P;
+                                Header.Data[i].Offset2 = s.P;
 
                                 for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
-                                { _IO.W( 0); _IO.W(0); }
-                                  _IO.W(-1); _IO.W(0);
+                                { s.W( 0); s.W(0); }
+                                  s.W(-1); s.W(0);
 
                                 for (i0 = Header.Data[i].Array2.Length - 1; i0 > -1; i0--)
                                 {
-                                    Header.Data[i].Array2[i0].Offset = _IO.P;
+                                    Header.Data[i].Array2[i0].Offset = s.P;
                                     for (i1 = 0; i1 < Header.Data[i].Array2[i0].Array.Length && i1 < 7; i1++)
-                                        _IO.W(Header.Data[i].Array2[i0].Array[i1]);
+                                        s.W(Header.Data[i].Array2[i0].Array[i1]);
 
-                                    for (; i1 < 7; i1++) _IO.W(0);
+                                    for (; i1 < 7; i1++) s.W(0);
                                 }
                             }
                         break;
                     }
-            _IO.A(0x20, true);
-            Header.SubHeaderOffset = _IO.P;
+            s.A(0x20, true);
+            Header.SubHeaderOffset = s.P;
             i1 = Header.EndMotionID - Header.StartMotionID;
 
             int offset = 0;
@@ -205,44 +205,44 @@ RETURN:
                 for (i0 = 0; i0 < Header.Data.Length; i0++)
                     if (Header.StartMotionID + i == Header.Data[i0].MotionID)
                     { offset = Header.Data[i0].Offset; break; }
-                _IO.W(offset);
+                s.W(offset);
             }
-            _IO.A(0x20, true);
+            s.A(0x20, true);
 
             for (i = 0; i < Header.Data.Length; i++)
             {
-                _IO.P = Header.Data[i].Offset;
-                _IO.W(Header.Data[i].SomeData);
-                _IO.W(0);
-                _IO.W(0L);
-                _IO.W(0x040004);
-                _IO.W(Header.Data[i].Offset2);
-                _IO.W(Header.Data[i].DataHeaderOffset);
-                _IO.W(0);
+                s.P = Header.Data[i].Offset;
+                s.W(Header.Data[i].SomeData);
+                s.W(0);
+                s.W(0L);
+                s.W(0x040004);
+                s.W(Header.Data[i].Offset2);
+                s.W(Header.Data[i].DataHeaderOffset);
+                s.W(0);
 
-                _IO.P = Header.Data[i].DataHeaderOffset;
+                s.P = Header.Data[i].DataHeaderOffset;
                 for (i0 = 0; i0 < Header.Data[i].Array.Length; i0++)
                 {
-                    _IO.W(Header.Data[i].Array[i0].Type  );
-                    _IO.W(Header.Data[i].Array[i0].Frame );
-                    _IO.W(Header.Data[i].Array[i0].Offset);
+                    s.W(Header.Data[i].Array[i0].Type  );
+                    s.W(Header.Data[i].Array[i0].Frame );
+                    s.W(Header.Data[i].Array[i0].Offset);
                 }
 
-                _IO.P = Header.Data[i].Offset2;
+                s.P = Header.Data[i].Offset2;
                 if (Header.Data[i].Array2 != null)
                     for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
                     {
-                        _IO.W(Header.Data[i].Array2[i0].Frame );
-                        _IO.W(Header.Data[i].Array2[i0].Offset);
+                        s.W(Header.Data[i].Array2[i0].Frame );
+                        s.W(Header.Data[i].Array2[i0].Offset);
                     }
             }
 
-            _IO.P = 0;
-            _IO.W(Header.MotionSetID    );
-            _IO.W(Header.StartMotionID  );
-            _IO.W(Header.  EndMotionID  );
-            _IO.W(Header.SubHeaderOffset);
-            _IO.C();
+            s.P = 0;
+            s.W(Header.MotionSetID    );
+            s.W(Header.StartMotionID  );
+            s.W(Header.  EndMotionID  );
+            s.W(Header.SubHeaderOffset);
+            s.C();
         }
 
         public void MsgPackReader(string file, bool json)
@@ -721,7 +721,7 @@ RETURN:
             };
 
         public void Dispose()
-        { if (_IO != null) _IO.D(); _IO = null; Header = default; }
+        { if (s != null) s.D(); s = null; Header = default; }
 
         public struct HeaderData
         {

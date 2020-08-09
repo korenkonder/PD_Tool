@@ -1,7 +1,7 @@
 using System;
 using KKdBaseLib;
 using MSIO = System.IO;
-using ENRSDict = System.Collections.Generic.Dictionary<long, int>;
+using ENRSDict = System.Collections.Generic.Dictionary<long, byte>;
 
 namespace KKdMainLib.IO
 {
@@ -95,12 +95,12 @@ namespace KKdMainLib.IO
             if (P % align != 0) s.Seek(P + O + Al, 0);
         }
 
-        public void A(long align, bool SetLength)
+        public void A(long align, bool setLength)
         {
-            if (SetLength) s.SetLength(P + O);
+            if (setLength) s.SetLength(P + O);
             long Al = align - P % align;
             if (P % align != 0) s.Seek(P + O + Al, 0);
-            if (SetLength) s.SetLength(P + O);
+            if (setLength) s.SetLength(P + O);
         }
 
         public void A(long align, bool setLength0, bool setLength1)
@@ -199,65 +199,65 @@ namespace KKdMainLib.IO
         public void WE( float val, bool isBE) { cW(); b.GBy(val); b.E(4, isBE); s.Write(b, 0, 4); }
         public void WE(double val, bool isBE) { cW(); b.GBy(val); b.E(8, isBE); s.Write(b, 0, 8); }
 
-        private void RENRS(byte[] b, int c)
+        private void RENRS(byte c)
         { cR(); if (getENRS) ENRSDict.Add(P, c); s.Read(b, 0, c); }
 
-        public  short RI16ENRS() { RENRS(b, 2); return b.TI16(); }
-        public ushort RU16ENRS() { RENRS(b, 2); return b.TU16(); }
-        public    int RI32ENRS() { RENRS(b, 4); return b.TI32(); }
-        public   uint RU32ENRS() { RENRS(b, 4); return b.TU32(); }
-        public   long RI64ENRS() { RENRS(b, 8); return b.TI64(); }
-        public  ulong RU64ENRS() { RENRS(b, 8); return b.TU64(); }
-        public  float RF32ENRS() { RENRS(b, 4); return b.TF32(); }
-        public double RF64ENRS() { RENRS(b, 8); return b.TF64(); }
+        public  short RI16ENRS() { RENRS((byte)2); return b.TI16(); }
+        public ushort RU16ENRS() { RENRS((byte)2); return b.TU16(); }
+        public    int RI32ENRS() { RENRS((byte)4); return b.TI32(); }
+        public   uint RU32ENRS() { RENRS((byte)4); return b.TU32(); }
+        public   long RI64ENRS() { RENRS((byte)8); return b.TI64(); }
+        public  ulong RU64ENRS() { RENRS((byte)8); return b.TU64(); }
+        public  float RF32ENRS() { RENRS((byte)4); return b.TF32(); }
+        public double RF64ENRS() { RENRS((byte)8); return b.TF64(); }
 
-        public  short RI16ENRSE() { RENRS(b, 2); b.E(2, IsBE); return b.TI16(); }
-        public ushort RU16ENRSE() { RENRS(b, 2); b.E(2, IsBE); return b.TU16(); }
-        public    int RI32ENRSE() { RENRS(b, 4); b.E(4, IsBE); return b.TI32(); }
-        public   uint RU32ENRSE() { RENRS(b, 4); b.E(4, IsBE); return b.TU32(); }
-        public   long RI64ENRSE() { RENRS(b, 8); b.E(8, IsBE); return b.TI64(); }
-        public  ulong RU64ENRSE() { RENRS(b, 8); b.E(8, IsBE); return b.TU64(); }
-        public  float RF32ENRSE() { RENRS(b, 4); b.E(4, IsBE); return b.TF32(); }
-        public double RF64ENRSE() { RENRS(b, 8); b.E(8, IsBE); return b.TF64(); }
+        public  short RI16ENRSE() { RENRS((byte)2); b.E(2, IsBE); return b.TI16(); }
+        public ushort RU16ENRSE() { RENRS((byte)2); b.E(2, IsBE); return b.TU16(); }
+        public    int RI32ENRSE() { RENRS((byte)4); b.E(4, IsBE); return b.TI32(); }
+        public   uint RU32ENRSE() { RENRS((byte)4); b.E(4, IsBE); return b.TU32(); }
+        public   long RI64ENRSE() { RENRS((byte)8); b.E(8, IsBE); return b.TI64(); }
+        public  ulong RU64ENRSE() { RENRS((byte)8); b.E(8, IsBE); return b.TU64(); }
+        public  float RF32ENRSE() { RENRS((byte)4); b.E(4, IsBE); return b.TF32(); }
+        public double RF64ENRSE() { RENRS((byte)8); b.E(8, IsBE); return b.TF64(); }
 
-        public  short RI16ENRSE(bool isBE) { RENRS(b, 2); b.E(2, isBE); return b.TI16(); }
-        public ushort RU16ENRSE(bool isBE) { RENRS(b, 2); b.E(2, isBE); return b.TU16(); }
-        public    int RI32ENRSE(bool isBE) { RENRS(b, 4); b.E(4, isBE); return b.TI32(); }
-        public   uint RU32ENRSE(bool isBE) { RENRS(b, 4); b.E(4, isBE); return b.TU32(); }
-        public   long RI64ENRSE(bool isBE) { RENRS(b, 8); b.E(8, isBE); return b.TI64(); }
-        public  ulong RU64ENRSE(bool isBE) { RENRS(b, 8); b.E(8, isBE); return b.TU64(); }
-        public  float RF32ENRSE(bool isBE) { RENRS(b, 4); b.E(4, isBE); return b.TF32(); }
-        public double RF64ENRSE(bool isBE) { RENRS(b, 8); b.E(8, isBE); return b.TF64(); }
+        public  short RI16ENRSE(bool isBE) { RENRS((byte)2); b.E(2, isBE); return b.TI16(); }
+        public ushort RU16ENRSE(bool isBE) { RENRS((byte)2); b.E(2, isBE); return b.TU16(); }
+        public    int RI32ENRSE(bool isBE) { RENRS((byte)4); b.E(4, isBE); return b.TI32(); }
+        public   uint RU32ENRSE(bool isBE) { RENRS((byte)4); b.E(4, isBE); return b.TU32(); }
+        public   long RI64ENRSE(bool isBE) { RENRS((byte)8); b.E(8, isBE); return b.TI64(); }
+        public  ulong RU64ENRSE(bool isBE) { RENRS((byte)8); b.E(8, isBE); return b.TU64(); }
+        public  float RF32ENRSE(bool isBE) { RENRS((byte)4); b.E(4, isBE); return b.TF32(); }
+        public double RF64ENRSE(bool isBE) { RENRS((byte)8); b.E(8, isBE); return b.TF64(); }
 
-        private void WENRS(byte[] b, int c)
-        { if (getENRS) ENRSDict.Add(P, c); cR(); s.Write(b, 0, c); }
+        private void WENRS(byte c)
+        { if (getENRS) ENRSDict.Add(P, c); cW(); s.Write(b, 0, c); }
 
-        public void WENRS( short val) { b.GBy(val); WENRS(b, 2); }
-        public void WENRS(ushort val) { b.GBy(val); WENRS(b, 2); }
-        public void WENRS(   int val) { b.GBy(val); WENRS(b, 4); }
-        public void WENRS(  uint val) { b.GBy(val); WENRS(b, 4); }
-        public void WENRS(  long val) { b.GBy(val); WENRS(b, 8); }
-        public void WENRS( ulong val) { b.GBy(val); WENRS(b, 8); }
-        public void WENRS( float val) { b.GBy(val); WENRS(b, 4); }
-        public void WENRS(double val) { b.GBy(val); WENRS(b, 8); }
+        public void WENRS( short val) { b.GBy(val); WENRS((byte)2); }
+        public void WENRS(ushort val) { b.GBy(val); WENRS((byte)2); }
+        public void WENRS(   int val) { b.GBy(val); WENRS((byte)4); }
+        public void WENRS(  uint val) { b.GBy(val); WENRS((byte)4); }
+        public void WENRS(  long val) { b.GBy(val); WENRS((byte)8); }
+        public void WENRS( ulong val) { b.GBy(val); WENRS((byte)8); }
+        public void WENRS( float val) { b.GBy(val); WENRS((byte)4); }
+        public void WENRS(double val) { b.GBy(val); WENRS((byte)8); }
 
-        public void WENRSE( short val) { b.GBy(val); b.E(2, IsBE); WENRS(b, 2); }
-        public void WENRSE(ushort val) { b.GBy(val); b.E(2, IsBE); WENRS(b, 2); }
-        public void WENRSE(   int val) { b.GBy(val); b.E(4, IsBE); WENRS(b, 4); }
-        public void WENRSE(  uint val) { b.GBy(val); b.E(4, IsBE); WENRS(b, 4); }
-        public void WENRSE(  long val) { b.GBy(val); b.E(8, IsBE); WENRS(b, 8); }
-        public void WENRSE( ulong val) { b.GBy(val); b.E(8, IsBE); WENRS(b, 8); }
-        public void WENRSE( float val) { b.GBy(val); b.E(4, IsBE); WENRS(b, 4); }
-        public void WENRSE(double val) { b.GBy(val); b.E(8, IsBE); WENRS(b, 8); }
+        public void WENRSE( short val) { b.GBy(val); b.E(2, IsBE); WENRS((byte)2); }
+        public void WENRSE(ushort val) { b.GBy(val); b.E(2, IsBE); WENRS((byte)2); }
+        public void WENRSE(   int val) { b.GBy(val); b.E(4, IsBE); WENRS((byte)4); }
+        public void WENRSE(  uint val) { b.GBy(val); b.E(4, IsBE); WENRS((byte)4); }
+        public void WENRSE(  long val) { b.GBy(val); b.E(8, IsBE); WENRS((byte)8); }
+        public void WENRSE( ulong val) { b.GBy(val); b.E(8, IsBE); WENRS((byte)8); }
+        public void WENRSE( float val) { b.GBy(val); b.E(4, IsBE); WENRS((byte)4); }
+        public void WENRSE(double val) { b.GBy(val); b.E(8, IsBE); WENRS((byte)8); }
 
-        public void WENRSE( short val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS(b, 2); }
-        public void WENRSE(ushort val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS(b, 2); }
-        public void WENRSE(   int val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS(b, 4); }
-        public void WENRSE(  uint val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS(b, 4); }
-        public void WENRSE(  long val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS(b, 8); }
-        public void WENRSE( ulong val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS(b, 8); }
-        public void WENRSE( float val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS(b, 4); }
-        public void WENRSE(double val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS(b, 8); }
+        public void WENRSE( short val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS((byte)2); }
+        public void WENRSE(ushort val, bool isBE) { b.GBy(val); b.E(2, isBE); WENRS((byte)2); }
+        public void WENRSE(   int val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS((byte)4); }
+        public void WENRSE(  uint val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS((byte)4); }
+        public void WENRSE(  long val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS((byte)8); }
+        public void WENRSE( ulong val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS((byte)8); }
+        public void WENRSE( float val, bool isBE) { b.GBy(val); b.E(4, isBE); WENRS((byte)4); }
+        public void WENRSE(double val, bool isBE) { b.GBy(val); b.E(8, isBE); WENRS((byte)8); }
 
         public  int RI24 (         ) { cR(); s.Read(b, 0, 3);               return b.TI24(); }
         public uint RU24 (         ) { cR(); s.Read(b, 0, 3);               return b.TU24(); }
@@ -300,32 +300,6 @@ namespace KKdMainLib.IO
         public void W (Quat val           ) { cW(); b.GBy(val);                s.Write(b, 0, 16); }
         public void WE(Quat val           ) { cW(); b.GBy(val); b.E(16, IsBE); s.Write(b, 0, 16); }
         public void WE(Quat val, bool isBE) { cW(); b.GBy(val); b.E(16, isBE); s.Write(b, 0, 16); }
-
-        public T RT<T>(long offset = -1) where T : unmanaged
-        {
-            cR();
-            int sizeOfT = sizeof(T);
-            if (offset > -1) s.Position = offset;
-            byte[] buf = new byte[sizeOfT];
-            fixed (byte* ptr = buf)
-            {
-                cR(); s.Read(buf, 0, sizeOfT);
-                return *(T*)ptr;
-            }
-        }
-
-        public void WT<T>(T val, long offset = -1) where T : unmanaged
-        {
-            cR();
-            int sizeOfT = sizeof(T);
-            if (offset > -1) s.Position = offset;
-            byte[] buf = new byte[sizeOfT];
-            fixed (byte* ptr = buf)
-            {
-                *(T*)ptr = val;
-                s.Write(buf, 0, sizeOfT);
-            }
-        }
 
         public T[] RA<T>(long length, long offset = -1) where T : unmanaged
         {

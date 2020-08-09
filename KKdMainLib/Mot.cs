@@ -9,28 +9,28 @@ namespace KKdMainLib
     {
         private int i, i0, i1;
         public MotHeader[] MOT;
-        private Stream _IO;
+        private Stream s;
 
         public void MOTReader(string file)
         {
-            _IO = File.OpenReader(file + ".bin");
+            s = File.OpenReader(file + ".bin");
 
             i = 0;
             while (true)
-                if    (_IO.RI64() == 0) break;
-                else { _IO.RI64(); i++; }
+                if    (s.RI64() == 0) break;
+                else { s.RI64(); i++; }
             if (i == 0) return;
 
-            _IO.P = 0;
+            s.P = 0;
             int motCount = i;
             MOT = new MotHeader[motCount];
             for (i = 0; i < motCount; i++)
             {
                 ref MotHeader mot = ref MOT[i];
-                mot.KeySet    .O      = _IO.RI32();
-                mot.KeySetTypesOffset = _IO.RI32();
-                mot.     KeySetOffset = _IO.RI32();
-                mot.BoneInfo  .O      = _IO.RI32();
+                mot.KeySet    .O      = s.RI32();
+                mot.KeySetTypesOffset = s.RI32();
+                mot.     KeySetOffset = s.RI32();
+                mot.BoneInfo  .O      = s.RI32();
             }
 
             for (i = 0; i < motCount; i++)
@@ -38,128 +38,128 @@ namespace KKdMainLib
                 ref MotHeader mot = ref MOT[i];
 
                 i0 = 1;
-                _IO.P = mot.BoneInfo.O;
-                _IO.RU16();
-                while (_IO.RU16() != 0) i0++;
+                s.P = mot.BoneInfo.O;
+                s.RU16();
+                while (s.RU16() != 0) i0++;
 
                 mot.BoneInfo.V = new BoneInfo[i0];
-                _IO.P = mot.BoneInfo.O;
+                s.P = mot.BoneInfo.O;
                 for (i0 = 0; i0 < mot.BoneInfo.V.Length; i0++)
-                    mot.BoneInfo.V[i0].Id = _IO.RU16();
+                    mot.BoneInfo.V[i0].Id = s.RU16();
 
-                _IO.P = mot.KeySet.O;
-                int info = _IO.RU16();
+                s.P = mot.KeySet.O;
+                int info = s.RU16();
                 mot.HighBits = info >> 14;
-                mot.FrameCount = _IO.RU16();
+                mot.FrameCount = s.RU16();
 
                 mot.KeySet.V = new KeySet[info & 0x3FFF];
-                _IO.P = mot.KeySetTypesOffset;
+                s.P = mot.KeySetTypesOffset;
                 for (i0 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
-                    if (i0 % 8 == 0) i1 = _IO.RU16();
+                    if (i0 % 8 == 0) i1 = s.RU16();
                     mot.KeySet.V[i0] = new KeySet { Type = (KeySetType)((i1 >> (i0 % 8 * 2)) & 0b11) };
                 }
 
-                _IO.P = mot.KeySetOffset;
+                s.P = mot.KeySetOffset;
                 for (i0 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
                     ref KeySet key = ref mot.KeySet.V[i0];
                     if (key.Type == KeySetType.Static)
                     {   key.Keys = new KFT2[1];
-                        key.Keys[0].V = _IO.RF32(); }
+                        key.Keys[0].V = s.RF32(); }
                     else if (key.Type == KeySetType.Linear)
                     {
-                        key.Keys = new KFT2[_IO.RU16()];
+                        key.Keys = new KFT2[s.RU16()];
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                            key.Keys[i1].F = _IO.RU16();
-                        _IO.A(0x4);
+                            key.Keys[i1].F = s.RU16();
+                        s.A(0x4);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                            key.Keys[i1].V = _IO.RF32();
+                            key.Keys[i1].V = s.RF32();
                     }
                     else if (key.Type == KeySetType.Interpolated)
                     {
-                        key.Keys = new KFT2[_IO.RU16()];
+                        key.Keys = new KFT2[s.RU16()];
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                          key.Keys[i1].F = _IO.RU16();
-                        _IO.A(0x4);
+                          key.Keys[i1].F = s.RU16();
+                        s.A(0x4);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                        { key.Keys[i1].V = _IO.RF32(); key.Keys[i1].T = _IO.RF32(); }
+                        { key.Keys[i1].V = s.RF32(); key.Keys[i1].T = s.RF32(); }
                     }
                 }
             }
-            _IO.C();
+            s.C();
         }
 
         public void MOTWriter(string file)
         {
             if (MOT == null) return;
-            _IO = File.OpenWriter(file + ".bin", true);
+            s = File.OpenWriter(file + ".bin", true);
 
             int MOTCount = MOT.Length;
-            _IO.P = (MOTCount + 1) << 4;
+            s.P = (MOTCount + 1) << 4;
             for (i = 0; i < MOTCount; i++)
             {
                 ref MotHeader mot = ref MOT[i];
-                mot.KeySet.O = _IO.P;
-                _IO.W((ushort)((mot.HighBits << 14) | (mot.KeySet.V.Length & 0x3FFF)));
-                _IO.W((ushort)mot.FrameCount);
+                mot.KeySet.O = s.P;
+                s.W((ushort)((mot.HighBits << 14) | (mot.KeySet.V.Length & 0x3FFF)));
+                s.W((ushort)mot.FrameCount);
 
-                mot.KeySetTypesOffset = _IO.P;
+                mot.KeySetTypesOffset = s.P;
                 for (i0 = 0, i1 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
                     i1 |= ((byte)mot.KeySet.V[i0].Type << (i0 % 8 * 2)) & (0b11 << (i0 % 8 * 2));
 
-                    if (i0 % 8 == 7) { _IO.W((ushort)i1); i1 = 0; }
+                    if (i0 % 8 == 7) { s.W((ushort)i1); i1 = 0; }
                 }
-                _IO.W((ushort)i1);
-                if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
+                s.W((ushort)i1);
+                if (s.P % 4 != 0) s.W((ushort)0x00);
 
-                mot.KeySetOffset = _IO.P;
+                mot.KeySetOffset = s.P;
                 for (i0 = 0; i0 < mot.KeySet.V.Length; i0++)
                 {
                     ref KeySet key = ref mot.KeySet.V[i0];
                     if (key.Type == KeySetType.Static)
-                        _IO.W(key.Keys[0].V);
+                        s.W(key.Keys[0].V);
                     else if (key.Type == KeySetType.Linear)
                     {
-                        _IO.W((ushort)key.Keys.Length);
+                        s.W((ushort)key.Keys.Length);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                            _IO.W((ushort)key.Keys[i1].F);
-                        if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
+                            s.W((ushort)key.Keys[i1].F);
+                        if (s.P % 4 != 0) s.W((ushort)0x00);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                            _IO.W(key.Keys[i1].V);
+                            s.W(key.Keys[i1].V);
                     }
                     else if (key.Type == KeySetType.Interpolated)
                     {
-                        _IO.W((ushort)key.Keys.Length);
+                        s.W((ushort)key.Keys.Length);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                          _IO.W((ushort)key.Keys[i1].F);
-                        if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
+                          s.W((ushort)key.Keys[i1].F);
+                        if (s.P % 4 != 0) s.W((ushort)0x00);
                         for (i1 = 0; i1 < key.Keys.Length; i1++)
-                        { _IO.W(key.Keys[i1].V); _IO.W(key.Keys[i1].T); }
+                        { s.W(key.Keys[i1].V); s.W(key.Keys[i1].T); }
                     }
                 }
-                if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
+                if (s.P % 4 != 0) s.W((ushort)0x00);
 
-                mot.BoneInfo.O = _IO.P;
+                mot.BoneInfo.O = s.P;
                 for (i0 = 0; i0 < mot.BoneInfo.V.Length; i0++)
-                    _IO.W((ushort)mot.BoneInfo.V[i0].Id);
-                _IO.W((ushort)0);
+                    s.W((ushort)mot.BoneInfo.V[i0].Id);
+                s.W((ushort)0);
             }
-            if (_IO.P % 4 != 0) _IO.W((ushort)0x00);
-            _IO.A(0x4, true);
+            if (s.P % 4 != 0) s.W((ushort)0x00);
+            s.A(0x4, true);
 
-            _IO.P = 0;
+            s.P = 0;
             for (i = 0; i < MOTCount; i++)
             {
                 ref MotHeader mot = ref MOT[i];
-                _IO.W(mot.KeySet    .O     );
-                _IO.W(mot.KeySetTypesOffset);
-                _IO.W(mot.     KeySetOffset);
-                _IO.W(mot.BoneInfo  .O     );
+                s.W(mot.KeySet    .O     );
+                s.W(mot.KeySetTypesOffset);
+                s.W(mot.     KeySetOffset);
+                s.W(mot.BoneInfo  .O     );
             }
 
-            _IO.C();
+            s.C();
         }
 
         public void MsgPackReader(string file, bool json)
@@ -315,7 +315,7 @@ namespace KKdMainLib
 
         public void Dispose()
         {
-            _IO = null;
+            s = null;
             MOT = null;
         }
 

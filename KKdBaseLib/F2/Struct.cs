@@ -9,10 +9,10 @@ namespace KKdBaseLib.F2
         public ENRS ENRS;
         public POF POF;
 
-        public int Length  => length(false);
-        public int LengthX => length( true);
+        public uint Length  => length(false);
+        public uint LengthX => length( true);
 
-        public int Depth => Header.Depth;
+        public uint Depth => Header.Depth;
 
         public bool HasPOF        => POF .NotNull;
         public bool HasENRS       => ENRS.NotNull;
@@ -20,29 +20,30 @@ namespace KKdBaseLib.F2
 
         public long DataOffset;
 
-        public override string ToString() => $"{Header.ToString()}" +
-            $"{(HasSubStructs ? $"; SubStructs: {SubStructs.Length}" : "")}" +
-            $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}";
-
-        private int length(bool shiftX = false)
+        public void Update(bool ShiftX = false)
         {
-            int length = Data != null ? Data.Length : 0;
-            if (HasPOF ) length += 0x20 + (shiftX ? POF.LengthX : POF.Length);
-            if (HasENRS) length += 0x20 + ENRS.Length;
+            Header.SectionSize = Data != null ? (uint)Data.Length : 0;
+            Header.DataSize = length(ShiftX);
+        }
+
+        private uint length(bool shiftX = false)
+        {
+            uint length = Data != null ? (uint)Data.Length : 0;
+            if (HasPOF ) length += 0x20 + (uint)(shiftX ? POF.LengthX : POF.Length);
+            if (HasENRS) length += 0x20 + (uint)ENRS.Length;
 
             if (HasSubStructs)
             {
                 for (int i = 0; i < SubStructs.Length; i++)
-                    length += (shiftX ? SubStructs[i].LengthX : SubStructs[i].Length) + SubStructs[i].Header.Length;
+                    length += (uint)(shiftX ? SubStructs[i].LengthX : SubStructs[i].Length)
+                        + SubStructs[i].Header.Length;
                 length += 0x20;
             }
             return length;
         }
 
-        public void Update(bool ShiftX = false)
-        {
-            Header.SectionSize = Data != null ? Data.Length : 0;
-            Header.DataSize = length(ShiftX);
-        }
+        public override string ToString() => $"{Header}" +
+            $"{(HasSubStructs ? $"; SubStructs: {SubStructs.Length}" : "")}" +
+            $"{(HasENRS ? "; Has ENRS" : "")}{(HasPOF ? "; Has POF" : "")}";
     }
 }

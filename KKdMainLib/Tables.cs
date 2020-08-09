@@ -8,8 +8,8 @@ namespace KKdMainLib
     public struct Tables : System.IDisposable
     {
         private int i0;
-        private Stream _IO;
         private TableDict dict;
+        private Stream s;
 
         public      ButtonSE[]      ButtonSETable;
         public  ChainSlideSE[]  ChainSlideSETable;
@@ -20,20 +20,9 @@ namespace KKdMainLib
         public  CustomizeItem[]  CustomizeItemTable;
         public         Module[]         ModuleTable;
         public          Plate[]          PlateTable;
-        public             PV[]             PVList;
+        public             PV[]         PVListTable;
 
         private const string c = ".";
-
-        public Tables(bool def = true)
-        {
-            i0 = 0;
-            _IO = null;
-            dict = null;
-            disposed = false;
-            ButtonSETable = null; ChainSlideSETable = null; SlideSETable = null; SliderTouchSETable = null;
-            CollectionCardTable = null; CustomizeItemTable = null;
-            ModuleTable = null; PlateTable = null; PVList = null;
-        }
 
         public void BINReader(string file) =>
             BINReader(File.ReadAllBytes(file + ".bin"));
@@ -42,7 +31,7 @@ namespace KKdMainLib
         {
             ButtonSETable = null; ChainSlideSETable = null; SlideSETable = null; SliderTouchSETable = null;
             CollectionCardTable = null; CustomizeItemTable = null;
-            ModuleTable = null; PlateTable = null; PVList = null;
+            ModuleTable = null; PlateTable = null; PVListTable = null;
 
             dict = new TableDict();
             string[] strData = data.ToUTF8().Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
@@ -182,12 +171,12 @@ namespace KKdMainLib
             }
             else if (dict.FV(out length, "pv_list.data_list.length"))
             {
-                PVList = new PV[length];
+                PVListTable = new PV[length];
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "pv_list" + c + i0 + c;
 
-                    ref PV pv = ref PVList[i0];
+                    ref PV pv = ref PVListTable[i0];
                     dict.FV(out pv.ID    , name + "id"    );
                     dict.FV(out pv.Ignore, name + "ignore");
                     dict.FV(out pv.Name  , name + "name"  );
@@ -281,57 +270,57 @@ namespace KKdMainLib
 
             if (ButtonSETable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = ButtonSETable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "btn_se" + c + so[i0] + c;
 
                     ref ButtonSE btn = ref ButtonSETable[so[i0]];
-                    WriteEndTableDate(_IO, name, btn.End);
+                    WriteEndTableDate(s, name, btn.End);
                     W(name +      "id"   , btn.    ID   );
                     W(name +      "name" , btn.    Name );
                     W(name +   "se_name" , btn.  SEName );
                     W(name + "sort_index", btn.SortIndex);
-                    WriteStartTableDate(_IO, name, btn.Start);
+                    WriteStartTableDate(s, name, btn.Start);
                 }
                 W("btn_se.data_list.length", length);
-                _IO.W("kind=0\n");
-                _IO.D();
+                s.W("kind=0\n");
+                s.D();
             }
             else if (ChainSlideSETable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = ChainSlideSETable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "chainslide_se" + c + so[i0] + c;
 
                     ref ChainSlideSE csld = ref ChainSlideSETable[so[i0]];
-                    WriteEndTableDate(_IO, name, csld.End);
+                    WriteEndTableDate(s, name, csld.End);
                     W(name + "failure_se_name" , csld.FailureSEName );
                     W(name +   "first_se_name" , csld.  FirstSEName );
                     W(name +            "id"   , csld.         ID   );
                     W(name +            "name" , csld.         Name );
                     W(name +       "sort_index", csld.     SortIndex);
-                    WriteStartTableDate(_IO, name, csld.Start);
+                    WriteStartTableDate(s, name, csld.Start);
                     W(name +     "sub_se_name" , csld.    SubSEName );
                     W(name + "success_se_name" , csld.SuccessSEName );
                 }
                 W("chainslide_se.data_list.length", length);
-                _IO.W("kind=2\n");
-                _IO.D();
+                s.W("kind=2\n");
+                s.D();
             }
             else if (CollectionCardTable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = CollectionCardTable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "collection_card" + c + so[i0] + c;
@@ -340,29 +329,29 @@ namespace KKdMainLib
                     W(name + "chara"        , clcrd.Chara       );
                     W(name + "disp_num"     , clcrd.DispNum     );
                     W(name + "divapro_param", clcrd.DivaProParam);
-                    WriteEndTableDate(_IO, name, clcrd.End);
+                    WriteEndTableDate(s, name, clcrd.End);
                     W(name + "id"           , clcrd.ID          );
                     W(name + "module_author", clcrd.ModuleAuthor);
                     W(name + "name"         , clcrd.Name        );
                     W(name + "name_reading" , clcrd.NameReading );
                     W(name + "ng"           , clcrd.NG          );
                     W(name + "sort_idx"     , clcrd.SortIndex   );
-                    WriteStartTableDate(_IO, name, clcrd.Start);
+                    WriteStartTableDate(s, name, clcrd.Start);
                     W(name + "type"         , clcrd.Type        );
                     W(name + "type_param"   , clcrd.TypeParam   );
                     W(name + "wall_param"   , clcrd.WallParam   );
                 }
                 W("collection_card.data_list.length", length);
-                _IO.W("patch=0\n");
-                _IO.W("version=0\n");
-                _IO.D();
+                s.W("patch=0\n");
+                s.W("version=0\n");
+                s.D();
             }
             else if (CustomizeItemTable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = CustomizeItemTable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "cstm_item" + c + so[i0] + c;
@@ -375,22 +364,22 @@ namespace KKdMainLib
                     W(name + "obj_id"    , czitm.ObjID    );
                     W(name + "parts"     , czitm.Parts    );
                     W(name + "sell_type" , czitm.SellType );
-                    WriteEndTableDate(_IO, name + "shop_", czitm.ShopEnd);
+                    WriteEndTableDate(s, name + "shop_", czitm.ShopEnd);
                     W(name + "shop_price", czitm.ShopPrice);
-                    WriteStartTableDate(_IO, name + "shop_", czitm.ShopStart);
+                    WriteStartTableDate(s, name + "shop_", czitm.ShopStart);
                     W(name + "sort_index", czitm.SortIndex);
                 }
                 W("cstm_item.data_list.length", length);
-                _IO.W("patch=0\n");
-                _IO.W("version=0\n");
-                _IO.D();
+                s.W("patch=0\n");
+                s.W("version=0\n");
+                s.D();
             }
             else if (ModuleTable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = ModuleTable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "module" + c + so[i0] + c;
@@ -402,20 +391,20 @@ namespace KKdMainLib
                     W(name + "id"        , mdl.ID       );
                     W(name + "name"      , mdl.Name     );
                     W(name + "ng"        , mdl.NG       );
-                    WriteEndTableDate(_IO, name + "shop_", mdl.ShopEnd);
+                    WriteEndTableDate(s, name + "shop_", mdl.ShopEnd);
                     W(name + "shop_price", mdl.ShopPrice);
-                    WriteStartTableDate(_IO, name + "shop_", mdl.ShopStart);
+                    WriteStartTableDate(s, name + "shop_", mdl.ShopStart);
                     W(name + "sort_index", mdl.SortIndex);
                 }
                 W("module.data_list.length", length);
-                _IO.D();
+                s.D();
             }
             else if (PlateTable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = PlateTable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "plate" + c + so[i0] + c;
@@ -436,33 +425,33 @@ namespace KKdMainLib
                     W(name + "shadow_color_r", plt.ShadowColorR);
                 }
                 W("plate.data_list.length", length);
-                _IO.D();
+                s.D();
             }
-            else if (PVList != null)
+            else if (PVListTable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
-                length = PVList.Length;
+                s = File.OpenWriter(file + ".bin", true);
+                length = PVListTable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
+                WriteEmptyLines(s, length);
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "pv_list" + c + so[i0] + c;
 
-                    ref PV pv = ref PVList[so[i0]];
-                      WriteEndTableDate(_IO, name + "adv_demo_", pv.AdvEnd  );
-                    WriteStartTableDate(_IO, name + "adv_demo_", pv.AdvStart);
+                    ref PV pv = ref PVListTable[so[i0]];
+                      WriteEndTableDate(s, name + "adv_demo_", pv.AdvEnd  );
+                    WriteStartTableDate(s, name + "adv_demo_", pv.AdvStart);
 
-                    WriteDifficulty(_IO, name +    "easy.", pv.Easy   );
-                    WriteDifficulty(_IO, name +  "encore.", pv.Encore );
-                    WriteDifficulty(_IO, name + "extreme.", pv.Extreme);
-                    WriteDifficulty(_IO, name +    "hard.", pv.Hard   );
+                    WriteDifficulty(s, name +    "easy.", pv.Easy   );
+                    WriteDifficulty(s, name +  "encore.", pv.Encore );
+                    WriteDifficulty(s, name + "extreme.", pv.Extreme);
+                    WriteDifficulty(s, name +    "hard.", pv.Hard   );
                     W(name + "id"    , pv.ID    );
                     W(name + "ignore", pv.Ignore);
                     W(name + "name"  , pv.Name  );
-                    WriteDifficulty(_IO, name +  "normal.", pv.Normal );
+                    WriteDifficulty(s, name +  "normal.", pv.Normal );
                 }
                 W("pv_list.data_list.length", length);
-                _IO.D();
+                s.D();
 
                 static void WriteDifficulty(Stream _IO, string name, PV.Difficulty[] arr)
                 {
@@ -484,47 +473,47 @@ namespace KKdMainLib
             }
             else if (SlideSETable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = SlideSETable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
-                _IO.W("kind=1\n");
+                WriteEmptyLines(s, length);
+                s.W("kind=1\n");
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "slide_se" + c + so[i0] + c;
 
                     ref SlideSE sld = ref SlideSETable[so[i0]];
-                    WriteEndTableDate(_IO, name, sld.End);
+                    WriteEndTableDate(s, name, sld.End);
                     W(name +      "id"   , sld.    ID   );
                     W(name +      "name" , sld.    Name );
                     W(name +   "se_name" , sld.  SEName );
                     W(name + "sort_index", sld.SortIndex);
-                    WriteStartTableDate(_IO, name, sld.Start);
+                    WriteStartTableDate(s, name, sld.Start);
                 }
                 W("slide_se.data_list.length", length);
-                _IO.D();
+                s.D();
             }
             else if (SliderTouchSETable != null)
             {
-                _IO = File.OpenWriter(file + ".bin", true);
+                s = File.OpenWriter(file + ".bin", true);
                 length = SliderTouchSETable.Length;
                 so = length.SW();
-                WriteEmptyLines(_IO, length);
-                _IO.W("kind=3\n");
+                WriteEmptyLines(s, length);
+                s.W("kind=3\n");
                 for (i0 = 0; i0 < length; i0++)
                 {
                     name = "slidertouch_se" + c + so[i0] + c;
 
                     ref SliderTouchSE sldt = ref SliderTouchSETable[so[i0]];
-                    WriteEndTableDate(_IO, name, sldt.End);
+                    WriteEndTableDate(s, name, sldt.End);
                     W(name +      "id"   , sldt.    ID   );
                     W(name +      "name" , sldt.    Name );
                     W(name +   "se_name" , sldt.  SEName );
                     W(name + "sort_index", sldt.SortIndex);
-                    WriteStartTableDate(_IO, name, sldt.Start);
+                    WriteStartTableDate(s, name, sldt.Start);
                 }
                 W("slidertouch_se.data_list.length", length);
-                _IO.D();
+                s.D();
             }
 
             static void WriteEmptyLines(Stream _IO, int count)
@@ -546,15 +535,15 @@ namespace KKdMainLib
         }
 
         private void W(string Data,   long  val) =>
-                           _IO.W(Data + "=" + val + "\n");
+                           s.W(Data + "=" + val + "\n");
         private void W(string Data, string  val)
-        { if (val != null) _IO.W(Data + "=" + val + "\n"); }
+        { if (val != null) s.W(Data + "=" + val + "\n"); }
 
         public void MsgPackReader(string file, bool json)
         {
             ButtonSETable = null; ChainSlideSETable = null; SlideSETable = null; SliderTouchSETable = null;
             CollectionCardTable = null; CustomizeItemTable = null;
-            ModuleTable = null; PlateTable = null; PVList = null;
+            ModuleTable = null; PlateTable = null; PVListTable = null;
 
             MsgPack msgPack = file.ReadMPAllAtOnce(json);
             MsgPack temp;
@@ -682,11 +671,11 @@ namespace KKdMainLib
             }
             else if ((temp = msgPack["PVList", true]).NotNull)
             {
-                PVList = new PV[temp.Array.Length];
-                for (i0 = 0; i0 < PVList.Length; i0++)
+                PVListTable = new PV[temp.Array.Length];
+                for (i0 = 0; i0 < PVListTable.Length; i0++)
                 {
                     MsgPack pvMP = temp[i0];
-                    ref PV pv = ref PVList[i0];
+                    ref PV pv = ref PVListTable[i0];
                     pv.AdvEnd  .SV(pvMP.RnI32("AdvEnd"  ),  true);
                     pv.AdvStart.SV(pvMP.RnI32("AdvStart"), false);
 
@@ -876,12 +865,12 @@ namespace KKdMainLib
                 }
                 msgPack.Add(plateTable);
             }
-            else if (PVList != null)
+            else if (PVListTable != null)
             {
-                MsgPack pvList = new MsgPack(PVList.Length, "PVList");
-                for (i0 = 0; i0 < PVList.Length; i0++)
+                MsgPack pvList = new MsgPack(PVListTable.Length, "PVList");
+                for (i0 = 0; i0 < PVListTable.Length; i0++)
                 {
-                    ref PV pv = ref PVList[i0];
+                    ref PV pv = ref PVListTable[i0];
                     MsgPack mp = MsgPack.New.Add("AdvEnd"  , pv.AdvEnd  .Int)
                                             .Add("AdvStart", pv.AdvStart.Int);
 
@@ -950,11 +939,11 @@ namespace KKdMainLib
         public void Dispose()
         {
             if (disposed) return;
-            if (_IO != null) _IO.D(); _IO = null;
+            if (s != null) s.D(); s = null;
             if (dict != null) { dict.Clear(); dict = null; }
             ButtonSETable = null; ChainSlideSETable = null; SlideSETable = null; SliderTouchSETable = null;
             CollectionCardTable = null; CustomizeItemTable = null;
-            ModuleTable = null; PlateTable = null; PVList = null;
+            ModuleTable = null; PlateTable = null; PVListTable = null; disposed = true;
         }
     }
 }

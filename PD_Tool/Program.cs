@@ -54,14 +54,15 @@ namespace PD_Tool
             ConsoleDesign("                Choose action:");
             ConsoleDesign(false);
             ConsoleDesign("1. Extract FARC Archive");
-            ConsoleDesign("2. Create  FARC Archive");
-            ConsoleDesign("3. Decrypt/Encrypt from/to DIVAFILE");
-            ConsoleDesign("4. DB_Tools");
-            ConsoleDesign("5. AC/DT/F/AFT Converting Tools");
-            ConsoleDesign("6. F/F2/FT     Converting Tools");
-            ConsoleDesign("7. X/XHD       Converting Tools");
-            ConsoleDesign("8. FT/M39      Converting Tools");
-            ConsoleDesign(json ? "9. MsgPack to JSON" : "9. JSON to MsgPack");
+            ConsoleDesign("2. Create FARC Archive");
+            ConsoleDesign("3. Decrypt from DIVAFILE");
+            ConsoleDesign("4. Encrypt to DIVAFILE");
+            ConsoleDesign("5. DB_Tools");
+            ConsoleDesign("6. AC/DT/F/AFT Converting Tools");
+            ConsoleDesign("7. F/F2/FT     Converting Tools");
+            ConsoleDesign("8. X/XHD       Converting Tools");
+            ConsoleDesign("9. FT/M39      Converting Tools");
+            ConsoleDesign(json ? "A. MsgPack to JSON" : "A. JSON to MsgPack");
             ConsoleDesign(false);
             ConsoleDesign(json ? "M. MessagePack" : "J. JSON");
             ConsoleDesign("Q. Quit");
@@ -89,8 +90,13 @@ namespace PD_Tool
                 Choose(1, "", out string[] FileNames);
                 foreach (string FileName in FileNames) DIVAFILE.Decrypt(FileName);
             }
-            else if (choose[0] == '4') DataBase.Processor(json);
-            else if (choose[0] == '5')
+            else if (choose[0] == '4')
+            {
+                Choose(1, "", out string[] FileNames);
+                foreach (string FileName in FileNames) DIVAFILE.Encrypt(FileName);
+            }
+            else if (choose[0] == '5') DataBase.Processor(json);
+            else if (choose[0] == '6')
             {
                 string localChoose = "";
                 if (choose.Length == 1)
@@ -128,7 +134,7 @@ namespace PD_Tool
                 else if (localChoose == "9") TBL.Processor(json);
                 else choose = localChoose;
             }
-            else if (choose[0] == '6')
+            else if (choose[0] == '7')
             {
                 string localChoose = "";
                 if (choose.Length == 1)
@@ -164,7 +170,7 @@ namespace PD_Tool
                 else if (localChoose == "8") VAG.Processor();
                 else choose = localChoose;
             }
-            else if (choose[0] == '7')
+            else if (choose[0] == '8')
             {
                 string localChoose = "";
                 if (choose.Length == 1)
@@ -190,7 +196,7 @@ namespace PD_Tool
                 else if (localChoose == "3") VAG.Processor();
                 else choose = localChoose;
             }
-            else if (choose[0] == '8')
+            else if (choose[0] == '9')
             {
                 string localChoose = "";
                 if (choose.Length == 1)
@@ -228,7 +234,7 @@ namespace PD_Tool
                 else if (localChoose == "9") TBL.Processor(json);
                 else choose = localChoose;
             }
-            else if (choose == "9")
+            else if (choose[0] == 'A')
             {
                 Console.Title = json ? "MsgPack to JSON" : "JSON to MsgPack";
                 Choose(1, json ? "mp" : "json", out string[] fileNames);

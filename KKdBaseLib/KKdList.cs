@@ -7,7 +7,7 @@ namespace KKdBaseLib
     {
         public static KKdList<T> Null => new KKdList<T>();
         public static KKdList<T> New  => new KKdList<T>() { count = 0, Capacity = 0 };
-        public static KKdList<T> NewReserve(int Capacity) => new KKdList<T>() { count = 0, Capacity = Capacity };
+        public static KKdList<T> NewReserve(int capacity) => new KKdList<T>() { count = 0, Capacity = capacity };
 
         private int count;
         private int index;
@@ -61,7 +61,7 @@ namespace KKdBaseLib
 
             count++;
             if (array.Length < count)
-                System.Array.Resize(ref array, count);
+                System.Array.Resize(ref array, array.Length * 2 + 1);
             array[count - 1] = item;
         }
 
@@ -70,7 +70,7 @@ namespace KKdBaseLib
             if (IsNull || index < 0 || index >= count) return;
 
             if (index + 1 < count)
-                System.Array.Copy(array, index + 1, array, index, count - index);
+                System.Array.Copy(array, index + 1, array, index, count - index - 1);
             count--;
         }
 

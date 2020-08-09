@@ -16,17 +16,17 @@ namespace KKdBaseLib.Interpolation
         private KFT3 firstKey;
         private KFT3  lastKey;
 
-        public float RequestedFramerate { get =>  rf; set {  rf = value; df = @if / rf; } }
+        public float RequestedFramerate { get => rf; set { rf = value; df = @if / rf; } }
 
         public float Frame => f;
         public float Time  => t;
         public float Value => v;
-        public bool  IsNull => a3daKey.Keys == null ?  true : a3daKey.Length < 1;
-        public bool NotNull => a3daKey.Keys == null ? false : a3daKey.Length > 0;
+        public bool  IsNull => a3daKey.Keys == null || a3daKey.Length < 1;
+        public bool NotNull => a3daKey.Keys != null && a3daKey.Length > 0;
 
         public A3DAI(Key key, float a3daFramerate = 60, float requestedFramerate = 60)
         {
-            a3daKey = (A3DAKey)key; f = -1; df = @if = rf = t = v = 0;
+            a3daKey = new A3DAKey(key); f = -1; df = @if = rf = t = v = 0;
             @if = a3daFramerate;
             firstKey = lastKey = default;
             RequestedFramerate = requestedFramerate;

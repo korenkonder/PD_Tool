@@ -16,9 +16,14 @@ namespace KKdMainLib
 
         public static Header ReadHeader(this Stream stream, bool readSectionSignature = true)
         {
-            Header header = new Header { Format = Format.F2, Signature = stream.RI32(),
-                DataSize = stream.RI32(), Length = stream.RI32(), Flags = stream.RI32(),
-                Depth = stream.RI32(), SectionSize = stream.RI32(), Mode = stream.RI32() };
+            Header header = new Header { Format = Format.F2 };
+            header.Signature   = stream.RU32();
+            header.DataSize    = stream.RU32();
+            header.Length      = stream.RU32();
+            header.Flags       = stream.RU32();
+            header.Depth       = stream.RU32();
+            header.SectionSize = stream.RU32();
+            header.Version     = stream.RU32();
             stream.RI32();
             header.UseBigEndian   = (header.Flags & 0x08000000) != 0;
             header.UseSectionSize = (header.Flags & 0x10000000) != 0;
@@ -26,20 +31,20 @@ namespace KKdMainLib
             {
                 stream.RI64();
                 stream.RI64();
-                header.InnerSignature = stream.RI32();
+                header.InnerSignature = stream.RU32();
                 stream.RI32();
                 stream.RI64();
             }
             stream.Format = header.Format;
-            if (readSectionSignature) header.SectionSignature = stream.RI32E();
+            if (readSectionSignature) header.SectionSignature = stream.RU32E();
             return header;
         }
 
         public static void W(this Stream stream, Header header, bool extended = false)
         {
-            header.Length = (header.Format < Format.X && extended) ? 0x40 : 0x20;
-            header.Flags = (header.UseSectionSize ? 0x10000000 : 0) |
-                           (header.UseBigEndian   ? 0x08000000 : 0);
+            header.Length = (header.Format < Format.X && extended) ? 0x40u : 0x20u;
+            header.Flags = (header.UseSectionSize ? 0x10000000 : 0u) |
+                           (header.UseBigEndian   ? 0x08000000 : 0u);
 
             stream.W(header.Signature);
             stream.W(header.DataSize);
@@ -47,7 +52,7 @@ namespace KKdMainLib
             stream.W(header.Flags);
             stream.W(header.Depth);
             stream.W(header.SectionSize);
-            stream.W(header.Mode);
+            stream.W(header.Version);
             stream.W(0x00);
             if (header.Length == 0x40)
             {
@@ -59,18 +64,18 @@ namespace KKdMainLib
             }
         }
 
-        public static void WEOFC(this Stream stream, int depth = 0) =>
+        public static void WEOFC(this Stream stream, uint depth = 0) =>
             stream.W(new Header { Depth = depth, Length = 0x20, Signature = 0x43464F45, UseSectionSize = true });
     }
 
     public static class POFExtensions
     {
-        public static void W(this Stream stream, POF pof, bool shiftX = false, int depth = 0)
+        public static void W(this Stream stream, POF pof, bool shiftX = false, uint depth = 0)
         {
             byte[] data = pof.Write(shiftX);
             Header header = new Header { Depth = depth, Format = Format.F2, Length = 0x20,
-                Signature = shiftX ? 0x31464F50 : 0x30464F50, UseSectionSize = true };
-            header.DataSize = header.SectionSize = data.Length.A(0x10);
+                Signature = shiftX ? 0x31464F50u : 0x30464F50u, UseSectionSize = true };
+            header.DataSize = header.SectionSize = (uint)data.Length.A(0x10);
             stream.W(header);
             stream.W(data);
             for (int c = data.Length.A(0x10) - data.Length; c > 0; c--)
@@ -80,12 +85,12 @@ namespace KKdMainLib
 
     public static class ENRSExtensions
     {
-        public static void W(this Stream stream, ENRS enrs, int depth = 0)
+        public static void W(this Stream stream, ENRS enrs, uint depth = 0)
         {
             byte[] data = enrs.Write();
             Header header = new Header { Depth = depth, Format = Format.F2,
                 Length = 0x20, Signature = 0x53524E45, UseSectionSize = true };
-            header.DataSize = header.SectionSize = data.Length;
+            header.DataSize = header.SectionSize = (uint)data.Length;
             stream.W(header);
             stream.W(data);
         }
@@ -104,12 +109,12 @@ namespace KKdMainLib
 
         public static Struct RSt(this Stream stream, Header header)
         {
-            int l = header.UseSectionSize ? header.SectionSize : header.DataSize;
+            uint l = header.UseSectionSize ? header.SectionSize : header.DataSize;
             Struct @struct = new Struct { Header = header, DataOffset =
                 stream.P, Data = stream.RBy(l) };
-            int depth = header.Depth;
+            uint depth = header.Depth;
 
-            int lastSig = 0, sig;
+            uint lastSig = 0, sig;
             long length = stream.L - stream.P;
             long position = 0;
             KKdList<Struct> subStructs = KKdList<Struct>.New;
@@ -137,20 +142,22 @@ namespace KKdMainLib
             return @struct;
         }
 
-        public static byte[] W(this Struct Struct, bool shiftX = false, bool useDepth = true)
+        public static byte[] W(this Struct @struct, bool shiftX = false, bool useDepth = true)
         {
             byte[] Data;
-            using (Stream stream = File.OpenWriter()) { Struct.Update(shiftX);
-                stream.W(Struct, shiftX, useDepth); stream.WEOFC(); Data = stream.ToArray(); }
+            using (Stream stream = File.OpenWriter())
+            { stream.W(@struct, shiftX, useDepth); stream.WEOFC(); Data = stream.ToArray(); }
             return Data;
         }
 
         public static void W(this Stream stream, Struct @struct, bool shiftX = false, bool useDepth = true)
         {
+            @struct.Update(shiftX);
+
             stream.W(@struct.Header);
-            stream.W(@struct.Data  );
-            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? @struct.Depth + 1 : 0);
-            if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? @struct.Depth + 1 : 0);
+            if (@struct.Data != null) stream.W(@struct.Data);
+            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? @struct.Depth + 1 : 0u);
+            if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? @struct.Depth + 1 : 0u);
             if (@struct.HasSubStructs)
             {
                 for (int i = 0; i < @struct.SubStructs.Length; i++)
@@ -228,15 +235,6 @@ namespace KKdMainLib
             else if (kf is KFT3 kft3) { kft3.F  = kft3.F .Round(d); kft3.V  = kft3.V .Round(d);
                                         kft3.T1 = kft3.T1.Round(d); kft3.T2 = kft3.T2.Round(d); return kft3; }
             return   kf;
-        }
-    }
-
-    public static class LibDeflate
-    {
-        public static void Extract()
-        {
-            if (!File.Exists("libdeflate.dll"))
-                File.WriteAllBytes("libdeflate.dll", Properties.Resources.libdeflate);
         }
     }
 }

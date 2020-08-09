@@ -59,8 +59,8 @@ namespace KKdMainLib.IO
 
         public static void WriteAllLines(string file, string[] data)
         { using Stream _IO = OpenWriter(file, true);
-            if (data != null) for (int i = 0; i < data.Length; i++)
-                { if (data[i] != null) _IO.W(data[i]); } _IO.W("\r\n"); }
+            if (data != null) { int c = data.Length; for (int i = 0; i < c; i++)
+                { if (data[i] != null) _IO.W(data[i]); if (i + 1 < c) _IO.W("\n"); } } }
 
         public static void WriteAllBytes(string file,   byte[] data, long length)
         { using Stream _IO = OpenWriter(file, true); if (data != null) { _IO.W(data); _IO.LI64 = length; } }
@@ -70,8 +70,8 @@ namespace KKdMainLib.IO
 
         public static void WriteAllLines(string file, string[] data, long length)
         { using Stream _IO = OpenWriter(file, true);
-            if (data != null) for (int i = 0; i < data.Length; i++)
-                { if (data[i] != null) _IO.W(data[i]); _IO.W("\r\n"); } _IO.LI64 = length; }
+            if (data != null) { int c = data.Length; for (int i = 0; i < c; i++)
+                { if (data[i] != null) _IO.W(data[i]); if (i + 1 < c) _IO.W("\n"); } _IO.LI64 = length; } }
 
         public static bool Exists(string file) =>
             MSIOF.Exists(file);

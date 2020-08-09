@@ -4,7 +4,7 @@ namespace KKdBaseLib
     {
         public float F;
 
-        public KFT0(float F = 0)
+        public KFT0(float F)
         { this.F = F; }
 
         public KFT0 ToT0() => this;
@@ -55,7 +55,10 @@ namespace KKdBaseLib
         public float F;
         public float V;
 
-        public KFT1(float F = 0, float V = 0)
+        public KFT1(float F)
+        { this.F = F; V = 0; }
+
+        public KFT1(float F, float V)
         { this.F = F; this.V = V; }
 
         public KFT0 ToT0() =>
@@ -109,7 +112,13 @@ namespace KKdBaseLib
         public float V;
         public float T;
 
-        public KFT2(float F = 0, float V = 0, float T = 0)
+        public KFT2(float F)
+        { this.F = F; V = T = 0; }
+
+        public KFT2(float F, float V)
+        { this.F = F; this.V = V; T = 0; }
+
+        public KFT2(float F, float V, float T)
         { this.F = F; this.V = V; this.T = T; }
 
         public KFT0 ToT0() =>
@@ -118,7 +127,7 @@ namespace KKdBaseLib
             new KFT1(F, V);
         public KFT2 ToT2() => this;
         public KFT3 ToT3() =>
-            new KFT3(F, V, T, T);
+            new KFT3(F, V, T);
 
         public KFT3 ToT3(IKF Previous) =>
             Previous is KFT2 PreviousT2 ?
@@ -169,7 +178,16 @@ namespace KKdBaseLib
         public float T1;
         public float T2;
 
-        public KFT3(float F = 0, float V = 0, float T1 = 0, float T2 = 0)
+        public KFT3(float F)
+        { this.F = F; V = T1 = T2 = 0; }
+
+        public KFT3(float F, float V)
+        { this.F = F; this.V = V; T1 = T2 = 0; }
+
+        public KFT3(float F, float V, float T)
+        { this.F = F; this.V = V; T1 = T2 = T; }
+
+        public KFT3(float F, float V, float T1, float T2)
         { this.F = F; this.V = V; this.T1 = T1; this.T2 = T2; }
 
         public KFT0 ToT0() =>

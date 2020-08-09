@@ -22,8 +22,16 @@ namespace PD_Tool
                     ext = ext.ToLower();
 
                     Console.Title = "DOF Converter: " + Path.GetFileNameWithoutExtension(file);
-                         if (ext == ".dft") { dft.DFTReader(filepath); dft.TXTWriter(filepath); }
-                    //else if (ext == ".txt") { dft.TXTReader(filepath); dft.DFTWriter(filepath); }
+                    if (ext == ".dft")
+                    {
+                        dft.DFTReader(filepath);
+                        dft.TXTWriter(filepath);
+                    }
+                    /*else if (ext == ".txt")
+                    {
+                        dft.TXTReader(filepath);
+                        dft.DFTWriter(filepath);
+                    }*/
                 }
         }
     }
