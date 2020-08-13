@@ -55,6 +55,7 @@ namespace KKdMainLib
                     if (element.Frame == 999999 || element.Both == 0xFFFF) break;
                     Dex[i].Main.Add(element);
                 }
+                Dex[i].Main.Capacity = Dex[i].Main.Count;
 
                 Dex[i].Eyes = KKdList<EXPElement>.New;
                 s.P = Dex[i].EyesOffset;
@@ -68,6 +69,7 @@ namespace KKdMainLib
                     if (element.Frame == 999999 || element.Both == 0xFFFF) break;
                     Dex[i].Eyes.Add(element);
                 }
+                Dex[i].Eyes.Capacity = Dex[i].Eyes.Count;
 
                 Dex[i].Name = s.RSaO(Dex[i].NameOffset);
             }
@@ -191,7 +193,7 @@ namespace KKdMainLib
                     {
                         Dex[i0].Eyes = KKdList<EXPElement>.New;
                         Dex[i0].Eyes.Capacity = temp.Array.Length;
-                        for (i1 = 0; i1 < this.Dex[i0].Eyes.Capacity; i1++)
+                        for (i1 = 0; i1 < Dex[i0].Eyes.Capacity; i1++)
                             Dex[i0].Eyes.Add(EXPElement.Read(temp[i1]));
                     }
                     temp.Dispose();

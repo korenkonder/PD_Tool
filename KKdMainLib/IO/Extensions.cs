@@ -18,6 +18,7 @@ namespace KKdMainLib.IO
                 if (a == end) break;
                 else s.Add(a);
             }
+            s.Capacity = s.Count;
             return s.ToArray();
         }
 

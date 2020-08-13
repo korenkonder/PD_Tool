@@ -107,13 +107,15 @@ namespace KKdBaseLib
         }
 
         public void Sort()
-        { List<T> List = (List<T>)this; List.Sort(); array = List.ToArray(); count = List.Count; }
+        { Capacity = Count; List<T> List = (List<T>)this; List.Sort();
+          array = List.ToArray(); count = List.Count; }
 
         public static explicit operator KKdList<T>(   List<T> list) =>
             new KKdList<T> { array = list.ToArray(), count = list.Count };
 
         public static explicit operator    List<T>(KKdList<T> list)
-        { List<T> outList = new List<T>(); for (int i = 0; i < list.Count; i++) outList.Add(list[i]); return outList; }
+        { list.Capacity = list.Count; List<T> outList = new List<T>();
+          for (int i = 0; i < list.Count; i++) outList.Add(list[i]); return outList; }
 
         public override string ToString() =>
             $"(Count: {Count}; Capacity: {Capacity}; Current: {Current})";

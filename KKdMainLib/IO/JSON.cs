@@ -104,7 +104,7 @@ namespace KKdMainLib.IO
                 else if (c == ',') { _IO.RCUTF8(); continue; }
                 else return KKdList<MsgPack>.Null;
             }
-
+            obj.Capacity = obj.Count;
             return obj;
         }
 
@@ -125,6 +125,7 @@ namespace KKdMainLib.IO
                 else if (c == ',') { _IO.RCUTF8(); continue; }
                 else return null;
             }
+            obj.Capacity = obj.Count;
             return obj.ToArray();
         }
 

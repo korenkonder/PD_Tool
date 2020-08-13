@@ -137,6 +137,7 @@ namespace KKdMainLib
                 else { stream.PI64 -= header.Length; break; }
                 lastSig = sig;
             }
+            subStructs.Capacity = subStructs.Count;
 
             if (subStructs.Capacity > 0) @struct.SubStructs = subStructs.ToArray();
             return @struct;
