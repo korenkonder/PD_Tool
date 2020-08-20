@@ -199,13 +199,54 @@ namespace KKdBaseLib
 
         public static int[] SW(this int length)
         {
-            int i = 0;
-            List<string> A = new List<string>();
-            for (i = 0; i < length; i++) A.Add(i.ToString());
-            A.Sort();
-            int[] B = new int[length];
-            for (i = 0; i < length; i++) B[i] = int.Parse(A[i]);
-            return B;
+            int i, j, l, m;
+
+            if (length <= 0) return new int[0];
+            if (length == 1) return new int[1] { 0 };
+
+            int[] sort = new int[length];
+            sort[0] = 0;
+            i = 1;
+            j = 1;
+
+            m = 1;
+            while (m < length)
+                m *= 10;
+            l = 0;
+            while (i < length)
+            {
+                if (j * 10 < m)
+                {
+                    sort[i++] = j;
+                    j *= 10;
+                }
+                else if (j >= length)
+                {
+                    m /= 10;
+                    j /= 10;
+                    sort[i++] = ++j;
+                    if (j * 10 >= length)
+                        j++;
+                }
+                else if (j % 10 != 9)
+                    sort[i++] = j++;
+
+                if (i < length)
+                    if (j == length && j % 10 != 9)
+                    {
+                        m /= 10;
+                        j /= 10;
+                        while (j % 10 == 9) j /= 10;
+                        j++;
+                    }
+                    else if (j < length && j % 10 == 9)
+                    {
+                        sort[i++] = j;
+                        while (j % 10 == 9) j /= 10;
+                        j++;
+                    }
+            }
+            return sort;
         }
     }
 }

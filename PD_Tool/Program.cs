@@ -47,7 +47,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.6";
+            Console.Title = "PD_Tool v0.4.9.7";
             Console.Clear();
 
             ConsoleDesign(true);

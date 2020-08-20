@@ -31,14 +31,12 @@ namespace KKdBaseLib.F2
             uint length = Data != null ? (uint)Data.Length : 0;
             if (HasPOF ) length += 0x20 + (uint)(shiftX ? POF.LengthX : POF.Length);
             if (HasENRS) length += 0x20 + (uint)ENRS.Length;
-
             if (HasSubStructs)
-            {
                 for (int i = 0; i < SubStructs.Length; i++)
                     length += (uint)(shiftX ? SubStructs[i].LengthX : SubStructs[i].Length)
                         + SubStructs[i].Header.Length;
+            if (HasPOF || HasENRS || HasSubStructs)
                 length += 0x20;
-            }
             return length;
         }
 

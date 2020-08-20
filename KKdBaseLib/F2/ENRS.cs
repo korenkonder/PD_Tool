@@ -24,12 +24,10 @@ namespace KKdBaseLib.F2
                 for (i = 0; i < ENRSCount; i++)
                 {
                     enrsEntry = default;
-                    enrsEntry.Offset = ReadENRSValue(ref localPtr);
-                    enrsEntry.Count  = ReadENRSValue(ref localPtr);
-                    enrsEntry.Size   = ReadENRSValue(ref localPtr);
-                    enrsEntry.Repeat = ReadENRSValue(ref localPtr);
-
-                    if (i > 0) enrsEntry.Offset += Array[i - 1].Offset;
+                    if (ReadENRSValue(ref localPtr, out enrsEntry.Offset)) return;
+                    if (ReadENRSValue(ref localPtr, out enrsEntry.Count )) return;
+                    if (ReadENRSValue(ref localPtr, out enrsEntry.Size  )) return;
+                    if (ReadENRSValue(ref localPtr, out enrsEntry.Repeat)) return;
 
                     if (enrsEntry.Repeat < 1) { enrsEntry.Sub = null; Array[i] = enrsEntry; continue; }
 
@@ -37,9 +35,8 @@ namespace KKdBaseLib.F2
                     for (i0 = 0; i0 < enrsEntry.Count; i0++)
                     {
                         sub = default;
-                        sub.Skip    = ReadENRSValue(ref localPtr, out sub.Type);
-                        sub.Reverse = ReadENRSValue(ref localPtr);
-                        if (i0 > 0) sub.Skip += enrsEntry.Sub[i0 - 1].SizeSkip;
+                        if (ReadENRSValue(ref localPtr, out sub.Skip, out sub.Type)) return;
+                        if (ReadENRSValue(ref localPtr, out sub.Reverse           )) return;
                         enrsEntry.Sub[i0] = sub;
 
                         if (enrsEntry.Sub[i0].Type == ENRSEntry.Type.Invalid) { Array = null; return; }
@@ -65,27 +62,24 @@ namespace KKdBaseLib.F2
                 for (i = 0; i < Array.Length; i++)
                 {
                     ENRSEntry enrsEntry = Array[i];
-                    WriteENRSValue(ref localPtr, i > 0 ? enrsEntry.Offset -
-                        Array[i - 1].Offset : enrsEntry.Offset);
-                    WriteENRSValue(ref localPtr, enrsEntry.Count > enrsEntry.Sub.Length ?
-                        enrsEntry.Sub.Length : enrsEntry.Count);
-                    WriteENRSValue(ref localPtr, enrsEntry.Size  );
-                    WriteENRSValue(ref localPtr, enrsEntry.Repeat);
+                    if (WriteENRSValue(ref localPtr, enrsEntry.Offset)) goto End;
+                    if (WriteENRSValue(ref localPtr, enrsEntry.Count )) goto End;
+                    if (WriteENRSValue(ref localPtr, enrsEntry.Size  )) goto End;
+                    if (WriteENRSValue(ref localPtr, enrsEntry.Repeat)) goto End;
 
                     if (enrsEntry.Repeat < 1) continue;
 
                     for (i0 = 0; i0 < enrsEntry.Count && i0 < enrsEntry.Sub.Length; i0++)
                     {
-                        if (enrsEntry.Sub[i0].Type < ENRSEntry.Type. WORD ||
-                            enrsEntry.Sub[i0].Type > ENRSEntry.Type.QWORD)
+                        if (enrsEntry.Sub[i0].Type > ENRSEntry.Type.QWORD)
                             return data;
 
-                        WriteENRSValue(ref localPtr, i0 > 0 ? enrsEntry.Sub[i0].Skip -
-                            enrsEntry.Sub[i0 - 1].SizeSkip : enrsEntry.Sub[i0].Skip, enrsEntry.Sub[i0].Type);
-                        WriteENRSValue(ref localPtr, enrsEntry.Sub[i0].Reverse);
+                        if (WriteENRSValue(ref localPtr, enrsEntry.Sub[i0].Skip, enrsEntry.Sub[i0].Type)) goto End;
+                        if (WriteENRSValue(ref localPtr, enrsEntry.Sub[i0].Reverse                     )) goto End;
                     }
                 }
             }
+        End:
             return data;
         }
 
@@ -96,10 +90,10 @@ namespace KKdBaseLib.F2
             for (i = 0; i < Array.Length; i++)
             {
                 ENRSEntry enrs = Array[i];
-                length += GetSize(i > 0 ? enrs.Offset - Array[i - 1].Offset : enrs.Offset);
-                length += GetSize(enrs.Count );
-                length += GetSize(enrs.Size  );
-                length += GetSize(enrs.Repeat);
+                if (GetSize(enrs.Offset, ref length)) goto End;
+                if (GetSize(enrs.Count , ref length)) goto End;
+                if (GetSize(enrs.Size  , ref length)) goto End;
+                if (GetSize(enrs.Repeat, ref length)) goto End;
 
                 if (enrs.Repeat < 1) continue;
 
@@ -108,15 +102,24 @@ namespace KKdBaseLib.F2
                     if (enrs.Sub[i0].Type < ENRSEntry.Type. WORD ||
                         enrs.Sub[i0].Type > ENRSEntry.Type.QWORD) return length.A(0x10);
 
-                    length += GetSizeType(i0 > 0 ? enrs.Sub[i0].Skip -
-                        enrs.Sub[i0 - 1].SizeSkip : enrs.Sub[i0].Skip);
-                    length += GetSize(enrs.Sub[i0].Reverse);
+                    if (GetSizeType(enrs.Sub[i0].Skip   , ref length)) goto End;
+                    if (GetSize    (enrs.Sub[i0].Reverse, ref length)) goto End;
                 }
             }
+        End:
             return length.A(0x10);
 
-            static int GetSizeType(int val) => val < 0x00000010 ? 1 : val < 0x00001000 ? 2 : 4;
-            static int GetSize    (int val) => val < 0x00000040 ? 1 : val < 0x00004000 ? 2 : 4;
+            static bool GetSizeType(int val, ref int length)
+            {
+                length += val <  0x00000010 ? 1 : val < 0x00001000 ? 2 : val < 0x10000000 ? 4 : 1;
+                return    val >= 0x10000000;
+            }
+
+            static bool GetSize    (int val, ref int length)
+            {
+                length += val <  0x00000040 ? 1 : val < 0x00004000 ? 2 : val < 0x40000000 ? 4 : 1;
+                return    val >= 0x40000000;
+            }
         }
 
         /*private static KKdList<ENRS.SubENRS> Optimize(KKdList<ENRS.SubENRS> Sub)
@@ -138,73 +141,76 @@ namespace KKdBaseLib.F2
 
         [System.ThreadStatic] private static ENRSEntry.Value value;
 
-        private unsafe static int ReadENRSValue(ref byte* ptr, out ENRSEntry.Type type)
+        private unsafe static bool ReadENRSValue(ref byte* ptr, out int v, out ENRSEntry.Type type)
         {
-            int V = *ptr & 0xF;
+            v = *ptr & 0xF;
              type = (ENRSEntry. Type)((*ptr & 0x30) >> 4);
             value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
-                 if (value == ENRSEntry.Value.Int32  )
-            { V = (V << 24) | (ptr[0] << 16) | (ptr[1] << 8) | ptr[2]; ptr += 3; }
-            else if (value == ENRSEntry.Value.Int16  )
-            { V = (V <<  8) |  ptr[0];                                 ptr += 1; }
-            else if (value == ENRSEntry.Value.Invalid) V = 0;
-            return V;
+                 if (value == ENRSEntry.Value.Int32  ) v = (((((v << 8) | *ptr++) << 8) | *ptr++) << 8) | *ptr++;
+            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++; 
+            else if (value == ENRSEntry.Value.Invalid) { v = 0; return true; }
+            return false;
         }
 
-        private unsafe static int ReadENRSValue(ref byte* ptr)
+        private unsafe static bool ReadENRSValue(ref byte* ptr, out int v)
         {
-            int V = *ptr & 0x3F;
+            v = *ptr & 0x3F;
             value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
-                 if (value == ENRSEntry.Value.Int32  )
-            { V = (V << 24) | (ptr[0] << 16) | (ptr[1] << 8) | ptr[2]; ptr += 3; }
-            else if (value == ENRSEntry.Value.Int16  )
-            { V = (V <<  8) |  ptr[0];                                 ptr += 1; }
-            else if (value == ENRSEntry.Value.Invalid) V = 0;
-            return V;
+                 if (value == ENRSEntry.Value.Int32  ) v = (((((v << 8) | *ptr++) << 8) | *ptr++) << 8) | *ptr++;
+            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++; 
+            else if (value == ENRSEntry.Value.Invalid) { v = 0; return true; }
+            return false;
         }
 
-        private unsafe static void WriteENRSValue(ref byte* ptr, int val, ENRSEntry.Type type)
+        private unsafe static bool WriteENRSValue(ref byte* ptr, int val, ENRSEntry.Type type)
         {
-            value = ENRSEntry.Value.Invalid;
-                 if (val < 0x00000040) value = ENRSEntry.Value.Int8 ;
-            else if (val < 0x00004000) value = ENRSEntry.Value.Int16;
-            else if (val < 0x40000000) value = ENRSEntry.Value.Int32;
-            *ptr = (byte)((((byte)value << 6) & 0xC0) | (((byte)type << 4) & 0x30));
-
-                 if (val < 0x00000010)
-            { *ptr |= (byte)( val        & 0x0F); }
+            byte t = (byte)(((byte)type & 0x3) << 4);
+            if (val < 0x00000010)
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int8  << 6) | t | ( val        & 0xF));
             else if (val < 0x00001000)
-            { *ptr |= (byte)((val >>  8) & 0x0F); ptr++;
-              *ptr  = (byte)( val        & 0xFF); }
+            {
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int16 << 6) | t | ((val >>  8) & 0xF));
+                *ptr++ = (byte)(val & 0xFF);
+            }
             else if (val < 0x10000000)
-            { *ptr |= (byte)((val >> 24) & 0x0F); ptr++;
-              *ptr  = (byte)((val >> 16) & 0xFF); ptr++;
-              *ptr  = (byte)((val >>  8) & 0xFF); ptr++;
-              *ptr  = (byte)( val        & 0xFF); }
-            ptr++;
+            {
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int32 << 6) | t | ((val >> 24) & 0xF));
+                *ptr++ = (byte)((val >> 16) & 0xFF);
+                *ptr++ = (byte)((val >>  8) & 0xFF);
+                *ptr++ = (byte)( val        & 0xFF);
+            }
+            else
+            {
+                *ptr++ = (byte)ENRSEntry.Value.Invalid << 6;
+                return true;
+            }
+            return false;
         }
 
-        private unsafe static void WriteENRSValue(ref byte* ptr, int val)
+        private unsafe static bool WriteENRSValue(ref byte* ptr, int val)
         {
-            value = ENRSEntry.Value.Invalid;
-                 if (val < 0x00000040) value = ENRSEntry.Value.Int8 ;
-            else if (val < 0x00004000) value = ENRSEntry.Value.Int16;
-            else if (val < 0x40000000) value = ENRSEntry.Value.Int32;
-            *ptr = (byte)(((byte)value << 6) & 0xC0);
-
-                 if (val < 0x00000040)
-            { *ptr |= (byte)( val        & 0x3F); }
+            if (val < 0x00000040)
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int8  << 6) | ( val        & 0x3F));
             else if (val < 0x00004000)
-            { *ptr |= (byte)((val >>  8) & 0x3F); ptr++;
-              *ptr  = (byte)( val        & 0xFF); }
+            {
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int16 << 6) | ((val >>  8) & 0x3F));
+                *ptr++ = (byte)(val & 0xFF);
+            }
             else if (val < 0x40000000)
-            { *ptr |= (byte)((val >> 24) & 0x3F); ptr++;
-              *ptr  = (byte)((val >> 16) & 0xFF); ptr++;
-              *ptr  = (byte)((val >>  8) & 0xFF); ptr++;
-              *ptr  = (byte)( val        & 0xFF); }
-            ptr++;
+            {
+                *ptr++ = (byte)(((byte)ENRSEntry.Value.Int32 << 6) | ((val >> 24) & 0x3F));
+                *ptr++ = (byte)((val >> 16) & 0xFF);
+                *ptr++ = (byte)((val >>  8) & 0xFF);
+                *ptr++ = (byte)( val        & 0xFF);
+            }
+            else
+            {
+                *ptr++ = (byte)ENRSEntry.Value.Invalid << 6;
+                return true;
+            }
+            return false;
         }
 
         public struct ENRSEntry
