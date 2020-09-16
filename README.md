@@ -2,8 +2,7 @@
 A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files
 
 # Dependencies:
-+ `.NET Standard 2.0`: Required to build KKdBaseLib, KKdMainLib and KKdSoundLib C# projects.
-+ `.NET Framework 4.6.1`: Required to run/build PD_Tool C# project.
++ `.NET Framework 4.6.1`: Required to build KKdBaseLib, KKdMainLib and KKdSoundLib C# projects and to run/build PD_Tool C# project.
 
 # Tools:
 - `FARC Extract/Create`
@@ -20,8 +19,8 @@ A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files
   - `DIVA Converter`
   - `MotHead Converter`
   - `MOT Converter`
-  - `Table Converter`
   - `STR Converter`
+  - `Table Converter`
 - `F/F2/FT Converting Tools`
   - `A3DA Converter`
   - `Bloom Converter`
@@ -43,5 +42,5 @@ A simple tool for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files
   - `DIVA Converter`
   - `MotHead Converter`
   - `MOT Converter`
-  - `Table Converter`
   - `STR Converter`
+  - `Table Converter`
