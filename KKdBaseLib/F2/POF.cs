@@ -55,7 +55,7 @@ namespace KKdBaseLib.F2
                         WritePOFValue(ref l, 0x7FFFFFFF);
                         break;
                     }
-                    
+
                     k = o - j;
                     if (i > 0 & k == 0)
                         continue;
@@ -75,7 +75,7 @@ namespace KKdBaseLib.F2
             value = (Value)((*ptr & 0xC0) >> 6);
             ptr++;
                  if (value == Value.Int32  ) v = (((((v << 8) | *ptr++) << 8) | *ptr++) << 8) | *ptr++;
-            else if (value == Value.Int16  ) v =     (v << 8) | *ptr++; 
+            else if (value == Value.Int16  ) v =     (v << 8) | *ptr++;
             else if (value == Value.Invalid) { v = 0; return true; }
             return false;
         }

@@ -24,12 +24,6 @@ namespace KKdMainLib.F2
             if (DFTs.C < 1) { s.C(); DFTs.C = -1; return; }
 
             if (DFTs.C > 0 && DFTs.O == 0) { s.C(); DFTs.C = -1; return; }
-            /*{
-                _IO.Format = Header.Format = Format.X;
-                _IO.Offset = Header.Length;
-                _IO.Position = DFTs.Offset;
-                DFTs = _IO.ReadCountPointerX<DFT>();
-            }*/
 
             s.P = DFTs.O;
             for (i = 0; i < DFTs.C; i++)
@@ -41,7 +35,6 @@ namespace KKdMainLib.F2
                 DFT.FuzzingRange = s.RF32E();
                 DFT.Ratio        = s.RF32E();
                 DFT.Quality      = s.RF32E();
-                if (s.IsX) s.RI32();
             }
 
             s.C();
@@ -54,8 +47,8 @@ namespace KKdMainLib.F2
             s = File.OpenWriter();
             s.WPSSJIS("ID,Focus,FocusRange,FuzzingRange,Ratio,Quality\n");
             for (i = 0; i < DFTs.C; i++)
-                s.W(i + "," + DFTs[i] + "\n");
-            File.WriteAllBytes(file + "_dof.txt", s.ToArray(true));
+                s.W($"{i},{DFTs[i]}\n");
+            File.WriteAllBytes($"{file}_dof.txt", s.ToArray(true));
         }
 
         private bool disposed;
@@ -70,11 +63,8 @@ namespace KKdMainLib.F2
             public float Ratio;
             public float Quality;
 
-            public override string ToString() =>   Focus     .ToS(6) + "," +
-                                                   FocusRange.ToS(6) + "," +
-                                                 FuzzingRange.ToS(6) + "," +
-                                                 Ratio       .ToS(6) + "," +
-                                                 Quality     .ToS(6);
+            public override string ToString() =>
+                $"{Focus.ToS(6)},{FocusRange.ToS(6)},{FuzzingRange.ToS(6)},{Ratio.ToS(6)},{Quality.ToS(6)}";
         }
     }
 }

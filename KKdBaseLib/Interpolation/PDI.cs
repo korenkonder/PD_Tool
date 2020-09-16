@@ -87,10 +87,8 @@ namespace KKdBaseLib.Interpolation
 
         private float Interpolate(float frame)
         {
-            float f = (int)frame;
-
-                 if (f <= firstKey.F) return firstKey.V;
-            else if (f >=  lastKey.F) return  lastKey.V;
+                 if (frame <= firstKey.F) return firstKey.V;
+            else if (frame >=  lastKey.F) return  lastKey.V;
 
             KFT2 c, n;
             unsafe
@@ -101,7 +99,7 @@ namespace KKdBaseLib.Interpolation
                     long length = this.length;
                     long temp;
                     while (length > 0)
-                        if (f > array[key + (temp = length >> 1)].F)
+                        if (frame >= ptr[key + (temp = length >> 1)].F)
                         {
                                key += temp + 1;
                             length -= temp + 1;
@@ -113,16 +111,22 @@ namespace KKdBaseLib.Interpolation
                 }
             }
 
-            float result;
-            if (frame > c.F && frame < n.F)
+            float v;
+            if (frame <= c.F || frame >= n.F)
+                v = frame > c.F ? n.V : c.V;
+            else if (n.T == c.T && n.T == 0.0f)
             {
-                float t = (this.f - c.F) / (n.F - c.F);
-                float t_1 = t - 1;
-                result = (t_1 * 2 - 1) * (c.V - n.V) * t * t +
-                    (t_1 * c.T + t * n.T) * t_1 * (this.f - c.F) + c.V;
+                float t = (frame - c.F) / (n.F - c.F);
+                v = (1.0f - t) * c.V + t * n.V;
             }
-            else result = frame > c.F ? n.V : c.V;
-            return result;
+            else
+            {
+                float t = (frame - c.F) / (n.F - c.F);
+                float t_1 = t - 1.0f;
+                v = (t_1 * 2.0f - 1.0f) * (c.V - n.V) * t * t +
+                    (t_1 * c.T + t * n.T) * t_1 * (frame - c.F) + c.V;
+            }
+            return v;
         }
 
         public void ResetFrameCount() { f = -df; t = f / rf; }

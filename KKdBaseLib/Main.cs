@@ -199,7 +199,7 @@ namespace KKdBaseLib
 
         public static int[] SW(this int length)
         {
-            int i, j, l, m;
+            int i, j, m;
 
             if (length <= 0) return new int[0];
             if (length == 1) return new int[1] { 0 };
@@ -212,7 +212,6 @@ namespace KKdBaseLib
             m = 1;
             while (m < length)
                 m *= 10;
-            l = 0;
             while (i < length)
             {
                 if (j * 10 < m)

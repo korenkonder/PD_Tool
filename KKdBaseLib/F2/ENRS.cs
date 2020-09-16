@@ -148,7 +148,7 @@ namespace KKdBaseLib.F2
             value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
                  if (value == ENRSEntry.Value.Int32  ) v = (((((v << 8) | *ptr++) << 8) | *ptr++) << 8) | *ptr++;
-            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++; 
+            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++;
             else if (value == ENRSEntry.Value.Invalid) { v = 0; return true; }
             return false;
         }
@@ -159,7 +159,7 @@ namespace KKdBaseLib.F2
             value = (ENRSEntry.Value)((*ptr & 0xC0) >> 6);
             ptr++;
                  if (value == ENRSEntry.Value.Int32  ) v = (((((v << 8) | *ptr++) << 8) | *ptr++) << 8) | *ptr++;
-            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++; 
+            else if (value == ENRSEntry.Value.Int16  ) v =     (v << 8) | *ptr++;
             else if (value == ENRSEntry.Value.Invalid) { v = 0; return true; }
             return false;
         }

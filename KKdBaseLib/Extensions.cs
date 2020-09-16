@@ -276,7 +276,7 @@ namespace KKdBaseLib
         public static string ToS(this  ulong? d) => (d ?? default).ToString();
         public static string ToS(this  ulong  d) => d.ToString();
         public static string ToS(this  float? d, int round) => (d ?? default).ToS(round);
-        public static string ToS(this  float? d)            => (d ?? default).ToS();
+        public static string ToS(this  float? d)            => (d ?? default).ToS(15);
         public static string ToS(this  float  d, int round)
         { string s = (d.ToU32() & 0x80000000) != 0 ? "-" : ""; d = (d.ToU32() & 0x7FFFFFFF).ToF32();
           return s + Math.Round(d, round).ToString().ToLower().Replace(NDS, "."); }

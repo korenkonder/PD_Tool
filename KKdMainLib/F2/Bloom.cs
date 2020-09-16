@@ -24,12 +24,6 @@ namespace KKdMainLib.F2
             if (BLTs.C < 1) { s.C(); BLTs.C = -1; return; }
 
             if (BLTs.C > 0 && BLTs.O == 0) { s.C(); BLTs.C = -1; return; }
-            /*{
-                _IO.Format = Header.Format = Format.X;
-                _IO.Offset = Header.Length;
-                _IO.Position = BLTs.Offset;
-                BLTs = _IO.ReadCountPointerX<BLT>();
-            }*/
 
             s.P = BLTs.O;
             for (i = 0; i < BLTs.C; i++)
@@ -54,8 +48,8 @@ namespace KKdMainLib.F2
             s = File.OpenWriter();
             s.WPSSJIS("ID,ColorR,ColorG,ColorB,BrightpassR,BrightpassG,BrightpassB,Range\n");
             for (i = 0; i < BLTs.C; i++)
-                s.W(i + "," + BLTs[i] + "\n");
-            File.WriteAllBytes(file + "_bloom.txt", s.ToArray(true));
+                s.W($"{i},{ BLTs[i]}\n");
+            File.WriteAllBytes($"{file}_bloom.txt", s.ToArray(true));
         }
 
         private bool disposed;
@@ -68,9 +62,9 @@ namespace KKdMainLib.F2
             public Vec3 Brightpass;
             public float Range;
 
-            public override string ToString() => Color     .ToString(6) + "," +
-                                                 Brightpass.ToString(6) + "," +
-                                                 Range     .ToS(6);
+            public override string ToString() =>
+                $"{Color.X.ToS(6)},{Color.Y.ToS(6)},{Color.Z.ToS(6)},{Brightpass.X.ToS(6)}" +
+                $",{Brightpass.Y.ToS(6)},{Brightpass.Z.ToS(6)},{Range.ToS(6)}";
         }
     }
 }

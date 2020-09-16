@@ -5,7 +5,7 @@ using KKdBaseLib.Auth3D;
 using KKdMainLib.IO;
 using Object = KKdBaseLib.Auth3D.Object;
 using A3DADict = System.Collections.Generic.Dictionary<string, object>;
-using UsedDict = System.Collections.Generic.Dictionary<  int?, float?>;
+using UsedDict = System.Collections.Generic.Dictionary<   int, KKdBaseLib.KeyValuePair<int, float>>;
 
 namespace KKdMainLib
 {
@@ -857,7 +857,7 @@ namespace KKdMainLib
                     }
 
                     if (objectHRC.Shadow != null)
-                        W(name + "shadow", objectHRC.Shadow);
+                        W(name + "shadow", objectHRC.Shadow.HasValue && objectHRC.Shadow.Value ? 1 : 0);
                     W(name + "uid_name", objectHRC.UIDName);
                 }
                 W("objhrc.length", Data.ObjectHRC.Length);
@@ -947,10 +947,10 @@ namespace KKdMainLib
             if (type == 0x0001) { dict.FV(out key.Value, str + "value"); return key; }
 
             int i = 0;
-            if (dict.FV(out int EPTypePost, str + "ep_type_post"))
-                key.EPTypePost = (EPType)EPTypePost;
-            if (dict.FV(out int EPTypePre , str + "ep_type_pre" ))
-                key.EPTypePre  = (EPType)EPTypePre ;
+            if (dict.FV(out int epTypePost, str + "ep_type_post"))
+                key.EPTypePost = (EPType)epTypePost;
+            if (dict.FV(out int epTypePre , str + "ep_type_pre" ))
+                key.EPTypePre  = (EPType)epTypePre ;
             dict.FV(out key.Length, str + "key.length");
             dict.FV(out key.Max   , str + "max"       );
             if (dict.SW(str + "raw_data"))
@@ -1048,7 +1048,7 @@ namespace KKdMainLib
             if (a3dc) { W(str + BO + "", key.BinOffset); return; }
 
             int i = 0;
-            if (key.Type < KeyType.Lerp || key.Keys == null || (key.Keys != null && key.Keys.Length == 0))
+            if (key.Type < KeyType.Linear || key.Keys == null || (key.Keys != null && key.Keys.Length == 0))
             {
                 W(str + "type", (int)key.Type);
                 if (key.Type > 0) W(str + "value", key.Value);
@@ -1074,7 +1074,7 @@ namespace KKdMainLib
                     W(str + "key" + d + soi + d + "type", Type);
                 }
                 W(str + "key.length", key.Length);
-                if (key.Max != null) W(str + "max", key.Max);
+                W(str + "max", (float)(key.Max ?? Data.PlayControl.Size));
                 W(str + "type", (int)key.Type);
             }
             else if (key.Keys != null)
@@ -1083,7 +1083,7 @@ namespace KKdMainLib
                 ref int keyType = ref key.RawData.KeyType;
                 keyType = 0;
                 IKF kf;
-                if (key.Max != null) W(str + "max", key.Max);
+                W(str + "max", (float)(key.Max ?? Data.PlayControl.Size));
                 for (i = 0; i < length && keyType < 3; i++)
                 {
                     kf = key.Keys[i].Check();
@@ -1109,7 +1109,6 @@ namespace KKdMainLib
                 W(str + "raw_data_key_type"       , key.RawData.  KeyType    );
                 W(str + "type", (int)key.Type);
             }
-            W(str + "type", (int)key.Type);
         }
 
         private void W(string Data,   long? val)
@@ -1119,7 +1118,7 @@ namespace KKdMainLib
         private void W(string Data,   long  val) =>
                            W(Data,        val.ToS());
         private void W(string Data,  float  val) =>
-                           W(Data,        val.ToS());
+                           W(Data,        val.ToS(9));
         private void W(string Data, string  val)
         { if (val != null) s.W(Data + "=" + val + "\n"); }
 
@@ -1255,7 +1254,7 @@ namespace KKdMainLib
         {
             if (a3dcOpt) usedValues = new UsedDict();
             Data._.CompressF16 = Head.Format > Format.AFT && Head.Format < Format.FT ?
-                (Head.Format == Format.MGF ? CompressF16.I16F16F16F16 : CompressF16.I16F16F32F32) : 0;
+                (Head.Format == Format.MGF ? CompressF16.Type2 : CompressF16.Type1) : 0;
 
             s = File.OpenWriter();
             for (byte i = 0; i < 2; i++)
@@ -1536,17 +1535,14 @@ namespace KKdMainLib
             int Type = s.RI32();
             key.Value = s.RF32();
             key.Type = (KeyType)(Type & 0xFF);
-            if (key.Type < KeyType.Lerp) return;
+            if (key.Type < KeyType.Linear) return;
             key.Max    = s.RF32();
-            key.Length = s.RI32 ();
-            if (Type >> 8 != 0)
-            {
-                key.EPTypePost = (EPType)((Type >> 12) & 0xF);
-                key.EPTypePre  = (EPType)((Type >>  8) & 0xF);
-            }
+            key.Length = s.RI32();
+            key.EPTypePost = (EPType)((Type >> 12) & 0xF);
+            key.EPTypePre  = (EPType)((Type >>  8) & 0xF);
             key.Keys = new KFT3[key.Length];
 
-            if (f16 && Data._.CompressF16 == CompressF16.I16F16F16F16)
+            if (f16 && Data._.CompressF16 == CompressF16.Type2)
                 for (int i = 0; i < key.Keys.Length; i++)
                 { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RU16(); kf.V  = s.RF16();
                                                  kf.T1 = s.RF16(); kf.T2 = s.RF16(); }
@@ -1556,8 +1552,8 @@ namespace KKdMainLib
                                                  kf.T1 = s.RF32(); kf.T2 = s.RF32(); }
             else
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RF32(); kf.V  = s.RF32();
-                                                 kf.T1 = s.RF32(); kf.T2 = s.RF32(); }
+                { ref KFT3 kf = ref key.Keys[i]; Vec4 v = s.RV4(); kf.F  = v.X; kf.V  = v.Y;
+                                                                   kf.T1 = v.Z; kf.T2 = v.W; }
         }
 
         private void ReadOffset(out Vec3<Key> key)
@@ -1606,7 +1602,7 @@ namespace KKdMainLib
         private void W(ref Key key, bool f16 = false)
         {
             int i = 0;
-            if (key.Type > KeyType.Value && key.Keys != null)
+            if (key.Type > KeyType.Static && key.Keys != null)
             {
                 key.BinOffset = s.P;
                 int Type = (int)key.Type & 0xFF;
@@ -1614,10 +1610,10 @@ namespace KKdMainLib
                 Type |= ((int)key.EPTypePre  & 0xF) <<  8;
                 s.W(Type);
                 s.W(0x00);
-                s.W((float)key.Max);
+                s.W((float)(key.Max ?? Data.PlayControl.Size));
                 s.W(key.Keys.Length);
 
-                if (f16 && Data._.CompressF16 == CompressF16.I16F16F16F16)
+                if (f16 && Data._.CompressF16 == CompressF16.Type2)
                     for (i = 0; i < key.Keys.Length; i++)
                     { ref KFT3 kf = ref key.Keys[i]; s.W((ushort)kf.F ); s.W((Half)kf.V );
                                                      s.W((  Half)kf.T1); s.W((Half)kf.T2); }
@@ -1627,25 +1623,25 @@ namespace KKdMainLib
                                                      s.W(        kf.T1); s.W(      kf.T2); }
                 else
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; s.W(        kf.F ); s.W(      kf.V );
-                                                     s.W(        kf.T1); s.W(      kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W(new Vec4(kf.F, kf.V, kf.T1, kf.T2)); }
             }
             else
             {
+                KeyValuePair<int, float> kvp = new KeyValuePair<int, float>((int)key.Type, key.Value);
                 if (!a3dcOpt)
                 {
                     key.BinOffset = s.P;
                     if (key.Type == 0) s.W(0x00L);
                     else { s.W((int)key.Type); s.W((float)key.Value); }
                 }
-                else if (!usedValues.ContainsValue(key.Value))
+                else if (!usedValues.ContainsValue(kvp))
                 {
                     key.BinOffset = s.P;
                     if (key.Type == 0) s.W(0x00L);
                     else { s.W((int)key.Type); s.W((float)key.Value); }
-                    usedValues.Add(key.BinOffset, key.Value);
+                    usedValues.Add(key.BinOffset.Value, kvp);
                 }
-                else key.BinOffset = usedValues.GK(key.Value);
+                else key.BinOffset = usedValues.GK(kvp);
             }
         }
 
@@ -1824,7 +1820,7 @@ namespace KKdMainLib
 
         private void MKUV(ref Vec2<Key?> uv, ref Vec2<Key?> mUV)
         { MK(ref uv.X, ref mUV.X); MK(ref uv.Y, ref mUV.Y); }
-        
+
         private void MK(ref Key? key, ref Key? mKey)
         { if (!key.HasValue || !mKey.HasValue) return; Key k = key.Value; Key mk = mKey.Value; MK(ref k, ref mk); key = k; mKey = mk; }
 
@@ -2146,9 +2142,9 @@ namespace KKdMainLib
                 {
                     Data.ObjectHRC[i0] = new ObjectHRC
                     {
-                           Name = temp[i0].RS   (   "Name"),
-                         Shadow = temp[i0].RnI32( "Shadow"),
-                        UIDName = temp[i0].RS   ("UIDName"),
+                           Name = temp[i0].RS (   "Name"),
+                         Shadow = temp[i0].RnB( "Shadow"),
+                        UIDName = temp[i0].RS ("UIDName"),
                     };
 
                     if ((temp1 = temp[i0]["JointOrient"]).NotNull)
@@ -2546,7 +2542,7 @@ namespace KKdMainLib
 
         public static Vec4<Key> RRGBAK(this MsgPack msgPack) =>
             new Vec4<Key> { X = msgPack.RK("R"), Y = msgPack.RK("G"),
-                               Z = msgPack.RK("B"), W = msgPack.RK("A") };
+                            Z = msgPack.RK("B"), W = msgPack.RK("A") };
 
         public static Vec3<Key> RV3(this MsgPack msgPack, string name) =>
             msgPack[name].RV3();
@@ -2570,13 +2566,24 @@ namespace KKdMainLib
         {
             if (msgPack.Object == null) return default;
 
-            Key key = new Key { Max = msgPack.RnF32("Max"), Value = msgPack.RF32("Value") };
-            if (Enum.TryParse(msgPack.RS("EPTypePost"), out EPType EPTypePost)) key.EPTypePost = EPTypePost;
-            if (Enum.TryParse(msgPack.RS("EPTypePre" ), out EPType EPTypePre )) key.EPTypePre  = EPTypePre;
-            if (!Enum.TryParse(msgPack.RS("Type"), out KeyType KeyType)) { key.Value = 0; return key; }
-            key.Type = KeyType;
+            Key key = default;
+            if (Enum.TryParse(msgPack.RS("EPTypePost"), out EPType epTypePost)) key.EPTypePost = epTypePost;
+            if (Enum.TryParse(msgPack.RS("EPTypePre" ), out EPType epTypePre )) key.EPTypePre  = epTypePre;
+            if (!Enum.TryParse(msgPack.RS("Type"), out KeyType keyType))
+            {
+                string type = msgPack.RS("Type");
+                if (type == null || type == "")  { key.Value = 0; return key; }
+                {
+                         if (type == "Null" ) keyType = KeyType.None;
+                    else if (type == "Value") keyType = KeyType.Static;
+                    else if (type == "Lerp" ) keyType = KeyType.Linear;
+                }
+            }
+            key.Max = msgPack.RnF32("Max");
+            key.Value = msgPack.RF32("Value");
+            key.Type = keyType;
             if (key.Type == 0) { key.Value = 0; return key; }
-            else if (key.Type < KeyType.Lerp) return key;
+            else if (key.Type < KeyType.Linear) return key;
 
             if (msgPack.RB("RawData")) key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
             MsgPack trans;
@@ -2627,11 +2634,14 @@ namespace KKdMainLib
             return msgPack;
         }
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec3<Key> key) =>
-            msgPack.Add(new MsgPack(name).Add("X", ref key.X).Add("Y", ref key.Y).Add("Z", ref key.Z));
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec3<Key> key)
+        {
+            MsgPack m = new MsgPack(name).Add("X", ref key.X).Add("Y", ref key.Y).Add("Z", ref key.Z);
+            return m.List.Count > 0 ? msgPack.Add(m) : msgPack;
+        }
 
         public static MsgPack Add(this MsgPack msgPack, string name, ref Vec2<Key?> uv)
-        { 
+        {
             if (!uv.X.HasValue && !uv.Y.HasValue) return msgPack;
             MsgPack m = new MsgPack(name);
             if (uv.X.HasValue) m = m.Add("U", ref uv.X);
@@ -2652,7 +2662,7 @@ namespace KKdMainLib
         public static MsgPack Add(this MsgPack msgPack, string name, ref Key key)
         {
             MsgPack keys = new MsgPack(name).Add("Type", key.Type.ToString());
-            if (key.Keys != null && key.Type != KeyType.Null)
+            if (key.Keys != null && key.Type > KeyType.Static)
             {
                 keys.Add("Max", key.Max);
                 if ((int)key.EPTypePost > 0)
@@ -2677,7 +2687,7 @@ namespace KKdMainLib
                 }
                 keys.Add(Trans);
             }
-            else if (key.Value != 0) keys.Add("Value", key.Value);
+            else if (key.Type != KeyType.None) keys.Add("Value", key.Value);
             msgPack.Add(keys);
             return msgPack;
         }

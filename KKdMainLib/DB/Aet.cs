@@ -1,6 +1,5 @@
 //Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
-using System.Collections.Generic;
 using KKdBaseLib;
 using KKdMainLib.IO;
 
@@ -9,39 +8,39 @@ namespace KKdMainLib.DB
     public class Aet : System.IDisposable
     {
         private int i, i0, i1, i2;
-        private Stream _IO;
+        private Stream s;
 
         public AetSet[] AetSets;
 
         public void BINReader(string file)
         {
-            _IO = File.OpenReader(file + ".bin");
+            s = File.OpenReader(file + ".bin");
 
-            int aetSetsLength = _IO.RI32();
-            int aetSetsOffset = _IO.RI32();
-            int aetsLength    = _IO.RI32();
-            int aetsOffset    = _IO.RI32();
+            int aetSetsLength = s.RI32();
+            int aetSetsOffset = s.RI32();
+            int aetsLength    = s.RI32();
+            int aetsOffset    = s.RI32();
 
-            _IO.P = aetSetsOffset;
+            s.P = aetSetsOffset;
             AetSets = new AetSet[aetSetsLength];
             for (i = 0; i < aetSetsLength; i++)
             {
-                AetSets[i].Id          = _IO.RI32();
-                AetSets[i].Name        = _IO.RSaO();
-                AetSets[i].FileName    = _IO.RSaO();
-                _IO.RI32();
-                AetSets[i].SpriteSetId = _IO.RI32();
+                AetSets[i].Id          = s.RI32();
+                AetSets[i].Name        = s.RSaO();
+                AetSets[i].FileName    = s.RSaO();
+                s.RI32();
+                AetSets[i].SpriteSetId = s.RI32();
             }
 
             int setIndex;
             AET aet = new AET();
             int[] AetCount = new int[aetSetsLength];
 
-            _IO.P = aetsOffset;
+            s.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                _IO.PI64 += 10;
-                setIndex = _IO.RI16();
+                s.PI64 += 10;
+                setIndex = s.RI16();
                 AetCount[setIndex]++;
             }
 
@@ -51,18 +50,18 @@ namespace KKdMainLib.DB
                 AetCount[i] = 0;
             }
 
-            _IO.P = aetsOffset;
+            s.P = aetsOffset;
             for (i = 0; i < aetsLength; i++)
             {
-                aet.Id    = _IO.RI32();
-                aet.Name  = _IO.RSaO();
-                _IO.RI16();
-                setIndex  = _IO.RI16();
+                aet.Id    = s.RI32();
+                aet.Name  = s.RSaO();
+                s.RI16();
+                setIndex  = s.RI16();
 
                 AetSets[setIndex].Aets[AetCount[setIndex]] = aet; AetCount[setIndex]++;
             }
 
-            _IO.C();
+            s.C();
         }
 
 
@@ -71,13 +70,13 @@ namespace KKdMainLib.DB
             if (AetSets        == null) return;
             if (AetSets.Length ==    0) return;
 
-            List<string> SetName     = new List<string>();
-            List<string> SetFileName = new List<string>();
+            KKdList<string> setName     = KKdList<string>.New;
+            KKdList<string> setFileName = KKdList<string>.New;
 
-            List<int>    Ids        = new List<int>();
-            List<int> SetIds        = new List<int>();
+            KKdList<int>    ids = KKdList<int>.New;
+            KKdList<int> setIds = KKdList<int>.New;
 
-            List<int> NotAdd = new List<int>();
+            KKdList<int> notAdd = KKdList<int>.New;
             AET temp;
             AetSet set;
 
@@ -85,11 +84,11 @@ namespace KKdMainLib.DB
             {
                 set = AetSets[i];
                 if (set.    Name  != null)
-                    if  (SetName    .Contains(set.    Name)) { NotAdd.Add(i); continue; }
-                    else SetName    .Add     (set.    Name);
+                    if  (setName    .Contains(set.    Name)) { notAdd.Add(i); continue; }
+                    else setName    .Add     (set.    Name);
                 if (set.FileName  != null)
-                    if  (SetFileName.Contains(set.FileName)) { NotAdd.Add(i); continue; }
-                    else SetFileName.Add     (set.FileName);
+                    if  (setFileName.Contains(set.FileName)) { notAdd.Add(i); continue; }
+                    else setFileName.Add     (set.FileName);
 
                 if (set.NewId)
                 {
@@ -99,93 +98,94 @@ namespace KKdMainLib.DB
                 }
 
                 if (set.Id    != null)
-                    if  (SetIds.Contains((int)set.Id)) { NotAdd.Add(i); continue; }
-                    else SetIds.Add     ((int)set.Id);
+                    if  (setIds.Contains((int)set.Id)) { notAdd.Add(i); continue; }
+                    else setIds.Add     ((int)set.Id);
 
                 for (i0 = 0; i0 < set.Aets.Length; i0++)
                 {
                     temp = set.Aets[i0];
                     if (temp.Id != null)
-                        if ( Ids.Contains((int)temp.Id)) { NotAdd.Add(i); break; }
-                        else Ids.Add     ((int)temp.Id);
+                        if ( ids.Contains((int)temp.Id)) { notAdd.Add(i); break; }
+                        else ids.Add     ((int)temp.Id);
                 }
             }
-            SetName     = null;
-            SetFileName = null;
+            setName    .Dispose();
+            setFileName.Dispose();
 
             for (i = 0; i < AetSets.Length; i++)
             {
                 set = AetSets[i];
-                if (NotAdd.Contains(i)) continue;
+                if (notAdd.Contains(i)) continue;
                 if (!set.NewId) continue;
 
                 i1 = 0;
                 if (set.Id    == null) while (true)
-                    { if (!SetIds.Contains(i1)) { AetSets[i].Id = i1; SetIds.Add(i1); break; } i1++; }
+                    { if (!setIds.Contains(i1)) { AetSets[i].Id = i1; setIds.Add(i1); break; } i1++; }
 
                 for (i0 = 0, i1 = 0; i0 < set.Aets.Length; i0++)
-                    if (set.Aets[i0].Id == null) while (true) { if (!Ids.Contains(i1))
-                            { AetSets[i].Aets[i0].Id = i1; Ids.Add(i1); break; } i1++; }
+                    if (set.Aets[i0].Id == null) while (true) { if (!ids.Contains(i1))
+                            { AetSets[i].Aets[i0].Id = i1; ids.Add(i1); break; } i1++; }
             }
-
-               Ids = null;
-            SetIds = null;
+               ids.Dispose();
+            setIds.Dispose();
 
             for (i = 0, i0 = 0, i2 = 0; i < AetSets.Length; i++)
-                if (!NotAdd.Contains(i)) { i0 += AetSets[i].Aets.Length; i2++; }
+                if (!notAdd.Contains(i)) { i0 += AetSets[i].Aets.Length; i2++; }
 
             i1 = i0 * 12;
             i1 = i1.A(0x20) + 0x20;
 
-            _IO = File.OpenWriter(file + ".bin", true);
-            _IO.W(i2);
-            _IO.W(i1);
-            _IO.W(i0);
-            _IO.W(0x20);
-            _IO.W(0x9066906690669066);
-            _IO.W(0x9066906690669066);
+            s = File.OpenWriter(file + ".bin", true);
+            s.W(i2);
+            s.W(i1);
+            s.W(i0);
+            s.W(0x20);
+            s.W(0x9066906690669066);
+            s.W(0x9066906690669066);
 
-            _IO.P = (i1 + i2 * 0x14).A(0x20);
+            s.P = (i1 + i2 * 0x14).A(0x20);
             for (i = 0; i < AetSets.Length; i++)
             {
-                if (NotAdd.Contains(i)) continue;
-                AetSets[i].    NameOffset = _IO.P; _IO.W(AetSets[i].    Name + "\0");
-                AetSets[i].FileNameOffset = _IO.P; _IO.W(AetSets[i].FileName + "\0");
+                if (notAdd.Contains(i)) continue;
+                AetSets[i].    NameOffset = s.P; s.W(AetSets[i].    Name + "\0");
+                AetSets[i].FileNameOffset = s.P; s.W(AetSets[i].FileName + "\0");
             }
 
             for (i = 0; i < AetSets.Length; i++)
             {
-                if (NotAdd.Contains(i)) continue;
+                if (notAdd.Contains(i)) continue;
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
-                { AetSets[i].Aets[i0].NameOffset = _IO.P; _IO.W(AetSets[i].Aets[i0].Name + "\0"); }
+                { AetSets[i].Aets[i0].NameOffset = s.P; s.W(AetSets[i].Aets[i0].Name + "\0"); }
             }
-            _IO.A(0x08, true);
+            s.A(0x08, true);
 
-            _IO.P = 0x20;
+            s.P = 0x20;
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
-                if (NotAdd.Contains(i)) { i2++; continue; }
+                if (notAdd.Contains(i)) { i2++; continue; }
 
                 for (i0 = 0; i0 < AetSets[i].Aets.Length; i0++)
                 {
-                    _IO.W(AetSets[i].Aets[i0].Id        );
-                    _IO.W(AetSets[i].Aets[i0].NameOffset);
-                    _IO.W((ushort)     i0 );
-                    _IO.W((ushort)(i - i2));
+                    s.W(AetSets[i].Aets[i0].Id        );
+                    s.W(AetSets[i].Aets[i0].NameOffset);
+                    s.W((ushort)     i0 );
+                    s.W((ushort)(i - i2));
                 }
             }
-            _IO.A(0x20);
+            s.A(0x20);
+
             for (i = 0, i2 = 0; i < AetSets.Length; i++)
             {
-                if (NotAdd.Contains(i)) { i2++; continue; }
+                if (notAdd.Contains(i)) { i2++; continue; }
 
-                _IO.W(AetSets[i].Id            );
-                _IO.W(AetSets[i].    NameOffset);
-                _IO.W(AetSets[i].FileNameOffset);
-                _IO.W(i - i2);
-                _IO.W(AetSets[i].SpriteSetId   );
+                s.W(AetSets[i].Id            );
+                s.W(AetSets[i].    NameOffset);
+                s.W(AetSets[i].FileNameOffset);
+                s.W(i - i2);
+                s.W(AetSets[i].SpriteSetId   );
             }
-            _IO.C();
+            notAdd.Dispose();
+            s.C();
         }
 
         public void MsgPackReader(string file, bool json)
@@ -218,7 +218,7 @@ namespace KKdMainLib.DB
 
         private bool disposed = false;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; AetSets = null; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; AetSets = null; disposed = true; } }
 
         public struct AET
         {
@@ -246,10 +246,10 @@ namespace KKdMainLib.DB
 
             public void ReadMsgPack(MsgPack msg)
             {
-                FileName    = msg.RS ("FileName"   );
+                FileName    = msg.RS   ("FileName"   );
                 Id          = msg.RnU16(         "Id");
-                Name        = msg.RS (    "Name"   );
-                NewId       = msg.RB("NewId"      );
+                Name        = msg.RS   (    "Name"   );
+                NewId       = msg.RB   ("NewId"      );
                 SpriteSetId = msg.RnU16("SpriteSetId");
 
                 MsgPack Temp;

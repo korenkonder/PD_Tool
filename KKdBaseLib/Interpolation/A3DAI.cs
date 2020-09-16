@@ -2,7 +2,7 @@ using KKdBaseLib.Auth3D;
 
 namespace KKdBaseLib.Interpolation
 {
-    public class A3DAI : IInterpolation<float> //A3DA Interpolation
+    public class A3DAI : IInterpolation<float>, System.IDisposable //A3DA Interpolation
     {
         private A3DAKey a3daKey;
 
@@ -113,54 +113,44 @@ namespace KKdBaseLib.Interpolation
         {
             float df = 0;
             float ep = 0;
-            float f = (int)frame;
 
-            if (f < firstKey.F)
+            if (frame < firstKey.F)
             {
-                if (a3daKey.EPTypePost < EPType.EP_1 || a3daKey.EPTypePost > EPType.EP_3) return firstKey.V;
+                if (a3daKey.EPTypePost < EPType.Linear || a3daKey.EPTypePost > EPType.CycleOffset)
+                    return firstKey.V;
 
                 df = firstKey.F - frame;
-                if (a3daKey.EPTypePre == EPType.EP_1) return firstKey.V - df * firstKey.T1;
+                if (a3daKey.EPTypePre == EPType.Linear)
+                    return firstKey.V - df * firstKey.T1;
 
                 frame = lastKey.F - df % a3daKey.FrameDelta;
-                f = (int)frame;
-                if (a3daKey.EPTypePre == EPType.EP_3)
-                {
-                    ep = df / a3daKey.FrameDelta;
-                    ep = (ep > 0 && ep != (int)ep) ? (ep - (int)ep > 0 ? 1 : 0) : ep;
-                    ep = -(ep + 1) * a3daKey.ValueDelta;
-                }
+                if (a3daKey.EPTypePre == EPType.CycleOffset)
+                    ep = -(float)((int)(df / a3daKey.FrameDelta) + 1) * a3daKey.ValueDelta;
             }
-            else if (f >= lastKey.F)
+            else if (frame >= lastKey.F)
             {
-                if (a3daKey.EPTypePost < EPType.EP_1 || a3daKey.EPTypePost > EPType.EP_3) return lastKey.V;
+                if (a3daKey.EPTypePost < EPType.Linear || a3daKey.EPTypePost > EPType.CycleOffset)
+                    return lastKey.V;
 
                 df = frame - lastKey.F;
-                if (a3daKey.EPTypePost == EPType.EP_1) return lastKey.V + df * lastKey.T2;
+                if (a3daKey.EPTypePost == EPType.Linear)
+                    return lastKey.V + df * lastKey.T2;
 
                 frame = firstKey.F + df % a3daKey.FrameDelta;
-                f = (int)frame;
-                if (a3daKey.EPTypePost == EPType.EP_3)
-                {
-                    ep = df / a3daKey.FrameDelta;
-                    ep = (ep > 0 && ep != (int)ep) ? (ep - (int)ep > 0 ? 1 : 0) : ep;
-                    ep = (ep + 1) * a3daKey.ValueDelta;
-                }
+                if (a3daKey.EPTypePost == EPType.CycleOffset)
+                    ep = (float)((int)(df / a3daKey.FrameDelta) + 1) * a3daKey.ValueDelta;
             }
 
-                 if (f <= firstKey.F) return firstKey.V + ep;
-            else if (f >=  lastKey.F) return  lastKey.V + ep;
-
             KFT3 c, n;
+            long key = 0;
             unsafe
             {
                 fixed (KFT3* ptr = a3daKey.Keys)
                 {
-                    long key = 0;
                     long length = a3daKey.Length;
                     long temp;
                     while (length > 0)
-                        if (f > a3daKey.Keys[key + (temp = length >> 1)].F)
+                        if (frame >= ptr[key + (temp = length >> 1)].F)
                         {
                                key += temp + 1;
                             length -= temp + 1;
@@ -172,29 +162,35 @@ namespace KKdBaseLib.Interpolation
                 }
             }
 
-            float result;
-            if (frame > c.F && frame < n.F)
+            float v;
+            if (frame <= c.F || frame >= n.F)
+                v = frame > c.F ? n.V : c.V;
+            else if (a3daKey.Type == KeyType.Linear || (a3daKey.Type == KeyType.Hermite && n.T1 == c.T2 && n.T1 == 0.0f))
             {
-                if (a3daKey.Type == KeyType.Lerp)
-                {
-                    float t = (frame - c.F) / (n.F - c.F);
-                    result = (1 - t) * c.V + t * n.V;
-                }
-                else if (a3daKey.Type == KeyType.Hermite)
-                {
-                    float t = (frame - c.F) / (n.F - c.F);
-                    float t_2 = (1 - t) * (1 - t);
-                    result = t_2 * c.V * (1 + 2 * t) + (t * n.V * (3 - 2 * t) +
-                        (t_2 * c.T2 + t * (t - 1) * n.T1) * (n.F - c.F)) * t;
-                }
-                else result = c.V;
+                float t = (frame - c.F) / (n.F - c.F);
+                v = (1.0f - t) * c.V + t * n.V;
             }
-            else result = frame > c.F ? n.V : c.V;
-            return result + ep;
+            else if (a3daKey.Type == KeyType.Hermite)
+            {
+                float t = (frame - c.F) / (n.F - c.F);
+                float t_2 = (1.0f - t) * (1.0f - t);
+                v = t_2 * c.V * (1.0f + 2.0f * t) + (t * n.V * (3.0f - 2.0f * t) +
+                    (t_2 * c.T2 + t * (t - 1.0f) * n.T1) * (n.F - c.F)) * t;
+            }
+            else v = c.V;
+            return v + ep;
         }
 
         public void ResetFrameCount() { f = -df; t = f / rf; }
 
         public override string ToString() => $"F: {f}; T: {t}; V: {v}";
+
+        public void Dispose()
+        {
+            a3daKey.Keys = null;
+            a3daKey = default;
+            f = t = v = df = @if = rf = default;
+            firstKey = lastKey = default;
+        }
     }
 }

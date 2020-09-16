@@ -69,7 +69,6 @@ namespace PD_Tool
                             else
                             {
                                 a3da.Head.Format = format;
-                                
                                 File.WriteAllBytes(filepath + ".a3da", (choose == "1" ||
                                     choose == "3") ? a3da.A3DAWriter() : a3da.A3DCWriter());
                             }
@@ -156,7 +155,7 @@ namespace PD_Tool
                     }
                 a3daArray[i].Data.PlayControl.Div = null;
             }
-            
+
             farc.Files.Capacity = 0;
             farc.Files.Capacity = list.Count;
             for (int i = 0; i < list.Count; i++)

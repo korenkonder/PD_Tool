@@ -8,7 +8,7 @@ namespace KKdMainLib.IO
 
         private const string libDeflateString = "libdeflate.dll";
 
-        public static void CheckLib() 
+        public static void CheckLib()
         {
             if (!File.Exists(libDeflateString))
                 File.WriteAllBytes(libDeflateString, Properties.Resources.libdeflate);

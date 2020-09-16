@@ -11,7 +11,7 @@ namespace KKdBaseLib
 
         public Vec3 Column0 { get => new Vec3(Row0.X, Row1.X, Row2.X);
             set { Row0.X = value.X; Row1.X = value.Y; Row2.X = value.Z; } }
-        public Vec3 Column1 { get => new Vec3(Row0.Y, Row1.X, Row2.Y);
+        public Vec3 Column1 { get => new Vec3(Row0.Y, Row1.Y, Row2.Y);
             set { Row0.Y = value.X; Row1.Y = value.Y; Row2.Y = value.Z; } }
         public Vec3 Column2 { get => new Vec3(Row0.Z, Row1.Z, Row2.Z);
             set { Row0.Z = value.X; Row1.Z = value.Y; Row2.Z = value.Z;} }

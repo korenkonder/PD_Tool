@@ -24,12 +24,6 @@ namespace KKdMainLib.F2
             if (CCTs.C < 1) { s.C(); CCTs.C = -1; return; }
 
             if (CCTs.C > 0 && CCTs.O == 0) { s.C(); CCTs.C = -1; return; }
-            /*{
-                _IO.Format = Header.Format = Format.X;
-                _IO.Offset = Header.Length;
-                _IO.Position = CCTs.Offset;
-                CCTs = _IO.ReadCountPointerX<CCT>();
-            }*/
 
             s.P = CCTs.O;
             for (i = 0; i < CCTs.C; i++)
@@ -56,8 +50,8 @@ namespace KKdMainLib.F2
             s = File.OpenWriter();
             s.WPSSJIS("ID,Hue,Saturation,Lightness,Exposure,GammaR,GammaG,GammaB,Contrast\n");
             for (i = 0; i < CCTs.C; i++)
-                s.W(i + "," + CCTs[i] + "\n");
-            File.WriteAllBytes(file + "_cc.txt", s.ToArray(true));
+                s.W($"{i},{CCTs[i]}\n");
+            File.WriteAllBytes($"{file}_cc.txt", s.ToArray(true));
         }
 
         private bool disposed;
@@ -73,12 +67,9 @@ namespace KKdMainLib.F2
             public Vec3 Gamma;
             public float Contrast;
 
-            public override string ToString() => Hue       .ToS(6) + "," +
-                                                 Saturation.ToS(6) + "," +
-                                                 Lightness .ToS(6) + "," +
-                                                 Exposure  .ToS(6) + "," +
-                                                 Gamma     .ToString(6) + "," +
-                                                 Contrast  .ToS(6);
+            public override string ToString() =>
+                $"{Hue.ToS(6)},{Saturation.ToS(6)},{Lightness.ToS(6)},{Exposure.ToS(6)}" +
+                $",{Gamma.X.ToS(6)},{Gamma.Y.ToS(6)},{Gamma.Z.ToS(6)},{Contrast.ToS(6)}";
         }
     }
 }

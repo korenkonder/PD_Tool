@@ -104,23 +104,23 @@ namespace KKdBaseLib.Auth3D
 
     public enum CompressF16 : int
     {
-        F32F32F32F32 = 0,
-        I16F16F32F32 = 1,
-        I16F16F16F16 = 2,
+        Type0 = 0,
+        Type1 = 1,
+        Type2 = 2,
     }
 
-    public enum EPType : int
+    public enum EPType : int // Pre/Post Infinity
     {
-        EP_1 = 1,
-        EP_2 = 2,
-        EP_3 = 3,
+        Linear      = 1,
+        Cycle       = 2,
+        CycleOffset = 3,
     }
 
     public enum KeyType : int
     {
-        Null    = 0,
-        Value   = 1,
-        Lerp    = 2,
+        None    = 0,
+        Static  = 1,
+        Linear  = 2,
         Hermite = 3,
         Hold    = 4,
     }
@@ -157,7 +157,7 @@ namespace KKdBaseLib.Auth3D
             }
             else if (k.Length == 1)
             {
-                Type = KeyType.Value;
+                Type = KeyType.Static;
                 Value = k.Keys[0].V;
             }
         }
@@ -259,7 +259,7 @@ namespace KKdBaseLib.Auth3D
 
     public struct ObjectHRC
     {
-        public int? Shadow;
+        public bool? Shadow;
         public string Name;
         public string UIDName;
         public Node[] Node;

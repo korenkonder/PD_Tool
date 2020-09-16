@@ -8,25 +8,29 @@ namespace PD_Tool
 {
     public class DataBase
     {
-        public static void Processor(bool json)
+        public static void Processor(bool json, char choose)
         {
-            Console.Title = "DB Converter";
-            Console.Clear();
-            Program.ConsoleDesign(true);
-            Program.ConsoleDesign("         Choose type of DataBase file:");
-            Program.ConsoleDesign(false);
-            Program.ConsoleDesign("1. Auth DB Converter");
-            Program.ConsoleDesign("2. AET DB Converter");
-            Program.ConsoleDesign("3. SPR DB Converter");
-            Program.ConsoleDesign(false);
-            Program.ConsoleDesign("R. Return to Main Menu");
-            Program.ConsoleDesign(false);
-            Program.ConsoleDesign(true);
-            Console.WriteLine();
-            string format = Console.ReadLine().ToUpper();
-            if (format == "1") AuthDBProcessor(json);
-            if (format == "2")  AETDBProcessor(json);
-            if (format == "3")  SPRDBProcessor(json);
+            if (choose == '\0')
+            {
+                Console.Title = "DB Converter";
+                Console.Clear();
+                Program.ConsoleDesign(true);
+                Program.ConsoleDesign("         Choose type of DataBase file:");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("1. Auth DB Converter");
+                Program.ConsoleDesign("2. AET DB Converter");
+                Program.ConsoleDesign("3. SPR DB Converter");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("R. Return to Main Menu");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign(true);
+                Console.WriteLine();
+                string format = Console.ReadLine().ToUpper();
+                if (format.Length > 0) choose = format[0];
+            }
+            if (choose == '1') AuthDBProcessor(json);
+            if (choose == '2')  AETDBProcessor(json);
+            if (choose == '3')  SPRDBProcessor(json);
         }
 
         public static void AuthDBProcessor(bool JSON)

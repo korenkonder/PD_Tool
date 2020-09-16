@@ -10,7 +10,7 @@ namespace KKdBaseLib
 
         public Vec2 Column0 { get => new Vec2(Row0.X, Row1.X);
             set { Row0.X = value.X; Row1.X = value.Y; } }
-        public Vec2 Column1 { get => new Vec2(Row0.Y, Row1.X);
+        public Vec2 Column1 { get => new Vec2(Row0.Y, Row1.Y);
             set { Row0.Y = value.X; Row1.Y = value.Y; } }
 
         public static Mat2 Identity => new Mat2(new Vec2(1.0f, 0.0f),

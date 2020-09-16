@@ -68,7 +68,7 @@ namespace KKdMainLib
                 }
                 else s.W("%2A%2A%2A");
             }
-            
+
             return s.ToArray(true);
         }
 
@@ -231,7 +231,7 @@ namespace KKdMainLib
                  NameExtra = msg.RS  ( "NameExtra");
                 Score      = msg.RI32("Score");
                 ScoreExtra = msg.RI32("ScoreExtra");
-                
+
                 if (Name == null)
                 {
                      Name      = msg.RS  ( "Name0");

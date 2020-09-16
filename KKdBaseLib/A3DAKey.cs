@@ -11,13 +11,10 @@ namespace KKdBaseLib
         public EPType EPTypePost;
         public float FrameDelta;
         public float ValueDelta;
-        public int Unk1C;
-        public int Unk20;
-        public int Unk24;
-        public int Unk28;
-        public int Unk2C;
-        public int Unk30;
-        public int Unk34;
+        public int Padding;
+        public long FirstKey;
+        public long SecondKey;
+        public long AfterLastKey;
         public long Length;
         public long DataOffset; //Used only in-game and points to KFT3 Array
 
@@ -26,17 +23,17 @@ namespace KKdBaseLib
         public A3DAKey(Key k)
         {
             Type = 0; Value = MaxFrames = FrameDelta = ValueDelta = 0; EPTypePre = EPTypePost = 0;
-            Unk1C = Unk20 = Unk24 = Unk28 = Unk2C = Unk30 = Unk34 = 0;
+            FirstKey = SecondKey = AfterLastKey = Padding = 0;
             Length = DataOffset = 0; Keys = null;
 
-            EPTypePost = k.EPTypePost;
-            EPTypePre = k.EPTypePre;
             MaxFrames = k.Max ?? 0;
-            if (k.Type > KeyType.Value && k.Length > 1)
+            if (k.Type > KeyType.Static && k.Length > 1)
             {
                 Type = k.Type;
                 Length = k.Length;
                 Keys = k.Keys;
+                EPTypePost = k.EPTypePost;
+                EPTypePre = k.EPTypePre;
                 FrameDelta = k.Keys[k.Length - 1].F - k.Keys[0].F;
                 ValueDelta = k.Keys[k.Length - 1].V - k.Keys[0].V;
             }
@@ -44,6 +41,10 @@ namespace KKdBaseLib
             {
                 Type = k.Type;
                 Value = k.Type > 0 ? k.Value : 0.0f;
+                EPTypePost = 0;
+                EPTypePre = 0;
+                FrameDelta = 0;
+                ValueDelta = Value;
             }
         }
     }

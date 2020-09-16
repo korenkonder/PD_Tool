@@ -28,13 +28,6 @@ namespace KKdMainLib.F2
             {
                 LITs[i] = s.RCPX<LIT>();
                 if ((LITs[i].C > 0 || LITs[i].O == 0) && !s.IsX) { s.C(); LITs.C = -1; return; }
-                /*{
-                    _IO.Format = Header.Format = Format.X;
-                    _IO.Offset = Header.Length;
-                    _IO.Position = LITs.Offset;
-                    LITs[i] = _IO.ReadCountPointerX<LIT>();
-                }
-                if (_IO.IsX) IO.ReadInt64();*/
             }
 
             for (i = 0; i < LITs.C; i++)
@@ -46,7 +39,6 @@ namespace KKdMainLib.F2
                     lit.Id    = (Id   )s.RI32E();
                     lit.Flags = (Flags)s.RI32E();
                     lit.Type  = (Type )s.RI32E();
-                    if (s.IsX) { s.RI64(); s.RI64(); s.RI64(); }
                     lit.Ambient  .X = s.RF32E();
                     lit.Ambient  .Y = s.RF32E();
                     lit.Ambient  .Z = s.RF32E();
@@ -65,8 +57,6 @@ namespace KKdMainLib.F2
                     lit.ToneCurve.X = s.RF32E();
                     lit.ToneCurve.Y = s.RF32E();
                     lit.ToneCurve.Z = s.RF32E();
-                    if (s.IsX) { s.RI64(); s.RI64(); s.RI64();
-                                 s.RI64(); s.RI64(); s.RI32(); }
                 }
             }
             s.C();
@@ -82,8 +72,8 @@ namespace KKdMainLib.F2
                 "SpecularB,SpecularA,PosX,PosY,PosZ,ToneCurveBegin,ToneCurveEnd,ToneCurveBlendRate," +
                 (file.EndsWith("_chara") ? "コメント" : "ID") + "\n");
             for (i0 = 0; i0 < LITs[i].C; i0++)
-                s.W(LITs[i][i0] + "," + i + "\n");
-            File.WriteAllBytes(file + "_light.txt", s.ToArray(true));
+                s.W($"{LITs[i][i0]},{i}\n");
+            File.WriteAllBytes($"{file}_light.txt", s.ToArray(true));
         }
 
         public struct LIT
@@ -97,12 +87,17 @@ namespace KKdMainLib.F2
             public Vec3 Position;
             public Vec3 ToneCurve;
 
-            public override string ToString() => Flags == 0 ? ",,,,,,,,,,,,,,,," : Type + "," +
-                ((Flags & Flags.Ambient  ) == 0 ? ",,,"  : Ambient  .ToString(6) + ",") +
-                ((Flags & Flags.Diffuse  ) == 0 ? ",,,"  : Diffuse  .ToString(6) + ",") +
-                ((Flags & Flags.Specular ) == 0 ? ",,,," : Specular .ToString(6) + ",") +
-                ((Flags & Flags.Position ) == 0 ? ",,,"  : Position .ToString(6) + ",") +
-                ((Flags & Flags.ToneCurve) == 0 ? ",,,"  : ToneCurve.ToString(6));
+            public override string ToString() => Flags == 0 ? ",,,,,,,,,,,,,,,," : $"{Type}," +
+                ((Flags & Flags.Ambient  ) != 0
+                ? $"{Ambient  .X.ToS(6)},{Ambient  .Y.ToS(6)},{Ambient  .Z.ToS(6)}," : ",,,") +
+                ((Flags & Flags.Diffuse  ) != 0
+                ? $"{Diffuse  .X.ToS(6)},{Diffuse  .Y.ToS(6)},{Diffuse  .Z.ToS(6)}," : ",,,") +
+                ((Flags & Flags.Specular ) != 0
+                ? $"{Specular .X.ToS(6)},{Specular .Y.ToS(6)},{Specular .Z.ToS(6)},{Specular .W.ToS(6)}," : ",,,,") +
+                ((Flags & Flags.Position ) != 0
+                ? $"{Position .X.ToS(6)},{Position .Y.ToS(6)},{Position .Z.ToS(6)}," : ",,,") +
+                ((Flags & Flags.ToneCurve) != 0
+                ? $"{ToneCurve.X.ToS(6)},{ToneCurve.Y.ToS(6)},{ToneCurve.Z.ToS(6)}" : ",,");
         }
 
         private bool disposed;

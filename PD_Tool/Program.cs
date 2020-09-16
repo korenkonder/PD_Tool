@@ -47,7 +47,7 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.7";
+            Console.Title = "PD_Tool v0.4.9.8";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -77,6 +77,7 @@ namespace PD_Tool
             if (choose == null || choose == "") return;
                  if (choose[0] == 'M') json = false;
             else if (choose[0] == 'J') json = true ;
+            else if (choose[0] >= 'A' && choose[0] <= 'A') Functions();
         }
 
         private static void Functions()
@@ -95,7 +96,8 @@ namespace PD_Tool
                 Choose(1, "", out string[] FileNames);
                 foreach (string FileName in FileNames) DIVAFILE.Encrypt(FileName);
             }
-            else if (choose[0] == '5') DataBase.Processor(json);
+            else if (choose[0] == '5')
+                DataBase.Processor(json, choose.Length > 1 ? choose[1] : '\0');
             else if (choose[0] == '6')
             {
                 string localChoose = "";

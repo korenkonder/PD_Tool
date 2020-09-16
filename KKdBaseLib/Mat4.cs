@@ -12,7 +12,7 @@ namespace KKdBaseLib
 
         public Vec4 Column0 { get => new Vec4(Row0.X, Row1.X, Row2.X, Row3.X);
             set { Row0.X = value.X; Row1.X = value.Y; Row2.X = value.Z; Row3.X = value.W; } }
-        public Vec4 Column1 { get => new Vec4(Row0.Y, Row1.X, Row2.Y, Row3.Y);
+        public Vec4 Column1 { get => new Vec4(Row0.Y, Row1.Y, Row2.Y, Row3.Y);
             set { Row0.Y = value.X; Row1.Y = value.Y; Row2.Y = value.Z; Row3.Y = value.W; } }
         public Vec4 Column2 { get => new Vec4(Row0.Z, Row1.Z, Row2.Z, Row3.Z);
             set { Row0.Z = value.X; Row1.Z = value.Y; Row2.Z = value.Z; Row3.Z = value.W; } }

@@ -8,7 +8,7 @@ namespace KKdMainLib.DB
     public class Auth : IDisposable
     {
         private int i;
-        private Stream _IO;
+        private Stream s;
 
         public string[] Category;
         public UID[] UIDs;
@@ -17,16 +17,16 @@ namespace KKdMainLib.DB
         {
             A3DADict dict = new A3DADict();
 
-            _IO = File.OpenReader(file + ".bin");
+            s = File.OpenReader(file + ".bin");
 
-            _IO.Format = Format.F;
-            int signature = _IO.RI32();
+            s.Format = Format.F;
+            int signature = s.RI32();
             if (signature != 0x44334123) return;
-            signature = _IO.RI32();
+            signature = s.RI32();
             if (signature != 0x5F5F5F41) return;
-            _IO.RI64();
+            s.RI64();
 
-            string[] strData = _IO.RS(_IO.L - _IO.P).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
+            string[] strData = s.RS(s.L - s.P).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             for (i = 0; i < strData.Length; i++)
                 dict.GD(strData[i]);
             strData = null;
@@ -51,25 +51,25 @@ namespace KKdMainLib.DB
                 }
             }
 
-            _IO.C();
+            s.C();
             dict.Clear();
             dict = null;
         }
 
         public void BINWriter(string file)
         {
-            _IO = File.OpenWriter(file + ".bin", true);
+            s = File.OpenWriter(file + ".bin", true);
 
-            _IO.W("#A3DA__________\n");
-            _IO.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
+            s.W("#A3DA__________\n");
+            s.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
                 System.Globalization.CultureInfo.InvariantCulture) + "\n");
 
             if (Category != null)
             {
                 int[] so = Category.Length.SW();
                 for (i = 0; i < Category.Length; i++)
-                    _IO.W($"category.{so[i]}.value={ Category[so[i]]}\n");
-                _IO.W($"category.length={Category.Length}\n");
+                    s.W($"category.{so[i]}.value={ Category[so[i]]}\n");
+                s.W($"category.length={Category.Length}\n");
             }
 
             if (UIDs != null)
@@ -78,18 +78,18 @@ namespace KKdMainLib.DB
                 for (i = 0; i < UIDs.Length; i++)
                 {
                     if (UIDs[so[i]].Category != null && UIDs[so[i]].Category != "")
-                        _IO.W($"uid.{so[i]}.category=" + UIDs[so[i]].Category + "\n");
+                        s.W($"uid.{so[i]}.category=" + UIDs[so[i]].Category + "\n");
                     if (UIDs[so[i]].OrgUid   != null)
-                        _IO.W($"uid.{so[i]}.org_uid="  + UIDs[so[i]].OrgUid   + "\n");
+                        s.W($"uid.{so[i]}.org_uid="  + UIDs[so[i]].OrgUid   + "\n");
                     if (UIDs[so[i]].Size     != null)
-                        _IO.W($"uid.{so[i]}.size="     + UIDs[so[i]].Size     + "\n");
+                        s.W($"uid.{so[i]}.size="     + UIDs[so[i]].Size     + "\n");
                     if (UIDs[so[i]].Value    != null && UIDs[so[i]].Value    != "")
-                        _IO.W($"uid.{so[i]}.value="    + UIDs[so[i]].Value    + "\n");
+                        s.W($"uid.{so[i]}.value="    + UIDs[so[i]].Value    + "\n");
                 }
-                _IO.W($"uid.length={UIDs.Length}\n");
+                s.W($"uid.length={UIDs.Length}\n");
             }
 
-            _IO.C();
+            s.C();
         }
 
         public void MsgPackReader(string file, bool json)
@@ -151,7 +151,7 @@ namespace KKdMainLib.DB
 
         private bool disposed = false;
         public void Dispose()
-        { if (!disposed) { if (_IO != null) _IO.D(); _IO = null; Category = null; UIDs = null; disposed = true; } }
+        { if (!disposed) { if (s != null) s.D(); s = null; Category = null; UIDs = null; disposed = true; } }
 
         public struct UID
         {
