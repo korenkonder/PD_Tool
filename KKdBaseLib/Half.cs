@@ -35,18 +35,23 @@ namespace KKdBaseLib
         public static unsafe explicit operator Half(float val)
         {
             int si32 = *(int*)&val;
-            int sign     = (si32 >> 31) & 0x001;
-            int exponent = (si32 >> 23) & 0x0FF;
-            int mantissa =  si32        & 0x3FF;
                  if (      si32 == 0x00000000) return new Half { value = 0x0000 };
             else if ((uint)si32 == 0x80000000) return new Half { value = 0x8000 };
             else
             {
-                     if (exponent <  0) { exponent =  0; mantissa = 0; }
-                else if (exponent > 30)   exponent = 31;
-                return new Half { value = (ushort)(sign | (exponent << 10) | mantissa) };
-            }
+                ushort sign     = (ushort)((si32 >> 31) & 0x001);
+                ushort exponent = (ushort)((si32 >> 23) & 0x0FF);
+                ushort mantissa = (ushort)((si32 >> 13) & 0x3FF);
 
+                if (exponent == 0xFF) exponent = 31;
+                else if (exponent != 0x00)
+                {
+                    exponent -= 127 - 15;
+                         if (exponent <  0) exponent = mantissa = 0;
+                    else if (exponent > 30) exponent = 31;
+                }
+                return new Half { value = (ushort)((sign << 15) | (exponent << 10) | mantissa) };
+            }
         }
 
         public static unsafe implicit operator double(Half h)
@@ -70,14 +75,18 @@ namespace KKdBaseLib
             else if ((ulong)si64 == 0x8000000000000000) return new Half { value = 0x8000 };
             else
             {
-                ushort sign     = (ushort) ((si64 >> 63) & 0x8000);
-                 short exponent = ( short)(((si64 >> 52) & 0x07FF) - 1023 + 15);
-                ushort mantissa = (ushort) ((si64 >> 42) & 0x03FF);
+                ushort sign     = (ushort)((si64 >> 63) & 0x8000);
+                ushort exponent = (ushort)((si64 >> 52) & 0x07FF);
+                ushort mantissa = (ushort)((si64 >> 42) & 0x03FF);
 
-                     if (exponent <  0) { exponent =  0; mantissa = 0; }
-                else if (exponent > 30)   exponent = 31;
-
-                return new Half { value = (ushort)(sign | (exponent << 10) | mantissa) };
+                if (exponent == 0x7FF) exponent = 31;
+                else if (exponent != 0x00)
+                {
+                    exponent -= 1023 - 15;
+                         if (exponent <  0) exponent = mantissa = 0;
+                    else if (exponent > 30) exponent = 31;
+                }
+                return new Half { value = (ushort)((sign << 15) | (exponent << 10) | mantissa) };
             }
         }
 
