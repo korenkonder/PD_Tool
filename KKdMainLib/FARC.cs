@@ -21,7 +21,7 @@ namespace KKdMainLib
         public Farc Signature = Farc.FArC;
         public Format Format = Format.DT;
         public string FilePath, DirectoryPath;
-        public bool HasFiles => Files.IsNull ? false : Files.Count > 0;
+        public bool HasFiles => !Files.IsNull || Files.Count > 0;
         public int CompressionLevel = 12;
 
         private readonly byte[] key = "project_diva.bin".ToASCII();
@@ -43,7 +43,7 @@ namespace KKdMainLib
             if (!File.Exists(FilePath)) return false;
 
             Stream reader = File.OpenReader(FilePath);
-            DirectoryPath = Path.GetFullPath(FilePath).Replace(Path.GetExtension(FilePath), "");
+            DirectoryPath = Path.RemoveExtension(Path.GetFullPath(FilePath));
             Signature = (Farc)reader.RI32E(true);
             if (Signature != Farc.FArc && Signature != Farc.FArC && Signature != Farc.FARC)
             { reader.Dispose(); return false; }
@@ -140,15 +140,9 @@ namespace KKdMainLib
             FARCFile file = Files[i];
             if (Signature != Farc.FARC)
             {
-                if (Signature == Farc.FArC)
-                    using (MSIO.MemoryStream memorystream = new MSIO.MemoryStream(
-                        File.ReadAllBytes(FilePath, file.SizeComp, file.Offset)))
-                    using (GZipStream gZipStream = new GZipStream(memorystream, CompressionMode.Decompress))
-                    {
-                        file.Data = new byte[file.SizeUnc];
-                        gZipStream.Read(file.Data, 0, file.SizeUnc);
-                    }
-                else file.Data = File.ReadAllBytes(FilePath, file.SizeUnc, file.Offset);
+                file.Data = Signature == Farc.FArC
+                    ? File.ReadAllBytes(FilePath, file.SizeComp, file.Offset).InflateGZip(file.SizeUnc)
+                    : File.ReadAllBytes(FilePath, file.SizeUnc, file.Offset);
                 Files[i] = file;
                 return file.Data;
             }
@@ -224,7 +218,7 @@ namespace KKdMainLib
             for (int i = 0; i < Files.Count; i++)
             {
                 string ext = Path.GetExtension(Files[i].Name).ToLower();
-                if (ext == ".a3da" || ext == ".diva" || ext == ".vag")
+                if (ext == ".a3da" || ext == ".diva" || ext == ".drs" || ext == ".dve" || ext == ".vag")
                 { Signature = Farc.FArc; break; }
             }
 
@@ -285,8 +279,8 @@ namespace KKdMainLib
             {
                 file.Type |= Type.GZip;
                 data = file.Data.DeflateGZip(CompressionLevel);
-                file.SizeComp = data.Length;
             }
+            file.SizeComp = data.Length;
 
             if (Signature == Farc.FARC && (FARCType & Type.Enc) != 0)
             {
@@ -295,7 +289,6 @@ namespace KKdMainLib
                 System.Array.Copy(data, tempData, data.Length);
                 for (int i1 = file.Data.Length; i1 < alignLength; i1++) tempData[i1] = 0x78;
                 data = Encrypt(tempData, false);
-                file.SizeComp = data.Length;
             }
             writer.W(data);
 

@@ -97,7 +97,7 @@ namespace KKdMainLib
 
                     if (Data.Offset > 0)
                     {
-                    s.P = Data.Offset;
+                        s.P = Data.Offset;
                              if (i1 == 0x01) Data.Array = new int[] { s.RU8 () };
                         else if (i1 == 0x02) Data.Array = new int[] { s.RU16() };
                         else
@@ -156,7 +156,7 @@ RETURN:
                             int Size = GetSize(data.Type);
                             if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
 
-                            if (data.Type == 0x3E) s.A(0x20, true);
+                            if (data.Type == 0x3E || data.Type == 0x49) s.A(0x20, true);
                             data.Offset = s.P;
 
                                  if (Size == 0x01) s.W(( byte)data.Array[0]);
@@ -194,7 +194,7 @@ RETURN:
                             }
                         break;
                     }
-            s.A(0x20, true);
+            s.A(0x04, true);
             Header.SubHeaderOffset = s.P;
             i1 = Header.EndMotionID - Header.StartMotionID;
 
@@ -418,7 +418,15 @@ RETURN:
                         data.Array = new int[] { temp.RI32("i0"),
                                                  temp.RF32("f1").ToI32(),
                                                  temp.RI32("i2"),
-                                                 temp.RF32("f3").ToI32() };
+                                                 temp.RF32("f3").ToI32(),
+                                                 temp.RI32("i4"),
+                                                 temp.RI32("i5"),
+                                                 temp.RI32("i6"),
+                                                 temp.RI32("i7"),
+                                                 temp.RI32("i8"),
+                                                 temp.RI32("i9"),
+                                                 temp.RI32("i10"),
+                                                 temp.RI32("i11") };
                     }
                     else if ((temp = array[i0]["Type74"]).NotNull)
                     {
@@ -448,8 +456,7 @@ RETURN:
                         data.Type = 0x4C;
                         data.Array = new int[] { temp.RI32("i0"),
                                                  temp.RF32("f1").ToI32(),
-                                                 temp.RF32("f2").ToI32(),
-                                                 temp.RI32("i3") };
+                                                 temp.RF32("f2").ToI32() };
                     }
                     else if ((temp = array[i0]["Type77"]).NotNull)
                     {
@@ -601,8 +608,16 @@ RETURN:
                             arrayEntry.Add(new MsgPack("Type73")
                                 .Add("i0", data.Array[0])
                                 .Add("f1", data.Array[1].ToF32())
-                                .Add("i2", (short)data.Array[2])
-                                .Add("f3", data.Array[3].ToF32()));
+                                .Add("i2", data.Array[2])
+                                .Add("f3", data.Array[3].ToF32())
+                                .Add("i4", data.Array[4])
+                                .Add("i5", data.Array[5])
+                                .Add("i6", data.Array[6])
+                                .Add("i7", data.Array[7])
+                                .Add("i8", data.Array[8])
+                                .Add("i9", data.Array[9])
+                                .Add("i10", data.Array[10])
+                                .Add("i11", data.Array[11]));
                         else if (data.Type == 0x4A)
                             arrayEntry.Add(new MsgPack("Type74")
                                 .Add("i0", data.Array[0]));
@@ -626,8 +641,7 @@ RETURN:
                             arrayEntry.Add(new MsgPack("Type76")
                                 .Add("i0", data.Array[0])
                                 .Add("f1", data.Array[1].ToF32())
-                                .Add("f2", data.Array[2].ToF32())
-                                .Add("i3", data.Array[3]));
+                                .Add("f2", data.Array[2].ToF32()));
                         else if (data.Type == 0x4D)
                             arrayEntry.Add(new MsgPack("Type77")
                                 .Add("i0", data.Array[0]));
@@ -709,10 +723,10 @@ RETURN:
                 0x46 => 0x04,
                 0x47 => 0x08,
                 0x48 => 0x08,
-                0x49 => 0x10,
+                0x49 => 0x30,
                 0x4A => 0x02,
                 0x4B => 0x34,
-                0x4C => 0x10,
+                0x4C => 0x0C,
                 0x4D => 0x04,
                 0x4E => 0x1C,
                 0x4F => 0x01,

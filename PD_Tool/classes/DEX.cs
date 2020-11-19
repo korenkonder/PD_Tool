@@ -46,9 +46,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (dex = new KKdDEX())
                 {
-                    ext      = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "DEX Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".bin" || ext == ".dex") dex.    DEXReader(filepath, ext );

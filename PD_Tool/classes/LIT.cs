@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (lit = new Light())
                 {
-                    ext = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "Light Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".lit")

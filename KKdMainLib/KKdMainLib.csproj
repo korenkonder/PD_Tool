@@ -6,12 +6,12 @@
     <Configuration></Configuration>
     <Copyright>korenkonder (C) 2018-2020</Copyright>
     <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/FT/M39 files</Description>
-    <FileVersion>0.4.9.8</FileVersion>
+    <FileVersion>0.4.9.9</FileVersion>
     <PackageId>KKdMainLib</PackageId>
     <Product>KKdMainLib</Product>
     <TargetFramework>net461</TargetFramework>
     <Title>KKdMainLib</Title>
-    <Version>0.4.9.8</Version>
+    <Version>0.4.9.9</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -24,7 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <NoWarn>IDE0004, IDE0032, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0066, IDE0069, IDE1006</NoWarn>
+    <NoWarn>IDE0004, IDE0018, IDE0032, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0066, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -37,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <NoWarn>IDE0004, IDE0032, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0066, IDE0069, IDE1006</NoWarn>
+    <NoWarn>IDE0004, IDE0018, IDE0032, IDE0044, IDE0045, IDE0046, IDE0055, IDE0059, IDE0066, IDE0069, IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KKdBaseLib\KKdBaseLib.csproj" />

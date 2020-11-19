@@ -12,18 +12,19 @@ namespace KKdBaseLib.F2
         public uint Length  => length(false);
         public uint LengthX => length( true);
 
-        public uint Depth => Header.Depth;
-
         public bool HasPOF        => POF .NotNull;
         public bool HasENRS       => ENRS.NotNull;
         public bool HasSubStructs => SubStructs != null;
 
         public long DataOffset;
 
-        public void Update(bool ShiftX = false)
+        public void Update(bool shiftX = false)
         {
+            if (Header.Signature == 0x4C435450 && SubStructs == null)
+                SubStructs = new Struct[0];
+
             Header.SectionSize = Data != null ? (uint)Data.Length : 0;
-            Header.DataSize = length(ShiftX);
+            Header.DataSize = length(shiftX);
         }
 
         private uint length(bool shiftX = false)

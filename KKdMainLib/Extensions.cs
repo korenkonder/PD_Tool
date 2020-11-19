@@ -147,24 +147,28 @@ namespace KKdMainLib
         {
             byte[] Data;
             using (Stream stream = File.OpenWriter())
-            { stream.W(@struct, shiftX, useDepth); stream.WEOFC(); Data = stream.ToArray(); }
+            { stream.W(@struct, 0, shiftX, useDepth); stream.WEOFC(); Data = stream.ToArray(); }
             return Data;
         }
 
-        public static void W(this Stream stream, Struct @struct, bool shiftX = false, bool useDepth = true)
+        public static void W(this Stream stream, Struct @struct, uint depth = 0,
+            bool shiftX = false, bool useDepth = true)
         {
             @struct.Update(shiftX);
 
+            if (@struct.Header.Signature == 0x54434645)
+            { }
+
+            @struct.Header.Depth = depth;
             stream.W(@struct.Header);
             if (@struct.Data != null) stream.W(@struct.Data);
-            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? @struct.Depth + 1 : 0u);
-            if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? @struct.Depth + 1 : 0u);
+            if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? depth + 1 : 0u);
+            if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? depth + 1 : 0u);
             if (@struct.HasSubStructs)
-            {
                 for (int i = 0; i < @struct.SubStructs.Length; i++)
-                    stream.W(@struct.SubStructs[i], shiftX);
-                stream.WEOFC(@struct.Depth + 1);
-            }
+                    stream.W(@struct.SubStructs[i], depth + 1, shiftX, useDepth);
+            if (@struct.HasPOF || @struct.HasENRS || @struct.HasSubStructs) 
+                stream.WEOFC(depth + 1);
         }
     }
 

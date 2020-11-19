@@ -16,9 +16,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (str = new KKdSTR())
                 {
-                    ext      = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext      = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "STR Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".str" || ext == ".bin")

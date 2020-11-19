@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using KKdMainLib.IO;
 using KKdFARC = KKdMainLib.FARC;
 
 namespace PD_Tool

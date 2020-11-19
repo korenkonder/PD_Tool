@@ -22,9 +22,8 @@ namespace PD_Tool
             KKdMainLib.DataBank db;
             foreach (string file in fileNames)
             {
-                ext      = Path.GetExtension(file);
-                filepath = file.Replace(ext, "");
-                ext      = ext.ToLower();
+                filepath = Path.RemoveExtension(file);
+                ext      = Path.GetExtension(file).ToLower();
 
                 string filename = Path.GetFileNameWithoutExtension(file);
                 file_split = filename.Split('_');

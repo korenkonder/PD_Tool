@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (aet = new Aet())
                 {
-                    ext = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "AET Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".bin")

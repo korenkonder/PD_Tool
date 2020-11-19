@@ -26,8 +26,6 @@ namespace KKdBaseLib
         public MsgPack(string name, object @object)
         { Name = name; Object = @object; }
 
-        public static MsgPack Null => new MsgPack();
-
         public MsgPack this[ int index]
         {   get =>    Object is MsgPack[] Array  ? Array[index] : default;
             set { if (Object is MsgPack[] Array) { Array[index] =   value; Object = Array; } } }

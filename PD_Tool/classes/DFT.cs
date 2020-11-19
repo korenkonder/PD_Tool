@@ -1,6 +1,6 @@
 using System;
-using KKdMainLib.IO;
 using KKdMainLib.F2;
+using KKdMainLib.IO;
 
 namespace PD_Tool
 {
@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (dft = new DOF())
                 {
-                    ext = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "DOF Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".dft")

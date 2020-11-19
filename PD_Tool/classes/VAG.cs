@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using KKdMainLib.IO;
 using KKdVAG = KKdSoundLib.VAG;
 
 namespace PD_Tool
@@ -42,9 +42,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (VAG = new KKdVAG())
                 {
-                    ext      = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext      = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "VAG Converter: " + Path.GetFileNameWithoutExtension(file);
                          if (ext == ".vag") { VAG.VAGReader(filepath); VAG.WAVWriter(filepath        ); }

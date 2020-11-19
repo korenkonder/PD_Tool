@@ -19,6 +19,7 @@ namespace KKdMainLib.F2
             header = s.ReadHeader();
             if (header.Signature != 0x54464F44 || header.InnerSignature != 0x3) return;
             s.P -= 0x4;
+            s.IsBE = header.UseBigEndian;
 
             DFTs = s.RCPE<DFT>();
             if (DFTs.C < 1) { s.C(); DFTs.C = -1; return; }

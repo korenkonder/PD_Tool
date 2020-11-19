@@ -47,7 +47,8 @@ namespace PD_Tool
 
         private static void MainMenu()
         {
-            Console.Title = "PD_Tool v0.4.9.8";
+            Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            Console.Title = $"PD_Tool v{ver}";
             Console.Clear();
 
             ConsoleDesign(true);
@@ -182,9 +183,9 @@ namespace PD_Tool
                     ConsoleDesign(true);
                     ConsoleDesign("               Choose converter:");
                     ConsoleDesign(false);
-                    ConsoleDesign("1. A3DA"          );
-                    ConsoleDesign("2. DEX"           );
-                    ConsoleDesign("3. VAG"           );
+                    ConsoleDesign("1. A3DA");
+                    ConsoleDesign("2. DEX" );
+                    ConsoleDesign("3. VAG" );
                     ConsoleDesign(false);
                     ConsoleDesign("R. Return to Main Menu");
                     ConsoleDesign(false);
@@ -244,12 +245,12 @@ namespace PD_Tool
                     if (json)
                     {
                         Console.Title = "MsgPack to JSON: " + Path.GetFileNameWithoutExtension(file);
-                        file.Replace(Path.GetExtension(file), "").ToJSON   ();
+                        Path.RemoveExtension(file).ToJSON   ();
                     }
                     else
                     {
                         Console.Title = "JSON to MsgPack: " + Path.GetFileNameWithoutExtension(file);
-                        file.Replace(Path.GetExtension(file), "").ToMsgPack();
+                        Path.RemoveExtension(file).ToMsgPack();
                     }
             }
         }
@@ -259,15 +260,15 @@ namespace PD_Tool
         public static void ConsoleDesign(string text, params string[] args)
         {
             text = string.Format(text, args);
-            string Text = "█                                                  █";
+            string Text = "X                                                  X";
             Text = Text.Remove(3) + text + Text.Remove(0, text.Length + 3);
             Console.WriteLine(Text);
         }
 
         public static void ConsoleDesign(bool Fill)
         {
-            if (Fill) Console.WriteLine("████████████████████████████████████████████████████");
-            else      Console.WriteLine("█                                                  █");
+            if (Fill) Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            else      Console.WriteLine("X                                                  X");
         }
 
         private static string GetArgs(string name, bool And, params string[] ext)

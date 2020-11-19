@@ -62,5 +62,11 @@ namespace KKdMainLib.IO
 
         public static bool IsPathRooted(string path) =>
             MSIOP.IsPathRooted(path);
+
+        public static string RemoveExtension(string path) =>
+            path.Substring(0, path.Length - GetExtension(path).Length);
+
+        public static string ReplaceExtension(string path, string ext) =>
+            path.Substring(0, path.Length - GetExtension(path).Length) + ext;
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using KKdMainLib.IO;
 using KKdSoundLib;
 
 namespace PD_Tool
@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
             {
                 diva = new DIVA();
-                ext      = Path.GetExtension(file);
-                filepath = file.Replace(ext, "");
-                ext      = ext.ToLower();
+                filepath = Path.RemoveExtension(file);
+                ext      = Path.GetExtension(file).ToLower();
 
                 Console.Title = "DIVA Converter: " + Path.GetFileNameWithoutExtension(file);
                      if (ext == ".diva") diva.DIVAReader(filepath);

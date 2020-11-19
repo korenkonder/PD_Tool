@@ -52,9 +52,8 @@ namespace PD_Tool
             KKdFARC farc;
             foreach (string file in fileNames)
             {
-                ext      = Path.GetExtension(file);
-                filepath = file.Replace(ext, "");
-                ext      = ext.ToLower();
+                filepath = Path.RemoveExtension(file);
+                ext      = Path.GetExtension(file).ToLower();
 
                 Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".farc")
@@ -142,8 +141,8 @@ namespace PD_Tool
             {
                 if (a3daArray[i].Data.PlayControl.Div == null) continue;
                 int div = a3daArray[i].Data.PlayControl.Div.Value;
-                string filename = Path.GetFileNameWithoutExtension(list[i]);
-                string ext = Path.GetExtension(list[i]);
+                string filename = Path.RemoveExtension(list[i]);
+                string ext      = Path.GetExtension(list[i]).ToLower();
                 KKdA3DA a3da;
                 for (int i1 = 1; i1 < div; i1++)
                     using (a3da = new KKdA3DA(true))

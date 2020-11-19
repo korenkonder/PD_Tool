@@ -140,7 +140,9 @@ namespace KKdMainLib.IO
             if (c == '.') s += _IO.RCUTF8() + RD();
             else if (c != 'e' && c != 'E')
             {
-                long val = long.Parse(s);
+                long val;
+                try { val = long.Parse(s); }
+                catch { return ulong.Parse(s); }
                      if (val >=  0x00000000 && val < 0x000000100) return (  byte)val;
                 else if (val >= -0x00000080 && val < 0x000000080) return ( sbyte)val;
                 else if (val >= -0x00008000 && val < 0x000008000) return ( short)val;

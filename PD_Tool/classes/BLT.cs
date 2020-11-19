@@ -1,6 +1,6 @@
 using System;
-using KKdMainLib.IO;
 using KKdMainLib.F2;
+using KKdMainLib.IO;
 
 namespace PD_Tool
 {
@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (blt = new Bloom())
                 {
-                    ext = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "Bloom Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".blt")

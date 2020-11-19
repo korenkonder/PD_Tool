@@ -17,8 +17,8 @@ namespace KKdMainLib.F2
             LITs = default;
             s = File.OpenReader(file + ".lit", true);
             header = s.ReadHeader();
-            if (header.Signature != 0x4354494C || header.InnerSignature != 0x2 ||
-                header.SectionSignature != 0x2) return;
+            if (header.Signature != 0x4354494C || header.InnerSignature != 0x2) return;
+            s.IsBE = header.UseBigEndian;
 
             LITs = s.RCPE<CountPointer<LIT>>();
             if (LITs.C < 1) { s.C(); LITs.C = -1; return; }

@@ -17,9 +17,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (adp = new AddParam())
                 {
-                    ext = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "Add Param Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".adp")

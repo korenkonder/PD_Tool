@@ -1,8 +1,6 @@
 using System;
-using System.IO;
-using Aet = KKdMainLib.DB.Aet;
-using Auth = KKdMainLib.DB.Auth;
-using Spr = KKdMainLib.DB.Spr;
+using KKdMainLib.DB;
+using KKdMainLib.IO;
 
 namespace PD_Tool
 {
@@ -45,8 +43,8 @@ namespace PD_Tool
                 using (auth = new Auth())
                 {
                     Console.Title = "Auth DB Converter: " + Path.GetFileNameWithoutExtension(file);
-                    ext = Path.GetExtension(file).ToLower();
-                    filepath = file.Replace(Path.GetExtension(file), "");
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     if (ext == ".bin")
                     {
@@ -73,8 +71,8 @@ namespace PD_Tool
                 using (aet = new Aet())
                 {
                     Console.Title = "AET DB Converter: " + Path.GetFileNameWithoutExtension(file);
+                    filepath = Path.RemoveExtension(file);
                     ext      = Path.GetExtension(file).ToLower();
-                    filepath = file.Replace(Path.GetExtension(file), "");
 
                     if (ext == ".bin")
                     {
@@ -101,8 +99,8 @@ namespace PD_Tool
                 using (spr = new Spr())
                 {
                     Console.Title = "SPR DB Converter: " + Path.GetFileNameWithoutExtension(file);
+                    filepath = Path.RemoveExtension(file);
                     ext      = Path.GetExtension(file).ToLower();
-                    filepath = file.Replace(Path.GetExtension(file), "");
 
                     if (ext == ".bin")
                     {

@@ -1,7 +1,7 @@
 using System;
-using System.IO;
 using KKdBaseLib;
 using KKdMainLib;
+using KKdMainLib.IO;
 using KKdFARC = KKdMainLib.FARC;
 
 namespace PD_Tool
@@ -19,9 +19,8 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 using (tbl = new Tables())
                 {
-                    ext      = Path.GetExtension(file);
-                    filepath = file.Replace(ext, "");
-                    ext      = ext.ToLower();
+                    filepath = Path.RemoveExtension(file);
+                    ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "Table Converter: " + Path.GetFileNameWithoutExtension(file);
                     if (ext == ".bin")

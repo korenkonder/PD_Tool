@@ -732,8 +732,9 @@ namespace KKdMainLib
 
         public MsgPack MsgPackWriter(ref Pointer<Scene> aetData)
         {
+            if (aetData.O <= 0) return default;
+
             int i, i0;
-            if (aetData.O <= 0) return MsgPack.Null;
             ref Scene aet = ref aetData.V;
 
             MsgPack msgPack = MsgPack.New.Add("Name", aet.Name.V).Add("StartFrame", aet.StartFrame)
@@ -966,7 +967,8 @@ namespace KKdMainLib
 
         private MsgPack WMP(ref CountPointer<KFT2> kfe, string name)
         {
-            if (kfe.C <  1) return     MsgPack.Null;
+            if (kfe.C <  1) return default;
+
             if (kfe.C == 1) return new MsgPack(name, kfe.E[0].V);
             MsgPack msg = new MsgPack(kfe.C, name);
             for (int i = 0; i < kfe.E.Length; i++)
