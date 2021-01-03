@@ -20,9 +20,6 @@ namespace KKdBaseLib.F2
 
         public void Update(bool shiftX = false)
         {
-            if (Header.Signature == 0x4C435450 && SubStructs == null)
-                SubStructs = new Struct[0];
-
             Header.SectionSize = Data != null ? (uint)Data.Length : 0;
             Header.DataSize = length(shiftX);
         }

@@ -6,15 +6,15 @@ namespace KKdMainLib
 {
     public static class HeaderExtensions
     {
-        public static Header ReadHeader(this Stream stream, bool seek, bool readSectionSignature = true)
+        public static Header ReadHeader(this Stream stream, bool seek)
         {
             if (seek)
                 if (stream.PI64 > 4) stream.PI64 -= 4;
                 else                 stream.PI64  = 0;
-            return stream.ReadHeader(readSectionSignature);
+            return stream.ReadHeader();
         }
 
-        public static Header ReadHeader(this Stream stream, bool readSectionSignature = true)
+        public static Header ReadHeader(this Stream stream)
         {
             Header header = new Header { Format = Format.F2 };
             header.Signature   = stream.RU32();
@@ -36,7 +36,6 @@ namespace KKdMainLib
                 stream.RI64();
             }
             stream.Format = header.Format;
-            if (readSectionSignature) header.SectionSignature = stream.RU32E();
             return header;
         }
 
@@ -156,11 +155,8 @@ namespace KKdMainLib
         {
             @struct.Update(shiftX);
 
-            if (@struct.Header.Signature == 0x54434645)
-            { }
-
             @struct.Header.Depth = depth;
-            stream.W(@struct.Header);
+            stream.W(@struct.Header, @struct.Header.Length == 0x40);
             if (@struct.Data != null) stream.W(@struct.Data);
             if (@struct.HasPOF ) stream.W(@struct.POF , shiftX, useDepth ? depth + 1 : 0u);
             if (@struct.HasENRS) stream.W(@struct.ENRS,         useDepth ? depth + 1 : 0u);
@@ -204,8 +200,12 @@ namespace KKdMainLib
 
         public static MsgPack Write(this MsgPack mp, string file, bool ignoreNull, bool json = false)
         {
-            if (json) using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true))) _IO.W(mp, ignoreNull, "\n", "  ");
-            else      using (  MP _IO = new   MP(File.OpenWriter(file + ".mp"  , true))) _IO.W(mp, ignoreNull);
+            if (json)
+                using (JSON _IO = new JSON(File.OpenWriter(file + ".json", true)))
+                    _IO.W(mp, ignoreNull, "\n", "  ");
+            else
+                using (  MP _IO = new   MP(File.OpenWriter(file + ".mp"  , true)))
+                    _IO.W(mp, ignoreNull);
             return mp;
         }
 
@@ -216,8 +216,12 @@ namespace KKdMainLib
         public static MsgPack WriteAfterAll(this MsgPack mp, string file, bool ignoreNull, bool json = false)
         {
             byte[] data = null;
-            if (json) using (JSON _IO = new JSON(File.OpenWriter())) { _IO.W(mp, ignoreNull, true); data = _IO.ToArray(); }
-            else      using (  MP _IO = new   MP(File.OpenWriter())) { _IO.W(mp, ignoreNull      ); data = _IO.ToArray(); }
+            if (json)
+                using (JSON _IO = new JSON(File.OpenWriter()))
+                { _IO.W(mp, ignoreNull, true); data = _IO.ToArray(); }
+            else
+                using (  MP _IO = new   MP(File.OpenWriter()))
+                { _IO.W(mp, ignoreNull      ); data = _IO.ToArray(); }
             File.WriteAllBytes(file + (json ? ".json" : ".mp"), data);
             return mp;
         }
@@ -240,6 +244,114 @@ namespace KKdMainLib
             else if (kf is KFT3 kft3) { kft3.F  = kft3.F .Round(d); kft3.V  = kft3.V .Round(d);
                                         kft3.T1 = kft3.T1.Round(d); kft3.T2 = kft3.T2.Round(d); return kft3; }
             return   kf;
+        }
+    }
+
+    public static class HashExt
+    {
+        public static ulong HashFNV1a64(this byte[] array, int length) // 0x1403B04D0 in SBZV_7.10; FNV 1a 64-bit
+        {
+            int i = 0;
+            ulong hash = 0xCBF29CE484222325;
+            while (i < length)
+            { hash = 0x100000001B3 * (hash ^ (ulong)array[i]); i++; }
+            return (hash >> 32) ^ hash;
+        }
+
+        public static uint HashMurmurHash(this byte[] array, int length, uint seed = 0,
+            bool alreadyUpper = false, bool bigEndian = false) // 0x814D7A9C in PCSB00554; MurmurHash
+        {
+            uint a, b, hash;
+            int i;
+            
+            const uint m = 0x7FD652AD;
+            const int r = 16;
+
+            hash = seed + 0xDEADBEEF;
+            if (alreadyUpper)
+            {
+                if (bigEndian)
+                    for (i = 0; length > 3; length -= 4, i += 4)
+                    {
+                        b = (uint)array[i + 3] | ((uint)array[i + 2] << 8)
+                            | ((uint)array[i + 1] << 16) | ((uint)array[i + 0] << 24);
+                        hash += b;
+                        hash *= m;
+                        hash ^= hash >> r;
+                    }
+                else
+                    for (i = 0; length > 3; length -= 4, i += 4)
+                    {
+                        b = (uint)array[i + 0] | ((uint)array[i + 1] << 8)
+                            | ((uint)array[i + 2] << 16) | ((uint)array[i + 3] << 24);
+                        hash += b;
+                        hash *= m;
+                        hash ^= hash >> r;
+                    }
+
+                if (length > 0)
+                {
+                    if (length > 1)
+                    {
+                        if (length > 2)
+                            hash += (uint)array[i + 2] << 16;
+                        hash += (uint)array[i + 1] << 8;
+                    }
+                    hash += array[i];
+                    hash *= m;
+                    hash ^= hash >> r;
+                }
+            }
+            else
+            {
+                if (bigEndian)
+                    for (i = 0; length > 3; length -= 4, i += 4)
+                    {
+                        b = (uint)array[i + 3] | ((uint)array[i + 2] << 8)
+                            | ((uint)array[i + 1] << 16) | ((uint)array[i + 0] << 24);
+                        a =  b        & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFFFFFF00) | a        ;
+                        a = (b >>  8) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFFFF00FF) | (a <<  8);
+                        a = (b >> 16) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFF00FFFF) | (a << 16);
+                        a = (b >> 24) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0x00FFFFFF) | (a << 24);
+                        hash += b;
+                        hash *= m;
+                        hash ^= hash >> r;
+                    }
+                else
+                    for (i = 0; length > 3; length -= 4, i += 4)
+                    {
+                        b = (uint)array[i + 0] | ((uint)array[i + 1] << 8)
+                            | ((uint)array[i + 2] << 16) | ((uint)array[i + 3] << 24);
+                        a =  b        & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFFFFFF00) | a        ;
+                        a = (b >>  8) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFFFF00FF) | (a <<  8);
+                        a = (b >> 16) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0xFF00FFFF) | (a << 16);
+                        a = (b >> 24) & 0xFF; if (a > 0x60 && a < 0x7B) a -= 0x20; b = (b & 0x00FFFFFF) | (a << 24);
+                        hash += b;
+                        hash *= m;
+                        hash ^= hash >> r;
+                    }
+
+                if (length > 0)
+                {
+                    if (length > 1)
+                    {
+                        if (length > 2)
+                        {
+                            b = array[i + 2]; if (b > 0x60 && b < 0x7B) b -= 0x20; hash += b << 16;
+                        }
+                        b = array[i + 1]; if (b > 0x60 && b < 0x7B) b -= 0x20; hash += b << 8;
+                    }
+                    b = array[i]; if (b > 0x60 && b < 0x7B) b -= 0x20; hash += b;
+                    hash *= m;
+                    hash ^= hash >> r;
+                }
+            }
+
+            hash *= m;
+            hash ^= hash >> 10;
+            hash *= m;
+            hash ^= hash >> 17;
+            return hash;
         }
     }
 }

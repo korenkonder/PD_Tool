@@ -62,20 +62,20 @@ namespace KKdMainLib
             Header header = new Header();
 
             Head.Format = s.Format = Format.F;
-            header.SectionSignature = s.RU32();
-            if (header.SectionSignature == 0x41443341)
-            { header = s.ReadHeader(true, true); Head.Format = header.Format; }
-            if (header.SectionSignature != 0x44334123) return 0;
+            uint signature = s.RU32();
+            if (signature == 0x41443341)
+            { header = s.ReadHeader(true); Head.Format = header.Format; signature = s.RU32(); }
+            if (signature != 0x44334123) return 0;
 
             s.O = s.P - 4;
-            header.SectionSignature = s.RU32();
+            signature = s.RU32();
 
-            if (header.SectionSignature == 0x5F5F5F41)
+            if (signature == 0x5F5F5F41)
             {
                 s.P = 0x10;
                 header.Format = s.Format = Format.DT;
             }
-            else if (header.SectionSignature == 0x5F5F5F43)
+            else if (signature == 0x5F5F5F43)
             {
                 s.P = 0x10;
                 s.RI32();
@@ -105,7 +105,7 @@ namespace KKdMainLib
 
             A3DAReader();
 
-            if (header.SectionSignature == 0x5F5F5F43)
+            if (signature == 0x5F5F5F43)
             {
                 s.P = s.O + Head.BinaryOffset;
                 s.O = s.P;
@@ -327,9 +327,10 @@ namespace KKdMainLib
                             dict.FV(out Data.MObjectHRC[i0]
                                 .Instances[i1].   Name, nameView +     "name");
                             dict.FV(out Data.MObjectHRC[i0]
-                                .Instances[i1]. Shadow, nameView +   "shadow");
-                            dict.FV(out Data.MObjectHRC[i0]
                                 .Instances[i1].UIDName, nameView + "uid_name");
+                            dict.FV(out int? shadow, name + "shadow");
+                            Data.MObjectHRC[i0].Instances[i1].Shadow
+                                = shadow.HasValue ? (bool?)(shadow != 0) : null;
 
                             Data.MObjectHRC[i0].Instances[i1].MT = RMT(nameView);
                         }
@@ -446,8 +447,9 @@ namespace KKdMainLib
                         dict.FV(out Data.ObjectHRC[i0].JointOrient.Z, name + "joint_orient.z");
                     }
                     dict.FV(out Data.ObjectHRC[i0].   Name, name +     "name");
-                    dict.FV(out Data.ObjectHRC[i0]. Shadow, name +   "shadow");
                     dict.FV(out Data.ObjectHRC[i0].UIDName, name + "uid_name");
+                    dict.FV(out int? shadow, name + "shadow");
+                    Data.ObjectHRC[i0].Shadow = shadow.HasValue ? (bool?)(shadow != 0) : null;
                     if (dict.FV(out value, name + "node.length"))
                     {
                         Data.ObjectHRC[i0].Node = new Node[int.Parse(value)];
@@ -683,7 +685,8 @@ namespace KKdMainLib
                             W(ref instance.MT, nameView, 0b10000);
                             W(nameView +     "name", instance.   Name);
                             W(ref instance.MT, nameView, 0b01100);
-                            W(nameView +   "shadow", instance. Shadow);
+                            if (instance.Shadow != null)
+                                W(name + "shadow", instance.Shadow.Value ? 1 : 0);
                             W(ref instance.MT, nameView, 0b00010);
                             W(nameView + "uid_name", instance.UIDName);
                             W(ref instance.MT, nameView, 0b00001);
@@ -857,7 +860,7 @@ namespace KKdMainLib
                     }
 
                     if (objectHRC.Shadow != null)
-                        W(name + "shadow", objectHRC.Shadow.HasValue && objectHRC.Shadow.Value ? 1 : 0);
+                        W(name + "shadow", objectHRC.Shadow.Value ? 1 : 0);
                     W(name + "uid_name", objectHRC.UIDName);
                 }
                 W("objhrc.length", Data.ObjectHRC.Length);
@@ -1544,11 +1547,11 @@ namespace KKdMainLib
 
             if (f16 && Data._.CompressF16 == CompressF16.Type2)
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RU16(); kf.V  = s.RF16();
+                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RI16(); kf.V  = s.RF16();
                                                  kf.T1 = s.RF16(); kf.T2 = s.RF16(); }
             else if (f16 && Data._.CompressF16 > 0)
                 for (int i = 0; i < key.Keys.Length; i++)
-                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RU16(); kf.V  = s.RF16();
+                { ref KFT3 kf = ref key.Keys[i]; kf.F  = s.RI16(); kf.V  = s.RF16();
                                                  kf.T1 = s.RF32(); kf.T2 = s.RF32(); }
             else
                 for (int i = 0; i < key.Keys.Length; i++)
@@ -1615,12 +1618,12 @@ namespace KKdMainLib
 
                 if (f16 && Data._.CompressF16 == CompressF16.Type2)
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; s.W((ushort)kf.F ); s.W((Half)kf.V );
-                                                     s.W((  Half)kf.T1); s.W((Half)kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W((short)kf.F ); s.W((Half)kf.V );
+                                                     s.W(( Half)kf.T1); s.W((Half)kf.T2); }
                 else if (f16 && Data._.CompressF16 > 0)
                     for (i = 0; i < key.Keys.Length; i++)
-                    { ref KFT3 kf = ref key.Keys[i]; s.W((ushort)kf.F ); s.W((Half)kf.V );
-                                                     s.W(        kf.T1); s.W(      kf.T2); }
+                    { ref KFT3 kf = ref key.Keys[i]; s.W((short)kf.F ); s.W((Half)kf.V );
+                                                     s.W(       kf.T1); s.W(      kf.T2); }
                 else
                     for (i = 0; i < key.Keys.Length; i++)
                     { ref KFT3 kf = ref key.Keys[i]; s.W(new Vec4(kf.F, kf.V, kf.T1, kf.T2)); }
@@ -1822,7 +1825,8 @@ namespace KKdMainLib
         { MK(ref uv.X, ref mUV.X); MK(ref uv.Y, ref mUV.Y); }
 
         private void MK(ref Key? key, ref Key? mKey)
-        { if (!key.HasValue || !mKey.HasValue) return; Key k = key.Value; Key mk = mKey.Value; MK(ref k, ref mk); key = k; mKey = mk; }
+        { if (!key.HasValue || !mKey.HasValue) return;
+          Key k = key.Value; Key mk = mKey.Value; MK(ref k, ref mk); key = k; mKey = mk; }
 
         private void MK(ref Key key, ref Key mKey)
         {
@@ -1855,7 +1859,7 @@ namespace KKdMainLib
 
             int i = key.Keys.Length;
             bool found = false;
-            while (i > 1 && !found)
+            while (i > 0 && !found)
                 if (key.Keys[--i] == mKey.Keys[0])
                     found = true;
 
@@ -2056,9 +2060,9 @@ namespace KKdMainLib
                             Data.MObjectHRC[i0].Instances[i1] = new MObjectHRC.Instance
                             {
                                      MT = temp1[i1].RMT(),
-                                   Name = temp1[i1].RS   (   "Name"),
-                                 Shadow = temp1[i1].RnI32( "Shadow"),
-                                UIDName = temp1[i1].RS   ("UIDName"),
+                                   Name = temp1[i1].RS (   "Name"),
+                                 Shadow = temp1[i1].RnB( "Shadow"),
+                                UIDName = temp1[i1].RS ("UIDName"),
                             };
                     }
 

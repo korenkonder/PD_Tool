@@ -18,10 +18,10 @@ namespace KKdMainLib
 
             header = new Header();
             s.Format = Format.F;
-            header.Signature = s.RU32();
-            if (header.Signature == 0x41525453)
+            uint signature = s.RU32();
+            if (signature == 0x41525453)
             {
-                header = s.ReadHeader(true, false);
+                header = s.ReadHeader(true);
                 s.IsBE = header.UseBigEndian;
                 s.Format = header.Format;
 
@@ -43,10 +43,10 @@ namespace KKdMainLib
             }
             else
             {
-                if ((header.Signature >> 24) > 0) { header.Format = Format.DT; s.IsBE = true; }
+                if ((signature >> 24) > 0) { header.Format = Format.DT; s.IsBE = true; }
                 else header.Format = Format.F;
                 int count = 0;
-                for (uint i = header.Signature; i != 0 && s.P >= 0 && s.P < s.L; count++)
+                for (uint i = signature; i != 0 && s.P >= 0 && s.P < s.L; count++)
                     i = s.RU32();
                 Strings = new String[count];
 

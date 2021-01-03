@@ -73,15 +73,16 @@ namespace KKdMainLib.IO
 
             byte[] outData = new byte[length];
 
+            int result;
             int actualOut = 0;
             void* d = libdeflate_alloc_decompressor();
             fixed (byte*  inPtr =    data)
             fixed (byte* outPtr = outData)
-                libdeflate_gzip_decompress(d, inPtr, data.Length, outPtr, (int)length, &actualOut);
+                result = libdeflate_gzip_decompress(d, inPtr, data.Length, outPtr, (int)length, &actualOut);
             libdeflate_free_decompressor(d);
 
             if (actualOut == 0 || actualOut > length)
-                return data.InflateGZip(length * 2);
+                return data.InflateGZip(length * 2 + 1);
             else if (actualOut < length)
                 System.Array.Resize(ref outData, (int)actualOut);
             return outData;
@@ -137,11 +138,11 @@ namespace KKdMainLib.IO
             byte* outData, int maxOutBytes);
 
         [DllImport(libDeflateString)]
-        private static extern void libdeflate_deflate_decompress(void* d, byte* inData, int inBytes,
+        private static extern int libdeflate_deflate_decompress(void* d, byte* inData, int inBytes,
             byte* outData, int outBytesAvail, int* actualOutBytes);
 
         [DllImport(libDeflateString)]
-        private static extern void libdeflate_deflate_decompress_ex(void* d, byte* inData, int inBytes,
+        private static extern int libdeflate_deflate_decompress_ex(void* d, byte* inData, int inBytes,
             byte* outData, int outBytesAvail, int* actualInBytes, int* actualOutBytes);
 
         [DllImport(libDeflateString)]
@@ -152,11 +153,11 @@ namespace KKdMainLib.IO
             byte* outData, int maxOutBytes);
 
         [DllImport(libDeflateString)]
-        private static extern void libdeflate_gzip_decompress(void* d, byte* inData, int inBytes,
+        private static extern int libdeflate_gzip_decompress(void* d, byte* inData, int inBytes,
             byte* outData, int outBytesAvail, int* actualOutBytes);
 
         [DllImport(libDeflateString)]
-        private static extern void libdeflate_gzip_decompress_ex(void* d, byte* inData, int inBytes,
+        private static extern int libdeflate_gzip_decompress_ex(void* d, byte* inData, int inBytes,
             byte* outData, int outBytesAvail, int* actualInBytes, int* actualOutBytes);
 
         [DllImport(libDeflateString)]
@@ -167,7 +168,7 @@ namespace KKdMainLib.IO
             byte* outData, int maxOutBytes);
 
         [DllImport(libDeflateString)]
-        private static extern void libdeflate_zlib_decompress(void* d, byte* inData, int inBytes,
+        private static extern int libdeflate_zlib_decompress(void* d, byte* inData, int inBytes,
             byte* outData, int outBytesAvail, int* actualOutBytes);
 
         [DllImport(libDeflateString)]

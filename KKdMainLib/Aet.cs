@@ -66,9 +66,9 @@ namespace KKdMainLib
             aet.Width       = s.RU32();
             aet.Height      = s.RU32();
             aet.Camera      = s.RP<Vec2<CountPointer<KFT2>>>();
-            aet.Composition = s.ReadCountPointer<Composition>();
-            aet.Video       = s.ReadCountPointer<Video      >();
-            aet.Audio       = s.ReadCountPointer<Audio      >();
+            aet.Composition = s.RCP<Composition>();
+            aet.Video       = s.RCP<Video      >();
+            aet.Audio       = s.RCP<Audio      >();
 
             if (aet.Camera.O > 0)
             {
@@ -102,7 +102,7 @@ namespace KKdMainLib
             s.P = aet.Video.O;
             for (i = 0; i < aet.Video.C; i++)
                 aet.Video[i] = new Video { O = s.P, Color = s.RU32(), Width = s.RU16(),
-                    Height = s.RU16(), Frames = s.RF32(), Identifiers = s.ReadCountPointer<Video.Identifier>() };
+                    Height = s.RU16(), Frames = s.RF32(), Identifiers = s.RCP<Video.Identifier>() };
 
             for (i = 0; i < aet.Video.C; i++)
             {
@@ -511,7 +511,7 @@ namespace KKdMainLib
                 obj.Type    = (Layer.AetLayerType   )s.RU8 ();
                 obj.VidItmOff  = s.RI32();
                 obj.ParentLayer = s.RI32();
-                obj.Marker = s.ReadCountPointer<Marker>();
+                obj.Marker = s.RCP<Marker>();
                 obj.Video = s.RP<VideoData>();
                 obj.Audio = s.RP<AudioData>();
 
@@ -523,14 +523,14 @@ namespace KKdMainLib
                     video.TransferMode.Flags      = (VideoData.VideoTransferMode.TransferFlags     )s.RU8();
                     video.TransferMode.TrackMatte = (VideoData.VideoTransferMode.TransferTrackMatte)s.RU8();
                     video.Padding = s.RU8();
-                    video.  AnchorX = s.ReadCountPointer<KFT2>();
-                    video.  AnchorY = s.ReadCountPointer<KFT2>();
-                    video.PositionX = s.ReadCountPointer<KFT2>();
-                    video.PositionY = s.ReadCountPointer<KFT2>();
-                    video.Rotation  = s.ReadCountPointer<KFT2>();
-                    video.   ScaleX = s.ReadCountPointer<KFT2>();
-                    video.   ScaleY = s.ReadCountPointer<KFT2>();
-                    video.Opacity   = s.ReadCountPointer<KFT2>();
+                    video.  AnchorX = s.RCP<KFT2>();
+                    video.  AnchorY = s.RCP<KFT2>();
+                    video.PositionX = s.RCP<KFT2>();
+                    video.PositionY = s.RCP<KFT2>();
+                    video.Rotation  = s.RCP<KFT2>();
+                    video.   ScaleX = s.RCP<KFT2>();
+                    video.   ScaleY = s.RCP<KFT2>();
+                    video.Opacity   = s.RCP<KFT2>();
                     video.Video3D = s.RP<VideoData.Video3DData>();
 
                     RKF(ref video.  AnchorX);
@@ -546,14 +546,14 @@ namespace KKdMainLib
                     {
                         ref VideoData.Video3DData video3DData = ref video.Video3D.V;
                         s.P = video.Video3D.O;
-                        video3DData.   AnchorZ = s.ReadCountPointer<KFT2>();
-                        video3DData. PositionZ = s.ReadCountPointer<KFT2>();
-                        video3DData.DirectionX = s.ReadCountPointer<KFT2>();
-                        video3DData.DirectionY = s.ReadCountPointer<KFT2>();
-                        video3DData.DirectionZ = s.ReadCountPointer<KFT2>();
-                        video3DData. RotationX = s.ReadCountPointer<KFT2>();
-                        video3DData. RotationY = s.ReadCountPointer<KFT2>();
-                        video3DData.    ScaleZ = s.ReadCountPointer<KFT2>();
+                        video3DData.   AnchorZ = s.RCP<KFT2>();
+                        video3DData. PositionZ = s.RCP<KFT2>();
+                        video3DData.DirectionX = s.RCP<KFT2>();
+                        video3DData.DirectionY = s.RCP<KFT2>();
+                        video3DData.DirectionZ = s.RCP<KFT2>();
+                        video3DData. RotationX = s.RCP<KFT2>();
+                        video3DData. RotationY = s.RCP<KFT2>();
+                        video3DData.    ScaleZ = s.RCP<KFT2>();
 
                         RKF(ref video3DData.   AnchorZ);
                         RKF(ref video3DData. PositionZ);
@@ -570,10 +570,10 @@ namespace KKdMainLib
                 {
                     ref AudioData audio = ref obj.Audio.V;
                     s.P = obj.Audio.O;
-                    audio.VolumeL = s.ReadCountPointer<KFT2>();
-                    audio.VolumeR = s.ReadCountPointer<KFT2>();
-                    audio.   PanL = s.ReadCountPointer<KFT2>();
-                    audio.   PanR = s.ReadCountPointer<KFT2>();
+                    audio.VolumeL = s.RCP<KFT2>();
+                    audio.VolumeR = s.RCP<KFT2>();
+                    audio.   PanL = s.RCP<KFT2>();
+                    audio.   PanR = s.RCP<KFT2>();
 
                     RKF(ref audio.VolumeL);
                     RKF(ref audio.VolumeR);

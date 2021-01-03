@@ -140,7 +140,7 @@ namespace KKdMainLib
             FARCFile file = Files[i];
             if (Signature != Farc.FARC)
             {
-                file.Data = Signature == Farc.FArC
+                file.Data = Signature == Farc.FArC && file.SizeUnc > 0
                     ? File.ReadAllBytes(FilePath, file.SizeComp, file.Offset).InflateGZip(file.SizeUnc)
                     : File.ReadAllBytes(FilePath, file.SizeUnc, file.Offset);
                 Files[i] = file;

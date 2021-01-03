@@ -6,11 +6,30 @@ namespace PD_Tool
 {
     public class CCT
     {
-        public static void Processor()
+        public static void Processor(bool json)
         {
             Console.Title = "Color Correction Converter";
             Program.Choose(1, "cct", out string[] fileNames);
             if (fileNames.Length < 1) return;
+
+            bool cc = false;
+            foreach (string file in fileNames)
+                if (file.EndsWith(".cct")) { cc = true; break; }
+
+            string choose = "";
+            if (cc)
+            {
+                Console.Clear();
+                Program.ConsoleDesign(true);
+                Program.ConsoleDesign("          Choose type of format to export:");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign("1. JSON");
+                Program.ConsoleDesign("2. TXT");
+                Program.ConsoleDesign(false);
+                Program.ConsoleDesign(true);
+                Console.WriteLine();
+                choose = Console.ReadLine().ToUpper();
+            }
 
             string filepath, ext;
             ColorCorrection cct;
@@ -24,13 +43,16 @@ namespace PD_Tool
                     if (ext == ".cct")
                     {
                         cct.CCTReader(filepath);
-                        cct.TXTWriter(filepath);
+                        if (choose == "2" && !cct.IsX)
+                            cct.TXTWriter(filepath);
+                        else
+                            cct.MsgPackWriter(filepath, json);
                     }
-                    /*else if (ext == ".txt")
+                    else if (ext == ".json" || ext == ".mp")
                     {
-                        blt.TXTReader(filepath);
-                        blt.CCTWriter(filepath);
-                    }*/
+                        cct.MsgPackReader(filepath, json);
+                        cct.CCTWriter(filepath);
+                    }
                 }
         }
     }

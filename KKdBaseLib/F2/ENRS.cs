@@ -220,6 +220,9 @@ namespace KKdBaseLib.F2
             public int Size;
             public int Repeat;
             public SubENRSEntry[] Sub;
+            
+            public ENRSEntry(int offset, int count, int size, int repeat)
+            { Offset = offset; Count = count; Size = size; Repeat = repeat; Sub = new SubENRSEntry[count]; }
 
             public enum Type : byte
             {
@@ -242,6 +245,9 @@ namespace KKdBaseLib.F2
                 public int Skip;
                 public int Reverse;
                 public Type Type;
+
+                public SubENRSEntry(int skip, int reverse, Type type)
+                { Skip = skip; Reverse = reverse; Type = type; }
 
                 public int SizeSkip => Skip + Reverse * (2 << (byte)Type);
                 public int Size     =>        Reverse * (2 << (byte)Type);

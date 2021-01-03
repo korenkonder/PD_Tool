@@ -164,11 +164,11 @@ namespace PD_Tool
                 }
                 else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
-                else if (localChoose == "2") BLT.Processor();
-                else if (localChoose == "3") CCT.Processor();
+                else if (localChoose == "2") BLT.Processor(json);
+                else if (localChoose == "3") CCT.Processor(json);
                 else if (localChoose == "4") DEX.Processor(json);
-                else if (localChoose == "5") DFT.Processor();
-                else if (localChoose == "6") LIT.Processor();
+                else if (localChoose == "5") DFT.Processor(json);
+                else if (localChoose == "6") LIT.Processor(json);
                 else if (localChoose == "7") STR.Processor(json);
                 else if (localChoose == "8") VAG.Processor();
                 else choose = localChoose;
@@ -184,8 +184,12 @@ namespace PD_Tool
                     ConsoleDesign("               Choose converter:");
                     ConsoleDesign(false);
                     ConsoleDesign("1. A3DA");
-                    ConsoleDesign("2. DEX" );
-                    ConsoleDesign("3. VAG" );
+                    ConsoleDesign("2. Bloom"           );
+                    ConsoleDesign("3. Color Correction");
+                    ConsoleDesign("4. DEX" );
+                    ConsoleDesign("5. DOF"             );
+                    ConsoleDesign("6. Light"           );
+                    ConsoleDesign("7. VAG" );
                     ConsoleDesign(false);
                     ConsoleDesign("R. Return to Main Menu");
                     ConsoleDesign(false);
@@ -195,8 +199,12 @@ namespace PD_Tool
                 }
                 else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
-                else if (localChoose == "2") DEX.Processor(json);
-                else if (localChoose == "3") VAG.Processor();
+                else if (localChoose == "2") BLT.Processor(json);
+                else if (localChoose == "3") CCT.Processor(json);
+                else if (localChoose == "4") DEX.Processor(json);
+                else if (localChoose == "5") DFT.Processor(json);
+                else if (localChoose == "6") LIT.Processor(json);
+                else if (localChoose == "7") VAG.Processor();
                 else choose = localChoose;
             }
             else if (choose[0] == '9')
@@ -293,36 +301,48 @@ namespace PD_Tool
 
         public static string Choose(int code, string filetype, out string[] FileNames)
         {
-            string mp   = GetArgs("MessagePack", true, "mp"  );
-            string json = GetArgs("JSON"       , true, "json");
-            string bin  = GetArgs("BIN"        , true, "bin" );
-            string wav  = GetArgs("WAV"        , true, "wav" );
-
             FileNames = new string[0];
             if (code == 1)
             {
-                string Filter = GetArgs("All;", false, "*");
+                string mp   = GetArgs("MessagePack", true, "mp"  );
+                string json = GetArgs("JSON"       , true, "json");
+                string bin  = GetArgs("BIN"        , true, "bin" );
+                string wav  = GetArgs("WAV"        , true, "wav" );
+
+                string Filter = GetArgs("All", false, "*");
                      if (filetype == "a3da") Filter = GetArgs("A3DA", "a3da", "farc", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") +   GetArgs("FARC", true, "farc") + json + mp;
                 else if (filetype == "adp" ) Filter = GetArgs("ADP" , "adp", "json", "mp") +
                         GetArgs("ADP", true, "adp" ) + json + mp;
                 else if (filetype == "bin" ) Filter = GetArgs("BIN" , "bin", "json", "mp") +
                         bin + json + mp;
-                else if (filetype == "blt" ) Filter = GetArgs("BLT" , "blt");
+                else if (filetype == "blt" ) Filter = GetArgs("BLT" , "blt", "json", "mp") +
+                        GetArgs("BLT", true, "blt") + json + mp;
                 else if (filetype == "bon" ) Filter = GetArgs("BON" , "bon", "bin", "json", "mp") +
                         GetArgs("BON", true, "bon") + bin + json + mp;
-                else if (filetype == "cct" ) Filter = GetArgs("CCT" , "cct");
+                else if (filetype == "cct" ) Filter = GetArgs("CCT" , "cct", "json", "mp") +
+                        GetArgs("CCT", true, "cct") + json + mp;
                 else if (filetype == "databank") Filter = GetArgs("DAT", "dat", "json", "mp") +
                         GetArgs("DAT", true, "dat") + json + mp;
                 else if (filetype == "dex" ) Filter = GetArgs("DEX" , "dex", "bin", "json", "mp") +
                         GetArgs("DEX", true, "dex") + bin + json + mp;
-                else if (filetype == "dft" ) Filter = GetArgs("DFT" , "dft");
+                else if (filetype == "dft" ) Filter = GetArgs("DFT" , "dft", "json", "mp") +
+                        GetArgs("DFT", true, "dft") + json + mp;
                 else if (filetype == "diva") Filter = GetArgs("DIVA", "diva", "wav") +
                         GetArgs("DIVA", true, "diva") + wav;
+                else if (filetype == "dsc" ) Filter = GetArgs("DSC" , "dsc", "json", "mp") +
+                        GetArgs("DSC", true, "dsc") + json + mp;
+                else if (filetype == "dve" ) Filter = GetArgs("Particle", "dve", "farc", "json", "mp") +
+                        GetArgs("Particle", true, "dve") + GetArgs("Particle", true, "farc") + json + mp;
                 else if (filetype == "farc") Filter = GetArgs("FARC", "farc");
                 else if (filetype == "json") Filter = GetArgs("JSON", "json");
+                else if (filetype == "igb" ) Filter = GetArgs("IGB", "igb");
+                else if (filetype == "mgftxt") Filter = GetArgs("MGF2AFT txt", "txt");
                 else if (filetype == "mp"  ) Filter = GetArgs("MessagePack", "mp");
-                else if (filetype == "lit")  Filter = GetArgs("LIT" , "lit");
+                else if (filetype == "lit")  Filter = GetArgs("LIT" , "lit", "json", "mp") +
+                        GetArgs("LIT", true, "lit") + json + mp;
+                else if (filetype == "pvdb") Filter = GetArgs("PV DB / PV Field", "txt", "json", "mp") +
+                        GetArgs("PV DB / PV Field", true, "txt") + json + mp;
                 else if (filetype == "str" ) Filter = GetArgs("STR" , "str", "bin", "json", "mp") +
                         GetArgs("STR", true, "str") + bin + json + mp;
                 else if (filetype == "tbl" ) Filter = GetArgs("Table" , "bin", "farc", "json", "mp") +
@@ -330,14 +350,14 @@ namespace PD_Tool
                 else if (filetype == "vag" ) Filter = GetArgs("VAG" , "vag", "wav") +
                         GetArgs("VAG", true, "vag") + wav;
 
-                using OpenFileDialog ofd = new OpenFileDialog { //InitialDirectory = Application.StartupPath,
+                using OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
                     Filter = Filter, Multiselect = true, Title = "Choose file(s) to open:" };
                 if (ofd.ShowDialog() == DialogResult.OK) FileNames = ofd.FileNames;
             }
             else if (code == 2)
             {
                 string Return = "";
-                using (OpenFileDialog ofd = new OpenFileDialog { //InitialDirectory = Application.StartupPath,
+                using (OpenFileDialog ofd = new OpenFileDialog { InitialDirectory = Application.StartupPath,
                     ValidateNames = false, CheckFileExists = false, Filter = " | ", CheckPathExists = true,
                     Title = "Choose any file in folder:", FileName = "Folder Selection." })
                     if (ofd.ShowDialog() == DialogResult.OK) Return = Path.GetDirectoryName(ofd.FileName);

@@ -203,7 +203,7 @@ namespace KKdBaseLib.Auth3D
 
         public struct Instance
         {
-            public int? Shadow;
+            public bool? Shadow;
             public string Name;
             public string UIDName;
             public ModelTransform MT;

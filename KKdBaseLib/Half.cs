@@ -75,9 +75,9 @@ namespace KKdBaseLib
             else if ((ulong)si64 == 0x8000000000000000) return new Half { value = 0x8000 };
             else
             {
-                ushort sign     = (ushort)((si64 >> 63) & 0x8000);
-                ushort exponent = (ushort)((si64 >> 52) & 0x07FF);
-                ushort mantissa = (ushort)((si64 >> 42) & 0x03FF);
+                ushort sign     = (ushort)((si64 >> 63) & 0x001);
+                ushort exponent = (ushort)((si64 >> 52) & 0x7FF);
+                ushort mantissa = (ushort)((si64 >> 42) & 0x3FF);
 
                 if (exponent == 0x7FF) exponent = 31;
                 else if (exponent != 0x00)

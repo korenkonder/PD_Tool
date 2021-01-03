@@ -19,10 +19,9 @@ namespace KKdMainLib
             s = File.OpenReader(filepath + ext);
 
             header.Format = Format.F;
-            header.SectionSignature = s.RU32();
-            if (header.SectionSignature == 0x43505845)
-                header = s.ReadHeader(true, true);
-            if (header.SectionSignature != 0x64) return;
+            uint signature = s.RU32();
+            if (signature == 0x43505845) { header = s.ReadHeader(true); signature = s.RU32(); }
+            if (signature != 0x64) return;
 
             s.O = s.P - 0x4;
             Dex = new EXP[s.RI32()];

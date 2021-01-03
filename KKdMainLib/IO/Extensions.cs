@@ -98,28 +98,38 @@ namespace KKdMainLib.IO
 
         public static string RSaO(this Stream stream)
         {
-            long Position = stream.PI64 + (stream.IsX ? 8 : 4);
-            stream.PI64 = stream.RIX();
+            long offset = stream.RIX();
+            if (offset < 1)
+                return "";
+
+            long position = stream.PI64;
+            stream.PI64 = offset;
             string s = stream.NTUTF8();
-            stream.PI64 = Position;
+            stream.PI64 = position;
             return s;
         }
 
         public static string RSaO(this Stream stream, long offset)
         {
-            long Position = stream.PI64;
+            if (offset < 1)
+                return "";
+
+            long position = stream.PI64;
             stream.PI64 = offset;
             string s = stream.NTUTF8();
-            stream.PI64 = Position;
+            stream.PI64 = position;
             return s;
         }
 
         public static string RSaO(this Stream stream, long offset, long length)
         {
-            long Position = stream.PI64;
+            if (offset < 1 || length < 1)
+                return "";
+
+            long position = stream.PI64;
             stream.PI64 = offset;
             string s = stream.RSUTF8(length);
-            stream.PI64 = Position;
+            stream.PI64 = position;
             return s;
         }
 
@@ -149,7 +159,7 @@ namespace KKdMainLib.IO
         public static void W<T>(this Stream stream, Pointer<T> val) =>
             stream.W(val.O);
 
-        public static CountPointer<T> ReadCountPointer<T>(this Stream stream) =>
+        public static CountPointer<T> RCP<T>(this Stream stream) =>
             new CountPointer<T> { C = stream.RI32(), O = stream.RI32() };
 
         public static void W<T>(this Stream stream, CountPointer<T> val)

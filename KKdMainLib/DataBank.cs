@@ -10,6 +10,7 @@ namespace KKdMainLib
         private int i;
         private Stream s;
 
+        public bool pvListPDA;
         public PvList[] pvList;
         public PsrData[] psrData;
 
@@ -20,6 +21,7 @@ namespace KKdMainLib
 
         public void DBReader(string file)
         {
+            pvListPDA = false;
             Success = false;
             if (!File.Exists(file)) return;
             string text = File.ReadAllText(file);
@@ -28,17 +30,25 @@ namespace KKdMainLib
 
             pvList = null;
             psrData = null;
-            if (file.Contains("psrData") && array.Length % 13 < 2)
+            if (file.Contains("psrData") && array.Length % 13 == 0)
             {
                 psrData = new PsrData[array.Length / 13];
                 for (i = 0; i < psrData.Length; i++) psrData[i].SetValue(array, i);
                 Success = true;
             }
             else if (file.Contains("psrData")) Success = true;
-            else if (file.Contains("PvList") && array.Length % 7 < 2)
+            else if (file.Contains("PvList") && (array.Length % 7 == 0 || array.Length % 6 == 0))
             {
-                pvList = new PvList[array.Length / 7];
-                for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i);
+                if (array[2] != "0" && array[3] != "1")
+                {
+                    pvList = new PvList[array.Length / 6];
+                    for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i, true);
+                }
+                else
+                {
+                    pvList = new PvList[array.Length / 7];
+                    for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i, false);
+                }
                 Success = true;
             }
             else if (file.Contains("PvList")) Success = true;
@@ -63,8 +73,8 @@ namespace KKdMainLib
                 if (pvList != null && pvList.Length > 0)
                 {
                     for (i = 0; i < pvList.Length - 1; i++)
-                        s.W(UrlEncode(pvList[i].ToString() + c));
-                    s.W(UrlEncode(pvList[i].ToString()));
+                        s.W(UrlEncode(pvList[i].ToString(pvListPDA) + c));
+                    s.W(UrlEncode(pvList[i].ToString(pvListPDA)));
                 }
                 else s.W("%2A%2A%2A");
             }
@@ -85,6 +95,7 @@ namespace KKdMainLib
 
         public void MsgPackReader(string file, bool json)
         {
+            pvListPDA = false;
             Success = false;
             MsgPack msgPack = file.ReadMPAllAtOnce(json);
             bool compact = msgPack.RB("Compact");
@@ -107,6 +118,19 @@ namespace KKdMainLib
             {
                 MsgPack pvList;
                 if ((pvList = msgPack["PvList", true]).NotNull)
+                {
+                    this.pvList = new PvList[pvList.Array.Length];
+                    for (i = 0; i < this.pvList.Length; i++)
+                        this.pvList[i].SetValue(pvList[i], compact);
+                }
+                Success = true;
+                pvList.Dispose();
+            }
+            else if (file.Contains("PvListPDA"))
+            {
+                pvListPDA = true;
+                MsgPack pvList;
+                if ((pvList = msgPack["PvListPDA", true]).NotNull)
                 {
                     this.pvList = new PvList[pvList.Array.Length];
                     for (i = 0; i < this.pvList.Length; i++)
@@ -139,11 +163,11 @@ namespace KKdMainLib
                 if (pvList != null)
                 {msgPack.Add("Compact", true);
 
-                    MsgPack PvList = new MsgPack(pvList.Length, "PvList");
+                    MsgPack PvList = new MsgPack(pvList.Length, pvListPDA ? "PvListPDA" : "PvList");
                     for (i = 0; i < pvList.Length; i++) PvList[i] = pvList[i].WriteMP();
                     msgPack.Add(PvList);
                 }
-                else msgPack.Add(new MsgPack("PvList", null));
+                else msgPack.Add(new MsgPack(pvListPDA ? "PvListPDA" : "PvList", null));
             }
             msgPack.Write(file, false, json).Dispose();
         }
@@ -154,7 +178,7 @@ namespace KKdMainLib
         private bool disposed;
         public void Dispose()
         { if (!disposed) { if (s != null) s.D(); s = null; psrData = null;
-                pvList = null; Success = false; disposed = true; } }
+                pvList = null; pvListPDA = false; Success = false; disposed = true; } }
 
         public struct PsrData
         {
@@ -262,15 +286,27 @@ namespace KKdMainLib
             public Date StartShow;
             public Date   EndShow;
 
-            public void SetValue(string[] data, int i = 0)
+            public void SetValue(string[] data, int i = 0, bool pda = false)
             {
-                PV_ID   = int.Parse(data[i * 7]);
-                Version = int.Parse(data[i * 7 + 1]);
-                Edition = int.Parse(data[i * 7 + 2]);
-                AdvDemoStart.SV(data[i * 7 + 3]);
-                AdvDemoEnd  .SV(data[i * 7 + 4]);
-                StartShow   .SV(data[i * 7 + 5]);
-                  EndShow   .SV(data[i * 7 + 6]);
+                if (pda)
+                {
+                    PV_ID = int.Parse(data[i * 6]);
+                    Version = int.Parse(data[i * 6 + 1]);
+                    AdvDemoStart.SV(data[i * 6 + 2]);
+                    AdvDemoEnd.SV(data[i * 6 + 3]);
+                    StartShow.SV(data[i * 6 + 4]);
+                    EndShow.SV(data[i * 6 + 5]);
+                }
+                else
+                {
+                    PV_ID   = int.Parse(data[i * 7]);
+                    Version = int.Parse(data[i * 7 + 1]);
+                    Edition = int.Parse(data[i * 7 + 2]);
+                    AdvDemoStart.SV(data[i * 7 + 3]);
+                    AdvDemoEnd  .SV(data[i * 7 + 4]);
+                    StartShow   .SV(data[i * 7 + 5]);
+                      EndShow   .SV(data[i * 7 + 6]);
+                }
             }
 
             public void SetValue(MsgPack msg, bool Compact)
@@ -313,8 +349,9 @@ namespace KKdMainLib
                 return msgPack;
             }
 
-            public override string ToString() =>
-                UrlEncode($"{PV_ID},{Version},{Edition},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}");
+            public string ToString(bool pda) => pda
+                ? UrlEncode($"{PV_ID},{Version},{Edition},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}")
+                : UrlEncode($"{PV_ID},{Version},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}");
         }
 
         public struct Date

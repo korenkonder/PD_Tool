@@ -10,7 +10,6 @@ namespace KKdBaseLib.F2
         public uint SectionSize;      // 0x14
         public uint Version;          // 0x18
         public uint   InnerSignature; // 0x30
-        public uint SectionSignature; // 0x40
 
         public Format Format;
         public bool UseBigEndian;
