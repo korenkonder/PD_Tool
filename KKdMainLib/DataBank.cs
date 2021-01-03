@@ -39,8 +39,9 @@ namespace KKdMainLib
             else if (file.Contains("psrData")) Success = true;
             else if (file.Contains("PvList") && (array.Length % 7 == 0 || array.Length % 6 == 0))
             {
-                if (array[2] != "0" && array[3] != "1")
+                if (array[2] != "0" && array[2] != "1")
                 {
+                    pvListPDA = true;
                     pvList = new PvList[array.Length / 6];
                     for (i = 0; i < pvList.Length; i++) pvList[i].SetValue(array, i, true);
                 }
@@ -123,15 +124,9 @@ namespace KKdMainLib
                     for (i = 0; i < this.pvList.Length; i++)
                         this.pvList[i].SetValue(pvList[i], compact);
                 }
-                Success = true;
-                pvList.Dispose();
-            }
-            else if (file.Contains("PvListPDA"))
-            {
-                pvListPDA = true;
-                MsgPack pvList;
-                if ((pvList = msgPack["PvListPDA", true]).NotNull)
+                else if ((pvList = msgPack["PvListPDA", true]).NotNull)
                 {
+                    pvListPDA = true;
                     this.pvList = new PvList[pvList.Array.Length];
                     for (i = 0; i < this.pvList.Length; i++)
                         this.pvList[i].SetValue(pvList[i], compact);
@@ -349,7 +344,7 @@ namespace KKdMainLib
                 return msgPack;
             }
 
-            public string ToString(bool pda) => pda
+            public string ToString(bool pda) => !pda
                 ? UrlEncode($"{PV_ID},{Version},{Edition},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}")
                 : UrlEncode($"{PV_ID},{Version},{AdvDemoStart},{AdvDemoEnd},{StartShow},{EndShow}");
         }
