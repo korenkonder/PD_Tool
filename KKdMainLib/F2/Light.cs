@@ -797,7 +797,7 @@ namespace KKdMainLib.F2
                 "SpecularB,SpecularA,PosX,PosY,PosZ,ToneCurveBegin,ToneCurveEnd,ToneCurveBlendRate," +
                 (file.EndsWith("_chara") ? "コメント" : "ID") + "\n");
             for (i0 = 0; i0 < LITs.E[i].C0; i0++)
-                s.W($"{LITs.E[i].E1[i0]},{i}\n");
+                s.W($"{LITs.E[i].E0[i0]},{i}\n");
             File.WriteAllBytes($"{file}_light.txt", s.ToArray(true));
         }
 

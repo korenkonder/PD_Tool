@@ -6,12 +6,12 @@
     <Configuration></Configuration>
     <Copyright>korenkonder (C) 2019-2021</Copyright>
     <Description>A base library</Description>
-    <FileVersion>0.4.9.10</FileVersion>
+    <FileVersion>0.4.9.11</FileVersion>
     <PackageId>KKdBaseLib</PackageId>
     <Product>KKdBaseLib</Product>
     <TargetFramework>net461</TargetFramework>
     <Title>KKdBaseLib</Title>
-    <Version>0.4.9.10</Version>
+    <Version>0.4.9.11</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

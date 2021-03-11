@@ -218,7 +218,7 @@ namespace KKdMainLib
             for (int i = 0; i < Files.Count; i++)
             {
                 string ext = Path.GetExtension(Files[i].Name).ToLower();
-                if (ext == ".a3da" || ext == ".diva" || ext == ".drs" || ext == ".dve" || ext == ".vag")
+                if (ext == ".a3da" || ext == ".diva" || ext == ".farc" || ext == ".vag")
                 { Signature = Farc.FArc; break; }
             }
 
