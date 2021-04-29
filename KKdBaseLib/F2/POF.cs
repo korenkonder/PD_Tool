@@ -106,6 +106,9 @@ namespace KKdBaseLib.F2
 
         private int length(bool shiftX = false)
         {
+            if (Offsets.IsNull)
+                return 0;
+
             int length = 4;
             long offset = 0;
             byte bitShift = (byte)(shiftX ? 3 : 2);

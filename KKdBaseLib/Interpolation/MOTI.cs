@@ -1,6 +1,6 @@
 namespace KKdBaseLib.Interpolation
 {
-    public class PDI : IInterpolation<float> //Project DIVA Interpolation
+    public class MOTI : IInterpolation<float> // MOT Interpolation
     {
         private KFT2[] array;
         private int length;
@@ -23,7 +23,7 @@ namespace KKdBaseLib.Interpolation
         public bool  IsNull => array == null || array.Length < 1;
         public bool NotNull => array != null && array.Length > 0;
 
-        public PDI(KFT2[] array, float interpolationFramerate = 60, float requestedFramerate = 60)
+        public MOTI(KFT2[] array, float interpolationFramerate = 60, float requestedFramerate = 60)
         {
             length = 0;
             this.array = array; f = -1; df = @if = rf = t = v = 0;
@@ -114,17 +114,12 @@ namespace KKdBaseLib.Interpolation
             float v;
             if (frame <= c.F || frame >= n.F)
                 v = frame > c.F ? n.V : c.V;
-            else if (n.T == c.T && n.T == 0.0f)
-            {
-                float t = (frame - c.F) / (n.F - c.F);
-                v = (1.0f - t) * c.V + t * n.V;
-            }
             else
             {
-                float t = (frame - c.F) / (n.F - c.F);
+                float df  = f - c.F;
+                float t   = df / (n.F - c.F);
                 float t_1 = t - 1.0f;
-                v = (t_1 * 2.0f - 1.0f) * (c.V - n.V) * t * t +
-                    (t_1 * c.T + t * n.T) * t_1 * (frame - c.F) + c.V;
+                return c.V + t * t * (3.0f - 2.0f * t) * (n.V - c.V) + (t_1 * c.T + t * n.T) * df * t_1;
             }
             return v;
         }

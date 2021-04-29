@@ -45,7 +45,6 @@ namespace KKdBaseLib
         {
             if (dict == null || args.Length < 1) return false;
 
-            args[0] = args[0].ToLower();
             if (args.Length > 1)
             {
                 string[] newArgs = new string[args.Length - 1];
@@ -119,7 +118,6 @@ namespace KKdBaseLib
             value = null;
             if (dict == null || args.Length < 1) return false;
 
-            args[0] = args[0].ToLower();
                  if (!dict.ContainsKey(args[0])) return false;
             else if (args.Length > 1)
             {
@@ -172,7 +170,6 @@ namespace KKdBaseLib
                  if (dict == null) dict = new A3DADict();
             else if (args.Length < 1) return;
 
-            args[0] = args[0].ToLower();
             if (args.Length > 1)
             {
                 string[] newArgs = new string[args.Length - 1];

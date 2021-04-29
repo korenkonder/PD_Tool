@@ -26,7 +26,21 @@ namespace KKdBaseLib
 
 
         public KKdList(T[] array)
-        { index = -1; count = array.Length; this.array = array; enumerator = new Enumerator(this.array); }
+        {
+            index = -1;
+            if (array != null)
+            {
+                count = array.Length;
+                this.array = new T[count];
+                System.Array.Copy(array, this.array, count);
+            }
+            else
+            {
+                count = 0;
+                this.array = null;
+            }
+            enumerator = new Enumerator(this.array);
+        }
 
         public T Current => index > -1 && index < Count ? array[index] : default;
 

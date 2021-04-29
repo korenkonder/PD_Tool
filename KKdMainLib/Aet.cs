@@ -753,7 +753,7 @@ namespace KKdMainLib
                 rootLayer[i0] = WL(ref aet.Composition[i].E[i0]);
             msgPack.Add(rootLayer);
 
-            if (aet.Composition[i].C > 1)
+            if (aet.Composition.C > 1)
             {
                 MsgPack compositions = new MsgPack(aet.Composition.C - 1, "Composition");
                 for (i = 0; i < aet.Composition.C - 1; i++)

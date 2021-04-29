@@ -371,9 +371,9 @@ namespace KKdMainLib
 
         public enum KeySetType : byte
         {
-            None         = 0b00,
-            Static       = 0b01,
-            Linear       = 0b10,
+            None    = 0b00,
+            Static  = 0b01,
+            Linear  = 0b10,
             Tangent = 0b11,
         }
     }

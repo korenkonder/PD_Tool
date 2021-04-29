@@ -2,7 +2,7 @@ using KKdBaseLib.Auth3D;
 
 namespace KKdBaseLib.Interpolation
 {
-    public class A3DAI : IInterpolation<float>, System.IDisposable //A3DA Interpolation
+    public class A3DAI : IInterpolation<float>, System.IDisposable // A3DA Interpolation
     {
         private A3DAKey a3daKey;
 
@@ -111,7 +111,6 @@ namespace KKdBaseLib.Interpolation
 
         private float Interpolate(float frame)
         {
-            float df = 0;
             float ep = 0;
 
             if (frame < firstKey.F)
@@ -119,7 +118,7 @@ namespace KKdBaseLib.Interpolation
                 if (a3daKey.EPTypePost < EPType.Linear || a3daKey.EPTypePost > EPType.CycleOffset)
                     return firstKey.V;
 
-                df = firstKey.F - frame;
+                float df = firstKey.F - frame;
                 if (a3daKey.EPTypePre == EPType.Linear)
                     return firstKey.V - df * firstKey.T1;
 
@@ -132,7 +131,7 @@ namespace KKdBaseLib.Interpolation
                 if (a3daKey.EPTypePost < EPType.Linear || a3daKey.EPTypePost > EPType.CycleOffset)
                     return lastKey.V;
 
-                df = frame - lastKey.F;
+                float df = frame - lastKey.F;
                 if (a3daKey.EPTypePost == EPType.Linear)
                     return lastKey.V + df * lastKey.T2;
 
@@ -165,17 +164,17 @@ namespace KKdBaseLib.Interpolation
             float v;
             if (frame <= c.F || frame >= n.F)
                 v = frame > c.F ? n.V : c.V;
-            else if (a3daKey.Type == KeyType.Linear || (a3daKey.Type == KeyType.Hermite && n.T1 == c.T2 && n.T1 == 0.0f))
+            else if (a3daKey.Type == KeyType.Linear)
             {
                 float t = (frame - c.F) / (n.F - c.F);
                 v = (1.0f - t) * c.V + t * n.V;
             }
             else if (a3daKey.Type == KeyType.Hermite)
             {
-                float t = (frame - c.F) / (n.F - c.F);
-                float t_2 = (1.0f - t) * (1.0f - t);
-                v = t_2 * c.V * (1.0f + 2.0f * t) + (t * n.V * (3.0f - 2.0f * t) +
-                    (t_2 * c.T2 + t * (t - 1.0f) * n.T1) * (n.F - c.F)) * t;
+                float df  = f - c.F;
+                float t   = df / (n.F - c.F);
+                float t_1 = t - 1.0f;
+                return c.V + t * t * (3.0f - 2.0f * t) * (n.V - c.V) + (t_1 * c.T2 + t * n.T1) * df * t_1;
             }
             else v = c.V;
             return v + ep;

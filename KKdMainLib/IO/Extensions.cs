@@ -66,22 +66,22 @@ namespace KKdMainLib.IO
         }
 
         public static long RIX(this Stream stream           ) =>
-            stream.IsX ? stream.RI64() : stream.RI32E(  );
+            stream.IsX ? stream.RI64E(    ) : stream.RI32E(    );
         public static long RIX(this Stream stream, bool isBE) =>
-            stream.IsX ? stream.RI64() : stream.RI32E(isBE);
+            stream.IsX ? stream.RI64E(isBE) : stream.RI32E(isBE);
 
         public static void WX(this Stream stream, long val, ref POF pof)
-        {   if (stream.IsX) stream.W (     val);
+        {   if (stream.IsX) stream.WE(     val);
             else            stream.WE((int)val);       pof.Offsets.Add(stream.P); }
         public static void WX(this Stream stream, long val, ref POF pof, bool isBE)
-        {   if (stream.IsX) stream.W (     val      );
+        {   if (stream.IsX) stream.WE(     val, isBE);
             else            stream.WE((int)val, isBE); pof.Offsets.Add(stream.P); }
 
         public static void WX(this Stream stream, long val)
-        {   if (stream.IsX) stream.W (     val);
+        {   if (stream.IsX) stream.WE(     val);
             else            stream.WE((int)val);       }
         public static void WX(this Stream stream, long val, bool isBE)
-        {   if (stream.IsX) stream.W (     val      );
+        {   if (stream.IsX) stream.WE(     val, isBE);
             else            stream.WE((int)val, isBE); }
 
         public static byte[] RaO(this Stream stream, long offset = -1, long length = -1)
@@ -111,9 +111,6 @@ namespace KKdMainLib.IO
 
         public static string RSaO(this Stream stream, long offset)
         {
-            if (offset < 1)
-                return "";
-
             long position = stream.PI64;
             stream.PI64 = offset;
             string s = stream.NTUTF8();
@@ -123,7 +120,7 @@ namespace KKdMainLib.IO
 
         public static string RSaO(this Stream stream, long offset, long length)
         {
-            if (offset < 1 || length < 1)
+            if (length < 1)
                 return "";
 
             long position = stream.PI64;

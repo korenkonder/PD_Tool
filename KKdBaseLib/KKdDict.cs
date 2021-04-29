@@ -27,7 +27,13 @@ namespace KKdBaseLib
         {
             this.keyArray = null; this.valArray = null; count = 0; index = 0;
             if (keyArray == null || valArray == null || keyArray.Length != valArray.Length) return;
-            count = valArray.Length; this.keyArray = keyArray; this.valArray = valArray; }
+
+            count = this.keyArray.Length;
+            this.keyArray = new TKey  [count];
+            this.valArray = new TValue[count];
+            System.Array.Copy(keyArray, this.keyArray, count);
+            System.Array.Copy(valArray, this.valArray, count);
+        }
 
         public KeyValuePair<TKey, TValue> Current => index < count ?
             new KeyValuePair<TKey, TValue>(keyArray[index], valArray[index]) : default;

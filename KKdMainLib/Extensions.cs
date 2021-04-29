@@ -131,7 +131,7 @@ namespace KKdMainLib
                     else                   @struct.POF .Read(Data, sig == 0x31464F50);
                 }
                 else if (header.Depth == 0 && sig == 0x43505854)
-                    subStructs.Add(new Struct { Header = header, DataOffset = stream.P, Data = stream.RBy(l) });
+                    subStructs.Add(stream.RSt(header));
                 else if (header.Depth > depth) subStructs.Add(stream.RSt(header));
                 else { stream.PI64 -= header.Length; break; }
                 lastSig = sig;

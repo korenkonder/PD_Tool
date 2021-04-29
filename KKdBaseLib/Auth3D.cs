@@ -36,8 +36,8 @@ namespace KKdBaseLib.Auth3D
     public struct Ambient
     {
         public string Name;
-        public Vec4<Key>?    LightDiffuse;
-        public Vec4<Key>? RimLightDiffuse;
+        public Vec3<Key>?    LightDiffuse;
+        public Vec3<Key>? RimLightDiffuse;
     }
 
     public struct CameraAuxiliary
@@ -96,10 +96,10 @@ namespace KKdBaseLib.Auth3D
     public struct Fog
     {
         public int? Id;
-        public Key End;
-        public Key Start;
-        public Key Density;
-        public Vec4<Key>? Diffuse;
+        public Key? End;
+        public Key? Start;
+        public Key? Density;
+        public Vec3<Key>? Diffuse;
     }
 
     public enum CompressF16 : int
@@ -111,6 +111,7 @@ namespace KKdBaseLib.Auth3D
 
     public enum EPType : int // Pre/Post Infinity
     {
+        None        = 0,
         Linear      = 1,
         Cycle       = 2,
         CycleOffset = 3,
@@ -176,21 +177,28 @@ namespace KKdBaseLib.Auth3D
         public int? Id;
         public string Name;
         public string Type;
-        public Vec4<Key>? Ambient;
-        public Vec4<Key>? Diffuse;
+        public Key? ConeAngle;
+        public Key? Constant;
+        public Key? DropOff;
+        public Key? Far;
+        public Key? Intensity;
+        public Key? Linear;
+        public Key? Quadratic;
+        public Vec3<Key>? Ambient;
+        public Vec3<Key>? Diffuse;
         public Vec4<Key>? Specular;
-        public Vec4<Key>? Incandescence;
+        public Vec3<Key>? Incandescence;
         public ModelTransform Position;
         public ModelTransform SpotDirection;
     }
 
     public struct MaterialList
     {
+        public ulong HashName;
         public string Name;
-        public string HashName;
         public Key GlowIntensity;
         public Vec4<Key>? BlendColor;
-        public Vec4<Key>? Incandescence;
+        public Vec3<Key>? Incandescence;
     }
 
     public struct MObjectHRC
@@ -250,10 +258,14 @@ namespace KKdBaseLib.Auth3D
             public string Name;
             public Key? Rotate;
             public Key? RotateFrame;
-            public Vec2<Key?> Offset;
-            public Vec2<Key?> Repeat;
-            public Vec2<Key?> Coverage;
-            public Vec2<Key?> TranslateFrame;
+            public Key? OffsetU;
+            public Key? OffsetV;
+            public Key? RepeatU;
+            public Key? RepeatV;
+            public Key? CoverageU;
+            public Key? CoverageV;
+            public Key? TranslateFrameU;
+            public Key? TranslateFrameV;
         }
     }
 
@@ -280,8 +292,8 @@ namespace KKdBaseLib.Auth3D
         public Key? LensFlare;
         public Key? LensGhost;
         public Key? LensShaft;
-        public Vec4<Key>? Ambient;
-        public Vec4<Key>? Diffuse;
+        public Vec3<Key>? Ambient;
+        public Vec3<Key>? Diffuse;
         public Vec4<Key>? Specular;
     }
 }

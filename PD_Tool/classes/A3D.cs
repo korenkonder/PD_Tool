@@ -31,7 +31,8 @@ namespace PD_Tool
             Program.ConsoleDesign("5. A3DC [F2]");
             Program.ConsoleDesign("6. A3DC [MGF]");
             Program.ConsoleDesign("7. A3DC [X]");
-            if (!mp) Program.ConsoleDesign($"8. {(json ? "JSON" : "MsgPack")}");
+            Program.ConsoleDesign("8. A3DC [XHD]");
+            if (!mp) Program.ConsoleDesign($"9. {(json ? "JSON" : "MsgPack")}");
             Program.ConsoleDesign(false);
             Program.ConsoleDesign(true);
             Console.WriteLine();
@@ -43,7 +44,8 @@ namespace PD_Tool
             else if (choose == "5") format = Format.F2;
             else if (choose == "6") format = Format.MGF;
             else if (choose == "7") format = Format.X  ;
-            else if (choose == "8") format = Format.NULL;
+            else if (choose == "8") format = Format.XHD;
+            else if (choose == "9") format = Format.NULL;
             else return;
 
             int state;
@@ -64,7 +66,7 @@ namespace PD_Tool
                     {
                         state = a3da.A3DAReader(filepath);
                         if (state == 1)
-                            if (choose == "8") a3da.MsgPackWriter(filepath, json);
+                            if (choose == "9") a3da.MsgPackWriter(filepath, json);
                             else
                             {
                                 a3da.Head.Format = format;

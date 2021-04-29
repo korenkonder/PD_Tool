@@ -85,6 +85,9 @@ namespace KKdBaseLib.F2
 
         private int length()
         {
+            if (Array == null)
+                return 0;
+
             int i, i0;
             int length = 0x10;
             for (i = 0; i < Array.Length; i++)

@@ -227,8 +227,8 @@ namespace KKdMainLib
 
             using (Stream headerWriter = File.OpenWriter())
             {
-                     if (Signature == Farc.FArc) headerWriter.WE(0x20, true);
-                else if (Signature == Farc.FArC) headerWriter.WE(0x10, true);
+                     if (Signature == Farc.FArc) headerWriter.WE(0x01, true);
+                else if (Signature == Farc.FArC) headerWriter.WE(0x01, true);
                 else if (Signature == Farc.FARC)
                 {
                     headerWriter.WE((int)FARCType, true);
