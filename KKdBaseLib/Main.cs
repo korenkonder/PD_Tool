@@ -59,7 +59,16 @@ namespace KKdBaseLib
               dict.FV(out string val, args.Split(split)) && bool.TryParse(val, out value);
 
         public static bool FV   (this A3DADict dict, ref    int value, char split, string args) =>
-              dict.FV(out string val, args.Split(split)) && int.TryParse(val, out value);
+              dict.FV(out string val, args.Split(split)) &&   int.TryParse(val, out value);
+
+        public static bool FV   (this A3DADict dict, ref   uint value, char split, string args) =>
+              dict.FV(out string val, args.Split(split)) &&  uint.TryParse(val, out value);
+
+        public static bool FV   (this A3DADict dict, ref   long value, char split, string args) =>
+              dict.FV(out string val, args.Split(split)) &&  long.TryParse(val, out value);
+
+        public static bool FV   (this A3DADict dict, ref  ulong value, char split, string args) =>
+              dict.FV(out string val, args.Split(split)) && ulong.TryParse(val, out value);
 
         public static bool FV   (this A3DADict dict, ref  float value, char split, string args) =>
               dict.FV(out string val, args.Split(split)) && val.ToF32(out value);
@@ -73,11 +82,23 @@ namespace KKdBaseLib
 
         public static bool FV   (this A3DADict dict, out   bool  value, string   args)
         { if (dict.FV(out string val  , args.Split('.'  )))
-                return bool.TryParse(val, out value); value = false; return false; }
+                return  bool.TryParse(val, out value); value = false; return false; }
 
         public static bool FV   (this A3DADict dict, out    int  value, string   args)
         { if (dict.FV(out string val  , args.Split('.'  )))
-                return  int.TryParse(val, out value); value =      0; return false; }
+                return   int.TryParse(val, out value); value =     0; return false; }
+
+        public static bool FV   (this A3DADict dict, out   uint  value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+                return  uint.TryParse(val, out value); value =     0; return false; }
+
+        public static bool FV   (this A3DADict dict, out   long  value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+                return  long.TryParse(val, out value); value =     0; return false; }
+
+        public static bool FV   (this A3DADict dict, out  ulong  value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+                return ulong.TryParse(val, out value); value =     0; return false; }
 
         public static bool FV   (this A3DADict dict, out  float  value, string   args)
         { if (dict.FV(out string val  , args.Split('.'  )))
@@ -87,14 +108,29 @@ namespace KKdBaseLib
         { if (dict.FV(out string val  , args.Split('.'  )))
                 return           val.ToF64(out value); value =     0; return false; }
 
-        public static bool FV<T>(this A3DADict dict, out      T  value, string   args) where T : struct
+        public static bool FV<T>(this A3DADict dict, out      T  value, string   args) where T : struct, Enum
         { if (dict.FV(out string val  , args.Split('.'  )))
             { bool Val = Enum.TryParse(val, out   T _value); value = _value; return Val; }
                                                      value = default; return false; }
 
         public static bool FV   (this A3DADict dict, out    int? value, string   args)
         { if (dict.FV(out string val  , args.Split('.'  )))
-            { bool Val =  int.TryParse(val, out int _value); value = _value; return Val; }
+            { bool Val =   int.TryParse(val, out   int _value); value = _value; return Val; }
+                                                     value =    null; return false; }
+
+        public static bool FV   (this A3DADict dict, out   uint? value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+            { bool Val =  uint.TryParse(val, out  uint _value); value = _value; return Val; }
+                                                     value =    null; return false; }
+
+        public static bool FV   (this A3DADict dict, out   long? value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+            { bool Val =  long.TryParse(val, out  long _value); value = _value; return Val; }
+                                                     value =    null; return false; }
+
+        public static bool FV   (this A3DADict dict, out  ulong? value, string   args)
+        { if (dict.FV(out string val  , args.Split('.'  )))
+            { bool Val = ulong.TryParse(val, out ulong _value); value = _value; return Val; }
                                                      value =    null; return false; }
 
         public static bool FV   (this A3DADict dict, out  float? value, string   args)
