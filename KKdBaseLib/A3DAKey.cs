@@ -27,15 +27,15 @@ namespace KKdBaseLib
             Length = DataOffset = 0; Keys = null;
 
             MaxFrames = k.Max ?? 0;
-            if (k.Type > KeyType.Static && k.Length > 1)
+            if (k.Type > KeyType.Static && k.Keys != null && k.Keys.Length > 1)
             {
                 Type = k.Type;
-                Length = k.Length;
+                Length = k.Keys.Length;
                 Keys = k.Keys;
                 EPTypePost = k.EPTypePost;
                 EPTypePre = k.EPTypePre;
-                FrameDelta = k.Keys[k.Length - 1].F - k.Keys[0].F;
-                ValueDelta = k.Keys[k.Length - 1].V - k.Keys[0].V;
+                FrameDelta = k.Keys[Length - 1].F - k.Keys[0].F;
+                ValueDelta = k.Keys[Length - 1].V - k.Keys[0].V;
             }
             else
             {

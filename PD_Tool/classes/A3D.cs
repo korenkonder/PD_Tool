@@ -62,7 +62,7 @@ namespace PD_Tool
                     using (farc = new KKdFARC(file))
                         FARCProcessor(farc, choose, format);
                 else if (ext == ".a3da")
-                    using (a3da = new KKdA3DA(true))
+                    using (a3da = new KKdA3DA())
                     {
                         state = a3da.A3DAReader(filepath);
                         if (state == 1)
@@ -75,7 +75,7 @@ namespace PD_Tool
                             }
                     }
                 else if (ext == ".mp" || ext == ".json")
-                    using (a3da = new KKdA3DA(true))
+                    using (a3da = new KKdA3DA())
                     {
                         a3da.MsgPackReader(filepath, ext == ".json");
                         a3da.Head.Format = format;
@@ -107,7 +107,7 @@ namespace PD_Tool
             {
                 KKdA3DA a3da;
                 for (int i = 0; i < A3DAlist.Count; i++)
-                    using (a3da = new KKdA3DA(true))
+                    using (a3da = new KKdA3DA())
                     {
                         data = farc.FileReader(A3DAlist[i]);
                         int state = a3da.A3DAReader(data);
@@ -129,7 +129,7 @@ namespace PD_Tool
                 for (int i = 0; i < list.Count; i++)
                 {
                     KKdA3DA a3da;
-                    using (a3da = new KKdA3DA(true))
+                    using (a3da = new KKdA3DA())
                     {
                         data = farc.FileReader(list[i]);
                         int state = a3da.A3DAReader(data);
@@ -147,7 +147,7 @@ namespace PD_Tool
                 string ext      = Path.GetExtension(list[i]).ToLower();
                 KKdA3DA a3da;
                 for (int i1 = 1; i1 < div; i1++)
-                    using (a3da = new KKdA3DA(true))
+                    using (a3da = new KKdA3DA())
                     {
                         string file = filename + "_div_" + i1 + ext;
                         data = farc.FileReader(file);

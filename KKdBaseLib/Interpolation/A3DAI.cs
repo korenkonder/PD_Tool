@@ -33,10 +33,10 @@ namespace KKdBaseLib.Interpolation
             f = -df;
             ResetFrameCount();
 
-            if (key.Keys != null && key.Length > 0)
+            if (key.Keys != null && key.Keys.Length > 0)
             {
                 firstKey = key.Keys[0];
-                 lastKey = key.Keys[key.Length - 1];
+                 lastKey = key.Keys[key.Keys.Length - 1];
             }
         }
 

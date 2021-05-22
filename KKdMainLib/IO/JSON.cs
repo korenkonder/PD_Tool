@@ -131,15 +131,19 @@ namespace KKdMainLib.IO
 
         private object RF()
         {
-            string s = " ";
+            string s = "";
             _IO.SW();
-            if (_IO.PCUTF8() == '-') s += _IO.RCUTF8();
+            bool negative = false;
+            if (_IO.PCUTF8() == '-') { _IO.RCUTF8(); negative = true; }
             if (_IO.PCUTF8() == '0') s += _IO.RCUTF8();
             else                     s +=     RD    ();
             char c = _IO.PCUTF8();
             if (c == '.') s += _IO.RCUTF8() + RD();
+            else if (negative && s == "0")
+                return (float)-0.0f;
             else if (c != 'e' && c != 'E')
             {
+                if (negative) s = "-" + s;
                 long val;
                 try { val = long.Parse(s); }
                 catch { return ulong.Parse(s); }
@@ -161,7 +165,10 @@ namespace KKdMainLib.IO
                 s += RD();
             }
             double d = s.ToF64();
-            return (float)d == d ? (float)d : d;
+            if ((float)d == d)
+                return negative ? (((float)d).ToU32() | 0x80000000).ToF32() : (float)d;
+            else
+                return negative ? (d.ToU64() | 0x8000000000000000).ToF64() : d;
         }
 
         private bool RBo()

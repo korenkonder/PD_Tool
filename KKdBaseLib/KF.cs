@@ -70,7 +70,7 @@ namespace KKdBaseLib
             new KFT3(F, V);
 
         public IKF Check() =>
-            V == 0 ? (KFT0)this : (IKF)this;
+            V.ToU32() == 0x00000000 ? (KFT0)this : (IKF)this;
 
         public override string ToString() => ToString(true, 7);
         public string ToString(int round = 7, bool brackets = true) =>
@@ -135,7 +135,7 @@ namespace KKdBaseLib
             new KFT3(F, V,            T, T);
 
         public IKF Check() =>
-            T == 0 ? (V == 0 ? (IKF)ToT0() : ToT1()) : this;
+            T.ToU32() == 0x00000000 ? (V.ToU32() == 0x00000000 ? (IKF)ToT0() : ToT1()) : this;
 
         public override string ToString() => ToString(true, 7);
         public string ToString(int round = 7, bool brackets = true) =>
@@ -199,7 +199,9 @@ namespace KKdBaseLib
         public KFT3 ToT3() => this;
 
         public IKF Check() =>
-            T1 == 0 && T2 == 0 ? (V == 0 ? (IKF)(KFT0)this : (KFT1)this) : T1 == T2 ? (KFT2)this : (IKF)this;
+            T1.ToU32() == 0x00000000 && T2.ToU32() == 0x00000000
+            ? (V.ToU32() == 0x00000000 ? (IKF)(KFT0)this : (KFT1)this)
+            : T1.ToU32() == T2.ToU32() ? (KFT2)this : (IKF)this;
 
         public override string ToString() => ToString(true, 7);
         public string ToString(int round = 7, bool brackets = true) =>

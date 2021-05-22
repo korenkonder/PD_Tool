@@ -16,7 +16,6 @@ namespace KKdMainLib
 
         private Stream s;
         private bool a3dc;
-        private bool a3dcOpt;
         private int i, i0, i1;
         private int soi;
         private int soi0;
@@ -29,17 +28,9 @@ namespace KKdMainLib
         private string value;
         private string[] dataArray;
         private A3DADict dict;
-        private UsedDict usedValues;
 
-        private const string d = ".";
-        private const string BO = "bin_offset";
-        private const string MTBO = "model_transform" + d + BO;
-
-        public A3DA(bool a3dcOpt = true)
-        { a3dc = false; i = i0 = i1 = soi = soi0 = soi1 = 0; value = null;
-            name = null; nameView = null; so = null; so0 = null; so1 = null;
-            dataArray = null; s = null; Head = default; Data = default;
-            dict = null; usedValues = null; this.a3dcOpt = a3dcOpt; }
+        private const string BO = ".bin_offset";
+        private const string MTBO = ".model_transform" + BO;
 
         public int A3DAReader(string file)
         { using (s = File.OpenReader(file + ".a3da"))
@@ -138,45 +129,50 @@ namespace KKdMainLib
 
             if (dict.SW("camera_auxiliary"))
             {
-                name = "camera_auxiliary" + d;
+                name = "camera_auxiliary";
 
                 Data.CameraAuxiliary = new CameraAuxiliary
                 {
-                    AutoExposure = RKN(name + "auto_exposure" + d),
-                        Exposure = RKN(name +      "exposure" + d),
-                    Gamma        = RKN(name + "gamma"         + d),
-                    GammaRate    = RKN(name + "gamma_rate"    + d),
-                    Saturate     = RKN(name + "saturate"      + d),
+                    AutoExposure     = RKN(name + ".auto_exposure"     ),
+                        Exposure     = RKN(name +      ".exposure"     ),
+                        ExposureRate = RKN(name +      ".exposure_rate"),
+                    Gamma            = RKN(name + ".gamma"             ),
+                    GammaRate        = RKN(name + ".gamma_rate"        ),
+                    Saturate         = RKN(name + ".saturate"          ),
                 };
+
                 if (Data.CameraAuxiliary.Value.GammaRate.HasValue)
                     if (Head.Format < Format.F || Head.Format == Format.AFT || Head.Format >= Format.FT)
                         Head.Format = Format.F;
+
+                if (Data.CameraAuxiliary.Value.ExposureRate.HasValue)
+                    Head.Format = Format.X;
             }
 
             if (dict.SW("play_control"))
             {
-                name = "play_control" + d;
+                name = "play_control";
 
                 Data.PlayControl = new PlayControl();
-                dict.FV(out Data.PlayControl.Begin , name + "begin" );
-                dict.FV(out Data.PlayControl.Div   , name + "div"   );
-                dict.FV(out Data.PlayControl.FPS   , name + "fps"   );
-                dict.FV(out Data.PlayControl.Offset, name + "offset");
-                dict.FV(out Data.PlayControl.Size  , name + "size"  );
+                dict.FV(out Data.PlayControl.Begin , name + ".begin" );
+                dict.FV(out Data.PlayControl.Div   , name + ".div"   );
+                dict.FV(out Data.PlayControl.FPS   , name + ".fps"   );
+                dict.FV(out Data.PlayControl.Offset, name + ".offset");
+                dict.FV(out Data.PlayControl.Size  , name + ".size"  );
             }
 
             if (dict.SW("post_process"))
             {
-                name = "post_process" + d;
+                name = "post_process";
 
                 Data.PostProcess = new PostProcess()
                 {
-                    Ambient   = RRGBK (name + "Ambient"    + d),
-                    Diffuse   = RRGBK (name + "Diffuse"    + d),
-                    Specular  = RRGBAK(name + "Specular"   + d),
-                    LensFlare = RKN   (name + "lens_flare" + d),
-                    LensGhost = RKN   (name + "lens_ghost" + d),
-                    LensShaft = RKN   (name + "lens_shaft" + d),
+                    Ambient   = RRGBAK(name + ".Ambient"   ),
+                    Diffuse   = RRGBAK(name + ".Diffuse"   ),
+                    Specular  = RRGBAK(name + ".Specular"  ),
+                    LensFlare = RKN   (name + ".lens_flare"),
+                    LensGhost = RKN   (name + ".lens_ghost"),
+                    LensShaft = RKN   (name + ".lens_shaft"),
                 };
             }
 
@@ -184,7 +180,7 @@ namespace KKdMainLib
             {
                 DOF dof = new DOF { Name = value };
                 Head.Format = Format.AFT;
-                dof.MT = RMT("dof" + d);
+                dof.MT = RMT("dof");
                 Data.DOF = dof;
             }
 
@@ -194,10 +190,10 @@ namespace KKdMainLib
                 Head.Format = Format.MGF;
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
-                    name = "ambient" + d + i0 + d;
-                    dict.FV(out Data.Ambient[i0].Name, name + "name");
-                    Data.Ambient[i0].   LightDiffuse = RRGBK(name +    "light.Diffuse" + d);
-                    Data.Ambient[i0].RimLightDiffuse = RRGBK(name + "rimlight.Diffuse" + d);
+                    name = "ambient." + i0;
+                    dict.FV(out Data.Ambient[i0].Name, name + ".name");
+                    Data.Ambient[i0].   LightDiffuse = RRGBAK(name +    ".light.Diffuse");
+                    Data.Ambient[i0].RimLightDiffuse = RRGBAK(name + ".rimlight.Diffuse");
                 }
             }
 
@@ -206,24 +202,24 @@ namespace KKdMainLib
                 Data.CameraRoot = new CameraRoot[int.Parse(value)];
                 for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                 {
-                    name = "camera_root" + d + i0 + d;
-                    nameView = name + "view_point" + d;
+                    name = "camera_root." + i0;
+                    nameView = name + ".view_point";
 
                     dict.FV(out Data.CameraRoot[i0].VP.
-                        Aspect         , nameView + "aspect"           );
+                        Aspect         , nameView + ".aspect"           );
                     dict.FV(out Data.CameraRoot[i0].VP.
-                        CameraApertureH, nameView + "camera_aperture_h");
+                        CameraApertureH, nameView + ".camera_aperture_h");
                     dict.FV(out Data.CameraRoot[i0].VP.
-                        CameraApertureW, nameView + "camera_aperture_w");
-                    dict.FV(out i1, nameView + "fov_is_horizontal");
+                        CameraApertureW, nameView + ".camera_aperture_w");
+                    dict.FV(out i1, nameView + ".fov_is_horizontal");
                     Data.CameraRoot[i0].VP.FOVHorizontal = i1 != 0;
 
                     Data.CameraRoot[i0].      MT = RMT(name);
-                    Data.CameraRoot[i0].Interest = RMT(name + "interest" + d);
+                    Data.CameraRoot[i0].Interest = RMT(name + ".interest");
                     Data.CameraRoot[i0].VP.   MT = RMT(nameView);
-                    Data.CameraRoot[i0].VP.FocalLength = RK(nameView + "focal_length" + d);
-                    Data.CameraRoot[i0].VP.FOV         = RK(nameView +          "fov" + d);
-                    Data.CameraRoot[i0].VP.Roll        = RK(nameView +         "roll" + d);
+                    Data.CameraRoot[i0].VP.FocalLength = RK(nameView + ".focal_length");
+                    Data.CameraRoot[i0].VP.FOV         = RK(nameView +         ".fov");
+                    Data.CameraRoot[i0].VP.Roll        = RK(nameView +        ".roll");
                 }
             }
 
@@ -231,7 +227,7 @@ namespace KKdMainLib
             {
                 Data.Chara = new ModelTransform[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Chara.Length; i0++)
-                    Data.Chara[i0] = RMT("chara" + d + i0 + d);
+                    Data.Chara[i0] = RMT("chara." + i0);
             }
 
             if (dict.FV(out value, "curve.length"))
@@ -239,10 +235,10 @@ namespace KKdMainLib
                 Data.Curve = new Curve[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Curve.Length; i0++)
                 {
-                    name = "curve" + d + i0 + d;
+                    name = "curve." + i0;
 
-                    dict.FV(out Data.Curve[i0].Name, name + "name");
-                    Data.Curve[i0].CV = RK(name + "cv" + d);
+                    dict.FV(out Data.Curve[i0].Name, name + ".name");
+                    Data.Curve[i0].CV = RK(name + ".cv");
                 }
             }
 
@@ -251,17 +247,17 @@ namespace KKdMainLib
                 Data.Event = new Event[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Event.Length; i0++)
                 {
-                    name = "event" + d + i0 + d;
+                    name = "event." + i0;
 
-                    dict.FV(out Data.Event[i0].Begin       , name + "begin"         );
-                    dict.FV(out Data.Event[i0].ClipBegin   , name + "clip_begin"    );
-                    dict.FV(out Data.Event[i0].ClipEnd     , name + "clip_en"       );
-                    dict.FV(out Data.Event[i0].End         , name + "end"           );
-                    dict.FV(out Data.Event[i0].Name        , name + "name"          );
-                    dict.FV(out Data.Event[i0].Param1      , name + "param1"        );
-                    dict.FV(out Data.Event[i0].Ref         , name + "ref"           );
-                    dict.FV(out Data.Event[i0].TimeRefScale, name + "time_ref_scale");
-                    dict.FV(out Data.Event[i0].Type        , name + "type"          );
+                    dict.FV(out Data.Event[i0].Begin       , name + ".begin"         );
+                    dict.FV(out Data.Event[i0].ClipBegin   , name + ".clip_begin"    );
+                    dict.FV(out Data.Event[i0].ClipEnd     , name + ".clip_en"       );
+                    dict.FV(out Data.Event[i0].End         , name + ".end"           );
+                    dict.FV(out Data.Event[i0].Name        , name + ".name"          );
+                    dict.FV(out Data.Event[i0].Param1      , name + ".param1"        );
+                    dict.FV(out Data.Event[i0].Ref         , name + ".ref"           );
+                    dict.FV(out Data.Event[i0].TimeRefScale, name + ".time_ref_scale");
+                    dict.FV(out Data.Event[i0].Type        , name + ".type"          );
                 }
             }
 
@@ -270,13 +266,13 @@ namespace KKdMainLib
                 Data.Fog = new Fog[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Fog.Length; i0++)
                 {
-                    name = "fog" + d + i0 + d;
+                    name = "fog." + i0;
 
-                    dict.FV(out Data.Fog[i0].Id, name + "id");
-                    Data.Fog[i0].Density = RK   (name + "density" + d);
-                    Data.Fog[i0].Diffuse = RRGBK(name + "Diffuse" + d);
-                    Data.Fog[i0].End     = RK   (name +     "end" + d);
-                    Data.Fog[i0].Start   = RK   (name +   "start" + d);
+                    dict.FV(out Data.Fog[i0].Id, name + ".id");
+                    Data.Fog[i0].Density = RK    (name + ".density");
+                    Data.Fog[i0].Diffuse = RRGBAK(name + ".Diffuse");
+                    Data.Fog[i0].End     = RK    (name +     ".end");
+                    Data.Fog[i0].Start   = RK    (name +   ".start");
                 }
             }
 
@@ -285,25 +281,25 @@ namespace KKdMainLib
                 Data.Light = new Light[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Light.Length; i0++)
                 {
-                    name = "light" + d + i0 + d;
+                    name = "light." + i0;
 
-                    dict.FV(out Data.Light[i0].Id  , name + "id"  );
-                    dict.FV(out Data.Light[i0].Name, name + "name");
-                    dict.FV(out Data.Light[i0].Type, name + "type");
+                    dict.FV(out Data.Light[i0].Id  , name + ".id"  );
+                    dict.FV(out Data.Light[i0].Name, name + ".name");
+                    dict.FV(out Data.Light[i0].Type, name + ".type");
 
-                    Data.Light[i0].Ambient       = RRGBK (name +        "Ambient" + d);
-                    Data.Light[i0].ConeAngle     = RKN   (name +      "ConeAngle" + d);
-                    Data.Light[i0].Constant      = RKN   (name +       "CONSTANT" + d);
-                    Data.Light[i0].Diffuse       = RRGBK (name +        "Diffuse" + d);
-                    Data.Light[i0].DropOff       = RKN   (name +        "DropOff" + d);
-                    Data.Light[i0].Far           = RKN   (name +            "FAR" + d);
-                    Data.Light[i0].Incandescence = RRGBK (name +  "Incandescence" + d);
-                    Data.Light[i0].Intensity     = RKN   (name +      "Intensity" + d);
-                    Data.Light[i0].Linear        = RKN   (name +         "LINEAR" + d);
-                    Data.Light[i0].Quadratic     = RKN   (name +      "QUADRATIC" + d);
-                    Data.Light[i0].Specular      = RRGBAK(name +       "Specular" + d);
-                    Data.Light[i0].Position      = RMT   (name +       "position" + d);
-                    Data.Light[i0].SpotDirection = RMT   (name + "spot_direction" + d);
+                    Data.Light[i0].Ambient       = RRGBAK(name +        ".Ambient");
+                    Data.Light[i0].ConeAngle     = RKN   (name +      ".ConeAngle");
+                    Data.Light[i0].Constant      = RKN   (name +       ".CONSTANT");
+                    Data.Light[i0].Diffuse       = RRGBAK(name +        ".Diffuse");
+                    Data.Light[i0].DropOff       = RKN   (name +        ".DropOff");
+                    Data.Light[i0].Far           = RKN   (name +            ".FAR");
+                    Data.Light[i0].Incandescence = RRGBAK(name +  ".Incandescence");
+                    Data.Light[i0].Intensity     = RKN   (name +      ".Intensity");
+                    Data.Light[i0].Linear        = RKN   (name +         ".LINEAR");
+                    Data.Light[i0].Quadratic     = RKN   (name +      ".QUADRATIC");
+                    Data.Light[i0].Specular      = RRGBAK(name +       ".Specular");
+                    Data.Light[i0].Position      = RMT   (name +       ".position");
+                    Data.Light[i0].SpotDirection = RMT   (name + ".spot_direction");
                 }
             }
 
@@ -312,31 +308,31 @@ namespace KKdMainLib
                 Data.MObjectHRC = new MObjectHRC[int.Parse(value)];
                 for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                 {
-                    name = "m_objhrc" + d + i0 + d;
+                    name = "m_objhrc." + i0;
 
-                    dict.FV(out Data.MObjectHRC[i0].Name, name + "name");
+                    dict.FV(out Data.MObjectHRC[i0].Name, name + ".name");
 
-                    if (dict.SW(name + "joint_orient"))
+                    if (dict.SW(name + ".joint_orient"))
                     {
                         Data.MObjectHRC[i0].JointOrient = new Vec3<float?>();
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.X, name + "joint_orient.x");
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Y, name + "joint_orient.y");
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Z, name + "joint_orient.z");
+                        dict.FV(out Data.MObjectHRC[i0].JointOrient.X, name + ".joint_orient.x");
+                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Y, name + ".joint_orient.y");
+                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Z, name + ".joint_orient.z");
                         Head.Format = Format.X;
                     }
 
-                    if (dict.FV(out value, name + "instance.length"))
+                    if (dict.FV(out value, name + ".instance.length"))
                     {
                         Data.MObjectHRC[i0].Instances = new MObjectHRC.Instance[int.Parse(value)];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
                         {
-                            nameView = name + "instance" + d + i1 + d;
+                            nameView = name + ".instance." + i1;
 
                             dict.FV(out Data.MObjectHRC[i0]
-                                .Instances[i1].   Name, nameView +     "name");
+                                .Instances[i1].   Name, nameView +     ".name");
                             dict.FV(out Data.MObjectHRC[i0]
-                                .Instances[i1].UIDName, nameView + "uid_name");
-                            dict.FV(out int? shadow, nameView + "shadow");
+                                .Instances[i1].UIDName, nameView + ".uid_name");
+                            dict.FV(out int? shadow, nameView + ".shadow");
                             Data.MObjectHRC[i0].Instances[i1].Shadow
                                 = shadow.HasValue ? (bool?)(shadow != 0) : null;
 
@@ -344,14 +340,14 @@ namespace KKdMainLib
                         }
                     }
 
-                    if (dict.FV(out value, name + "node.length"))
+                    if (dict.FV(out value, name + ".node.length"))
                     {
                         Data.MObjectHRC[i0].Node = new Node[int.Parse(value)];
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                         {
-                            nameView = name + "node" + d + i1 + d;
-                            dict.FV(out Data.MObjectHRC[i0].Node[i1].Name  , nameView + "name"  );
-                            dict.FV(out Data.MObjectHRC[i0].Node[i1].Parent, nameView + "parent");
+                            nameView = name + ".node." + i1;
+                            dict.FV(out Data.MObjectHRC[i0].Node[i1].Name  , nameView + ".name"  );
+                            dict.FV(out Data.MObjectHRC[i0].Node[i1].Parent, nameView + ".parent");
 
                             Data.MObjectHRC[i0].Node[i1].MT = RMT(nameView);
                         }
@@ -365,7 +361,7 @@ namespace KKdMainLib
             {
                 Data.MObjectHRCList = new string[int.Parse(value)];
                 for (i0 = 0; i0 < Data.MObjectHRCList.Length; i0++)
-                    dict.FV(out Data.MObjectHRCList[i0], "m_objhrc_list" + d + i0);
+                    dict.FV(out Data.MObjectHRCList[i0], "m_objhrc_list." + i0);
             }
 
             if (dict.FV(out value, "material_list.length"))
@@ -374,13 +370,13 @@ namespace KKdMainLib
                 Head.Format = Format.X;
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
-                    name = "material_list" + d + i0 + d;
-                    dict.FV(out Data.MaterialList[i0].HashName, name + "hash_name");
-                    dict.FV(out Data.MaterialList[i0].    Name, name +      "name");
+                    name = "material_list." + i0;
+                    dict.FV(out Data.MaterialList[i0].HashName, name + ".hash_name");
+                    dict.FV(out Data.MaterialList[i0].    Name, name +      ".name");
 
-                    Data.MaterialList[i0].BlendColor    = RRGBAK(name +    "blend_color" + d);
-                    Data.MaterialList[i0].GlowIntensity = RK    (name + "glow_intensity" + d);
-                    Data.MaterialList[i0].Incandescence = RRGBK (name +  "incandescence" + d);
+                    Data.MaterialList[i0].BlendColor    = RRGBAK(name +    ".blend_color");
+                    Data.MaterialList[i0].GlowIntensity = RK    (name + ".glow_intensity");
+                    Data.MaterialList[i0].Incandescence = RRGBAK(name +  ".incandescence");
                 }
             }
 
@@ -388,7 +384,7 @@ namespace KKdMainLib
             {
                 Data.Motion = new string[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Motion.Length; i0++)
-                    dict.FV(out Data.Motion[i0], "motion" + d + i0 + d + "name");
+                    dict.FV(out Data.Motion[i0], "motion." + i0 + ".name");
             }
 
             if (dict.FV(out value, "object.length"))
@@ -396,47 +392,49 @@ namespace KKdMainLib
                 Data.Object = new Object[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
                 {
-                    name = "object" + d + i0 + d;
+                    name = "object." + i0;
 
-                    dict.FV(out Data.Object[i0].Morph      , name + "morph"       );
-                    dict.FV(out Data.Object[i0].MorphOffset, name + "morph_offset");
-                    dict.FV(out Data.Object[i0].       Name, name +         "name");
-                    dict.FV(out Data.Object[i0]. ParentName, name +  "parent_name");
-                    dict.FV(out Data.Object[i0].    UIDName, name +     "uid_name");
+                    dict.FV(out Data.Object[i0].Morph      , name + ".morph"       );
+                    dict.FV(out Data.Object[i0].MorphOffset, name + ".morph_offset");
+                    dict.FV(out Data.Object[i0].       Name, name +         ".name");
+                    dict.FV(out Data.Object[i0]. ParentName, name +  ".parent_name");
+                    dict.FV(out Data.Object[i0].  Pat      , name +   ".pat"       );
+                    dict.FV(out Data.Object[i0].  PatOffset, name +   ".pat_offset");
+                    dict.FV(out Data.Object[i0].    UIDName, name +     ".uid_name");
 
-                    if (dict.FV(out value, name + "tex_pat.length"))
+                    if (dict.FV(out value, name + ".tex_pat.length"))
                     {
                         Data.Object[i0].TexPat = new Object.TexturePattern[int.Parse(value)];
                         for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
                         {
-                            nameView = name + "tex_pat" + d + i1 + d;
+                            nameView = name + ".tex_pat." + i1;
                             dict.FV(out Data.Object[i0].TexPat[i1]
-                                .Name     , nameView + "name"      );
+                                .Name     , nameView + ".name"      );
                             dict.FV(out Data.Object[i0].TexPat[i1]
-                                .Pat      , nameView + "pat"       );
+                                .Pat      , nameView + ".pat"       );
                             dict.FV(out Data.Object[i0].TexPat[i1]
-                                .PatOffset, nameView + "pat_offset");
+                                .PatOffset, nameView + ".pat_offset");
                         }
                     }
 
-                    if (dict.FV(out value, name + "tex_transform.length"))
+                    if (dict.FV(out value, name + ".tex_transform.length"))
                     {
                         Data.Object[i0].TexTrans = new Object.TextureTransform[int.Parse(value)];
                         for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                         {
-                            nameView = name + "tex_transform" + d + i1 + d;
+                            nameView = name + ".tex_transform." + i1;
 
-                            dict.FV(out Data.Object[i0].TexTrans[i1].Name, nameView + "name");
-                            Data.Object[i0].TexTrans[i1].CoverageU       = RKN(nameView + "coverageU"       + d);
-                            Data.Object[i0].TexTrans[i1].CoverageV       = RKN(nameView + "coverageV"       + d);
-                            Data.Object[i0].TexTrans[i1].OffsetU         = RKN(nameView + "offsetU"         + d);
-                            Data.Object[i0].TexTrans[i1].OffsetV         = RKN(nameView + "offsetV"         + d);
-                            Data.Object[i0].TexTrans[i1].RepeatU         = RKN(nameView + "repeatU"         + d);
-                            Data.Object[i0].TexTrans[i1].RepeatV         = RKN(nameView + "repeatV"         + d);
-                            Data.Object[i0].TexTrans[i1].   Rotate       = RKN(nameView + "rotate"          + d);
-                            Data.Object[i0].TexTrans[i1].   RotateFrame  = RKN(nameView + "rotateFrame"     + d);
-                            Data.Object[i0].TexTrans[i1].TranslateFrameU = RKN(nameView + "translateFrameU" + d);
-                            Data.Object[i0].TexTrans[i1].TranslateFrameV = RKN(nameView + "translateFrameV" + d);
+                            dict.FV(out Data.Object[i0].TexTrans[i1].Name, nameView + ".name");
+                            Data.Object[i0].TexTrans[i1].CoverageU       = RKN(nameView + ".coverageU"      );
+                            Data.Object[i0].TexTrans[i1].CoverageV       = RKN(nameView + ".coverageV"      );
+                            Data.Object[i0].TexTrans[i1].OffsetU         = RKN(nameView + ".offsetU"        );
+                            Data.Object[i0].TexTrans[i1].OffsetV         = RKN(nameView + ".offsetV"        );
+                            Data.Object[i0].TexTrans[i1].RepeatU         = RKN(nameView + ".repeatU"        );
+                            Data.Object[i0].TexTrans[i1].RepeatV         = RKN(nameView + ".repeatV"        );
+                            Data.Object[i0].TexTrans[i1].   Rotate       = RKN(nameView + ".rotate"         );
+                            Data.Object[i0].TexTrans[i1].   RotateFrame  = RKN(nameView + ".rotateFrame"    );
+                            Data.Object[i0].TexTrans[i1].TranslateFrameU = RKN(nameView + ".translateFrameU");
+                            Data.Object[i0].TexTrans[i1].TranslateFrameV = RKN(nameView + ".translateFrameV");
                         }
                     }
 
@@ -449,28 +447,28 @@ namespace KKdMainLib
                 Data.ObjectHRC = new ObjectHRC[int.Parse(value)];
                 for (i0 = 0; i0 < Data.ObjectHRC.Length; i0++)
                 {
-                    name = "objhrc" + d + i0 + d;
+                    name = "objhrc." + i0;
 
-                    if (dict.SW(name + "joint_orient"))
+                    if (dict.SW(name + ".joint_orient"))
                     {
                         Data.ObjectHRC[i0].JointOrient = new Vec3<float?>();
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.X, name + "joint_orient.x");
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Y, name + "joint_orient.y");
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Z, name + "joint_orient.z");
+                        dict.FV(out Data.ObjectHRC[i0].JointOrient.X, name + ".joint_orient.x");
+                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Y, name + ".joint_orient.y");
+                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Z, name + ".joint_orient.z");
                     }
-                    dict.FV(out Data.ObjectHRC[i0].   Name, name +     "name");
-                    dict.FV(out Data.ObjectHRC[i0].UIDName, name + "uid_name");
-                    dict.FV(out int? shadow, name + "shadow");
+                    dict.FV(out Data.ObjectHRC[i0].   Name, name +     ".name");
+                    dict.FV(out Data.ObjectHRC[i0].UIDName, name + ".uid_name");
+                    dict.FV(out int? shadow, name + ".shadow");
                     Data.ObjectHRC[i0].Shadow = shadow.HasValue ? (bool?)(shadow != 0) : null;
-                    if (dict.FV(out value, name + "node.length"))
+                    if (dict.FV(out value, name + ".node.length"))
                     {
                         Data.ObjectHRC[i0].Node = new Node[int.Parse(value)];
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
                         {
-                            nameView = name + "node" + d + i1 + d;
+                            nameView = name + ".node." + i1;
 
-                            dict.FV(out Data.ObjectHRC[i0].Node[i1].Name  , nameView + "name"  );
-                            dict.FV(out Data.ObjectHRC[i0].Node[i1].Parent, nameView + "parent");
+                            dict.FV(out Data.ObjectHRC[i0].Node[i1].Name  , nameView + ".name"  );
+                            dict.FV(out Data.ObjectHRC[i0].Node[i1].Parent, nameView + ".parent");
 
                             Data.ObjectHRC[i0].Node[i1].MT = RMT(nameView);
                         }
@@ -482,21 +480,21 @@ namespace KKdMainLib
             {
                 Data.ObjectList = new string[int.Parse(value)];
                 for (i0 = 0; i0 < Data.ObjectList.Length; i0++)
-                    dict.FV(out Data.ObjectList[i0], "object_list" + d + i0);
+                    dict.FV(out Data.ObjectList[i0], "object_list." + i0);
             }
 
             if (dict.FV(out value, "objhrc_list.length"))
             {
                 Data.ObjectHRCList = new string[int.Parse(value)];
                 for (i0 = 0; i0 < Data.ObjectHRCList.Length; i0++)
-                    dict.FV(out Data.ObjectHRCList[i0], "objhrc_list" + d + i0);
+                    dict.FV(out Data.ObjectHRCList[i0], "objhrc_list." + i0);
             }
 
             if (dict.FV(out value, "point.length"))
             {
                 Data.Point = new ModelTransform[int.Parse(value)];
                 for (i0 = 0; i0 < Data.Point.Length; i0++)
-                    Data.Point[i0] = RMT("point" + d + i0 + d);
+                    Data.Point[i0] = RMT("point." + i0);
             }
         }
 
@@ -524,26 +522,28 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "ambient" + d + soi0 + d;
+                    name = "ambient." + soi0;
                     ref Ambient Ambient = ref Data.Ambient[soi0];
 
-                    W(ref Ambient.   LightDiffuse, name +    "light.Diffuse");
-                    W(name + "name", Ambient.Name);
-                    W(ref Ambient.RimLightDiffuse, name + "rimlight.Diffuse");
+                    W(ref Ambient.   LightDiffuse, name +    ".light.Diffuse");
+                    W(name + ".name", Ambient.Name);
+                    W(ref Ambient.RimLightDiffuse, name + ".rimlight.Diffuse");
                 }
                 W("ambient.length", Data.Fog.Length);
             }
 
             if (Data.CameraAuxiliary != null)
             {
-                name = "camera_auxiliary" + d;
+                name = "camera_auxiliary";
                 CameraAuxiliary ca = Data.CameraAuxiliary.Value;
-                W(ref ca.AutoExposure, name + "auto_exposure");
-                W(ref ca.    Exposure, name +      "exposure");
-                W(ref ca.Gamma       , name + "gamma"        );
+                W(ref ca.AutoExposure    , name + ".auto_exposure"     );
+                W(ref ca.    Exposure    , name +      ".exposure"     );
+                if (Head.Format == Format.X || Head.Format == Format.XHD)
+                    W(ref ca.    ExposureRate, name +      ".exposure_rate");
+                W(ref ca.Gamma           , name + ".gamma"             );
                 if (Head.Format == Format.F || (Head.Format > Format.AFT && Head.Format < Format.FT))
-                    W(ref ca.GammaRate   , name + "gamma_rate"   );
-                W(ref ca.Saturate    , name + "saturate"     );
+                    W(ref ca.GammaRate       , name + ".gamma_rate"        );
+                W(ref ca.Saturate        , name + ".saturate"          );
                 Data.CameraAuxiliary = ca;
             }
 
@@ -553,25 +553,25 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.CameraRoot.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "camera_root" + d + soi0 + d;
-                    nameView = name + "view_point" + d;
+                    name = "camera_root." + soi0;
+                    nameView = name + ".view_point";
                     ref CameraRoot cr = ref Data.CameraRoot[soi0];
 
-                    W(ref cr.Interest, name + "interest" + d);
+                    W(ref cr.Interest, name + ".interest");
                     W(ref cr.MT, name, 0b11110);
-                    W(nameView + "aspect", cr.VP.Aspect);
+                    W(nameView + ".aspect", cr.VP.Aspect);
                     if (cr.VP.CameraApertureH.HasValue)
-                        W(nameView + "camera_aperture_h", cr.VP.CameraApertureH);
+                        W(nameView + ".camera_aperture_h", cr.VP.CameraApertureH);
                     if (cr.VP.CameraApertureW.HasValue)
-                        W(nameView + "camera_aperture_w", cr.VP.CameraApertureW);
-                    W(ref cr.VP.FocalLength, nameView + "focal_length" + d);
-                    W(ref cr.VP.FOV, nameView + "fov" + d);
+                        W(nameView + ".camera_aperture_w", cr.VP.CameraApertureW);
+                    W(ref cr.VP.FocalLength, nameView + ".focal_length");
+                    W(ref cr.VP.FOV, nameView + ".fov");
                     if (cr.VP.FOVHorizontal)
-                        W(nameView + "fov_is_horizontal", cr.VP.FOVHorizontal ? 1 : 0);
+                        W(nameView + ".fov_is_horizontal", cr.VP.FOVHorizontal ? 1 : 0);
                     W(ref cr.VP.MT  , nameView, 0b10000);
-                    W(ref cr.VP.Roll, nameView + "roll" + d);
+                    W(ref cr.VP.Roll, nameView + ".roll");
                     W(ref cr.VP.MT  , nameView, 0b01111);
-                    W(ref cr.MT  , name    , 0b00001);
+                    W(ref cr.MT     , name    , 0b00001);
                 }
                 W("camera_root.length", Data.CameraRoot.Length);
             }
@@ -580,7 +580,7 @@ namespace KKdMainLib
             {
                 so0 = Data.Chara.Length.SW();
                 for (i0 = 0; i0 < Data.Chara.Length; i0++)
-                    W(ref Data.Chara[so0[i0]], "chara" + d + so0[i0] + d);
+                    W(ref Data.Chara[so0[i0]], "chara." + so0[i0]);
                 W("chara.length", Data.Chara.Length);
             }
 
@@ -590,11 +590,11 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Curve.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "curve" + d + soi0 + d;
+                    name = "curve." + soi0;
                     ref Curve curve = ref Data.Curve[soi0];
 
-                    W(ref curve.CV, name + "cv" + d);
-                    W(name + "name", curve.Name);
+                    W(ref curve.CV, name + ".cv");
+                    W(name + ".name", curve.Name);
                 }
                 W("curve.length", Data.Curve.Length);
             }
@@ -603,7 +603,7 @@ namespace KKdMainLib
             {
                 DOF dof = Data.DOF.Value;
                 W("dof.name", dof.Name);
-                W(ref dof.MT, "dof" + d);
+                W(ref dof.MT, "dof");
                 Data.DOF = dof;
             }
 
@@ -613,18 +613,18 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Event.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "event" + d + soi0 + d;
+                    name = "event." + soi0;
                     ref Event @event = ref Data.Event[soi0];
 
-                    W(name + "begin"         , @event.Begin       );
-                    W(name + "clip_begin"    , @event.ClipBegin   );
-                    W(name + "clip_en"       , @event.ClipEnd     );
-                    W(name + "end"           , @event.End         );
-                    W(name + "name"          , @event.Name        );
-                    W(name + "param1"        , @event.Param1      );
-                    W(name + "ref"           , @event.Ref         );
-                    W(name + "time_ref_scale", @event.TimeRefScale);
-                    W(name + "type"          , @event.Type        );
+                    W(name + ".begin"         , @event.Begin       );
+                    W(name + ".clip_begin"    , @event.ClipBegin   );
+                    W(name + ".clip_en"       , @event.ClipEnd     );
+                    W(name + ".end"           , @event.End         );
+                    W(name + ".name"          , @event.Name        );
+                    W(name + ".param1"        , @event.Param1      );
+                    W(name + ".ref"           , @event.Ref         );
+                    W(name + ".time_ref_scale", @event.TimeRefScale);
+                    W(name + ".type"          , @event.Type        );
                 }
             }
 
@@ -634,14 +634,14 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Fog.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "fog" + d + soi0 + d;
+                    name = "fog." + soi0;
                     ref Fog fog = ref Data.Fog[soi0];
 
-                    W(ref fog.Diffuse, name + "Diffuse");
-                    W(ref fog.Density, name + "density");
-                    W(ref fog.End    , name + "end"    );
-                    W(name + "id", fog.Id);
-                    W(ref fog.Start  , name + "start"  );
+                    W(ref fog.Diffuse, name + ".Diffuse");
+                    W(ref fog.Density, name + ".density");
+                    W(ref fog.End    , name + ".end"    );
+                    W(name + ".id", fog.Id);
+                    W(ref fog.Start  , name + ".start"  );
                 }
                 W("fog.length", Data.Fog.Length);
             }
@@ -652,35 +652,35 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Light.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "light" + d + soi0 + d;
+                    name = "light." + soi0;
                     ref Light light = ref Data.Light[soi0];
 
-                    W(ref light.Ambient      , name + "Ambient"      );
+                    W(ref light.Ambient      , name + ".Ambient"      );
                     if (Head.Format == Format.XHD)
                     {
-                        W(ref light.Constant     , name + "CONSTANT"     );
-                        W(ref light.ConeAngle    , name + "ConeAngle"    );
+                        W(ref light.Constant     , name + ".CONSTANT"     );
+                        W(ref light.ConeAngle    , name + ".ConeAngle"    );
                     }
-                    W(ref light.Diffuse, name + "Diffuse");
+                    W(ref light.Diffuse, name + ".Diffuse");
                     if (Head.Format == Format.XHD)
                     {
-                        W(ref light.DropOff      , name + "DropOff"      );
-                        W(ref light.Far          , name + "FAR"          );
+                        W(ref light.DropOff      , name + ".DropOff"      );
+                        W(ref light.Far          , name + ".FAR"          );
                     }
-                    W(ref light.Incandescence, name + "Incandescence");
+                    W(ref light.Incandescence, name + ".Incandescence");
                     if (Head.Format == Format.XHD)
                     {
-                        W(ref light.Intensity    , name + "Intensity"    );
-                        W(ref light.Linear       , name + "LINEAR"       );
+                        W(ref light.Intensity    , name + ".Intensity"    );
+                        W(ref light.Linear       , name + ".LINEAR"       );
                     }
-                    W(ref light.Specular     , name + "Specular"     );
+                    W(ref light.Specular     , name + ".Specular"     );
                     if (Head.Format == Format.XHD)
-                        W(ref light.Quadratic    , name + "QUADRATIC"    );
-                    W(name + "id"  , light.Id  );
-                    W(name + "name", light.Name);
-                    W(ref light.Position     , name + "position"       + d);
-                    W(ref light.SpotDirection, name + "spot_direction" + d);
-                    W(name + "type", light.Type);
+                        W(ref light.Quadratic    , name + ".QUADRATIC"    );
+                    W(name + ".id"  , light.Id  );
+                    W(name + ".name", light.Name);
+                    W(ref light.Position     , name + ".position"      );
+                    W(ref light.SpotDirection, name + ".spot_direction");
+                    W(name + ".type", light.Type);
                 }
                 W("light.length", Data.Light.Length);
             }
@@ -691,15 +691,15 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "m_objhrc" + d + soi0 + d;
+                    name = "m_objhrc." + soi0;
                     ref MObjectHRC mObjectHRC = ref Data.MObjectHRC[soi0];
 
                     if (mObjectHRC.JointOrient.NotNull && (Head.Format ==
                         Format.X || Head.Format == Format.XHD))
                     {
-                        W(name + "joint_orient.x", mObjectHRC.JointOrient.X);
-                        W(name + "joint_orient.y", mObjectHRC.JointOrient.Y);
-                        W(name + "joint_orient.z", mObjectHRC.JointOrient.Z);
+                        W(name + ".joint_orient.x", mObjectHRC.JointOrient.X);
+                        W(name + ".joint_orient.y", mObjectHRC.JointOrient.Y);
+                        W(name + ".joint_orient.z", mObjectHRC.JointOrient.Z);
                     }
 
                     if (mObjectHRC.Instances != null)
@@ -708,23 +708,23 @@ namespace KKdMainLib
                         for (i1 = 0; i1 < mObjectHRC.Instances.Length; i1++)
                         {
                             soi1 = so1[i1];
-                            nameView = name + "instance" + d + soi1 + d;
+                            nameView = name + ".instance." + soi1;
                             ref MObjectHRC.Instance instance = ref mObjectHRC.Instances[soi1];
 
                             W(ref instance.MT, nameView, 0b10000);
-                            W(nameView +     "name", instance.   Name);
+                            W(nameView +     ".name", instance.   Name);
                             W(ref instance.MT, nameView, 0b01100);
                             if (instance.Shadow != null)
-                                W(nameView + "shadow", instance.Shadow.Value ? 1 : 0);
+                                W(nameView + ".shadow", instance.Shadow.Value ? 1 : 0);
                             W(ref instance.MT, nameView, 0b00010);
-                            W(nameView + "uid_name", instance.UIDName);
+                            W(nameView + ".uid_name", instance.UIDName);
                             W(ref instance.MT, nameView, 0b00001);
                         }
-                        W(name + "instance.length", mObjectHRC.Instances.Length);
+                        W(name + ".instance.length", mObjectHRC.Instances.Length);
                     }
 
                     W(ref mObjectHRC.MT, name, 0b10000);
-                    W(name + "name", mObjectHRC.Name);
+                    W(name + ".name", mObjectHRC.Name);
 
                     if (mObjectHRC.Node != null)
                     {
@@ -732,15 +732,15 @@ namespace KKdMainLib
                         for (i1 = 0; i1 < mObjectHRC.Node.Length; i1++)
                         {
                             soi1 = so1[i1];
-                            nameView = name + "node" + d + soi1 + d;
+                            nameView = name + ".node." + soi1;
                             ref Node node = ref mObjectHRC.Node[soi1];
 
                             W(ref node.MT, nameView, 0b10000);
-                            W(nameView +   "name", node.Name  );
-                            W(nameView + "parent", node.Parent);
+                            W(nameView +   ".name", node.Name  );
+                            W(nameView + ".parent", node.Parent);
                             W(ref node.MT, nameView, 0b01111);
                         }
-                        W(name + "node.length", mObjectHRC.Node.Length);
+                        W(name + ".node.length", mObjectHRC.Node.Length);
                     }
 
                     W(ref mObjectHRC.MT, name, 0b01111);
@@ -752,7 +752,7 @@ namespace KKdMainLib
             {
                 so0 = Data.MObjectHRCList.Length.SW();
                 for (i0 = 0; i0 < Data.MObjectHRCList.Length; i0++)
-                    W("m_objhrc_list" + d + so0[i0] + "", Data.MObjectHRCList[so0[i0]]);
+                    W("m_objhrc_list." + so0[i0], Data.MObjectHRCList[so0[i0]]);
                 W("m_objhrc_list.length", Data.MObjectHRCList.Length);
             }
 
@@ -762,14 +762,14 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "material_list" + d + soi0 + d;
+                    name = "material_list." + soi0;
                     ref MaterialList ml = ref Data.MaterialList[soi0];
 
-                    W(ref ml.BlendColor   , name + "blend_color"   );
-                    W(ref ml.GlowIntensity, name + "glow_intensity");
-                    W(name + "hash_name", ml.HashName);
-                    W(ref ml.Incandescence, name + "incandescence" );
-                    W(name +      "name", ml.    Name);
+                    W(ref ml.BlendColor   , name + ".blend_color"   );
+                    W(ref ml.GlowIntensity, name + ".glow_intensity");
+                    W(name + ".hash_name", ml.HashName);
+                    W(ref ml.Incandescence, name + ".incandescence" );
+                    W(name +      ".name", ml.    Name);
                 }
                 W("material_list.length", Data.MaterialList.Length);
             }
@@ -778,7 +778,7 @@ namespace KKdMainLib
             {
                 so0 = Data.Motion.Length.SW();
                 for (i0 = 0; i0 < Data.Motion.Length; i0++)
-                    W(name + so0[i0] + d + "name", Data.Motion[so0[i0]]);
+                    W(name + "." + so0[i0] + ".name", Data.Motion[so0[i0]]);
                 W("motion.length", Data.Motion.Length);
             }
 
@@ -788,17 +788,22 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.Object.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "object" + d + soi0 + d;
+                    name = "object." + soi0;
                     ref Object @object = ref Data.Object[soi0];
 
                     W(ref @object.MT, name, 0b10000);
                     if (@object.Morph != null)
                     {
-                        W(name + "morph"       , @object.Morph      );
-                        W(name + "morph_offset", @object.MorphOffset);
+                        W(name + ".morph"       , @object.Morph      );
+                        W(name + ".morph_offset", @object.MorphOffset);
                     }
-                    W(name + "name"       , @object.Name      );
-                    W(name + "parent_name", @object.ParentName);
+                    W(name + ".name"       , @object.Name      );
+                    W(name + ".parent_name", @object.ParentName);
+                    if (@object.Pat != null)
+                    {
+                        W(name + ".pat"       , @object.Pat      );
+                        W(name + ".pat_offset", @object.PatOffset);
+                    }
                     W(ref @object.MT, name, 0b01100);
 
                     if (@object.TexPat != null)
@@ -807,14 +812,14 @@ namespace KKdMainLib
                         for (i1 = 0; i1 < @object.TexPat.Length; i1++)
                         {
                             soi1 = so1[i1];
-                            nameView = name + "tex_pat" + d + soi1 + d;
+                            nameView = name + ".tex_pat." + soi1;
                             ref Object.TexturePattern texPat = ref @object.TexPat[soi1];
 
-                            W(nameView + "name"      , texPat.Name     );
-                            W(nameView + "pat"       , texPat.Pat      );
-                            W(nameView + "pat_offset", texPat.PatOffset);
+                            W(nameView + ".name"      , texPat.Name     );
+                            W(nameView + ".pat"       , texPat.Pat      );
+                            W(nameView + ".pat_offset", texPat.PatOffset);
                         }
-                        W(name + "tex_pat.length", @object.TexPat.Length);
+                        W(name + ".tex_pat.length", @object.TexPat.Length);
                     }
 
                     if (@object.TexTrans != null)
@@ -823,26 +828,26 @@ namespace KKdMainLib
                         for (i1 = 0; i1 < @object.TexTrans.Length; i1++)
                         {
                             soi1 = so1[i1];
-                            nameView = name + "tex_transform" + d + soi1 + d;
+                            nameView = name + ".tex_transform." + soi1;
                             ref Object.TextureTransform texTrans = ref @object.TexTrans[soi1];
 
-                            W(nameView + "name", @object.TexTrans[soi1].Name);
-                            W(ref texTrans.CoverageU      , nameView + "coverageU"      );
-                            W(ref texTrans.CoverageV      , nameView + "coverageV"      );
-                            W(ref texTrans.OffsetU        , nameView + "offsetU"        );
-                            W(ref texTrans.OffsetV        , nameView + "offsetV"        );
-                            W(ref texTrans.RepeatU        , nameView + "repeatU"        );
-                            W(ref texTrans.RepeatV        , nameView + "repeatV"        );
-                            W(ref texTrans.   Rotate      , nameView + "rotate"         );
-                            W(ref texTrans.   RotateFrame , nameView + "rotateFrame"    );
-                            W(ref texTrans.TranslateFrameU, nameView + "translateFrameU");
-                            W(ref texTrans.TranslateFrameV, nameView + "translateFrameV");
+                            W(ref texTrans.CoverageU      , nameView + ".coverageU"      );
+                            W(ref texTrans.CoverageV      , nameView + ".coverageV"      );
+                            W(nameView + ".name", @object.TexTrans[soi1].Name);
+                            W(ref texTrans.OffsetU        , nameView + ".offsetU"        );
+                            W(ref texTrans.OffsetV        , nameView + ".offsetV"        );
+                            W(ref texTrans.RepeatU        , nameView + ".repeatU"        );
+                            W(ref texTrans.RepeatV        , nameView + ".repeatV"        );
+                            W(ref texTrans.   Rotate      , nameView + ".rotate"         );
+                            W(ref texTrans.   RotateFrame , nameView + ".rotateFrame"    );
+                            W(ref texTrans.TranslateFrameU, nameView + ".translateFrameU");
+                            W(ref texTrans.TranslateFrameV, nameView + ".translateFrameV");
                         }
-                        W(name + "tex_transform.length", @object.TexTrans.Length);
+                        W(name + ".tex_transform.length", @object.TexTrans.Length);
                     }
 
                     W(ref @object.MT, name, 0b00010);
-                    W(name + "uid_name", @object.UIDName);
+                    W(name + ".uid_name", @object.UIDName);
                     W(ref @object.MT, name, 0b00001);
                 }
                 W("object.length", Data.Object.Length);
@@ -852,7 +857,7 @@ namespace KKdMainLib
             {
                 so0 = Data.ObjectList.Length.SW();
                 for (i0 = 0; i0 < Data.ObjectList.Length; i0++)
-                    W("object_list" + d + so0[i0] + "", Data.ObjectList[so0[i0]]);
+                    W("object_list." + so0[i0] + "", Data.ObjectList[so0[i0]]);
                 W("object_list.length", Data.ObjectList.Length);
             }
 
@@ -862,17 +867,17 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.ObjectHRC.Length; i0++)
                 {
                     soi0 = so0[i0];
-                    name = "objhrc" + d + soi0 + d;
+                    name = "objhrc." + soi0;
                     ref ObjectHRC objectHRC = ref Data.ObjectHRC[soi0];
 
-                    W(name + "name", objectHRC.Name);
+                    W(name + ".name", objectHRC.Name);
 
                     if (objectHRC.JointOrient.NotNull && (Head.Format ==
                         Format.X || Head.Format == Format.XHD))
                     {
-                        W(name + "joint_orient.x", objectHRC.JointOrient.X);
-                        W(name + "joint_orient.y", objectHRC.JointOrient.Y);
-                        W(name + "joint_orient.z", objectHRC.JointOrient.Z);
+                        W(name + ".joint_orient.x", objectHRC.JointOrient.X);
+                        W(name + ".joint_orient.y", objectHRC.JointOrient.Y);
+                        W(name + ".joint_orient.z", objectHRC.JointOrient.Z);
                     }
 
                     if (objectHRC.Node != null)
@@ -881,20 +886,20 @@ namespace KKdMainLib
                         for (i1 = 0; i1 < objectHRC.Node.Length; i1++)
                         {
                             soi1 = so1[i1];
-                            nameView = name + "node" + d + soi1 + d;
+                            nameView = name + ".node." + soi1;
                             ref Node node = ref objectHRC.Node[soi1];
 
                             W(ref node.MT, nameView, 0b10000);
-                            W(nameView + "name"  , node.Name  );
-                            W(nameView + "parent", node.Parent);
+                            W(nameView + ".name"  , node.Name  );
+                            W(nameView + ".parent", node.Parent);
                             W(ref node.MT, nameView, 0b01111);
                         }
-                        W(name + "node.length", objectHRC.Node.Length);
+                        W(name + ".node.length", objectHRC.Node.Length);
                     }
 
                     if (objectHRC.Shadow != null)
-                        W(name + "shadow", objectHRC.Shadow.Value ? 1 : 0);
-                    W(name + "uid_name", objectHRC.UIDName);
+                        W(name + ".shadow", objectHRC.Shadow.Value ? 1 : 0);
+                    W(name + ".uid_name", objectHRC.UIDName);
                 }
                 W("objhrc.length", Data.ObjectHRC.Length);
             }
@@ -903,7 +908,7 @@ namespace KKdMainLib
             {
                 so0 = Data.ObjectHRCList.Length.SW();
                 for (i0 = 0; i0 < Data.ObjectHRCList.Length; i0++)
-                    W("objhrc_list" + d + so0[i0] + "", Data.ObjectHRCList[so0[i0]]);
+                    W("objhrc_list." + so0[i0] + "", Data.ObjectHRCList[so0[i0]]);
                 W("objhrc_list.length", Data.ObjectHRCList.Length);
             }
 
@@ -922,13 +927,13 @@ namespace KKdMainLib
             if (Data.PostProcess != null)
             {
                 PostProcess pp = Data.PostProcess.Value;
-                name = "post_process" + d;
-                W(ref pp.Ambient  , name + "Ambient"   );
-                W(ref pp.Diffuse  , name + "Diffuse"   );
-                W(ref pp.Specular , name + "Specular"  );
-                W(ref pp.LensFlare, name + "lens_flare");
-                W(ref pp.LensGhost, name + "lens_ghost");
-                W(ref pp.LensShaft, name + "lens_shaft");
+                name = "post_process";
+                W(ref pp.Ambient  , name + ".Ambient"   );
+                W(ref pp.Diffuse  , name + ".Diffuse"   );
+                W(ref pp.Specular , name + ".Specular"  );
+                W(ref pp.LensFlare, name + ".lens_flare");
+                W(ref pp.LensGhost, name + ".lens_ghost");
+                W(ref pp.LensShaft, name + ".lens_shaft");
                 Data.PostProcess = pp;
             }
 
@@ -936,7 +941,7 @@ namespace KKdMainLib
             {
                 so0 = Data.Point.Length.SW();
                 for (i0 = 0; i0 < Data.Point.Length; i0++)
-                    W(ref Data.Point[so0[i0]], "point" + d + so0[i0] + d);
+                    W(ref Data.Point[so0[i0]], "point." + so0[i0]);
                 W("point.length", Data.Point.Length);
             }
 
@@ -951,73 +956,71 @@ namespace KKdMainLib
             ModelTransform mt = new ModelTransform();
             dict.FV(out mt.BinOffset, str + MTBO);
 
-            mt.Rot        = RV3(str + "rot"        + d);
-            mt.Scale      = RV3(str + "scale"      + d);
-            mt.Trans      = RV3(str + "trans"      + d);
-            mt.Visibility = RK (str + "visibility" + d);
+            mt.Rot        = RV3(str + ".rot"       );
+            mt.Scale      = RV3(str + ".scale"     );
+            mt.Trans      = RV3(str + ".trans"     );
+            mt.Visibility = RK (str + ".visibility");
             return mt;
         }
 
-        private Vec4<Key>? RRGBAK(string str) =>
-            dict.FV(out bool b, str) ? b ?
-            (Vec4<Key>?)new Vec4<Key> { W = RK(str + "a" + d), Z = RK(str + "b" + d),
-                                        Y = RK(str + "g" + d), X = RK(str + "r" + d) } : null : null;
-
-        private Vec3<Key>? RRGBK(string str) =>
-            dict.FV(out bool b, str) ? b ?
-            (Vec3<Key>?)new Vec3<Key> { Z = RK(str + "b" + d),
-                                        Y = RK(str + "g" + d), X = RK(str + "r" + d) } : null : null;
+        private Vec4<Key?>? RRGBAK(string str) =>
+            dict.FV(out bool b, str + ".") ? b ?
+            (Vec4<Key?>?)new Vec4<Key?> { W = RKNS(str + ".a"), Z = RKNS(str + ".b"),
+                                          Y = RKNS(str + ".g"), X = RKNS(str + ".r") } : null : null;
 
         private Vec3<Key> RV3(string str) =>
-            new Vec3<Key> { X = RK(str + "x" + d), Y = RK(str + "y" + d), Z = RK(str + "z" + d) };
+            new Vec3<Key> { X = RK(str + ".x"), Y = RK(str + ".y"), Z = RK(str + ".z") };
+
+        private Key? RKNS(string str) =>
+            dict.SW(str) ? (Key?)RK(str) : null;
 
         private Key? RKN(string str) =>
-            dict.FV(out bool b, str) && b ? (Key?)RK(str) : null;
+            dict.FV(out bool b, str + ".") && b ? (Key?)RK(str) : null;
 
         private Key RK(string str)
         {
             Key key = new Key();
-            if ( dict.FV(out key.BinOffset, str + BO    )) return  key;
-            if (!dict.FV(out int type     , str + "type")) return default;
+            if ( dict.FV(out key.BinOffset, str + BO     )) return  key;
+            if (!dict.FV(out int type     , str + ".type")) return default;
 
             key.Type = (KeyType)type;
             if (type == 0x0000) return key;
-            if (type == 0x0001) { dict.FV(out key.Value, str + "value"); return key; }
+            if (type == 0x0001) { dict.FV(out key.Value, str + ".value"); return key; }
 
             int i = 0;
-            if (dict.FV(out int epTypePost, str + "ep_type_post"))
+            if (dict.FV(out int epTypePost, str + ".ep_type_post"))
                 key.EPTypePost = (EPType)epTypePost;
-            if (dict.FV(out int epTypePre , str + "ep_type_pre" ))
-                key.EPTypePre  = (EPType)epTypePre ;
-            dict.FV(out key.Length, str + "key.length");
-            dict.FV(out key.Max   , str + "max"       );
+            if (dict.FV(out int epTypePre , str + ".ep_type_pre" ))
+                key.EPTypePre  = (EPType)epTypePre;
+            dict.FV(out int length, str + ".key.length");
+            dict.FV(out key.Max   , str + ".max"       );
             if (dict.SW(str + "raw_data"))
-                dict.FV(out key.RawData.KeyType, str + "raw_data_key_type");
+                dict.FV(out key.RawData.KeyType, str + ".raw_data_key_type");
 
             if (key.RawData.KeyType != 0)
             {
                 ref string[] VL = ref key.RawData.ValueList;
-                dict.FV(out key.RawData.ValueType, str + "raw_data.value_type");
-                if (dict.FV(out value, str + "raw_data.value_list"))
+                dict.FV(out key.RawData.ValueType, str + ".raw_data.value_type");
+                if (dict.FV(out value, str + ".raw_data.value_list"))
                     VL = value.Split(',');
-                dict.FV(out key.RawData.ValueListSize, str + "raw_data.value_list_size");
+                dict.FV(out key.RawData.ValueListSize, str + ".raw_data.value_list_size");
                 value = "";
 
                 int ds = key.RawData.KeyType + 1;
-                key.Length = key.RawData.ValueListSize / ds;
-                key.Keys = new KFT3[key.Length];
+                length = key.RawData.ValueListSize / ds;
+                key.Keys = new KFT3[length];
                      if (key.RawData.KeyType == 0)
-                    for (i = 0; i < key.Length; i++)
+                    for (i = 0; i < length; i++)
                         key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32());
                 else if (key.RawData.KeyType == 1)
-                    for (i = 0; i < key.Length; i++)
+                    for (i = 0; i < length; i++)
                         key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32());
                 else if (key.RawData.KeyType == 2)
-                    for (i = 0; i < key.Length; i++)
+                    for (i = 0; i < length; i++)
                         key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
                                                VL[i * ds + 2].ToF32());
                 else if (key.RawData.KeyType == 3)
-                    for (i = 0; i < key.Length; i++)
+                    for (i = 0; i < length; i++)
                         key.Keys[i] = new KFT3(VL[i * ds + 0].ToF32(), VL[i * ds + 1].ToF32(),
                                                VL[i * ds + 2].ToF32(), VL[i * ds + 3].ToF32());
 
@@ -1025,10 +1028,10 @@ namespace KKdMainLib
             }
             else
             {
-                key.Keys = new KFT3[key.Length];
-                for (i = 0; i < key.Length; i++)
+                key.Keys = new KFT3[length];
+                for (i = 0; i < length; i++)
                 {
-                    if (!dict.FV(out value, str + "key" + d + i + d + "data")) continue;
+                    if (!dict.FV(out value, str + ".key." + i + ".data")) continue;
 
                     dataArray = value.Replace("(", "").Replace(")", "").Split(',');
                     type = dataArray.Length - 1;
@@ -1048,81 +1051,75 @@ namespace KKdMainLib
         private void W(ref ModelTransform mt, string str, byte flags = 0b11111)
         {
             if (a3dc && !mt.Writed && (flags & 0b10000) != 0)
-            { W(str + MTBO + "", mt.BinOffset); mt.Writed = true; }
+            { W(str + MTBO, mt.BinOffset); mt.Writed = true; }
 
             if (!a3dc)
             {
-                if ((flags & 0b01000) != 0) W(ref mt.Rot       , str + "rot"        + d);
-                if ((flags & 0b00100) != 0) W(ref mt.Scale     , str + "scale"      + d);
-                if ((flags & 0b00010) != 0) W(ref mt.Trans     , str + "trans"      + d);
-                if ((flags & 0b00001) != 0) W(ref mt.Visibility, str + "visibility" + d);
+                if ((flags & 0b01000) != 0) W(ref mt.Rot       , str + ".rot"       );
+                if ((flags & 0b00100) != 0) W(ref mt.Scale     , str + ".scale"     );
+                if ((flags & 0b00010) != 0) W(ref mt.Trans     , str + ".trans"     );
+                if ((flags & 0b00001) != 0) W(ref mt.Visibility, str + ".visibility", a3dc);
             }
         }
 
-        private void W(ref Vec4<Key>? rgba, string str)
+        private void W(ref Vec4<Key?>? rgba, string str)
         {
             if (!rgba.HasValue) return;
 
-            Vec4<Key> rgbav = rgba.Value;
+            bool a3dc = Head.Format != Format.AFT && this.a3dc; // A3DC reading is bugged in AFT
+
+            Vec4<Key?> rgbav = rgba.Value;
             W(str, "true");
-            W(ref rgbav.W, str + d + "a" + d);
-            W(ref rgbav.Z, str + d + "b" + d);
-            W(ref rgbav.Y, str + d + "g" + d);
-            W(ref rgbav.X, str + d + "r" + d);
+            if (rgbav.W.HasValue) { Key k = rgbav.W.Value; W(ref k, str + ".a", a3dc); rgbav.W = k; }
+            if (rgbav.Z.HasValue) { Key k = rgbav.Z.Value; W(ref k, str + ".b", a3dc); rgbav.Z = k; }
+            if (rgbav.Y.HasValue) { Key k = rgbav.Y.Value; W(ref k, str + ".g", a3dc); rgbav.Y = k; }
+            if (rgbav.X.HasValue) { Key k = rgbav.X.Value; W(ref k, str + ".r", a3dc); rgbav.X = k; }
             rgba = rgbav;
         }
 
-        private void W(ref Vec3<Key>? rgb, string str)
-        {
-            if (!rgb.HasValue) return;
-
-            Vec3<Key> rgbv = rgb.Value;
-            W(str, "true");
-            W(ref rgbv.Z, str + d + "b" + d);
-            W(ref rgbv.Y, str + d + "g" + d);
-            W(ref rgbv.X, str + d + "r" + d);
-            rgb = rgbv;
-        }
-
         private void W(ref Vec3<Key> key, string str)
-        { W(ref key.X, str + "x" + d); W(ref key.Y, str + "y" + d); W(ref key.Z, str + "z" + d); }
+        { W(ref key.X, str + ".x", a3dc); W(ref key.Y, str + ".y", a3dc); W(ref key.Z, str + ".z", a3dc); }
 
         private void W(ref Key? key, string str)
-        { if (!key.HasValue) return; Key k = key.Value; W(str, "true"); W(ref k, str + d); key = k; }
+        { if (!key.HasValue) return; Key k = key.Value; W(str, "true"); W(ref k, str, a3dc); key = k; }
 
-        private void W(ref Key key, string str)
+        private void W(ref Key key, string str) =>
+            W(ref key, str, a3dc);
+
+        private void W(ref Key key, string str, bool a3dc)
         {
-            if (a3dc) { W(str + BO + "", key.BinOffset); return; }
+            if (a3dc) { W(str + BO, key.BinOffset); return; }
 
             int i = 0;
             if (key.Type < KeyType.Linear || key.Keys == null || (key.Keys != null && key.Keys.Length == 0))
             {
-                W(str + "type", (int)key.Type);
-                if (key.Type > 0) W(str + "value", key.Value);
+                W(str + ".type", (int)key.Type);
+                if (key.Type > 0) W(str + ".value", key.Value);
                 return;
             }
 
-            if (key.EPTypePost != EPType.None) W(str + "ep_type_post", (int)key.EPTypePost);
-            if (key.EPTypePre  != EPType.None) W(str + "ep_type_pre" , (int)key.EPTypePre );
+            if (key.EPTypePost != EPType.None) W(str + ".ep_type_post", (int)key.EPTypePost);
+            if (key.EPTypePre  != EPType.None) W(str + ".ep_type_pre" , (int)key.EPTypePre );
             if (key.RawData.KeyType == 0 && key.Keys != null)
             {
+                int length = key.Keys.Length;
                 IKF kf;
-                so = key.Keys.Length.SW();
-                for (i = 0; i < key.Keys.Length; i++)
+                so = length.SW();
+                for (i = 0; i < length; i++)
                 {
                     soi = so[i];
                     kf = key.Keys[soi].Check();
-                    W(str + "key" + d + soi + d + "data", kf.ToString());
+                    W(str + ".key." + soi + ".data", kf.ToString());
                     int Type = 0;
                          if (kf is KFT0) Type = 0;
                     else if (kf is KFT1) Type = 1;
                     else if (kf is KFT2) Type = 2;
                     else if (kf is KFT3) Type = 3;
-                    W(str + "key" + d + soi + d + "type", Type);
+                    W(str + ".key." + soi + ".type", Type);
                 }
-                W(str + "key.length", key.Length);
-                W(str + "max", (float)(key.Max ?? Data.PlayControl.Size));
-                W(str + "type", (int)key.Type);
+                W(str + ".key.length", length);
+                W(str + ".max", (float)(key.Max ?? Data.PlayControl.Size));
+                W(str + ".type", (int)key.Type);
             }
             else if (key.Keys != null)
             {
@@ -1130,7 +1127,7 @@ namespace KKdMainLib
                 ref int keyType = ref key.RawData.KeyType;
                 keyType = 0;
                 IKF kf;
-                W(str + "max", (float)(key.Max ?? Data.PlayControl.Size));
+                W(str + ".max", (float)(key.Max ?? Data.PlayControl.Size));
                 for (i = 0; i < length && keyType < 3; i++)
                 {
                     kf = key.Keys[i].Check();
@@ -1140,7 +1137,7 @@ namespace KKdMainLib
                     else if (kf is KFT3 && keyType < 3) keyType = 3;
                 }
                 key.RawData.ValueListSize = length * keyType + length;
-                s.W(str + "raw_data.value_list");
+                s.W(str + ".raw_data.value_list");
                      if (keyType == 0) for (i = 0; i < length; i++)
                         s.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
                 else if (keyType == 1) for (i = 0; i < length; i++)
@@ -1151,10 +1148,10 @@ namespace KKdMainLib
                         s.W(key.Keys[i]       .ToString(false) + (i + 1 < length ? "," : ""));
                 s.P--;
                 s.W('\n');
-                W(str + "raw_data.value_list_size", key.RawData.ValueListSize);
-                W(str + "raw_data.value_type"     , key.RawData.ValueType    );
-                W(str + "raw_data_key_type"       , key.RawData.  KeyType    );
-                W(str + "type", (int)key.Type);
+                W(str + ".raw_data.value_list_size", key.RawData.ValueListSize);
+                W(str + ".raw_data.value_type"     , key.RawData.ValueType    );
+                W(str + ".raw_data_key_type"       , key.RawData.  KeyType    );
+                W(str + ".type", (int)key.Type);
             }
         }
 
@@ -1182,18 +1179,19 @@ namespace KKdMainLib
             if (Data.Ambient != null)
                 for (i0 = 0; i0 < Data.Ambient.Length; i0++)
                 {
-                    RRGBK(ref Data.Ambient[i0].   LightDiffuse);
-                    RRGBK(ref Data.Ambient[i0].RimLightDiffuse);
+                    RRGBAK(ref Data.Ambient[i0].   LightDiffuse);
+                    RRGBAK(ref Data.Ambient[i0].RimLightDiffuse);
                 }
 
             if (Data.CameraAuxiliary != null)
             {
                 CameraAuxiliary ca = Data.CameraAuxiliary.Value;
-                RK(ref ca.AutoExposure);
-                RK(ref ca.    Exposure);
-                RK(ref ca.Gamma       );
-                RK(ref ca.GammaRate   );
-                RK(ref ca.Saturate    );
+                RKN(ref ca.AutoExposure    );
+                RKN(ref ca.    Exposure    );
+                RKN(ref ca.    ExposureRate);
+                RKN(ref ca.Gamma           );
+                RKN(ref ca.GammaRate       );
+                RKN(ref ca.Saturate        );
                 Data.CameraAuxiliary = ca;
             }
 
@@ -1226,36 +1224,36 @@ namespace KKdMainLib
             if (Data.Fog != null)
                 for (i0 = 0; i0 < Data.Fog.Length; i0++)
                 {
-                    RK   (ref Data.Fog[i0].Density);
-                    RRGBK(ref Data.Fog[i0].Diffuse);
-                    RK   (ref Data.Fog[i0].End    );
-                    RK   (ref Data.Fog[i0].Start  );
+                    RKN   (ref Data.Fog[i0].Density);
+                    RRGBAK(ref Data.Fog[i0].Diffuse);
+                    RKN   (ref Data.Fog[i0].End    );
+                    RKN   (ref Data.Fog[i0].Start  );
                 }
 
             if (Data.Light != null)
                 for (i0 = 0; i0 < Data.Light.Length; i0++)
                 {
-                    RRGBK (ref Data.Light[i0].Ambient      );
+                    RRGBAK(ref Data.Light[i0].Ambient      );
                     if (Head.Format == Format.XHD)
                     {
-                        RK    (ref Data.Light[i0].ConeAngle    );
-                        RK    (ref Data.Light[i0].Constant     );
+                        RKN   (ref Data.Light[i0].ConeAngle    );
+                        RKN   (ref Data.Light[i0].Constant     );
                     }
-                    RRGBK (ref Data.Light[i0].Diffuse      );
+                    RRGBAK(ref Data.Light[i0].Diffuse      );
                     if (Head.Format == Format.XHD)
                     {
-                        RK    (ref Data.Light[i0].DropOff      );
-                        RK    (ref Data.Light[i0].Far          );
+                        RKN   (ref Data.Light[i0].DropOff      );
+                        RKN   (ref Data.Light[i0].Far          );
                     }
-                    RRGBK (ref Data.Light[i0].Incandescence);
+                    RRGBAK(ref Data.Light[i0].Incandescence);
                     if (Head.Format == Format.XHD)
                     {
-                        RK    (ref Data.Light[i0].Intensity    );
-                        RK    (ref Data.Light[i0].Linear       );
+                        RKN   (ref Data.Light[i0].Intensity    );
+                        RKN   (ref Data.Light[i0].Linear       );
                     }
                     RMT   (ref Data.Light[i0].Position     );
                     if (Head.Format == Format.XHD)
-                        RK    (ref Data.Light[i0].Quadratic    );
+                        RKN   (ref Data.Light[i0].Quadratic    );
                     RRGBAK(ref Data.Light[i0].Specular     );
                     RMT   (ref Data.Light[i0].SpotDirection);
                 }
@@ -1279,7 +1277,7 @@ namespace KKdMainLib
                 {
                     RRGBAK(ref Data.MaterialList[i0].BlendColor   );
                     RK    (ref Data.MaterialList[i0].GlowIntensity);
-                    RRGBK (ref Data.MaterialList[i0].Incandescence);
+                    RRGBAK(ref Data.MaterialList[i0].Incandescence);
                 }
 
             if (Data.Object != null)
@@ -1289,16 +1287,16 @@ namespace KKdMainLib
                     if (Data.Object[i0].TexTrans != null)
                         for (i1 = 0; i1 < Data.Object[i0].TexTrans.Length; i1++)
                         {
-                            RK(ref Data.Object[i0].TexTrans[i1].CoverageU      );
-                            RK(ref Data.Object[i0].TexTrans[i1].CoverageV      );
-                            RK(ref Data.Object[i0].TexTrans[i1].OffsetU        );
-                            RK(ref Data.Object[i0].TexTrans[i1].OffsetV        );
-                            RK(ref Data.Object[i0].TexTrans[i1].RepeatU        );
-                            RK(ref Data.Object[i0].TexTrans[i1].RepeatV        );
-                            RK(ref Data.Object[i0].TexTrans[i1].   Rotate      );
-                            RK(ref Data.Object[i0].TexTrans[i1].   RotateFrame );
-                            RK(ref Data.Object[i0].TexTrans[i1].TranslateFrameU);
-                            RK(ref Data.Object[i0].TexTrans[i1].TranslateFrameV);
+                            RKN(ref Data.Object[i0].TexTrans[i1].CoverageU      );
+                            RKN(ref Data.Object[i0].TexTrans[i1].CoverageV      );
+                            RKN(ref Data.Object[i0].TexTrans[i1].OffsetU        );
+                            RKN(ref Data.Object[i0].TexTrans[i1].OffsetV        );
+                            RKN(ref Data.Object[i0].TexTrans[i1].RepeatU        );
+                            RKN(ref Data.Object[i0].TexTrans[i1].RepeatV        );
+                            RKN(ref Data.Object[i0].TexTrans[i1].   Rotate      );
+                            RKN(ref Data.Object[i0].TexTrans[i1].   RotateFrame );
+                            RKN(ref Data.Object[i0].TexTrans[i1].TranslateFrameU);
+                            RKN(ref Data.Object[i0].TexTrans[i1].TranslateFrameV);
                         }
                 }
 
@@ -1316,19 +1314,18 @@ namespace KKdMainLib
             if (Data.PostProcess != null)
             {
                 PostProcess pp = Data.PostProcess.Value;
-                RRGBK (ref pp.Ambient  );
-                RRGBK (ref pp.Diffuse  );
+                RRGBAK(ref pp.Ambient  );
+                RRGBAK(ref pp.Diffuse  );
                 RRGBAK(ref pp.Specular );
-                RK    (ref pp.LensFlare);
-                RK    (ref pp.LensGhost);
-                RK    (ref pp.LensShaft);
+                RKN   (ref pp.LensFlare);
+                RKN   (ref pp.LensGhost);
+                RKN   (ref pp.LensShaft);
                 Data.PostProcess = pp;
             }
         }
 
         public byte[] A3DCWriter()
         {
-            if (a3dcOpt) usedValues = new UsedDict();
             Data._.CompressF16 = Head.Format > Format.AFT && Head.Format < Format.FT ?
                 (Head.Format == Format.MGF ? CompressF16.Type2 : CompressF16.Type1) : 0;
 
@@ -1363,15 +1360,15 @@ namespace KKdMainLib
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
-                        if (Data.MObjectHRC[i0].Instances != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
-                                WO(ref Data.MObjectHRC[i0].Instances[i1].MT, ReturnToOffset);
-
                         WO(ref Data.MObjectHRC[i0].MT, ReturnToOffset);
 
                         if (Data.MObjectHRC[i0].Node != null)
                             for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                                 WO(ref Data.MObjectHRC[i0].Node[i1].MT, ReturnToOffset);
+
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                WO(ref Data.MObjectHRC[i0].Instances[i1].MT, ReturnToOffset);
                     }
 
                 if (Data.Object != null)
@@ -1397,11 +1394,12 @@ namespace KKdMainLib
                 if (Data.CameraAuxiliary != null)
                 {
                     CameraAuxiliary ca = Data.CameraAuxiliary.Value;
-                    W(ref ca.AutoExposure);
-                    W(ref ca.    Exposure);
-                    W(ref ca.Gamma       );
-                    W(ref ca.GammaRate   );
-                    W(ref ca.Saturate    );
+                    W(ref ca.AutoExposure    );
+                    W(ref ca.    Exposure    );
+                    W(ref ca.    ExposureRate);
+                    W(ref ca.Gamma           );
+                    W(ref ca.GammaRate       );
+                    W(ref ca.Saturate        );
                     Data.CameraAuxiliary = ca;
                 }
 
@@ -1436,62 +1434,54 @@ namespace KKdMainLib
                     {
                         W(ref Data.Light[i0].Position     );
                         W(ref Data.Light[i0].SpotDirection);
-                    }
 
-                if (Data.Light != null)
-                    for (i0 = 0; i0 < Data.Light.Length; i0++)
-                    {
                         W(ref Data.Light[i0].Ambient      );
-                        if (Head.Format == Format.XHD)
-                        {
-                            W(ref Data.Light[i0].ConeAngle    );
-                            W(ref Data.Light[i0].Constant     );
-                        }
                         W(ref Data.Light[i0].Diffuse      );
-                        if (Head.Format == Format.XHD)
-                        {
-                            W(ref Data.Light[i0].DropOff      );
-                            W(ref Data.Light[i0].Far          );
-                        }
+                        W(ref Data.Light[i0].Specular     );
                         W(ref Data.Light[i0].Incandescence);
+
                         if (Head.Format == Format.XHD)
                         {
                             W(ref Data.Light[i0].Intensity    );
+                            W(ref Data.Light[i0].Far          );
+                            W(ref Data.Light[i0].Constant     );
                             W(ref Data.Light[i0].Linear       );
-                        }
-                        if (Head.Format == Format.XHD)
                             W(ref Data.Light[i0].Quadratic    );
-                        W(ref Data.Light[i0].Specular     );
+                            W(ref Data.Light[i0].DropOff      );
+                            W(ref Data.Light[i0].ConeAngle    );
+                        }
                     }
 
                 if (Data.Fog != null)
                     for (i0 = 0; i0 < Data.Fog.Length; i0++)
                     {
                         W(ref Data.Fog[i0].Density);
-                        W(ref Data.Fog[i0].Diffuse);
                         W(ref Data.Fog[i0].Start  );
                         W(ref Data.Fog[i0].End    );
+
+                        W(ref Data.Fog[i0].Diffuse);
                     }
 
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
-                        if (Data.MObjectHRC[i0].Instances != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
-                                W(ref Data.MObjectHRC[i0].Instances[i1].MT);
-
                         W(ref Data.MObjectHRC[i0].MT);
 
                         if (Data.MObjectHRC[i0].Node != null)
                             for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                                 W(ref Data.MObjectHRC[i0].Node[i1].MT);
+
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                W(ref Data.MObjectHRC[i0].Instances[i1].MT);
                     }
 
                 if (Data.MaterialList != null && (Head.Format == Format.X || Head.Format == Format.XHD))
                     for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                     {
-                        W(ref Data.MaterialList[i0].BlendColor   );
                         W(ref Data.MaterialList[i0].GlowIntensity);
+
+                        W(ref Data.MaterialList[i0].BlendColor   );
                         W(ref Data.MaterialList[i0].Incandescence);
                     }
 
@@ -1504,10 +1494,10 @@ namespace KKdMainLib
                             {
                                 W(ref Data.Object[i0].TexTrans[i1].CoverageU      );
                                 W(ref Data.Object[i0].TexTrans[i1].CoverageV      );
-                                W(ref Data.Object[i0].TexTrans[i1].OffsetU        );
-                                W(ref Data.Object[i0].TexTrans[i1].OffsetV        );
                                 W(ref Data.Object[i0].TexTrans[i1].RepeatU        );
                                 W(ref Data.Object[i0].TexTrans[i1].RepeatV        );
+                                W(ref Data.Object[i0].TexTrans[i1].OffsetU        );
+                                W(ref Data.Object[i0].TexTrans[i1].OffsetV        );
                                 W(ref Data.Object[i0].TexTrans[i1].   Rotate      );
                                 W(ref Data.Object[i0].TexTrans[i1].   RotateFrame );
                                 W(ref Data.Object[i0].TexTrans[i1].TranslateFrameU);
@@ -1528,12 +1518,13 @@ namespace KKdMainLib
                 if (Data.PostProcess != null)
                 {
                     PostProcess pp = Data.PostProcess.Value;
-                    W(ref pp.Ambient  );
-                    W(ref pp.Diffuse  );
-                    W(ref pp.Specular );
                     W(ref pp.LensFlare);
                     W(ref pp.LensShaft);
                     W(ref pp.LensGhost);
+
+                    W(ref pp.Diffuse  );
+                    W(ref pp.Ambient  );
+                    W(ref pp.Specular );
                     Data.PostProcess = pp;
                 }
 
@@ -1606,27 +1597,19 @@ namespace KKdMainLib
             RK (ref mt.Visibility);
         }
 
-        private void RRGBAK(ref Vec4<Key>? rgba)
+        private void RRGBAK(ref Vec4<Key?>? rgba)
         {
             if (!rgba.HasValue) return;
-            Vec4<Key> rgbav = rgba.Value;
-            RK(ref rgbav.X); RK(ref rgbav.Y);
-            RK(ref rgbav.Z); RK(ref rgbav.W);
+            Vec4<Key?> rgbav = rgba.Value;
+            RKN(ref rgbav.X); RKN(ref rgbav.Y);
+            RKN(ref rgbav.Z); RKN(ref rgbav.W);
             rgba = rgbav;
-        }
-
-        private void RRGBK(ref Vec3<Key>? rgb)
-        {
-            if (!rgb.HasValue) return;
-            Vec3<Key> rgbv = rgb.Value;
-            RK(ref rgbv.X); RK(ref rgbv.Y); RK(ref rgbv.Z);
-            rgb = rgbv;
         }
 
         private void RV3(ref Vec3<Key> key, bool f16 = false)
         { RK(ref key.X, f16); RK(ref key.Y, f16); RK(ref key.Z, f16); }
 
-        private void RK(ref Key? key)
+        private void RKN(ref Key? key)
         { if (!key.HasValue) return; Key k = key.Value; RK(ref k); key = k; }
 
         private void RK(ref Key key, bool f16 = false)
@@ -1639,10 +1622,10 @@ namespace KKdMainLib
             key.Type = (KeyType)(Type & 0xFF);
             if (key.Type < KeyType.Linear) return;
             key.Max    = s.RF32();
-            key.Length = s.RI32();
+            int length = s.RI32();
             key.EPTypePost = (EPType)((Type >> 12) & 0xF);
             key.EPTypePre  = (EPType)((Type >>  8) & 0xF);
-            key.Keys = new KFT3[key.Length];
+            key.Keys = new KFT3[length];
 
             if (f16 && Data._.CompressF16 == CompressF16.Type2)
                 for (int i = 0; i < key.Keys.Length; i++)
@@ -1660,8 +1643,8 @@ namespace KKdMainLib
 
         private void ReadOffset(out Vec3<Key> key)
         { key = new Vec3<Key> { X = new Key { BinOffset = s.RI32() },
-                                   Y = new Key { BinOffset = s.RI32() },
-                                   Z = new Key { BinOffset = s.RI32() }, }; }
+                                Y = new Key { BinOffset = s.RI32() },
+                                Z = new Key { BinOffset = s.RI32() }, }; }
 
         private void WO(ref ModelTransform mt, bool ReturnToOffset)
         {
@@ -1682,23 +1665,14 @@ namespace KKdMainLib
         private void W(ref ModelTransform mt)
         { W(ref mt.Scale); W(ref mt.Rot, true); W(ref mt.Trans); W(ref mt.Visibility); }
 
-        private void W(ref Vec4<Key>? rgba)
+        private void W(ref Vec4<Key?>? rgba)
         {
-            if (!rgba.HasValue) return;
+            if (!rgba.HasValue || Head.Format == Format.AFT) return;
 
-            Vec4<Key> rgbav = rgba.Value;
+            Vec4<Key?> rgbav = rgba.Value;
             W(ref rgbav.X); W(ref rgbav.Y);
             W(ref rgbav.Z); W(ref rgbav.W);
             rgba = rgbav;
-        }
-
-        private void W(ref Vec3<Key>? rgb)
-        {
-            if (!rgb.HasValue) return;
-
-            Vec3<Key> rgbv = rgb.Value;
-            W(ref rgbv.X); W(ref rgbv.Y); W(ref rgbv.Z);
-            rgb = rgbv;
         }
 
         private void W(ref Vec3<Key> key, bool f16 = false)
@@ -1735,21 +1709,9 @@ namespace KKdMainLib
             }
             else
             {
-                KeyValuePair<int, float> kvp = new KeyValuePair<int, float>((int)key.Type, key.Value);
-                if (!a3dcOpt)
-                {
-                    key.BinOffset = s.P;
-                    if (key.Type == 0) s.W(0x00L);
-                    else { s.W((int)key.Type); s.W((float)key.Value); }
-                }
-                else if (!usedValues.ContainsValue(kvp))
-                {
-                    key.BinOffset = s.P;
-                    if (key.Type == 0) s.W(0x00L);
-                    else { s.W((int)key.Type); s.W((float)key.Value); }
-                    usedValues.Add(key.BinOffset.Value, kvp);
-                }
-                else key.BinOffset = usedValues.GK(kvp);
+                key.BinOffset = s.P;
+                if (key.Type == 0) s.W(0x00L);
+                else { s.W((int)key.Type); s.W((float)key.Value); }
             }
         }
 
@@ -1758,19 +1720,20 @@ namespace KKdMainLib
             if (Data.Ambient != null && mData.Ambient != null)
                 for (i0 = 0; i0 < Data.Ambient.Length && i0 < mData.Ambient.Length; i0++)
                 {
-                    MRGBK(ref Data.Ambient[i0].   LightDiffuse, ref mData.Ambient[i0].   LightDiffuse);
-                    MRGBK(ref Data.Ambient[i0].RimLightDiffuse, ref mData.Ambient[i0].RimLightDiffuse);
+                    MRGBAK(ref Data.Ambient[i0].   LightDiffuse, ref mData.Ambient[i0].   LightDiffuse);
+                    MRGBAK(ref Data.Ambient[i0].RimLightDiffuse, ref mData.Ambient[i0].RimLightDiffuse);
                 }
 
             if (Data.CameraAuxiliary != null && mData.CameraAuxiliary != null)
             {
                 CameraAuxiliary mCA = mData.CameraAuxiliary.Value;
                 CameraAuxiliary ca = Data.CameraAuxiliary.Value;
-                MK(ref ca.AutoExposure, ref mCA.AutoExposure);
-                MK(ref ca.    Exposure, ref mCA.    Exposure);
-                MK(ref ca.Gamma       , ref mCA.Gamma       );
-                MK(ref ca.GammaRate   , ref mCA.GammaRate   );
-                MK(ref ca.Saturate    , ref mCA.Saturate    );
+                MKN(ref ca.AutoExposure    , ref mCA.AutoExposure    );
+                MKN(ref ca.    Exposure    , ref mCA.    Exposure    );
+                MKN(ref ca.    ExposureRate, ref mCA.    ExposureRate);
+                MKN(ref ca.Gamma           , ref mCA.Gamma           );
+                MKN(ref ca.GammaRate       , ref mCA.GammaRate       );
+                MKN(ref ca.Saturate        , ref mCA.Saturate        );
                 Data.CameraAuxiliary = ca;
                 mData.CameraAuxiliary = mCA;
             }
@@ -1806,36 +1769,36 @@ namespace KKdMainLib
             if (Data.Fog != null && mData.Fog != null)
                 for (i0 = 0; i0 < Data.Fog.Length && i0 < Data.Fog.Length; i0++)
                 {
-                    MK   (ref Data.Fog[i0].Density, ref mData.Fog[i0].Density);
-                    MRGBK(ref Data.Fog[i0].Diffuse, ref mData.Fog[i0].Diffuse);
-                    MK   (ref Data.Fog[i0].End    , ref mData.Fog[i0].End    );
-                    MK   (ref Data.Fog[i0].Start  , ref mData.Fog[i0].Start  );
+                    MKN   (ref Data.Fog[i0].Density, ref mData.Fog[i0].Density);
+                    MRGBAK(ref Data.Fog[i0].Diffuse, ref mData.Fog[i0].Diffuse);
+                    MKN   (ref Data.Fog[i0].End    , ref mData.Fog[i0].End    );
+                    MKN   (ref Data.Fog[i0].Start  , ref mData.Fog[i0].Start  );
                 }
 
             if (Data.Light != null && mData.Light != null)
                 for (i0 = 0; i0 < Data.Light.Length; i0++)
                 {
-                    MRGBK (ref Data.Light[i0].Ambient      , ref mData.Light[i0].Ambient      );
+                    MRGBAK(ref Data.Light[i0].Ambient      , ref mData.Light[i0].Ambient      );
                     if (Head.Format == Format.XHD)
                     {
-                        MK    (ref Data.Light[i0].ConeAngle    , ref mData.Light[i0].ConeAngle    );
-                        MK    (ref Data.Light[i0].Constant     , ref mData.Light[i0].Constant     );
+                        MKN   (ref Data.Light[i0].ConeAngle    , ref mData.Light[i0].ConeAngle    );
+                        MKN   (ref Data.Light[i0].Constant     , ref mData.Light[i0].Constant     );
                     }
-                    MRGBK (ref Data.Light[i0].Diffuse      , ref mData.Light[i0].Diffuse      );
+                    MRGBAK(ref Data.Light[i0].Diffuse      , ref mData.Light[i0].Diffuse      );
                     if (Head.Format == Format.XHD)
                     {
-                        MK    (ref Data.Light[i0].DropOff      , ref mData.Light[i0].DropOff      );
-                        MK    (ref Data.Light[i0].Far          , ref mData.Light[i0].Far          );
+                        MKN   (ref Data.Light[i0].DropOff      , ref mData.Light[i0].DropOff      );
+                        MKN   (ref Data.Light[i0].Far          , ref mData.Light[i0].Far          );
                     }
-                    MRGBK (ref Data.Light[i0].Incandescence, ref mData.Light[i0].Incandescence);
+                    MRGBAK(ref Data.Light[i0].Incandescence, ref mData.Light[i0].Incandescence);
                     if (Head.Format == Format.XHD)
                     {
-                        MK    (ref Data.Light[i0].Intensity    , ref mData.Light[i0].Intensity    );
-                        MK    (ref Data.Light[i0].Linear       , ref mData.Light[i0].Linear       );
+                        MKN   (ref Data.Light[i0].Intensity    , ref mData.Light[i0].Intensity    );
+                        MKN   (ref Data.Light[i0].Linear       , ref mData.Light[i0].Linear       );
                     }
                     MMT   (ref Data.Light[i0].Position     , ref mData.Light[i0].Position     );
                     if (Head.Format == Format.XHD)
-                        MK    (ref Data.Light[i0].Quadratic    , ref mData.Light[i0].Quadratic);
+                        MKN   (ref Data.Light[i0].Quadratic    , ref mData.Light[i0].Quadratic);
                     MRGBAK(ref Data.Light[i0].Specular     , ref mData.Light[i0].Specular     );
                     MMT   (ref Data.Light[i0].SpotDirection, ref mData.Light[i0].SpotDirection);
                 }
@@ -1869,7 +1832,7 @@ namespace KKdMainLib
                     ref MaterialList  ml = ref  Data.MaterialList[i0];
                     MRGBAK(ref ml.BlendColor   , ref mML.BlendColor   );
                     MK    (ref ml.GlowIntensity, ref mML.GlowIntensity);
-                    MRGBK (ref ml.Incandescence, ref mML.Incandescence);
+                    MRGBAK(ref ml.Incandescence, ref mML.Incandescence);
                 }
 
             if (Data.Object != null && mData.Object != null)
@@ -1882,16 +1845,16 @@ namespace KKdMainLib
                         {
                             ref Object.TextureTransform mTT = ref mData.Object[i0].TexTrans[i1];
                             ref Object.TextureTransform  tt = ref  Data.Object[i0].TexTrans[i1];
-                            MK(ref tt.CoverageU      , ref mTT.CoverageU      );
-                            MK(ref tt.CoverageV      , ref mTT.CoverageV      );
-                            MK(ref tt.OffsetU        , ref mTT.OffsetU        );
-                            MK(ref tt.OffsetV        , ref mTT.OffsetV        );
-                            MK(ref tt.RepeatU        , ref mTT.RepeatU        );
-                            MK(ref tt.RepeatV        , ref mTT.RepeatV        );
-                            MK(ref tt.   Rotate      , ref mTT.   Rotate      );
-                            MK(ref tt.   RotateFrame , ref mTT.   RotateFrame );
-                            MK(ref tt.TranslateFrameU, ref mTT.TranslateFrameU);
-                            MK(ref tt.TranslateFrameV, ref mTT.TranslateFrameV);
+                            MKN(ref tt.CoverageU      , ref mTT.CoverageU      );
+                            MKN(ref tt.CoverageV      , ref mTT.CoverageV      );
+                            MKN(ref tt.OffsetU        , ref mTT.OffsetU        );
+                            MKN(ref tt.OffsetV        , ref mTT.OffsetV        );
+                            MKN(ref tt.RepeatU        , ref mTT.RepeatU        );
+                            MKN(ref tt.RepeatV        , ref mTT.RepeatV        );
+                            MKN(ref tt.   Rotate      , ref mTT.   Rotate      );
+                            MKN(ref tt.   RotateFrame , ref mTT.   RotateFrame );
+                            MKN(ref tt.TranslateFrameU, ref mTT.TranslateFrameU);
+                            MKN(ref tt.TranslateFrameV, ref mTT.TranslateFrameV);
                         }
                 }
 
@@ -1914,12 +1877,12 @@ namespace KKdMainLib
             {
                 PostProcess mPP = mData.PostProcess.Value;
                 PostProcess  pp =  Data.PostProcess.Value;
-                MRGBK (ref pp.Ambient  , ref mPP.Ambient  );
-                MRGBK (ref pp.Diffuse  , ref mPP.Diffuse  );
+                MRGBAK(ref pp.Ambient  , ref mPP.Ambient  );
+                MRGBAK(ref pp.Diffuse  , ref mPP.Diffuse  );
                 MRGBAK(ref pp.Specular , ref mPP.Specular );
-                MK    (ref pp.LensFlare, ref mPP.LensFlare);
-                MK    (ref pp.LensGhost, ref mPP.LensGhost);
-                MK    (ref pp.LensShaft, ref mPP.LensShaft);
+                MKN   (ref pp.LensFlare, ref mPP.LensFlare);
+                MKN   (ref pp.LensGhost, ref mPP.LensGhost);
+                MKN   (ref pp.LensShaft, ref mPP.LensShaft);
                 Data.PostProcess = pp;
                 mData.PostProcess = mPP;
             }
@@ -1933,31 +1896,21 @@ namespace KKdMainLib
             MK (ref mt.Visibility, ref mMT.Visibility);
         }
 
-        private void MRGBAK(ref Vec4<Key>? rgba, ref Vec4<Key>? mRGBA)
+        private void MRGBAK(ref Vec4<Key?>? rgba, ref Vec4<Key?>? mRGBA)
         {
             if (!rgba.HasValue) return;
 
-            Vec4<Key> rgbav = rgba.Value;
-            Vec4<Key> mrgbav = mRGBA.Value;
-            MK(ref rgbav.X, ref mrgbav.X); MK(ref rgbav.Y, ref mrgbav.Y);
-            MK(ref rgbav.Z, ref mrgbav.Z); MK(ref rgbav.W, ref mrgbav.W);
+            Vec4<Key?> rgbav = rgba.Value;
+            Vec4<Key?> mrgbav = mRGBA.Value;
+            MKN(ref rgbav.X, ref mrgbav.X); MKN(ref rgbav.Y, ref mrgbav.Y);
+            MKN(ref rgbav.Z, ref mrgbav.Z); MKN(ref rgbav.W, ref mrgbav.W);
             mRGBA = mrgbav;
-        }
-
-        private void MRGBK(ref Vec3<Key>? rgb, ref Vec3<Key>? mRGB)
-        {
-            if (!rgb.HasValue) return;
-
-            Vec3<Key> rgbv = rgb.Value;
-            Vec3<Key> mrgbv = mRGB.Value;
-            MK(ref rgbv.X, ref mrgbv.X); MK(ref rgbv.Y, ref mrgbv.Y); MK(ref rgbv.Z, ref mrgbv.Z);
-            mRGB = mrgbv;
         }
 
         private void MV3(ref Vec3<Key> key, ref Vec3<Key> mKey)
         { MK(ref key.X, ref mKey.X); MK(ref key.Y, ref mKey.Y); MK(ref key.Z, ref mKey.Z); }
 
-        private void MK(ref Key? key, ref Key? mKey)
+        private void MKN(ref Key? key, ref Key? mKey)
         { if (!key.HasValue || !mKey.HasValue) return;
           Key k = key.Value; Key mk = mKey.Value; MK(ref k, ref mk); key = k; mKey = mk; }
 
@@ -1974,17 +1927,15 @@ namespace KKdMainLib
 
             if (key.Keys.Length >= 1 && mKey.Keys.Length == 1)
             {
-                key.Length = key.Keys.Length;
-                key.Max = (int)key.Keys[key.Length - 1].F + 1;
+                key.Max = (int)key.Keys[key.Keys.Length - 1].F + 1;
                 return;
             }
             else if (key.Keys.Length == 1 && mKey.Keys.Length > 1)
             {
                 if (key.Keys[0] == mKey.Keys[0])
                 {
-                    key.Length = mKey.Keys.Length;
                     key.Keys = mKey.Keys;
-                    key.Max = (int)mKey.Keys[key.Length - 1].F + 1;
+                    key.Max = (int)mKey.Keys[mKey.Keys.Length - 1].F + 1;
                     return;
                 }
                 return;
@@ -2001,8 +1952,7 @@ namespace KKdMainLib
             int OldLength = i;
             Array.Resize(ref key.Keys, OldLength + mKey.Keys.Length);
             Array.Copy(mKey.Keys, 0, key.Keys, OldLength, mKey.Keys.Length);
-            key.Length = key.Keys.Length;
-            key.Max = (int)key.Keys[key.Length - 1].F + 1;
+            key.Max = (int)key.Keys[key.Keys.Length - 1].F + 1;
         }
 
         public void MsgPackReader(string file, bool json)
@@ -2036,20 +1986,21 @@ namespace KKdMainLib
                 for (i = 0; i < Data.Ambient.Length; i++)
                     Data.Ambient[i] = new Ambient
                     {
-                                   Name = temp[i].RS   (           "Name"),
-                           LightDiffuse = temp[i].RRGBK(   "LightDiffuse"),
-                        RimLightDiffuse = temp[i].RRGBK("RimLightDiffuse"),
+                                   Name = temp[i].RS    (           "Name"),
+                           LightDiffuse = temp[i].RRGBAK(   "LightDiffuse"),
+                        RimLightDiffuse = temp[i].RRGBAK("RimLightDiffuse"),
                     };
             }
 
             if ((temp = a3d["CameraAuxiliary"]).NotNull)
                 Data.CameraAuxiliary = new CameraAuxiliary
                 {
-                    AutoExposure = temp.RKN("AutoExposure"),
-                        Exposure = temp.RKN(    "Exposure"),
-                    Gamma        = temp.RKN("Gamma"       ),
-                    GammaRate    = temp.RKN("GammaRate"   ),
-                    Saturate     = temp.RKN("Saturate"    ),
+                    AutoExposure     = temp.RKN("AutoExposure"    ),
+                        Exposure     = temp.RKN(    "Exposure"    ),
+                        ExposureRate = temp.RKN(    "ExposureRate"),
+                    Gamma            = temp.RKN("Gamma"           ),
+                    GammaRate        = temp.RKN("GammaRate"       ),
+                    Saturate         = temp.RKN("Saturate"        ),
                 };
 
             if ((temp = a3d["CameraRoot", true]).NotNull)
@@ -2127,11 +2078,11 @@ namespace KKdMainLib
                 for (i = 0; i < Data.Fog.Length; i++)
                     Data.Fog[i] = new Fog
                     {
-                        Id      = temp[i].RnI32("Id"     ),
-                        Density = temp[i].RK   ("Density"),
-                        Diffuse = temp[i].RRGBK("Diffuse"),
-                        End     = temp[i].RK   ("End"    ),
-                        Start   = temp[i].RK   ("Start"  ),
+                        Id      = temp[i].RnI32 ("Id"     ),
+                        Density = temp[i].RK    ("Density"),
+                        Diffuse = temp[i].RRGBAK("Diffuse"),
+                        End     = temp[i].RK    ("End"    ),
+                        Start   = temp[i].RK    ("Start"  ),
                     };
             }
 
@@ -2144,13 +2095,13 @@ namespace KKdMainLib
                         Id            = temp[i].RnI32 ("Id"           ),
                         Name          = temp[i].RS    ("Name"         ),
                         Type          = temp[i].RS    ("Type"         ),
-                        Ambient       = temp[i].RRGBK ("Ambient"      ),
+                        Ambient       = temp[i].RRGBAK("Ambient"      ),
                         ConeAngle     = temp[i].RKN   ("ConeAngle"    ),
                         Constant      = temp[i].RKN   ("Constant"     ),
-                        Diffuse       = temp[i].RRGBK ("Diffuse"      ),
+                        Diffuse       = temp[i].RRGBAK("Diffuse"      ),
                         DropOff       = temp[i].RKN   ("DropOff"      ),
                         Far           = temp[i].RKN   ("Far"          ),
-                        Incandescence = temp[i].RRGBK ("Incandescence"),
+                        Incandescence = temp[i].RRGBAK("Incandescence"),
                         Intensity     = temp[i].RKN   ("Intensity"    ),
                         Linear        = temp[i].RKN   ("Linear"       ),
                         Position      = temp[i].RMT   ("Position"     ),
@@ -2170,7 +2121,7 @@ namespace KKdMainLib
                             Name      = temp[i].RS    (         "Name"),
                         BlendColor    = temp[i].RRGBAK(   "BlendColor"),
                         GlowIntensity = temp[i].RK    ("GlowIntensity"),
-                        Incandescence = temp[i].RRGBK ("Incandescence"),
+                        Incandescence = temp[i].RRGBAK("Incandescence"),
                     };
             }
 
@@ -2243,9 +2194,11 @@ namespace KKdMainLib
                     {
                                  MT = temp[i0].RMT(),
                         Morph       = temp[i0].RS   ("Morph"      ),
-                        MorphOffset = temp[i0].RnI32("MorphOffset"),
+                        MorphOffset = temp[i0].RnF32("MorphOffset"),
                                Name = temp[i0].RS   (       "Name"),
                          ParentName = temp[i0].RS   ( "ParentName"),
+                          Pat       = temp[i0].RS   (  "Pat"      ),
+                          PatOffset = temp[i0].RnF32(  "PatOffset"),
                             UIDName = temp[i0].RS   (    "UIDName"),
                     };
 
@@ -2371,8 +2324,8 @@ namespace KKdMainLib
             if ((temp = a3d["PostProcess"]).NotNull)
                 Data.PostProcess = new PostProcess
                 {
-                    Ambient   = temp.RRGBK ("Ambient"  ),
-                    Diffuse   = temp.RRGBK ("Diffuse"  ),
+                    Ambient   = temp.RRGBAK("Ambient"  ),
+                    Diffuse   = temp.RRGBAK("Diffuse"  ),
                     LensFlare = temp.RKN   ("LensFlare"),
                     LensGhost = temp.RKN   ("LensGhost"),
                     LensShaft = temp.RKN   ("LensShaft"),
@@ -2475,7 +2428,7 @@ namespace KKdMainLib
             {
                 MsgPack fog = new MsgPack(Data.Fog.Length, "Fog");
                 for (i = 0; i < Data.Fog.Length; i++)
-                    fog[i] = MsgPack.New.Add("Id"     , Data.Fog[i].Id     )
+                    fog[i] = MsgPack.New.Add("Id"     , Data.Fog[i].Id)
                                         .Add("Density", ref Data.Fog[i].Density)
                                         .Add("Diffuse", ref Data.Fog[i].Diffuse)
                                         .Add("End"    , ref Data.Fog[i].End    )
@@ -2583,6 +2536,8 @@ namespace KKdMainLib
                     MsgPack _object = MsgPack.New.Add("Morph"      , Data.Object[i0].Morph      )
                                                  .Add("MorphOffset", Data.Object[i0].MorphOffset)
                                                  .Add(      "Name" , Data.Object[i0].      Name )
+                                                 .Add(  "Pat"      , Data.Object[i0].  Pat      )
+                                                 .Add(  "PatOffset", Data.Object[i0].  PatOffset)
                                                  .Add("ParentName" , Data.Object[i0].ParentName )
                                                  .Add(   "UIDName" , Data.Object[i0].   UIDName );
                     if (Data.Object[i0].TexPat != null)
@@ -2699,7 +2654,6 @@ namespace KKdMainLib
             so0 = so1 = null;
             name = nameView = value = null;
             dataArray = null;
-            usedValues = null;
             dict = null;
             s = null;
             Data = default;
@@ -2716,18 +2670,12 @@ namespace KKdMainLib
             new ModelTransform { Rot   = msgPack.RV3("Rot"  ), Scale      = msgPack.RV3("Scale"     ),
                                  Trans = msgPack.RV3("Trans"), Visibility = msgPack.RK ("Visibility") };
 
-        public static Vec4<Key>? RRGBAK(this MsgPack msgPack, string name) =>
-            msgPack[name].NotNull ? (Vec4<Key>?)msgPack[name].RRGBAK() : null;
+        public static Vec4<Key?>? RRGBAK(this MsgPack msgPack, string name) =>
+            msgPack[name].NotNull ? (Vec4<Key?>?)msgPack[name].RRGBAK() : null;
 
-        public static Vec4<Key> RRGBAK(this MsgPack msgPack) =>
-            new Vec4<Key> { X = msgPack.RK("R"), Y = msgPack.RK("G"),
-                            Z = msgPack.RK("B"), W = msgPack.RK("A") };
-
-        public static Vec3<Key>? RRGBK(this MsgPack msgPack, string name) =>
-            msgPack[name].NotNull ? (Vec3<Key>?)msgPack[name].RRGBK() : null;
-
-        public static Vec3<Key> RRGBK(this MsgPack msgPack) =>
-            new Vec3<Key> { X = msgPack.RK("R"), Y = msgPack.RK("G"), Z = msgPack.RK("B") };
+        public static Vec4<Key?> RRGBAK(this MsgPack msgPack) =>
+            new Vec4<Key?> { X = msgPack.RKN("R"), Y = msgPack.RKN("G"),
+                             Z = msgPack.RKN("B"), W = msgPack.RKN("A") };
 
         public static Vec3<Key> RV3(this MsgPack msgPack, string name) =>
             msgPack[name].RV3();
@@ -2768,9 +2716,9 @@ namespace KKdMainLib
             MsgPack trans;
             if ((trans = msgPack["Trans", true]).IsNull) return key;
 
-            key.Length = trans.Array.Length;
-            key.Keys = new KFT3[key.Length];
-            for (int i = 0; i < key.Length; i++)
+            int length = trans.Array.Length;
+            key.Keys = new KFT3[length];
+            for (int i = 0; i < length; i++)
             {
                      if (trans[i].Array == null)     continue;
                 else if (trans[i].Array.Length == 0) continue;
@@ -2802,24 +2750,14 @@ namespace KKdMainLib
                                          .Add("Trans"     , ref mt.Trans     )
                                          .Add("Visibility", ref mt.Visibility));
 
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec4<Key>? rgba)
+        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec4<Key?>? rgba)
         {
             if (!rgba.HasValue) return msgPack;
 
-            Vec4<Key> rgbav = rgba.Value;
+            Vec4<Key?> rgbav = rgba.Value;
             msgPack = msgPack.Add(new MsgPack(name).Add("R", ref rgbav.X).Add("G", ref rgbav.Y)
                                                    .Add("B", ref rgbav.Z).Add("A", ref rgbav.W));
             rgba = rgbav;
-            return msgPack;
-        }
-
-        public static MsgPack Add(this MsgPack msgPack, string name, ref Vec3<Key>? rgb)
-        {
-            if (!rgb.HasValue) return msgPack;
-
-            Vec3<Key> rgbv = rgb.Value;
-            msgPack = msgPack.Add(new MsgPack(name).Add("R", ref rgbv.X).Add("G", ref rgbv.Y).Add("B", ref rgbv.Z));
-            rgb = rgbv;
             return msgPack;
         }
 
@@ -2852,8 +2790,9 @@ namespace KKdMainLib
 
                 if (key.RawData.KeyType != 0) keys.Add("RawData", true);
 
-                MsgPack Trans = new MsgPack(key.Keys.Length, "Trans");
-                for (int i = 0; i < key.Keys.Length; i++)
+                int length = key.Keys.Length;
+                MsgPack Trans = new MsgPack(length, "Trans");
+                for (int i = 0; i < length; i++)
                 {
                     IKF kf = key.Keys[i].Check();
                          if (kf is KFT0 kft0) Trans[i] = new MsgPack(null,
