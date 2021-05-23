@@ -857,7 +857,7 @@ namespace KKdMainLib
             {
                 so0 = Data.ObjectList.Length.SW();
                 for (i0 = 0; i0 < Data.ObjectList.Length; i0++)
-                    W("object_list." + so0[i0] + "", Data.ObjectList[so0[i0]]);
+                    W("object_list." + so0[i0], Data.ObjectList[so0[i0]]);
                 W("object_list.length", Data.ObjectList.Length);
             }
 
@@ -908,7 +908,7 @@ namespace KKdMainLib
             {
                 so0 = Data.ObjectHRCList.Length.SW();
                 for (i0 = 0; i0 < Data.ObjectHRCList.Length; i0++)
-                    W("objhrc_list." + so0[i0] + "", Data.ObjectHRCList[so0[i0]]);
+                    W("objhrc_list." + so0[i0], Data.ObjectHRCList[so0[i0]]);
                 W("objhrc_list.length", Data.ObjectHRCList.Length);
             }
 
@@ -984,8 +984,8 @@ namespace KKdMainLib
             if (!dict.FV(out int type     , str + ".type")) return default;
 
             key.Type = (KeyType)type;
-            if (type == 0x0000) return key;
-            if (type == 0x0001) { dict.FV(out key.Value, str + ".value"); return key; }
+            if (key.Type == KeyType.None  ) return key;
+            if (key.Type == KeyType.Static) { dict.FV(out key.Value, str + ".value"); return key; }
 
             int i = 0;
             if (dict.FV(out int epTypePost, str + ".ep_type_post"))
@@ -994,7 +994,7 @@ namespace KKdMainLib
                 key.EPTypePre  = (EPType)epTypePre;
             dict.FV(out int length, str + ".key.length");
             dict.FV(out key.Max   , str + ".max"       );
-            if (dict.SW(str + "raw_data"))
+            if (dict.SW(str + ".raw_data"))
                 dict.FV(out key.RawData.KeyType, str + ".raw_data_key_type");
 
             if (key.RawData.KeyType != 0)
@@ -1137,7 +1137,7 @@ namespace KKdMainLib
                     else if (kf is KFT3 && keyType < 3) keyType = 3;
                 }
                 key.RawData.ValueListSize = length * keyType + length;
-                s.W(str + ".raw_data.value_list");
+                s.W(str + ".raw_data.value_list=");
                      if (keyType == 0) for (i = 0; i < length; i++)
                         s.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
                 else if (keyType == 1) for (i = 0; i < length; i++)
