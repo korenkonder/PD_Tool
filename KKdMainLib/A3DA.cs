@@ -16,6 +16,7 @@ namespace KKdMainLib
 
         private Stream s;
         private bool a3dc;
+        private bool a3dcOpt;
         private int i, i0, i1;
         private int soi;
         private int soi0;
@@ -28,9 +29,16 @@ namespace KKdMainLib
         private string value;
         private string[] dataArray;
         private A3DADict dict;
+        private UsedDict usedValues;
 
         private const string BO = ".bin_offset";
         private const string MTBO = ".model_transform" + BO;
+
+        public A3DA(bool a3dcOpt = true)
+        { a3dc = false; i = i0 = i1 = soi = soi0 = soi1 = 0; value = null;
+            name = null; nameView = null; so = null; so0 = null; so1 = null;
+            dataArray = null; s = null; Head = default; Data = default;
+            dict = null; usedValues = null; this.a3dcOpt = a3dcOpt; }
 
         public int A3DAReader(string file)
         { using (s = File.OpenReader(file + ".a3da"))
@@ -1326,6 +1334,7 @@ namespace KKdMainLib
 
         public byte[] A3DCWriter()
         {
+            usedValues = new UsedDict();
             Data._.CompressF16 = Head.Format > Format.AFT && Head.Format < Format.FT ?
                 (Head.Format == Format.MGF ? CompressF16.Type2 : CompressF16.Type1) : 0;
 
@@ -1360,15 +1369,15 @@ namespace KKdMainLib
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                WO(ref Data.MObjectHRC[i0].Instances[i1].MT, ReturnToOffset);
+
                         WO(ref Data.MObjectHRC[i0].MT, ReturnToOffset);
 
                         if (Data.MObjectHRC[i0].Node != null)
                             for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                                 WO(ref Data.MObjectHRC[i0].Node[i1].MT, ReturnToOffset);
-
-                        if (Data.MObjectHRC[i0].Instances != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
-                                WO(ref Data.MObjectHRC[i0].Instances[i1].MT, ReturnToOffset);
                     }
 
                 if (Data.Object != null)
@@ -1465,15 +1474,15 @@ namespace KKdMainLib
                 if (Data.MObjectHRC != null)
                     for (i0 = 0; i0 < Data.MObjectHRC.Length; i0++)
                     {
+                        if (Data.MObjectHRC[i0].Instances != null)
+                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
+                                W(ref Data.MObjectHRC[i0].Instances[i1].MT);
+
                         W(ref Data.MObjectHRC[i0].MT);
 
                         if (Data.MObjectHRC[i0].Node != null)
                             for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                                 W(ref Data.MObjectHRC[i0].Node[i1].MT);
-
-                        if (Data.MObjectHRC[i0].Instances != null)
-                            for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
-                                W(ref Data.MObjectHRC[i0].Instances[i1].MT);
                     }
 
                 if (Data.MaterialList != null && (Head.Format == Format.X || Head.Format == Format.XHD))
@@ -1709,9 +1718,24 @@ namespace KKdMainLib
             }
             else
             {
-                key.BinOffset = s.P;
-                if (key.Type == 0) s.W(0x00L);
-                else { s.W((int)key.Type); s.W((float)key.Value); }
+                if (a3dcOpt)
+                {
+                    key.BinOffset = s.P;
+                    if (key.Type == 0) s.W(0x00L);
+                    else { s.W((int)key.Type); s.W((float)key.Value); }
+                }
+                else
+                {
+                    KeyValuePair<int, float> kvp = new KeyValuePair<int, float>((int)key.Type, key.Value);
+                    if (!usedValues.ContainsValue(kvp))
+                    {
+                        key.BinOffset = s.P;
+                        if (key.Type == 0) s.W(0x00L);
+                        else { s.W((int)key.Type); s.W((float)key.Value); }
+                        usedValues.Add(key.BinOffset.Value, kvp);
+                    }
+                    else key.BinOffset = usedValues.GK(kvp);
+                }
             }
         }
 
