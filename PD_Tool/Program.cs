@@ -218,14 +218,13 @@ namespace PD_Tool
                     ConsoleDesign("               Choose converter:");
                     ConsoleDesign(false);
                     ConsoleDesign("1. A3DA"    );
-                    ConsoleDesign("2. AddParam");
-                    ConsoleDesign("3. AET"     );
-                    ConsoleDesign("4. DEX"     );
-                    ConsoleDesign("5. DIVA"    );
-                    ConsoleDesign("6. MotHead" );
-                    ConsoleDesign("7. MOT"     );
-                    ConsoleDesign("8. STR"     );
-                    ConsoleDesign("9. Table"   );
+                    ConsoleDesign("2. AET"     );
+                    ConsoleDesign("3. DEX"     );
+                    ConsoleDesign("4. DIVA"    );
+                    ConsoleDesign("5. MotHead" );
+                    ConsoleDesign("6. MOT"     );
+                    ConsoleDesign("7. STR"     );
+                    ConsoleDesign("8. Table"   );
                     ConsoleDesign(false);
                     ConsoleDesign("R. Return to Main Menu");
                     ConsoleDesign(false);
@@ -235,14 +234,13 @@ namespace PD_Tool
                 }
                 else localChoose = choose[1].ToString();
                      if (localChoose == "1") A3D.Processor(json);
-                else if (localChoose == "2") ADP.Processor(json);
-                else if (localChoose == "3") AET.Processor(json);
-                else if (localChoose == "4") DEX.Processor(json);
-                else if (localChoose == "5") DIV.Processor();
-                else if (localChoose == "6") MHD.Processor(json);
-                else if (localChoose == "7") MOT.Processor(json);
-                else if (localChoose == "8") STR.Processor(json);
-                else if (localChoose == "9") TBL.Processor(json);
+                else if (localChoose == "2") AET.Processor(json);
+                else if (localChoose == "3") DEX.Processor(json);
+                else if (localChoose == "4") DIV.Processor();
+                else if (localChoose == "5") MHD.Processor(json);
+                else if (localChoose == "6") MOT.Processor(json);
+                else if (localChoose == "7") STR.Processor(json);
+                else if (localChoose == "8") TBL.Processor(json);
                 else choose = localChoose;
             }
             else if (choose[0] == 'A')
@@ -312,8 +310,6 @@ namespace PD_Tool
                 string Filter = GetArgs("All", false, "*");
                      if (filetype == "a3da") Filter = GetArgs("A3DA", "a3da", "farc", "json", "mp") +
                         GetArgs("A3DA", true, "a3da") +   GetArgs("FARC", true, "farc") + json + mp;
-                else if (filetype == "adp" ) Filter = GetArgs("ADP" , "adp", "json", "mp") +
-                        GetArgs("ADP", true, "adp" ) + json + mp;
                 else if (filetype == "bin" ) Filter = GetArgs("BIN" , "bin", "json", "mp") +
                         bin + json + mp;
                 else if (filetype == "blt" ) Filter = GetArgs("BLT" , "blt", "json", "mp") +

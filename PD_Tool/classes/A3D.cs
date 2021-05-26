@@ -82,7 +82,7 @@ namespace PD_Tool
                     {
                         state = a3da.A3DAReader(filepath);
                         if (state == 1)
-                            if (choose == "9") a3da.MsgPackWriter(filepath, json);
+                            if (choose == "F") a3da.MsgPackWriter(filepath, json);
                             else
                             {
                                 a3da.Head.Format = format;

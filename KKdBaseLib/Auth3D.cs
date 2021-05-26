@@ -195,8 +195,8 @@ namespace KKdBaseLib.Auth3D
         public ulong HashName;
         public string Name;
         public Key GlowIntensity;
-        public Vec4<Key?>? BlendColor;
-        public Vec4<Key?>? Incandescence;
+        public Vec4<Key?> BlendColor;
+        public Vec4<Key?> Incandescence;
     }
 
     public struct MObjectHRC
