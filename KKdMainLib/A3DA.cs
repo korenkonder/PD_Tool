@@ -320,11 +320,11 @@ namespace KKdMainLib
 
                     if (dict.SW(name + ".joint_orient"))
                     {
-                        Data.MObjectHRC[i0].JointOrient = new Vec3<float?>();
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.X, name + ".joint_orient.x");
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Y, name + ".joint_orient.y");
-                        dict.FV(out Data.MObjectHRC[i0].JointOrient.Z, name + ".joint_orient.z");
-                        Head.Format = Format.X;
+                        Vec3 jointOrient = new Vec3();
+                        dict.FV(out jointOrient.X, name + ".joint_orient.x");
+                        dict.FV(out jointOrient.Y, name + ".joint_orient.y");
+                        dict.FV(out jointOrient.Z, name + ".joint_orient.z");
+                        Data.MObjectHRC[i0].JointOrient = jointOrient;
                     }
 
                     if (dict.FV(out value, name + ".instance.length"))
@@ -377,8 +377,7 @@ namespace KKdMainLib
                 for (i0 = 0; i0 < Data.MaterialList.Length; i0++)
                 {
                     name = "material_list." + i0;
-                    dict.FV(out Data.MaterialList[i0].HashName, name + ".hash_name");
-                    dict.FV(out Data.MaterialList[i0].    Name, name +      ".name");
+                    dict.FV(out Data.MaterialList[i0].Name, name + ".name");
 
                     Data.MaterialList[i0].BlendColor    = RRGBAK(name +    ".blend_color");
                     Data.MaterialList[i0].GlowIntensity = RK    (name + ".glow_intensity");
@@ -457,10 +456,11 @@ namespace KKdMainLib
 
                     if (dict.SW(name + ".joint_orient"))
                     {
-                        Data.ObjectHRC[i0].JointOrient = new Vec3<float?>();
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.X, name + ".joint_orient.x");
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Y, name + ".joint_orient.y");
-                        dict.FV(out Data.ObjectHRC[i0].JointOrient.Z, name + ".joint_orient.z");
+                        Vec3 jointOrient = new Vec3();
+                        dict.FV(out jointOrient.X, name + ".joint_orient.x");
+                        dict.FV(out jointOrient.Y, name + ".joint_orient.y");
+                        dict.FV(out jointOrient.Z, name + ".joint_orient.z");
+                        Data.ObjectHRC[i0].JointOrient = jointOrient;
                     }
                     dict.FV(out Data.ObjectHRC[i0].   Name, name +     ".name");
                     dict.FV(out Data.ObjectHRC[i0].UIDName, name + ".uid_name");
@@ -704,12 +704,12 @@ namespace KKdMainLib
                     name = "m_objhrc." + soi0;
                     ref MObjectHRC mObjectHRC = ref Data.MObjectHRC[soi0];
 
-                    if (mObjectHRC.JointOrient.NotNull && (Head.Format ==
-                        Format.X || Head.Format == Format.XHD))
+                    if (mObjectHRC.JointOrient.HasValue)
                     {
-                        W(name + ".joint_orient.x", mObjectHRC.JointOrient.X);
-                        W(name + ".joint_orient.y", mObjectHRC.JointOrient.Y);
-                        W(name + ".joint_orient.z", mObjectHRC.JointOrient.Z);
+                        Vec3 jointOrient = mObjectHRC.JointOrient.Value;
+                        W(name + ".joint_orient.x", jointOrient.X);
+                        W(name + ".joint_orient.y", jointOrient.Y);
+                        W(name + ".joint_orient.z", jointOrient.Z);
                     }
 
                     if (mObjectHRC.Instances != null)
@@ -777,9 +777,9 @@ namespace KKdMainLib
 
                     W(ref ml.BlendColor   , name + ".blend_color"   );
                     W(ref ml.GlowIntensity, name + ".glow_intensity");
-                    W(name + ".hash_name", ml.HashName);
+                    W(name + ".hash_name", HashExt.HashMurmurHash(ml.Name.ToUTF8()));
                     W(ref ml.Incandescence, name + ".incandescence" );
-                    W(name +      ".name", ml.    Name);
+                    W(name +      ".name", ml.Name);
                 }
                 W("material_list.length", Data.MaterialList.Length);
             }
@@ -882,12 +882,12 @@ namespace KKdMainLib
 
                     W(name + ".name", objectHRC.Name);
 
-                    if (objectHRC.JointOrient.NotNull && (Head.Format ==
-                        Format.X || Head.Format == Format.XHD))
+                    if (objectHRC.JointOrient.HasValue)
                     {
-                        W(name + ".joint_orient.x", objectHRC.JointOrient.X);
-                        W(name + ".joint_orient.y", objectHRC.JointOrient.Y);
-                        W(name + ".joint_orient.z", objectHRC.JointOrient.Z);
+                        Vec3 jointOrient = objectHRC.JointOrient.Value;
+                        W(name + ".joint_orient.x", jointOrient.X);
+                        W(name + ".joint_orient.y", jointOrient.Y);
+                        W(name + ".joint_orient.z", jointOrient.Z);
                     }
 
                     if (objectHRC.Node != null)
@@ -2177,7 +2177,6 @@ namespace KKdMainLib
                 for (i = 0; i < Data.MaterialList.Length; i++)
                     Data.MaterialList[i] = new MaterialList
                     {
-                        HashName      = temp[i].RU64  (     "HashName"),
                             Name      = temp[i].RS    (         "Name"),
                         BlendColor    = temp[i].RRGBAK(   "BlendColor"),
                         GlowIntensity = temp[i].RK    ("GlowIntensity"),
@@ -2197,11 +2196,11 @@ namespace KKdMainLib
                     };
 
                     if ((temp1 = temp[i0]["JointOrient"]).NotNull)
-                        Data.MObjectHRC[i0].JointOrient = new Vec3<float?>
+                        Data.MObjectHRC[i0].JointOrient = new Vec3
                         {
-                            X = temp1.RnF32("X"),
-                            Y = temp1.RnF32("Y"),
-                            Z = temp1.RnF32("Z"),
+                            X = temp1.RF32("X"),
+                            Y = temp1.RF32("Y"),
+                            Z = temp1.RF32("Z"),
                         };
 
                     if ((temp1 = temp[i0]["Instance", true]).NotNull)
@@ -2329,7 +2328,7 @@ namespace KKdMainLib
                     };
 
                     if ((temp1 = temp[i0]["JointOrient"]).NotNull)
-                        Data.ObjectHRC[i0].JointOrient = new Vec3<float?>
+                        Data.ObjectHRC[i0].JointOrient = new Vec3
                         {
                             X = temp1.RF32("X"),
                             Y = temp1.RF32("Y"),
@@ -2526,12 +2525,14 @@ namespace KKdMainLib
                 {
                     MsgPack _mObjectHRC = MsgPack.New.Add("Name", Data.MObjectHRC[i0].Name);
 
-                    if (Data.MObjectHRC[i0].JointOrient.NotNull &&
-                        (Head.Format == Format.X || Head.Format == Format.XHD))
+                    if (Data.MObjectHRC[i0].JointOrient.HasValue)
+                    {
+                        Vec3 jointOrient = Data.MObjectHRC[i0].JointOrient.Value;
                         _mObjectHRC.Add(new MsgPack("JointOrient")
-                            .Add("X", Data.MObjectHRC[i0].JointOrient.X)
-                            .Add("Y", Data.MObjectHRC[i0].JointOrient.Y)
-                            .Add("Z", Data.MObjectHRC[i0].JointOrient.Z));
+                            .Add("X", jointOrient.X)
+                            .Add("Y", jointOrient.Y)
+                            .Add("Z", jointOrient.Z));
+                    }
 
                     if (Data.MObjectHRC[i0].Instances != null)
                     {
@@ -2574,8 +2575,7 @@ namespace KKdMainLib
                 for (i = 0; i < Data.MaterialList.Length; i++)
                 {
                     MsgPack material = new MsgPack("Material")
-                        .Add("HashName", Data.MaterialList[i].HashName)
-                        .Add(    "Name", Data.MaterialList[i].    Name)
+                        .Add("Name", Data.MaterialList[i].Name)
                         .Add("BlendColor", ref Data.MaterialList[i].BlendColor);
 
                     if (Data.MaterialList[i].GlowIntensity.Type != KeyType.None)
@@ -2648,12 +2648,14 @@ namespace KKdMainLib
                                                     .Add("Shadow" , Data.ObjectHRC[i0].Shadow )
                                                     .Add("UIDName", Data.ObjectHRC[i0].UIDName);
 
-                    if (Data.ObjectHRC[i0].JointOrient.NotNull &&
-                        (Head.Format == Format.X || Head.Format == Format.XHD))
+                    if (Data.ObjectHRC[i0].JointOrient.HasValue)
+                    {
+                        Vec3 jointOrient = Data.ObjectHRC[i0].JointOrient.Value;
                         _objectHRC.Add(new MsgPack("JointOrient")
-                            .Add("X", Data.ObjectHRC[i0].JointOrient.X)
-                            .Add("Y", Data.ObjectHRC[i0].JointOrient.Y)
-                            .Add("Z", Data.ObjectHRC[i0].JointOrient.Z));
+                            .Add("X", jointOrient.X)
+                            .Add("Y", jointOrient.Y)
+                            .Add("Z", jointOrient.Z));
+                    }
 
                     if (Data.ObjectHRC[i0].Node != null)
                     {
@@ -2782,7 +2784,7 @@ namespace KKdMainLib
 
             if (msgPack.RB("RawData")) key.RawData = new Key.RawD() { KeyType = -1, ValueType = "float" };
             MsgPack trans;
-            if ((trans = msgPack["Trans", true]).IsNull) return key;
+            if ((trans = msgPack["Keys", true]).IsNull && (trans = msgPack["Trans", true]).IsNull) return key;
 
             int length = trans.Array.Length;
             key.Keys = new KFT3[length];
@@ -2866,20 +2868,20 @@ namespace KKdMainLib
                 if (key.RawData.KeyType != 0) keys.Add("RawData", true);
 
                 int length = key.Keys.Length;
-                MsgPack Trans = new MsgPack(length, "Trans");
+                MsgPack Keys = new MsgPack(length, "Keys");
                 for (int i = 0; i < length; i++)
                 {
                     IKF kf = key.Keys[i].Check();
-                         if (kf is KFT0 kft0) Trans[i] = new MsgPack(null,
+                         if (kf is KFT0 kft0) Keys[i] = new MsgPack(null,
                         new MsgPack[] { kft0.F });
-                    else if (kf is KFT1 kft1) Trans[i] = new MsgPack(null,
+                    else if (kf is KFT1 kft1) Keys[i] = new MsgPack(null,
                         new MsgPack[] { kft1.F, kft1.V });
-                    else if (kf is KFT2 kft2) Trans[i] = new MsgPack(null,
+                    else if (kf is KFT2 kft2) Keys[i] = new MsgPack(null,
                         new MsgPack[] { kft2.F, kft2.V, kft2.T });
-                    else if (kf is KFT3 kft3) Trans[i] = new MsgPack(null,
+                    else if (kf is KFT3 kft3) Keys[i] = new MsgPack(null,
                         new MsgPack[] { kft3.F, kft3.V, kft3.T1, kft3.T2, });
                 }
-                keys.Add(Trans);
+                keys.Add(Keys);
             }
             else if (key.Type != KeyType.None) keys.Add("Value", key.Value);
             msgPack.Add(keys);

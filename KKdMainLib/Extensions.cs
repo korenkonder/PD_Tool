@@ -249,6 +249,9 @@ namespace KKdMainLib
 
     public static class HashExt
     {
+        public static uint HashFNV1a64(this byte[] array) =>
+            array.HashMurmurHash(array.Length);
+
         public static ulong HashFNV1a64(this byte[] array, int length) // 0x1403B04D0 in SBZV_7.10; FNV 1a 64-bit
         {
             int i = 0;
@@ -258,7 +261,11 @@ namespace KKdMainLib
             return (hash >> 32) ^ hash;
         }
 
-        public static uint HashMurmurHash(this byte[] array, int length, uint seed = 0,
+        public static uint HashMurmurHash(this byte[] array, uint salt = 0,
+            bool alreadyUpper = false, bool bigEndian = false) =>
+            array.HashMurmurHash(array.Length, salt, alreadyUpper, bigEndian);
+
+        public static uint HashMurmurHash(this byte[] array, int length, uint salt = 0,
             bool alreadyUpper = false, bool bigEndian = false) // 0x814D7A9C in PCSB00554; MurmurHash
         {
             uint a, b, hash;
@@ -267,7 +274,7 @@ namespace KKdMainLib
             const uint m = 0x7FD652AD;
             const int r = 16;
 
-            hash = seed + 0xDEADBEEF;
+            hash = salt + 0xDEADBEEF;
             if (alreadyUpper)
             {
                 if (bigEndian)

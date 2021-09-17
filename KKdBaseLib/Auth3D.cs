@@ -192,7 +192,6 @@ namespace KKdBaseLib.Auth3D
 
     public struct MaterialList
     {
-        public ulong HashName;
         public string Name;
         public Key GlowIntensity;
         public Vec4<Key?> BlendColor;
@@ -203,7 +202,7 @@ namespace KKdBaseLib.Auth3D
     {
         public string Name;
         public Node[] Node;
-        public Vec3<float?> JointOrient;
+        public Vec3? JointOrient;
         public Instance[] Instances;
         public ModelTransform MT;
 
@@ -275,7 +274,7 @@ namespace KKdBaseLib.Auth3D
         public string Name;
         public string UIDName;
         public Node[] Node;
-        public Vec3<float?> JointOrient;
+        public Vec3? JointOrient;
     }
 
     public struct PlayControl
