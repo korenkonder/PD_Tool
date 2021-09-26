@@ -18,7 +18,6 @@ namespace PD_Tool
             foreach (string file in fileNames)
                 if (file.EndsWith(".mp") || file.EndsWith(".json") || file.EndsWith(".farc")) { mp = true; break; }
 
-            bool a3dcOpt = false;
             Format format = Format.NULL;
             string choose = "";
             Console.Clear();
@@ -30,38 +29,26 @@ namespace PD_Tool
             Program.ConsoleDesign(false);
             Program.ConsoleDesign("1. A3DA [DT/AC/F]");
             Program.ConsoleDesign("2. A3DC [DT/AC/F]");
-            Program.ConsoleDesign("3. A3DC [DT/AC/F] (A3DC Opt)");
-            Program.ConsoleDesign("4. A3DA [AFT/FT/M39]");
-            Program.ConsoleDesign("5. A3DC [AFT/FT/M39]");
-            Program.ConsoleDesign("6. A3DC [AFT/FT/M39] (A3DC Opt)");
-            Program.ConsoleDesign("7. A3DC [F2]");
-            Program.ConsoleDesign("8. A3DC [F2] (A3DC Opt)");
-            Program.ConsoleDesign("9. A3DC [MGF]");
-            Program.ConsoleDesign("A. A3DC [MGF] (A3DC Opt)");
-            Program.ConsoleDesign("B. A3DC [X]");
-            Program.ConsoleDesign("C. A3DC [X] (A3DC Opt)");
-            Program.ConsoleDesign("D. A3DC [XHD]");
-            Program.ConsoleDesign("E. A3DC [XHD] (A3DC Opt)");
-            if (!mp) Program.ConsoleDesign($"F. {(json ? "JSON" : "MsgPack")}");
+            Program.ConsoleDesign("3. A3DA [AFT/FT/M39]");
+            Program.ConsoleDesign("4. A3DC [AFT/FT/M39]");
+            Program.ConsoleDesign("5. A3DC [F2]");
+            Program.ConsoleDesign("6. A3DC [MGF]");
+            Program.ConsoleDesign("7. A3DC [X]");
+            Program.ConsoleDesign("8. A3DC [XHD/VRFL]");
+            if (!mp) Program.ConsoleDesign($"9. {(json ? "JSON" : "MsgPack")}");
             Program.ConsoleDesign(false);
             Program.ConsoleDesign(true);
             Console.WriteLine();
             choose = Console.ReadLine().ToUpper();
                  if (choose == "1")   format = Format.DT ;
             else if (choose == "2")   format = Format.F  ;
-            else if (choose == "3") { format = Format.F  ; a3dcOpt = true; }
+            else if (choose == "3")   format = Format.AFT;
             else if (choose == "4")   format = Format.AFT;
-            else if (choose == "5")   format = Format.AFT;
-            else if (choose == "6") { format = Format.AFT; a3dcOpt = true; }
-            else if (choose == "7")   format = Format.F2 ;
-            else if (choose == "8") { format = Format.F2 ; a3dcOpt = true; }
-            else if (choose == "9")   format = Format.MGF;
-            else if (choose == "A") { format = Format.MGF; a3dcOpt = true; }
-            else if (choose == "B")   format = Format.X  ;
-            else if (choose == "C") { format = Format.X  ; a3dcOpt = true; }
-            else if (choose == "D")   format = Format.XHD;
-            else if (choose == "E") { format = Format.XHD; a3dcOpt = true; }
-            else if (choose == "F")   format = Format.NULL;
+            else if (choose == "5")   format = Format.F2 ;
+            else if (choose == "6")   format = Format.MGF;
+            else if (choose == "7")   format = Format.X  ;
+            else if (choose == "8")   format = Format.XHD;
+            else if (choose == "9")   format = Format.NULL;
             else return;
 
             int state;
@@ -76,9 +63,9 @@ namespace PD_Tool
                 Console.Title = "A3DA Converter: " + Path.GetFileNameWithoutExtension(file);
                 if (ext == ".farc")
                     using (farc = new KKdFARC(file))
-                        FARCProcessor(farc, choose, format, a3dcOpt);
+                        FARCProcessor(farc, choose, format);
                 else if (ext == ".a3da")
-                    using (a3da = new KKdA3DA(a3dcOpt))
+                    using (a3da = new KKdA3DA())
                     {
                         state = a3da.A3DAReader(filepath);
                         if (state == 1)
@@ -91,7 +78,7 @@ namespace PD_Tool
                             }
                     }
                 else if (ext == ".mp" || ext == ".json")
-                    using (a3da = new KKdA3DA(a3dcOpt))
+                    using (a3da = new KKdA3DA())
                     {
                         a3da.MsgPackReader(filepath, ext == ".json");
                         a3da.Head.Format = format;
@@ -102,7 +89,7 @@ namespace PD_Tool
             }
         }
 
-        private static void FARCProcessor(KKdFARC farc, string choose, Format format, bool a3dcOpt)
+        private static void FARCProcessor(KKdFARC farc, string choose, Format format)
         {
             if (!farc.HeaderReader() || !farc.HasFiles) return;
 
@@ -123,7 +110,7 @@ namespace PD_Tool
             {
                 KKdA3DA a3da;
                 for (int i = 0; i < A3DAlist.Count; i++)
-                    using (a3da = new KKdA3DA(a3dcOpt))
+                    using (a3da = new KKdA3DA())
                     {
                         data = farc.FileReader(A3DAlist[i]);
                         int state = a3da.A3DAReader(data);
@@ -146,7 +133,7 @@ namespace PD_Tool
                 for (int i = 0; i < list.Count; i++)
                 {
                     KKdA3DA a3da;
-                    using (a3da = new KKdA3DA(a3dcOpt))
+                    using (a3da = new KKdA3DA())
                     {
                         data = farc.FileReader(list[i]);
                         int state = a3da.A3DAReader(data);
@@ -164,7 +151,7 @@ namespace PD_Tool
                 string ext      = Path.GetExtension(list[i]).ToLower();
                 KKdA3DA a3da;
                 for (int i1 = 1; i1 < div; i1++)
-                    using (a3da = new KKdA3DA(a3dcOpt))
+                    using (a3da = new KKdA3DA())
                     {
                         string file = filename + "_div_" + i1 + ext;
                         data = farc.FileReader(file);

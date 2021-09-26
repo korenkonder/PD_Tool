@@ -61,7 +61,7 @@ namespace PD_Tool
             ConsoleDesign("5. DB_Tools");
             ConsoleDesign("6. AC/DT/F/AFT Converting Tools");
             ConsoleDesign("7. F/F2/FT     Converting Tools");
-            ConsoleDesign("8. X/XHD       Converting Tools");
+            ConsoleDesign("8. X/XHD/VRFL  Converting Tools");
             ConsoleDesign("9. FT/M39      Converting Tools");
             ConsoleDesign(json ? "A. MsgPack to JSON" : "A. JSON to MsgPack");
             ConsoleDesign(false);
@@ -179,7 +179,7 @@ namespace PD_Tool
                 if (choose.Length == 1)
                 {
                     Console.Clear();
-                    Console.Title = "X/XHD Converting Tools";
+                    Console.Title = "X/XHD/VRFL Converting Tools";
                     ConsoleDesign(true);
                     ConsoleDesign("               Choose converter:");
                     ConsoleDesign(false);

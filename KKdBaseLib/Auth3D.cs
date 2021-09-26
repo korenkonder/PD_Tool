@@ -9,9 +9,11 @@ namespace KKdBaseLib.Auth3D
         public _ _;
         public DOF? DOF;
         public Fog[] Fog;
+        public Chara[] Chara;
         public Curve[] Curve;
         public Event[] Event;
         public Light[] Light;
+        public Point[] Point;
         public Object[] Object;
         public Ambient[] Ambient;
         public ObjectHRC[] ObjectHRC;
@@ -20,8 +22,6 @@ namespace KKdBaseLib.Auth3D
         public PlayControl PlayControl;
         public PostProcess? PostProcess;
         public MaterialList[] MaterialList;
-        public ModelTransform[] Chara;
-        public ModelTransform[] Point;
         public CameraAuxiliary? CameraAuxiliary;
     }
 
@@ -58,15 +58,21 @@ namespace KKdBaseLib.Auth3D
 
         public struct ViewPoint
         {
-            public  bool  FOVHorizontal;
-            public float? Aspect;
-            public float? CameraApertureH;
-            public float? CameraApertureW;
+            public  bool FOVIsHorizontal;
+            public float Aspect;
+            public float CameraApertureH;
+            public float CameraApertureW;
             public Key FOV;
             public Key Roll;
             public Key FocalLength;
             public ModelTransform MT;
         }
+    }
+
+    public struct Chara
+    {
+        public ModelTransform MT;
+        public string Name;
     }
 
     public struct Curve
@@ -83,12 +89,12 @@ namespace KKdBaseLib.Auth3D
 
     public struct Event
     {
-        public int? Type;
-        public float? End;
-        public float? Begin;
-        public float? ClipEnd;
-        public float? ClipBegin;
-        public float? TimeRefScale;
+        public int Type;
+        public float End;
+        public float Begin;
+        public float ClipEnd;
+        public float ClipBegin;
+        public float TimeRefScale;
         public string Name;
         public string Param1;
         public string Ref;
@@ -96,11 +102,11 @@ namespace KKdBaseLib.Auth3D
 
     public struct Fog
     {
-        public int? Id;
+        public int Id;
         public Key? End;
         public Key? Start;
         public Key? Density;
-        public Vec4<Key?>? Diffuse;
+        public Vec4<Key?>? Color;
     }
 
     public enum CompressF16 : int
@@ -135,7 +141,7 @@ namespace KKdBaseLib.Auth3D
         public EPType EPTypePost;
         public float? Max;
         public float Value;
-        public RawD RawData;
+        public bool RawData;
         public KFT3[] Keys;
 
         public Key(A3DAKey k)
@@ -160,19 +166,11 @@ namespace KKdBaseLib.Auth3D
                 Value = k.Keys[0].V;
             }
         }
-
-        public struct RawD
-        {
-            public int KeyType;
-            public int ValueListSize;
-            public string ValueType;
-            public string[] ValueList;
-        }
     }
 
     public struct Light
     {
-        public int? Id;
+        public int Id;
         public string Name;
         public string Type;
         public Key? ConeAngle;
@@ -185,7 +183,7 @@ namespace KKdBaseLib.Auth3D
         public Vec4<Key?>? Ambient;
         public Vec4<Key?>? Diffuse;
         public Vec4<Key?>? Specular;
-        public Vec4<Key?>? Incandescence;
+        public Vec4<Key?>? ToneCurve;
         public ModelTransform Position;
         public ModelTransform SpotDirection;
     }
@@ -193,22 +191,21 @@ namespace KKdBaseLib.Auth3D
     public struct MaterialList
     {
         public string Name;
-        public Key GlowIntensity;
-        public Vec4<Key?> BlendColor;
-        public Vec4<Key?> Incandescence;
+        public Key? GlowIntensity;
+        public Vec4<Key?>? BlendColor;
+        public Vec4<Key?>? Incandescence;
     }
 
     public struct MObjectHRC
     {
         public string Name;
-        public Node[] Node;
-        public Vec3? JointOrient;
+        public ObjectNode[] Node;
         public Instance[] Instances;
         public ModelTransform MT;
 
         public struct Instance
         {
-            public bool? Shadow;
+            public bool Shadow;
             public string Name;
             public string UIDName;
             public ModelTransform MT;
@@ -217,7 +214,6 @@ namespace KKdBaseLib.Auth3D
 
     public struct ModelTransform
     {
-        public bool Writed;
         public int? BinOffset;
         public Key Visibility;
         public Vec3<Key> Rot;
@@ -225,17 +221,10 @@ namespace KKdBaseLib.Auth3D
         public Vec3<Key> Trans;
     }
 
-    public struct Node
-    {
-        public int? Parent;
-        public string Name;
-        public ModelTransform MT;
-    }
-
     public struct Object
     {
-        public float? PatOffset;
-        public float? MorphOffset;
+        public float PatOffset;
+        public float MorphOffset;
         public string Name;
         public string Pat;
         public string Morph;
@@ -247,7 +236,7 @@ namespace KKdBaseLib.Auth3D
 
         public struct TexturePattern
         {
-            public int? PatOffset;
+            public float PatOffset;
             public string Pat;
             public string Name;
         }
@@ -270,11 +259,18 @@ namespace KKdBaseLib.Auth3D
 
     public struct ObjectHRC
     {
-        public bool? Shadow;
+        public bool Shadow;
         public string Name;
         public string UIDName;
-        public Node[] Node;
+        public ObjectNode[] Node;
+    }
+
+    public struct ObjectNode
+    {
         public Vec3? JointOrient;
+        public int Parent;
+        public string Name;
+        public ModelTransform MT;
     }
 
     public struct PlayControl
@@ -286,13 +282,19 @@ namespace KKdBaseLib.Auth3D
         public int Size;
     }
 
+    public struct Point
+    {
+        public ModelTransform MT;
+        public string Name;
+    }
+
     public struct PostProcess
     {
         public Key? LensFlare;
         public Key? LensGhost;
         public Key? LensShaft;
-        public Vec4<Key?>? Ambient;
-        public Vec4<Key?>? Diffuse;
-        public Vec4<Key?>? Specular;
+        public Vec4<Key?>? Intensity;
+        public Vec4<Key?>? Radius;
+        public Vec4<Key?>? SceneFade;
     }
 }
