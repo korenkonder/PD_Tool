@@ -256,9 +256,8 @@ namespace KKdBaseLib
                 {
                     m /= 10;
                     j /= 10;
-                    sort[i++] = ++j;
-                    if (j * 10 >= length)
-                        j++;
+                    while (j % 10 == 9) j /= 10;
+                    j++;
                 }
                 else if (j % 10 != 9)
                     sort[i++] = j++;
