@@ -895,7 +895,7 @@ namespace KKdMainLib.F2
             ToneCurve  = 0b00000001000000000,
         }
     }
-    
+
     public struct LITX
     {
         public int C;

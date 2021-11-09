@@ -223,7 +223,7 @@ namespace KKdBaseLib.F2
             public int Size;
             public int Repeat;
             public SubENRSEntry[] Sub;
-            
+
             public ENRSEntry(int offset, int count, int size, int repeat)
             { Offset = offset; Count = count; Size = size; Repeat = repeat; Sub = new SubENRSEntry[count]; }
 
@@ -255,13 +255,12 @@ namespace KKdBaseLib.F2
                 public int SizeSkip => Skip + Reverse * (2 << (byte)Type);
                 public int Size     =>        Reverse * (2 << (byte)Type);
 
-                public override string ToString() => "Skip: " + Skip +
-                    "; Reverse: " + Reverse + "; Type: " + Type;
+                public override string ToString() =>
+                    $"Skip: {Skip}; Reverse: {Reverse}; Type: {Type}";
             }
 
             public override string ToString() =>
-                "Offset: " + Offset + "; Count: " + Count + "; " +
-                "Size: " + Size + "; Repeat: " + Repeat;
+                $"Offset: {Offset}; Count: {Count}; Size: {Size}; Repeat: {Repeat}";
         }
 
         public override string ToString() =>

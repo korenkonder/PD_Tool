@@ -163,7 +163,7 @@ namespace KKdMainLib
             if (@struct.HasSubStructs)
                 for (int i = 0; i < @struct.SubStructs.Length; i++)
                     stream.W(@struct.SubStructs[i], depth + 1, shiftX, useDepth);
-            if (@struct.HasPOF || @struct.HasENRS || @struct.HasSubStructs) 
+            if (@struct.HasPOF || @struct.HasENRS || @struct.HasSubStructs)
                 stream.WEOFC(depth + 1);
         }
     }
@@ -270,7 +270,7 @@ namespace KKdMainLib
         {
             uint a, b, hash;
             int i;
-            
+
             const uint m = 0x7FD652AD;
             const int r = 16;
 

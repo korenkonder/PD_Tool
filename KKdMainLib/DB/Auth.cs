@@ -61,8 +61,7 @@ namespace KKdMainLib.DB
             s = File.OpenWriter(file + ".bin", true);
 
             s.W("#A3DA__________\n");
-            s.W("#" + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss yyyy",
-                System.Globalization.CultureInfo.InvariantCulture) + "\n");
+            s.W("# date time was eliminated.\n");
 
             if (Category != null)
             {
@@ -75,18 +74,26 @@ namespace KKdMainLib.DB
             if (UIDs != null)
             {
                 int[] so = UIDs.Length.SW();
+                int max = -1;
                 for (i = 0; i < UIDs.Length; i++)
                 {
                     if (UIDs[so[i]].Category != null && UIDs[so[i]].Category != "")
                         s.W($"uid.{so[i]}.category=" + UIDs[so[i]].Category + "\n");
                     if (UIDs[so[i]].OrgUid   != null)
-                        s.W($"uid.{so[i]}.org_uid="  + UIDs[so[i]].OrgUid   + "\n");
+                    {
+                        int orgUid = UIDs[so[i]].OrgUid.Value;
+                        s.W($"uid.{so[i]}.org_uid="  +             orgUid   + "\n");
+                        if (max < orgUid)
+                            max = orgUid;
+                    }
                     if (UIDs[so[i]].Size     != null)
                         s.W($"uid.{so[i]}.size="     + UIDs[so[i]].Size     + "\n");
                     if (UIDs[so[i]].Value    != null && UIDs[so[i]].Value    != "")
                         s.W($"uid.{so[i]}.value="    + UIDs[so[i]].Value    + "\n");
                 }
                 s.W($"uid.length={UIDs.Length}\n");
+                if (max != -1)
+                    s.W($"uid.max={max}\n");
             }
 
             s.C();

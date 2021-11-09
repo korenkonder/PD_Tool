@@ -2,6 +2,7 @@ namespace KKdBaseLib.Auth3D
 {
     public struct Data
     {
+        public string[] Auth2D;
         public string[] Motion;
         public string[] ObjectList;
         public string[] ObjectHRCList;
@@ -62,9 +63,9 @@ namespace KKdBaseLib.Auth3D
             public float Aspect;
             public float CameraApertureH;
             public float CameraApertureW;
-            public Key FOV;
-            public Key Roll;
-            public Key FocalLength;
+            public Key? FocalLength;
+            public Key? FOV;
+            public Key? Roll;
             public ModelTransform MT;
         }
     }
@@ -83,7 +84,6 @@ namespace KKdBaseLib.Auth3D
 
     public struct DOF
     {
-        public string Name;
         public ModelTransform MT;
     }
 
@@ -171,7 +171,6 @@ namespace KKdBaseLib.Auth3D
     public struct Light
     {
         public int Id;
-        public string Name;
         public string Type;
         public Key? ConeAngle;
         public Key? Constant;
@@ -230,6 +229,7 @@ namespace KKdBaseLib.Auth3D
         public string Morph;
         public string UIDName;
         public string ParentName;
+        public string ParentNode;
         public ModelTransform MT;
         public TexturePattern[] TexPat;
         public TextureTransform[] TexTrans;
@@ -262,6 +262,8 @@ namespace KKdBaseLib.Auth3D
         public bool Shadow;
         public string Name;
         public string UIDName;
+        public string ParentName;
+        public string ParentNode;
         public ObjectNode[] Node;
     }
 
@@ -275,11 +277,11 @@ namespace KKdBaseLib.Auth3D
 
     public struct PlayControl
     {
-        public int Begin;
+        public float Begin;
         public int? Div;
-        public int FPS;
-        public int? Offset;
-        public int Size;
+        public float FPS;
+        public float? Offset;
+        public float Size;
     }
 
     public struct Point

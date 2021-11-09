@@ -91,7 +91,7 @@ namespace KKdMainLib.F2
                     s.W(dft.Ratio       );
                     s.W(dft.Quality     );
                 }
-                
+
                 e.Array = new ENRS.ENRSEntry[2];
                 e.Array[0] = new ENRS.ENRSEntry(0x00, 0x01, 0x10, 0x01);
                 e.Array[0].Sub[0] = new ENRS.ENRSEntry.SubENRSEntry(0x00, 0x02, ENRS.ENRSEntry.Type.DWORD);
