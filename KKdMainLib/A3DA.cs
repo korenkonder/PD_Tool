@@ -219,7 +219,7 @@ namespace KKdMainLib
                     if (dict.FV(out i1, nameView + ".fov_is_horizontal"))
                     {
                         Data.CameraRoot[i0].VP.FOVIsHorizontal = i1 != 0;
-                        Data.CameraRoot[i0].VP.FOV         = RKN(nameView +          ".fov");
+                        Data.CameraRoot[i0].VP.FOV         = RKNS(nameView +          ".fov");
                     }
                     else
                     {
@@ -227,13 +227,13 @@ namespace KKdMainLib
                             CameraApertureH, nameView + ".camera_aperture_h");
                         dict.FV(out Data.CameraRoot[i0].VP.
                             CameraApertureW, nameView + ".camera_aperture_w");
-                        Data.CameraRoot[i0].VP.FocalLength = RKN(nameView + ".focal_length");
+                        Data.CameraRoot[i0].VP.FocalLength = RKNS(nameView + ".focal_length");
                     }
 
                     Data.CameraRoot[i0].      MT = RMT(name);
                     Data.CameraRoot[i0].Interest = RMT(name + ".interest");
                     Data.CameraRoot[i0].VP.   MT = RMT(nameView);
-                    Data.CameraRoot[i0].VP.Roll = RKN(nameView + ".roll");
+                    Data.CameraRoot[i0].VP.Roll = RKNS(nameView + ".roll");
                 }
             }
 
@@ -614,17 +614,32 @@ namespace KKdMainLib
                     W(nameView + ".aspect", cr.VP.Aspect);
                     if (cr.VP.FOV.HasValue)
                     {
-                        W(ref cr.VP.FOV, nameView + ".fov");
+                        if (cr.VP.FOV.HasValue)
+                        {
+                            Key key = cr.VP.FOV.Value;
+                            W(ref key, nameView + ".fov");
+                            cr.VP.FOV = key;
+                        }
                         W(nameView + ".fov_is_horizontal", cr.VP.FOVIsHorizontal ? 1 : 0);
                     }
                     else
                     {
                         W(nameView + ".camera_aperture_h", cr.VP.CameraApertureH);
                         W(nameView + ".camera_aperture_w", cr.VP.CameraApertureW);
-                        W(ref cr.VP.FocalLength, nameView + ".focal_length");
+                        if (cr.VP.FocalLength.HasValue)
+                        {
+                            Key key = cr.VP.FocalLength.Value;
+                            W(ref key, nameView + ".focal_length");
+                            cr.VP.FocalLength = key;
+                        }
                     }
                     W(ref cr.VP.MT  , nameView, 0b10000);
-                    W(ref cr.VP.Roll, nameView + ".roll");
+                    if (cr.VP.Roll.HasValue)
+                    {
+                        Key key = cr.VP.Roll.Value;
+                        W(ref key, nameView + ".roll");
+                        cr.VP.Roll = key;
+                    }
                     W(ref cr.VP.MT  , nameView, 0b01111);
                     W(ref cr.MT     , name    , 0b00001);
                 }
@@ -2103,13 +2118,12 @@ namespace KKdMainLib
 
                     if ((temp1 = temp[i]["ViewPoint"]).IsNull) continue;
 
-                    if (temp1[temp1["FOVHorizontal"].NotNull
-                        ? "FOVHorizontal" : "FOVIsHorizontal"].NotNull)
+                    if (temp1["FOVHorizontal"].Object != null || temp1["FOVIsHorizontal"].Object != null)
                         Data.CameraRoot[i].VP = new CameraRoot.ViewPoint
                         {
                             MT              = temp1.RMT(),
                             Aspect          = temp1.RF32("Aspect"),
-                            FOVIsHorizontal = temp1.RB(temp1["FOVHorizontal"].NotNull
+                            FOVIsHorizontal = temp1.RB(temp1["FOVHorizontal"].Object != null
                                 ? "FOVHorizontal" : "FOVIsHorizontal"),
                             FOV             = temp1.RK  ("FOV"   ),
                             Roll            = temp1.RK  ("Roll"  ),
