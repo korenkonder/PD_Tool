@@ -32,43 +32,43 @@ namespace KKdMainLib
             s.P = DEXOffset;
             for (i = 0; i < Dex.Length; i++)
             {
-                Dex[i].MainOffset = (int)s.RIX();
-                Dex[i].EyesOffset = (int)s.RIX();
+                Dex[i].FaceOffset = s.RIX();
+                Dex[i].FaceCLOffset = s.RIX();
             }
             s.P = DEXNameOffset;
             for (i = 0; i < Dex.Length; i++)
-                Dex[i].NameOffset = (int)s.RIX();
+                Dex[i].NameOffset = s.RIX();
 
             for (i = 0; i < Dex.Length; i++)
             {
-                EXPElement element = new EXPElement();
-                Dex[i].Main = KKdList<EXPElement>.New;
-                s.P = Dex[i].MainOffset;
+                EXPData element = new EXPData();
+                Dex[i].Face = KKdList<EXPData>.New;
+                s.PI64 = Dex[i].FaceOffset;
                 while (true)
                 {
                     element.Frame = s.RF32();
-                    element.Both  = s.RU16();
+                    element.Type  = s.RU16();
                     element.ID    = s.RU16();
                     element.Value = s.RF32();
                     element.Trans = s.RF32();
-                    if (element.Frame == 999999 || element.Both == 0xFFFF) break;
-                    Dex[i].Main.Add(element);
+                    if (element.Type == 0xFFFF) break;
+                    Dex[i].Face.Add(element);
                 }
-                Dex[i].Main.Capacity = Dex[i].Main.Count;
+                Dex[i].Face.Capacity = Dex[i].Face.Count;
 
-                Dex[i].Eyes = KKdList<EXPElement>.New;
-                s.P = Dex[i].EyesOffset;
+                Dex[i].FaceCL = KKdList<EXPData>.New;
+                s.PI64 = Dex[i].FaceCLOffset;
                 while(true)
                 {
                     element.Frame = s.RF32();
-                    element.Both  = s.RU16();
+                    element.Type  = s.RU16();
                     element.ID    = s.RU16();
                     element.Value = s.RF32();
                     element.Trans = s.RF32();
-                    if (element.Frame == 999999 || element.Both == 0xFFFF) break;
-                    Dex[i].Eyes.Add(element);
+                    if (element.Type == 0xFFFF) break;
+                    Dex[i].FaceCL.Add(element);
                 }
-                Dex[i].Eyes.Capacity = Dex[i].Eyes.Count;
+                Dex[i].FaceCL.Capacity = Dex[i].FaceCL.Count;
 
                 Dex[i].Name = s.RSaO(Dex[i].NameOffset);
             }
@@ -102,30 +102,30 @@ namespace KKdMainLib
 
             for (i0 = 0; i0 < Dex.Length; i0++)
             {
-                Dex[i0].MainOffset = s.P;
-                for (i1 = 0; i1 < Dex[i0].Main.Count; i1++)
+                Dex[i0].FaceOffset = s.P;
+                for (i1 = 0; i1 < Dex[i0].Face.Count; i1++)
                 {
-                    s.W(Dex[i0].Main[i1].Frame);
-                    s.W(Dex[i0].Main[i1].Both );
-                    s.W(Dex[i0].Main[i1].ID   );
-                    s.W(Dex[i0].Main[i1].Value);
-                    s.W(Dex[i0].Main[i1].Trans);
+                    s.W(Dex[i0].Face[i1].Frame);
+                    s.W(Dex[i0].Face[i1].Type );
+                    s.W(Dex[i0].Face[i1].ID   );
+                    s.W(Dex[i0].Face[i1].Value);
+                    s.W(Dex[i0].Face[i1].Trans);
                 }
-                s.W(999999f);
+                s.W(999999.0f);
                 s.W(0xFFFF);
                 s.W(0x0L);
                 s.A(0x20);
 
-                Dex[i0].EyesOffset = s.P;
-                for (i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
+                Dex[i0].FaceCLOffset = s.P;
+                for (i1 = 0; i1 < Dex[i0].FaceCL.Count; i1++)
                 {
-                    s.W(Dex[i0].Eyes[i1].Frame);
-                    s.W(Dex[i0].Eyes[i1].Both );
-                    s.W(Dex[i0].Eyes[i1].ID   );
-                    s.W(Dex[i0].Eyes[i1].Value);
-                    s.W(Dex[i0].Eyes[i1].Trans);
+                    s.W(Dex[i0].FaceCL[i1].Frame);
+                    s.W(Dex[i0].FaceCL[i1].Type );
+                    s.W(Dex[i0].FaceCL[i1].ID   );
+                    s.W(Dex[i0].FaceCL[i1].Value);
+                    s.W(Dex[i0].FaceCL[i1].Trans);
                 }
-                s.W(999999f);
+                s.W(999999.0f);
                 s.W(0xFFFF);
                 s.W(0x0L);
                 s.A(0x20);
@@ -140,8 +140,8 @@ namespace KKdMainLib
             s.P = header.IsX ? 0x28 : 0x20;
             for (i = 0; i < Dex.Length; i++)
             {
-                s.WX(Dex[i].MainOffset);
-                s.WX(Dex[i].EyesOffset);
+                s.WX(Dex[i].FaceOffset);
+                s.WX(Dex[i].FaceCLOffset);
             }
             int namesPosition = s.P;
             for (i = 0; i < Dex.Length; i++)
@@ -181,19 +181,19 @@ namespace KKdMainLib
                     Dex[i0] = new EXP { Name = dex[i0].RS("Name") };
 
                     MsgPack temp;
-                    if ((temp = dex[i0]["Main", true]).NotNull)
+                    if ((temp = dex[i0]["Face", true]).NotNull)
                     {
-                        Dex[i0].Main = KKdList<EXPElement>.New;
-                        Dex[i0].Main.Capacity = temp.Array.Length;
-                        for (i1 = 0; i1 < Dex[i0].Main.Capacity; i1++)
-                            Dex[i0].Main.Add(EXPElement.Read(temp[i1]));
+                        Dex[i0].Face = KKdList<EXPData>.New;
+                        Dex[i0].Face.Capacity = temp.Array.Length;
+                        for (i1 = 0; i1 < Dex[i0].Face.Capacity; i1++)
+                            Dex[i0].Face.Add(EXPData.Read(temp[i1]));
                     }
-                    if ((temp = dex[i0]["Eyes", true]).NotNull)
+                    if ((temp = dex[i0]["FaceCL", true]).NotNull)
                     {
-                        Dex[i0].Eyes = KKdList<EXPElement>.New;
-                        Dex[i0].Eyes.Capacity = temp.Array.Length;
-                        for (i1 = 0; i1 < Dex[i0].Eyes.Capacity; i1++)
-                            Dex[i0].Eyes.Add(EXPElement.Read(temp[i1]));
+                        Dex[i0].FaceCL = KKdList<EXPData>.New;
+                        Dex[i0].FaceCL.Capacity = temp.Array.Length;
+                        for (i1 = 0; i1 < Dex[i0].FaceCL.Capacity; i1++)
+                            Dex[i0].FaceCL.Add(EXPData.Read(temp[i1]));
                     }
                     temp.Dispose();
                 }
@@ -210,14 +210,14 @@ namespace KKdMainLib
             for (i0 = 0; i0 < Dex.Length; i0++)
             {
                 MsgPack exp = MsgPack.New.Add("Name", Dex[i0].Name);
-                MsgPack main = new MsgPack(Dex[i0].Main.Count, "Main");
-                for (i1 = 0; i1 < Dex[i0].Main.Count; i1++)
-                    main[i1] = Dex[i0].Main[i1].Write();
+                MsgPack main = new MsgPack(Dex[i0].Face.Count, "Face");
+                for (i1 = 0; i1 < Dex[i0].Face.Count; i1++)
+                    main[i1] = Dex[i0].Face[i1].Write();
                 exp.Add(main);
 
-                MsgPack eyes = new MsgPack(Dex[i0].Eyes.Count, "Eyes");
-                for (i1 = 0; i1 < Dex[i0].Eyes.Count; i1++)
-                    eyes[i1] = Dex[i0].Eyes[i1].Write();
+                MsgPack eyes = new MsgPack(Dex[i0].FaceCL.Count, "FaceCL");
+                for (i1 = 0; i1 < Dex[i0].FaceCL.Count; i1++)
+                    eyes[i1] = Dex[i0].FaceCL[i1].Write();
                 exp.Add(eyes);
                 dex[i0] = exp;
             }
@@ -231,33 +231,33 @@ namespace KKdMainLib
 
         public struct EXP
         {
-            public int MainOffset;
-            public int EyesOffset;
-            public int NameOffset;
+            public long FaceOffset;
+            public long FaceCLOffset;
+            public long NameOffset;
             public string Name;
-            public KKdList<EXPElement> Main;
-            public KKdList<EXPElement> Eyes;
+            public KKdList<EXPData> Face;
+            public KKdList<EXPData> FaceCL;
 
             public override string ToString() => Name;
         }
 
-        public struct EXPElement
+        public struct EXPData
         {
             public  float Frame;
-            public ushort Both;
+            public ushort Type;
             public ushort ID;
             public  float Value;
             public  float Trans;
 
-            public static EXPElement Read(MsgPack msg) =>
-                new EXPElement() { Frame = msg.RF32("F"), Both  = msg.RU16("B"),
-                                   ID    = msg.RU16("I"), Value = msg.RF32("V"),
-                                   Trans = msg.RF32("T"), };
+            public static EXPData Read(MsgPack msg) =>
+                new EXPData() { Frame = msg.RF32("Frame"), Type  = msg.RU16("Type" ),
+                                ID    = msg.RU16("ID"   ), Value = msg.RF32("Value"),
+                                Trans = msg.RF32("Trans"), };
 
             public MsgPack Write() =>
-                MsgPack.New.Add("F", Frame).Add("B", Both )
-                           .Add("I",    ID).Add("V", Value)
-                           .Add("T", Trans);
+                MsgPack.New.Add("Frame", Frame).Add("Type" , Type )
+                           .Add("ID"   , ID   ).Add("Value", Value)
+                           .Add("Trans", Trans);
         }
     }
 }

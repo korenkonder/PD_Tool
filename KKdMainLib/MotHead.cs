@@ -155,13 +155,15 @@ RETURN:
 
                             if ((int)data.Type == 0x3E || (int)data.Type == 0x49)
                                 s.A(0x20, true);
-                            data.Offset = s.P;
 
                             if (data.Array.Length >= 4 && s.P % 0x4 != 0)
                                 s.A(0x04, true);
                             else if (data.Array.Length == 2 && s.P % 0x2 != 0)
                                 s.A(0x02, true);
+
+                            data.Offset = s.P;
                             s.W(data.Array);
+
                             if ((int)data.Type == 0x3C)
                                 s.A(0x20, true);
                         }
@@ -180,18 +182,18 @@ RETURN:
                                 int Size = GetSize2(data.Type);
                                 if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
 
-                                data.Offset = s.P;
-
                                 if (data.Array.Length >= 4 && s.P % 0x4 != 0)
                                     s.A(0x04, true);
                                 else if (data.Array.Length == 2 && s.P % 0x2 != 0)
                                     s.A(0x02, true);
+
+                                data.Offset = s.P;
                                 s.W(data.Array);
                             }
                             break;
                         }
                     }
-            s.A(0x20, true);
+            s.A(0x10, true);
 
             Header.SubHeaderOffset = s.P;
             i1 = Header.LastMotionID - Header.FirstMotionID;
@@ -1011,9 +1013,9 @@ RETURN:
 
         public enum Type
         {
-            WingReset     = 0x40,
-            OsageReset    = 0x41,
-            OsagePhysStep = 0x42,
+            WindReset  = 0x40,
+            OsageReset = 0x41,
+            OsageStep  = 0x42,
         }
     }
 }
