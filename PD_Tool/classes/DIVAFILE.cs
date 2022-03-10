@@ -13,7 +13,7 @@ namespace PD_Tool
 
             if (head != 0x454C494641564944) return;
             System.Console.Title = "DIVAFILE Decrypt: " + Path.GetFileName(file);
-            file.Decrypt();
+            KKdMainLib.DIVAFILE.Decrypt(file);
         }
 
         public static void Encrypt(string file)
@@ -24,7 +24,7 @@ namespace PD_Tool
 
             if (head == 0x454C494641564944) return;
             System.Console.Title = "DIVAFILE Encrypt: " + Path.GetFileName(file);
-            file.Encrypt();
+            KKdMainLib.DIVAFILE.Encrypt(file);
         }
     }
 }

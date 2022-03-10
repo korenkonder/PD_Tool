@@ -37,19 +37,28 @@ namespace PD_Tool
             Program.ConsoleDesign("8. A3DC [XHD/VRFL]");
             if (!mp) Program.ConsoleDesign($"9. {(json ? "JSON" : "MsgPack")}");
             Program.ConsoleDesign(false);
+            Program.ConsoleDesign("X[Y] - X: option; Y: rounding in text (def. 9)");
+            Program.ConsoleDesign(false);
             Program.ConsoleDesign(true);
             Console.WriteLine();
             choose = Console.ReadLine().ToUpper();
-                 if (choose == "1")   format = Format.DT ;
-            else if (choose == "2")   format = Format.F  ;
-            else if (choose == "3")   format = Format.AFT;
-            else if (choose == "4")   format = Format.AFT;
-            else if (choose == "5")   format = Format.F2 ;
-            else if (choose == "6")   format = Format.MGF;
-            else if (choose == "7")   format = Format.X  ;
-            else if (choose == "8")   format = Format.XHD;
-            else if (choose == "9")   format = Format.NULL;
+            if (choose == null || choose.Length < 1)
+                return;
+            else if (choose[0] == '1') format = Format.DT ;
+            else if (choose[0] == '2') format = Format.F  ;
+            else if (choose[0] == '3') format = Format.AFT;
+            else if (choose[0] == '4') format = Format.AFT;
+            else if (choose[0] == '5') format = Format.F2 ;
+            else if (choose[0] == '6') format = Format.MGF;
+            else if (choose[0] == '7') format = Format.X  ;
+            else if (choose[0] == '8') format = Format.XHD;
+            else if (choose[0] == '9') format = Format.NULL;
             else return;
+
+            if (int.TryParse(choose.Substring(1), out int rounding))
+                KKdA3DA.Rounding = rounding;
+            else
+                KKdA3DA.Rounding = 9;
 
             int state;
             string filepath, ext;

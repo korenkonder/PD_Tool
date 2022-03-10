@@ -9,7 +9,7 @@ namespace PD_Tool
         public static void Processor(bool json)
         {
             Console.Title = "MotHead Converter";
-            Program.Choose(1, "bin", out string[] fileNames);
+            Program.Choose(1, "mhd", out string[] fileNames);
             if (fileNames.Length < 1) return;
 
             string filepath, ext;
@@ -21,9 +21,9 @@ namespace PD_Tool
                     ext      = Path.GetExtension(file).ToLower();
 
                     Console.Title = "MotHead Converter: " + Path.GetFileNameWithoutExtension(file);
-                    if (ext == ".bin")
+                    if (ext == ".bin" || ext == ".mhd")
                     {
-                        mhd.MotHeadReader(filepath);
+                        mhd.MotHeadReader(filepath, ext);
                         mhd.MsgPackWriter(filepath, json);
                     }
                     else if (ext == ".mp" || ext == ".json")

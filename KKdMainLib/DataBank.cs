@@ -83,15 +83,15 @@ namespace KKdMainLib
             return s.ToArray(true);
         }
 
-        public void DBWriter(string file, uint num2)
+        public void DBWriter(string file, uint timestamp)
         {
             if (!Success) return;
 
             byte[] data = DBWriter(file);
             if (data == null) return;
 
-            ushort num = DCC.CalculateChecksum(data);
-            File.WriteAllBytes(file + "_" + num + "_" + num2 + ".dat", data);
+            ushort hash = data.HashCRC16_CCITT();
+            File.WriteAllBytes(file + "_" + hash + "_" + timestamp + ".dat", data);
         }
 
         public void MsgPackReader(string file, bool json)

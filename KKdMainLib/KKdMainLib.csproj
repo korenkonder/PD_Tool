@@ -6,12 +6,12 @@
     <Configuration></Configuration>
     <Copyright>korenkonder (C) 2018-2022</Copyright>
     <Description>A simple library for working with Project Diva AC/DT/F/AFT/F2/X/XHD/FT/VRFL/M39 files</Description>
-    <FileVersion>0.4.10.10</FileVersion>
+    <FileVersion>0.4.10.11</FileVersion>
     <PackageId>KKdMainLib</PackageId>
     <Product>KKdMainLib</Product>
     <TargetFramework>net461</TargetFramework>
     <Title>KKdMainLib</Title>
-    <Version>0.4.10.10</Version>
+    <Version>0.4.10.11</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

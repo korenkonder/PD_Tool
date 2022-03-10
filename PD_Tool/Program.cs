@@ -334,6 +334,8 @@ namespace PD_Tool
                 else if (filetype == "json") Filter = GetArgs("JSON", "json");
                 else if (filetype == "igb" ) Filter = GetArgs("IGB", "igb");
                 else if (filetype == "mgftxt") Filter = GetArgs("MGF2AFT txt", "txt");
+                else if (filetype == "mhd" ) Filter = GetArgs("MotHead", "mhd", "bin", "json", "mp") +
+                        GetArgs("MotHead", true, "mhd") + bin + json + mp;
                 else if (filetype == "mp"  ) Filter = GetArgs("MessagePack", "mp");
                 else if (filetype == "lit")  Filter = GetArgs("LIT" , "lit", "json", "mp") +
                         GetArgs("LIT", true, "lit") + json + mp;

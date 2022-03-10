@@ -14,6 +14,8 @@ namespace KKdMainLib
         public Data Data;
         public A3DAHeader Head;
 
+        public static int Rounding = 9;
+
         private Stream s;
         private bool a3dc;
         private int i, i0, i1;
@@ -1253,9 +1255,9 @@ namespace KKdMainLib
         private void W(string Data,  ulong  val) =>
                            W(Data,        val.ToS());
         private void W(string Data,  float  val) =>
-                           W(Data,        val.ToS(9));
+                           W(Data,        val.ToS(Rounding));
         private void W(string Data, double  val) =>
-                           W(Data,        val.ToS(9));
+                           W(Data,        val.ToS(Rounding));
         private void W(string Data, string  val)
         { if (val != null) s.W(Data + "=" + val + "\n"); }
 

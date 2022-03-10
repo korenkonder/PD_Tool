@@ -1,4 +1,5 @@
 using KKdBaseLib;
+using KKdBaseLib.F2;
 using KKdMainLib.IO;
 
 namespace KKdMainLib
@@ -10,49 +11,96 @@ namespace KKdMainLib
 
         public HeaderData Header;
 
-        public void MotHeadReader(string file)
+        public void MotHeadReader(string file, string ext)
         {
-            s = File.OpenReader(file + ".bin");
-            s.RI32();
+            bool f2;
+            bool x = false;
+            int x_offset = 0;
+            s = File.OpenReader(file + ext);
             Header = new HeaderData();
+            int signature = s.RI32();
+            if (signature == 0x484D4D4D)
+            {
+                x_offset = (int)s.ReadHeader(true).Length;
+                Header.MotionSetID = s.RU32();
+                int mot_count = s.RI32();
+                int mot_hashes_offset = s.RI32();
+                Header.SubHeaderOffset = s.RI32();
+                if (Header.SubHeaderOffset == 0)
+                {
+                    if (mot_hashes_offset != 0) mot_hashes_offset += x_offset;
+                    s.IsX = true;
+                    x = true;
+                    Header.SubHeaderOffset = (int)s.RIX();
+                    if (Header.SubHeaderOffset != 0) Header.SubHeaderOffset += x_offset;
+                }
 
-            int offset = s.RI32();
-            if (offset < 0x10) goto RETURN;
-            s.O = offset;
-            s.P = 0;
+                if (Header.SubHeaderOffset < 0x20) goto RETURN;
 
-            Header.  MotionSetID   = s.RI32();
-            Header.FirstMotionID   = s.RI32();
-            Header. LastMotionID   = s.RI32();
-            Header.SubHeaderOffset = s.RI32();
+                s.P = mot_hashes_offset;
+                Header.Data = new HeaderData.Sub[mot_count];
+                for (i = 0; i < Header.Data.Length; i++) Header.Data[i].MotionID = s.RU32();
 
-            if (Header.SubHeaderOffset < 0x10) goto RETURN;
-            i0 = Header.LastMotionID - Header.FirstMotionID;
-            if (i0 < 0) goto RETURN;
+                s.P = Header.SubHeaderOffset;
+                f2 = true;
+            }
+            else
+            {
+                int offset = s.RI32();
+                if (offset < 0x10) goto RETURN;
+                s.O = offset;
+                s.P = 0;
 
-            s.P = Header.SubHeaderOffset;
-            Header.Data = new HeaderData.Sub[++i0];
-            for (i = 0; i < Header.Data.Length; i++) Header.Data[i].Offset = s.RI32();
+                Header.MotionSetID     = s.RU32();
+                Header.FirstMotionID   = s.RU32();
+                Header.LastMotionID    = s.RU32();
+                Header.SubHeaderOffset = (int)s.RIX();
+
+                if (Header.SubHeaderOffset < 0x10) goto RETURN;
+                i0 = (int)(Header.LastMotionID - Header.FirstMotionID);
+                if (i0 < 0) goto RETURN;
+
+                s.P = Header.SubHeaderOffset;
+                Header.Data = new HeaderData.Sub[++i0];
+                f2 = false;
+            }
+
+            for (i = 0; i < Header.Data.Length; i++)
+            {
+                if (x) s.A(0x08);
+                Header.Data[i].Offset = (int)s.RIX();
+                if (x && Header.Data[i].Offset != 0) Header.Data[i].Offset += x_offset;
+            }
+
             for (i = 0; i < Header.Data.Length; i++)
             {
                 if (Header.Data[i].Offset < 0x10) continue;
 
                 s.P = Header.Data[i].Offset;
 
-                Header.Data[i].MotionID = Header.FirstMotionID + i;
+                if (!f2)
+                    Header.Data[i].MotionID = Header.FirstMotionID + (uint)i;
                 Header.Data[i].Field00 = s.RI32();
-                Header.Data[i].Field04 = s.RI32();
-                Header.Data[i].Field08 = s.RI32();
-                Header.Data[i].Field0C = s.RI32();
+                if (!x)
+                {
+                    Header.Data[i].Field04 = s.RI32();
+                    Header.Data[i].Field08 = s.RI32();
+                    Header.Data[i].Field0C = s.RI32();
+                }
                 Header.Data[i].Field10 = s.RU16();
                 Header.Data[i].Field12 = s.RU16();
-                Header.Data[i].Offset2 = s.RI32();
-                Header.Data[i].DataHeaderOffset = s.RI32();
+                if (x) s.A(0x08);
+                Header.Data[i].Offset2 = (int)s.RIX();
+                if (x && Header.Data[i].Offset2 != 0) Header.Data[i].Offset2 += x_offset;
+                if (x) s.A(0x08);
+                Header.Data[i].DataHeaderOffset = (int)s.RIX();
+                if (x && Header.Data[i].DataHeaderOffset != 0)
+                    Header.Data[i].DataHeaderOffset += x_offset;
 
                 if (Header.Data[i].DataHeaderOffset < 0x10) goto RETURN;
                 s.P = Header.Data[i].DataHeaderOffset;
                 i0 = 0;
-                while (s.RI32() != -1) { s.RI32(); s.RI32(); i0++; }
+                while (s.RI32() != -1) { s.RI32(); if (x) s.A(0x08); s.RIX(); i0++; }
                 s.P = Header.Data[i].DataHeaderOffset;
 
                 Header.Data[i].Array = new HeaderData.Sub.Data[i0];
@@ -60,7 +108,10 @@ namespace KKdMainLib
                 {
                     Header.Data[i].Array[i0].Type   = (Type)s.RI32();
                     Header.Data[i].Array[i0].Frame  = s.RI32();
-                    Header.Data[i].Array[i0].Offset = s.RI32();
+                    if (x) s.A(0x08);
+                    Header.Data[i].Array[i0].Offset = (int)s.RIX();
+                    if (x && Header.Data[i].Array[i0].Offset != 0)
+                        Header.Data[i].Array[i0].Offset += x_offset;
                 }
             }
 
@@ -77,7 +128,10 @@ namespace KKdMainLib
                     for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
                     {
                         Header.Data[i].Array2[i0].Type   = s.RI32();
-                        Header.Data[i].Array2[i0].Offset = s.RI32();
+                        if (x) s.A(0x08);
+                        Header.Data[i].Array2[i0].Offset = (int)s.RIX();
+                        if (x && Header.Data[i].Array2[i0].Offset != 0)
+                            Header.Data[i].Array2[i0].Offset += x_offset;
                     }
 
                     for (i0 = 0; i0 < Header.Data[i].Array2.Length; i0++)
@@ -131,7 +185,7 @@ RETURN:
             s.O = 0x20;
             s.P = 0;
             s.W(0);
-            for (int I = Header.LastMotionID - Header.FirstMotionID; I > -1; I--)
+            for (int I = (int)(Header.LastMotionID - Header.FirstMotionID); I > -1; I--)
                 for (i = 0; i < Header.Data.Length; i++)
                     if (Header.FirstMotionID + I == Header.Data[i].MotionID)
                     {
@@ -196,7 +250,7 @@ RETURN:
             s.A(0x10, true);
 
             Header.SubHeaderOffset = s.P;
-            i1 = Header.LastMotionID - Header.FirstMotionID;
+            i1 = (int)(Header.LastMotionID - Header.FirstMotionID);
 
             int offset = 0;
             for (i = 0, i1++; i < i1; i++)
@@ -254,14 +308,14 @@ RETURN:
             MsgPack motHead;
             MsgPack msgPack = file.ReadMPAllAtOnce(json);
             if ((motHead = msgPack["MotHead"]).IsNull) return;
-            Header.MotionSetID = motHead.RI32("MotionSetID");
+            Header.MotionSetID = motHead.RU32("MotionSetID");
 
             MsgPack motions, array;
             if ((motions = motHead["Motions", true]).IsNull) return;
             Header.Data = new HeaderData.Sub[motions.Array.Length];
             for (i = 0; i < Header.Data.Length; i++)
             {
-                Header.Data[i].MotionID = motions[i].RI32("MotionID");
+                Header.Data[i].MotionID = motions[i].RU32("MotionID");
                 Header.Data[i].Field00 = motions[i].RI32("Field00");
                 Header.Data[i].Field04 = motions[i].RI32("Field04");
                 Header.Data[i].Field08 = motions[i].RI32("Field08");
@@ -370,7 +424,7 @@ RETURN:
                             break;
                         case 0x20:
                             data.Array.GBy(temp.RI16("i00_16"), 0x00);
-                            data.Array.GBy(temp.RI32("i04"), 0x04);
+                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
                             data.Array.GBy(temp.RI32("i08"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             break;
@@ -462,6 +516,9 @@ RETURN:
                             data.Array.GBy(temp.RF32("f34"), 0x34);
                             data.Array.GBy(temp.RF32("f38"), 0x38);
                             break;
+                        case 0x41:
+                            data.Array.GBy(temp.RI32("Iterations"), 0x00);
+                            break;
                         case 0x42:
                             data.Array.GBy(temp.RF32("Value"), 0x00);
                             break;
@@ -480,8 +537,8 @@ RETURN:
                             data.Array.GBy(temp.RI32("i00"), 0x00);
                             break;
                         case 0x47:
-                            data.Array.GBy(temp.RU8("i00_8"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
+                            data.Array.GBy(temp.RU8("ID"), 0x00);                   // 0 - All, 1 - Kami, 2 - Outer
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
                             break;
                         case 0x48:
                             data.Array.GBy(temp.RF32("f00"), 0x00);
@@ -495,21 +552,21 @@ RETURN:
                             data.Array.GBy(temp.RU8("i1A_8"), 0x1A);
                             break;
                         case 0x49:
-                            data.Array.GBy(temp.RI16("i00_16"), 0x00);
-                            data.Array.GBy(temp.RI16("i02_16"), 0x02);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RI16("i08_16"), 0x08);
-                            data.Array.GBy(temp.RF32("f0C"), 0x0C);
-                            data.Array.GBy(temp.RI32("i10"), 0x10);
-                            data.Array.GBy(temp.RI32("i14"), 0x14);
-                            data.Array.GBy(temp.RI32("i18"), 0x18);
-                            data.Array.GBy(temp.RI32("i1C"), 0x1C);
-                            data.Array.GBy(temp.RU8("i20"), 0x20);
-                            data.Array.GBy(temp.RU8("i21"), 0x21);
-                            data.Array.GBy(temp.RU8("i22"), 0x22);
-                            data.Array.GBy(temp.RU8("i23"), 0x23);
-                            data.Array.GBy(temp.RF32("f24"), 0x24);
-                            data.Array.GBy(temp.RI32("i28"), 0x28);
+                            data.Array.GBy(temp.RI16("hand"), 0x00);
+                            data.Array.GBy(temp.RI16("scale_select"), 0x02);
+                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
+                            data.Array.GBy(temp.RI16("type"), 0x08);
+                            data.Array.GBy(temp.RF32("scale"), 0x0C);
+                            data.Array.GBy(temp.RF32("rot_blend"), 0x10);
+                            data.Array.GBy(temp.RF32("offset_x"), 0x14);
+                            data.Array.GBy(temp.RF32("offset_y"), 0x18);
+                            data.Array.GBy(temp.RF32("offset_z"), 0x1C);
+                            data.Array.GBy(temp.RU8("enable_scale"), 0x20);
+                            data.Array.GBy(temp.RU8("disable_x"), 0x21);
+                            data.Array.GBy(temp.RU8("disable_y"), 0x22);
+                            data.Array.GBy(temp.RU8("disable_z"), 0x23);
+                            data.Array.GBy(temp.RF32("offset_blend"), 0x24);
+                            data.Array.GBy(temp.RF32("f28"), 0x28);
                             data.Array.GBy(temp.RI32("i2C"), 0x2C);
                             break;
                         case 0x4A:
@@ -533,8 +590,8 @@ RETURN:
                             data.Array.GBy(temp.RF32("f30"), 0x30);
                             break;
                         case 0x4C:
-                            data.Array.GBy(temp.RI16("i00_16"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
+                            data.Array.GBy(temp.RI16("hand"), 0x00);
+                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
                             data.Array.GBy(temp.RF32("f08"), 0x08);
                             break;
                         case 0x4D:
@@ -657,7 +714,7 @@ RETURN:
                             case 0x20:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("i04", data.Array.TI32(0x04))
+                                    .Add("trans_time", data.Array.TF32(0x04))
                                     .Add("i08", data.Array.TI32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C)));
                                 break;
@@ -761,6 +818,10 @@ RETURN:
                                     .Add("f34", data.Array.TF32(0x34))
                                     .Add("f38", data.Array.TF32(0x38)));
                                 break;
+                            case 0x41:
+                                arrayEntry.Add(new MsgPack("Data")
+                                    .Add("Iterations", data.Array.TI32(0x00)));
+                                break;
                             case 0x42:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Value", data.Array.TF32(0x00)));
@@ -785,8 +846,8 @@ RETURN:
                                 break;
                             case 0x47:
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array[0x00])
-                                    .Add("f04", data.Array.TF32(0x04)));
+                                    .Add("ID", data.Array[0x00])                    // 0 - All, 1 - Kami, 2 - Outer
+                                    .Add("Value", data.Array.TF32(0x04)));
                                 break;
                             case 0x48:
                                 arrayEntry.Add(new MsgPack("Data")
@@ -802,21 +863,21 @@ RETURN:
                                 break;
                             case 0x49:
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("i02_16", data.Array.TI16(0x02))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("i08_16", data.Array.TI16(0x08))
-                                    .Add("f0C", data.Array.TF32(0x0C))
-                                    .Add("i10", data.Array.TI32(0x10))
-                                    .Add("i14", data.Array.TI32(0x14))
-                                    .Add("i18", data.Array.TI32(0x18))
-                                    .Add("i1C", data.Array.TI32(0x1C))
-                                    .Add("i20_8", data.Array[0x20])
-                                    .Add("i21_8", data.Array[0x21])
-                                    .Add("i22_8", data.Array[0x22])
-                                    .Add("i23_8", data.Array[0x23])
-                                    .Add("f24", data.Array.TI32(0x24))
-                                    .Add("i28", data.Array.TI32(0x28))
+                                    .Add("hand", data.Array.TI16(0x00))
+                                    .Add("scale_select", data.Array.TI16(0x02))
+                                    .Add("trans_time", data.Array.TF32(0x04))
+                                    .Add("type", data.Array.TI16(0x08))
+                                    .Add("scale", data.Array.TF32(0x0C))
+                                    .Add("rot_blend", data.Array.TF32(0x10))
+                                    .Add("offset_x", data.Array.TF32(0x14))
+                                    .Add("offset_y", data.Array.TF32(0x18))
+                                    .Add("offset_z", data.Array.TF32(0x1C))
+                                    .Add("enable_scale", data.Array[0x20])
+                                    .Add("disable_x", data.Array[0x21])
+                                    .Add("disable_y", data.Array[0x22])
+                                    .Add("disable_z", data.Array[0x23])
+                                    .Add("offset_blend", data.Array.TF32(0x24))
+                                    .Add("f28", data.Array.TF32(0x28))
                                     .Add("i2C", data.Array.TI32(0x2C)));
                                 break;
                             case 0x4A:
@@ -843,8 +904,8 @@ RETURN:
                                 break;
                             case 0x4C:
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
+                                    .Add("hand", data.Array.TI16(0x00))
+                                    .Add("trans_time", data.Array.TF32(0x04))
                                     .Add("f08", data.Array.TF32(0x08)));
                                 break;
                             case 0x4D:
@@ -936,6 +997,7 @@ RETURN:
                 0x3C => 0x10,
                 0x3D => 0x08,
                 0x3E => 0x40,
+                0x41 => 0x04,
                 0x42 => 0x04,
                 0x43 => 0x08,
                 0x44 => 0x08,
@@ -968,9 +1030,9 @@ RETURN:
 
         public struct HeaderData
         {
-            public int MotionSetID;
-            public int FirstMotionID;
-            public int LastMotionID;
+            public uint MotionSetID;
+            public uint FirstMotionID;
+            public uint LastMotionID;
             public int SubHeaderOffset;
 
             public Sub[] Data;
@@ -978,7 +1040,7 @@ RETURN:
             public struct Sub
             {
                 public int Offset;
-                public int MotionID;
+                public uint MotionID;
 
                 public int Field00;
                 public int Field04;
@@ -1013,9 +1075,10 @@ RETURN:
 
         public enum Type
         {
-            WindReset  = 0x40,
-            OsageReset = 0x41,
-            OsageStep  = 0x42,
+            WindReset     = 0x40,
+            RobReset      = 0x41,
+            RobStep       = 0x42,
+            RobMoveCancel = 0x47,
         }
     }
 }

@@ -16,7 +16,7 @@ namespace PD_Tool
                      if (file.EndsWith(".mp"  )) { mp = false; break; }
                 else if (file.EndsWith(".json")) { mp = false; break; }
 
-            uint num2 = (uint)((DateTime.Now.Ticks - 621355968000000000) / 10000000);
+            uint timestamp = (uint)((DateTime.Now.Ticks - 621355968000000000) / 10000000);
             string[] file_split;
             string filepath, ext;
             KKdMainLib.DataBank db;
@@ -48,7 +48,7 @@ namespace PD_Tool
                     {
                         Console.Title = "DataBank Converter: " + filename;
                         db.MsgPackReader(filepath, json);
-                        db.     DBWriter(filepath, num2);
+                        db.     DBWriter(filepath, timestamp);
                     }
                 }
             }
