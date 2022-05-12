@@ -36,7 +36,7 @@ namespace KKdMainLib
             using (Stream _IO = File.OpenWriter(file, fileLength))
                 _IO.W(decrypted, fileLength < streamLength ? fileLength : streamLength);
         }
-        
+
         public static void Encrypt(string file)
         {
             byte[] data;
@@ -66,7 +66,7 @@ namespace KKdMainLib
                 _IO.W(encrypted);
             }
         }
-        
+
         public static byte[] Decrypt(byte[] data)
         {
             int streamLength, fileLength;

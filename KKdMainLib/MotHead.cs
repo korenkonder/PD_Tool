@@ -13,7 +13,6 @@ namespace KKdMainLib
 
         public void MotHeadReader(string file, string ext)
         {
-            bool f2;
             bool x = false;
             int x_offset = 0;
             s = File.OpenReader(file + ext);
@@ -40,9 +39,6 @@ namespace KKdMainLib
                 s.P = mot_hashes_offset;
                 Header.Data = new HeaderData.Sub[mot_count];
                 for (i = 0; i < Header.Data.Length; i++) Header.Data[i].MotionID = s.RU32();
-
-                s.P = Header.SubHeaderOffset;
-                f2 = true;
             }
             else
             {
@@ -60,11 +56,12 @@ namespace KKdMainLib
                 i0 = (int)(Header.LastMotionID - Header.FirstMotionID);
                 if (i0 < 0) goto RETURN;
 
-                s.P = Header.SubHeaderOffset;
                 Header.Data = new HeaderData.Sub[++i0];
-                f2 = false;
+                for (i = 0; i < Header.Data.Length; i++)
+                    Header.Data[i].MotionID = Header.FirstMotionID + (uint)i;
             }
 
+            s.P = Header.SubHeaderOffset;
             for (i = 0; i < Header.Data.Length; i++)
             {
                 if (x) s.A(0x08);
@@ -78,8 +75,6 @@ namespace KKdMainLib
 
                 s.P = Header.Data[i].Offset;
 
-                if (!f2)
-                    Header.Data[i].MotionID = Header.FirstMotionID + (uint)i;
                 Header.Data[i].Field00 = s.RI32();
                 if (!x)
                 {
@@ -424,8 +419,8 @@ RETURN:
                             break;
                         case 0x20:
                             data.Array.GBy(temp.RI16("i00_16"), 0x00);
-                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
-                            data.Array.GBy(temp.RI32("i08"), 0x08);
+                            data.Array.GBy(temp.RI32("i04"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             break;
                         case 0x21:
@@ -437,54 +432,54 @@ RETURN:
                             data.Array.GBy(temp.RI32("i10"), 0x10);
                             data.Array.GBy(temp.RI32("i14"), 0x14);
                             break;
-                        case 0x32:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
+                        case 0x32: // SetFaceMotionId
+                            data.Array.GBy(temp.RI32("MotionID"), 0x00);
+                            data.Array.GBy(temp.RF32("Frame"), 0x04);
                             break;
-                        case 0x35:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x35: // SetFaceMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x36:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x36: // SetHandRMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x37:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x37: // SetHandLMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x38:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x38: // SetMouthMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x39:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x39: // SetEyesMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x3A:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x3A: // SetEyelidMottblMotion
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Value"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x08);
                             data.Array.GBy(temp.RI32("i0C"), 0x0C);
                             data.Array.GBy(temp.RF32("f10"), 0x10);
                             break;
-                        case 0x3B:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
+                        case 0x3B: // SetRobCharaHeadObject
+                            data.Array.GBy(temp.RI32("Index"), 0x00);
                             break;
                         case 0x3C:
                             data.Array.GBy(temp.RI32("i00"), 0x00);
@@ -492,34 +487,35 @@ RETURN:
                             data.Array.GBy(temp.RF32("f08"), 0x08);
                             data.Array.GBy(temp.RF32("f0C"), 0x0C);
                             break;
-                        case 0x3D:
+                        case 0x3D: // SetEyelidMotionFromFace
                             data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
+                            data.Array.GBy(temp.RF32("Duration"), 0x04);
                             break;
-                        case 0x3E:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RU8("i04_8"), 0x04);
-                            data.Array.GBy(temp.RU8("i05_8"), 0x05);
-                            data.Array.GBy(temp.RU8("i06_8"), 0x06);
-                            data.Array.GBy(temp.RU8("i07_8"), 0x07);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
-                            data.Array.GBy(temp.RF32("f0C"), 0x0C);
-                            data.Array.GBy(temp.RF32("f10"), 0x10);
-                            data.Array.GBy(temp.RF32("f14"), 0x14);
-                            data.Array.GBy(temp.RF32("f18"), 0x18);
-                            data.Array.GBy(temp.RF32("f1C"), 0x1C);
-                            data.Array.GBy(temp.RF32("f20"), 0x20);
-                            data.Array.GBy(temp.RF32("f24"), 0x24);
-                            data.Array.GBy(temp.RF32("f28"), 0x28);
-                            data.Array.GBy(temp.RF32("f2C"), 0x2C);
-                            data.Array.GBy(temp.RF32("f30"), 0x30);
-                            data.Array.GBy(temp.RF32("f34"), 0x34);
-                            data.Array.GBy(temp.RF32("f38"), 0x38);
+                        case 0x3E: // RobPartsAdjust
+                            data.Array.GBy(temp.RF32("ForceDuration"), 0x00);
+                            data.Array.GBy(temp.RU8("Parts"), 0x04);
+                            data.Array.GBy(temp.RU8("Type"), 0x05);
+                            data.Array.GBy((byte)(temp.RB("IgnoreGravity") ? 1 : 0), 0x06);
+                            data.Array.GBy(temp.RU8("CycleType"), 0x07);
+                            data.Array.GBy(temp.RF32("ExternalForceX"), 0x08);
+                            data.Array.GBy(temp.RF32("ExternalForceY"), 0x0C);
+                            data.Array.GBy(temp.RF32("ExternalForceZ"), 0x10);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthX"), 0x14);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthY"), 0x18);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthZ"), 0x1C);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleX"), 0x20);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleY"), 0x24);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleZ"), 0x28);
+                            data.Array.GBy(temp.RF32("Cycle"), 0x2C);
+                            data.Array.GBy(temp.RF32("Phase"), 0x30);
+                            data.Array.GBy(temp.RF32("Force"), 0x34);
+                            data.Array.GBy(temp.RF32("Strength"), 0x38);
+                            data.Array.GBy(temp.RF32("StrengthTransition"), 0x3C);
                             break;
-                        case 0x41:
+                        case 0x41: // OsageReset
                             data.Array.GBy(temp.RI32("Iterations"), 0x00);
                             break;
-                        case 0x42:
+                        case 0x42: // OsageStep
                             data.Array.GBy(temp.RF32("Value"), 0x00);
                             break;
                         case 0x43:
@@ -536,8 +532,8 @@ RETURN:
                         case 0x46:
                             data.Array.GBy(temp.RI32("i00"), 0x00);
                             break;
-                        case 0x47:
-                            data.Array.GBy(temp.RU8("ID"), 0x00);                   // 0 - All, 1 - Kami, 2 - Outer
+                        case 0x47: // OsageMoveCancel
+                            data.Array.GBy(temp.RU8("ID"), 0x00);                       // 0 - All, 1 - Kami, 2 - Outer
                             data.Array.GBy(temp.RF32("Value"), 0x04);
                             break;
                         case 0x48:
@@ -551,51 +547,51 @@ RETURN:
                             data.Array.GBy(temp.RU8("i19_8"), 0x19);
                             data.Array.GBy(temp.RU8("i1A_8"), 0x1A);
                             break;
-                        case 0x49:
-                            data.Array.GBy(temp.RI16("hand"), 0x00);
-                            data.Array.GBy(temp.RI16("scale_select"), 0x02);
-                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
-                            data.Array.GBy(temp.RI16("type"), 0x08);
-                            data.Array.GBy(temp.RF32("scale"), 0x0C);
-                            data.Array.GBy(temp.RF32("rot_blend"), 0x10);
-                            data.Array.GBy(temp.RF32("offset_x"), 0x14);
-                            data.Array.GBy(temp.RF32("offset_y"), 0x18);
-                            data.Array.GBy(temp.RF32("offset_z"), 0x1C);
-                            data.Array.GBy(temp.RU8("enable_scale"), 0x20);
-                            data.Array.GBy(temp.RU8("disable_x"), 0x21);
-                            data.Array.GBy(temp.RU8("disable_y"), 0x22);
-                            data.Array.GBy(temp.RU8("disable_z"), 0x23);
-                            data.Array.GBy(temp.RF32("offset_blend"), 0x24);
-                            data.Array.GBy(temp.RF32("f28"), 0x28);
+                        case 0x49: // RobHandAdjust
+                            data.Array.GBy(temp.RI16("Hand"), 0x00);
+                            data.Array.GBy(temp.RI16("ScaleSelect"), 0x02);
+                            data.Array.GBy(temp.RF32("Duration"), 0x04);
+                            data.Array.GBy(temp.RI16("Type"), 0x08);
+                            data.Array.GBy(temp.RF32("Scale"), 0x0C);
+                            data.Array.GBy(temp.RF32("RotBlend"), 0x10);
+                            data.Array.GBy(temp.RF32("OffsetX"), 0x14);
+                            data.Array.GBy(temp.RF32("OffsetY"), 0x18);
+                            data.Array.GBy(temp.RF32("OffsetZ"), 0x1C);
+                            data.Array.GBy((byte)(temp.RB("EnableScale") ? 1 : 0), 0x20);
+                            data.Array.GBy((byte)(temp.RB("DisableX") ? 1 : 0), 0x21);
+                            data.Array.GBy((byte)(temp.RB("DisableY") ? 1 : 0), 0x22);
+                            data.Array.GBy((byte)(temp.RB("DisableZ") ? 1 : 0), 0x23);
+                            data.Array.GBy(temp.RF32("OffsetBlend"), 0x24);
+                            data.Array.GBy(temp.RF32("ArmLength"), 0x28);
                             data.Array.GBy(temp.RI32("i2C"), 0x2C);
                             break;
                         case 0x4A:
                             data.Array.GBy(temp.RU8("i00_8"), 0x00);
                             data.Array.GBy(temp.RU8("i01_8"), 0x01);
                             break;
-                        case 0x4B:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RU8("i04_8"), 0x04);
-                            data.Array.GBy(temp.RU8("i05_8"), 0x05);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
-                            data.Array.GBy(temp.RF32("f0C"), 0x0C);
-                            data.Array.GBy(temp.RF32("f10"), 0x10);
-                            data.Array.GBy(temp.RF32("f14"), 0x14);
-                            data.Array.GBy(temp.RF32("f18"), 0x18);
-                            data.Array.GBy(temp.RF32("f1C"), 0x1C);
-                            data.Array.GBy(temp.RF32("f20"), 0x20);
-                            data.Array.GBy(temp.RF32("f24"), 0x24);
-                            data.Array.GBy(temp.RF32("f28"), 0x28);
-                            data.Array.GBy(temp.RF32("f2C"), 0x2C);
-                            data.Array.GBy(temp.RF32("f30"), 0x30);
+                        case 0x4B: // RobAdjustGlobal
+                            data.Array.GBy(temp.RI32("ForceDuration"), 0x00);
+                            data.Array.GBy(temp.RU8("Type"), 0x04);
+                            data.Array.GBy(temp.RU8("CycleType"), 0x05);
+                            data.Array.GBy(temp.RF32("ExternalForceX"), 0x08);
+                            data.Array.GBy(temp.RF32("ExternalForceY"), 0x0C);
+                            data.Array.GBy(temp.RF32("ExternalForceZ"), 0x10);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthX"), 0x14);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthY"), 0x18);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleStrengthZ"), 0x1C);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleX"), 0x20);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleY"), 0x24);
+                            data.Array.GBy(temp.RF32("ExternalForceCycleZ"), 0x28);
+                            data.Array.GBy(temp.RF32("Cycle"), 0x2C);
+                            data.Array.GBy(temp.RF32("Phase"), 0x30);
                             break;
-                        case 0x4C:
-                            data.Array.GBy(temp.RI16("hand"), 0x00);
-                            data.Array.GBy(temp.RF32("trans_time"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
+                        case 0x4C: // RobArmAdjust
+                            data.Array.GBy(temp.RI16("Index"), 0x00);
+                            data.Array.GBy(temp.RF32("Duration"), 0x04);
+                            data.Array.GBy(temp.RF32("Value"), 0x08);
                             break;
-                        case 0x4D:
-                            data.Array.GBy(temp.RU8("i00_8"), 0x00);
+                        case 0x4D: // DisableEyeMotion
+                            data.Array.GBy((byte)(temp.RB("Value") ? 1 : 0), 0x00);
                             break;
                         case 0x4E:
                             data.Array.GBy(temp.RI16("i00_16"), 0x00);
@@ -608,11 +604,14 @@ RETURN:
                             data.Array.GBy(temp.RI32("i14"), 0x14);
                             data.Array.GBy(temp.RI32("i18"), 0x18);
                             break;
-                        case 0x4F:
-                            data.Array.GBy(temp.RU8("i00_8"), 0x00);
+                        case 0x4F: // RobCharaColiRing
+                            data.Array.GBy(temp.RU8("Index"), 0x00);
                             break;
-                        case 0x50:
-                            data.Array.GBy(temp.RU8("i00_8"), 0x00);
+                        case 0x50: // AdjustGetGlobalTrans
+                            data.Array.GBy((byte)(temp.RB("Value") ? 1 : 0), 0x00);
+                            break;
+                        case 0x40: // WindReset
+                        default:
                             break;
                     }
                 }
@@ -714,76 +713,76 @@ RETURN:
                             case 0x20:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("trans_time", data.Array.TF32(0x04))
-                                    .Add("i08", data.Array.TI32(0x08))
+                                    .Add("i04", data.Array.TI32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C)));
                                 break;
                             case 0x21:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("i02_8", data.Array[0x02])
+                                    .Add("i02_8", data.Array.TU8(0x02))
                                     .Add("i04", data.Array.TI32(0x04))
                                     .Add("f08", data.Array.TF32(0x08))
                                     .Add("f0C", data.Array.TF32(0x0C))
                                     .Add("i10", data.Array.TI32(0x10))
                                     .Add("i14", data.Array.TI32(0x14)));
                                 break;
-                            case 0x32:
+                            case 0x32: // SetFaceMotionId
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04)));
+                                    .Add("MotionID", data.Array.TI32(0x00))
+                                    .Add("Frame", data.Array.TF32(0x04)));
                                 break;
-                            case 0x35:
+                            case 0x35: // SetFaceMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x36:
+                            case 0x36: // SetHandRMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x37:
+                            case 0x37: // SetHandLMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x38:
+                            case 0x38: // SetMouthMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x39:
+                            case 0x39: // SetEyesMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x3A:
+                            case 0x3A: // SetEyelidMottblMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
+                                    .Add("Index", data.Array.TI32(0x00))
+                                    .Add("Value", data.Array.TF32(0x04))
+                                    .Add("Duration", data.Array.TF32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("f10", data.Array.TF32(0x10)));
                                 break;
-                            case 0x3B:
+                            case 0x3B: // SetRobCharaHeadObject
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00)));
+                                    .Add("Index", data.Array.TI32(0x00)));
                                 break;
                             case 0x3C:
                                 arrayEntry.Add(new MsgPack("Data")
@@ -792,37 +791,38 @@ RETURN:
                                     .Add("f08", data.Array.TF32(0x08))
                                     .Add("f0C", data.Array.TF32(0x0C)));
                                 break;
-                            case 0x3D:
+                            case 0x3D: // SetEyelidMotionFromFace
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04)));
+                                    .Add("Duration", data.Array.TF32(0x04)));
                                 break;
-                            case 0x3E:
+                            case 0x3E: // RobPartsAdjust
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("i04_8", data.Array[0x04])
-                                    .Add("i05_8", data.Array[0x05])
-                                    .Add("i06_8", data.Array[0x06])
-                                    .Add("i07_8", data.Array[0x07])
-                                    .Add("f08", data.Array.TF32(0x08))
-                                    .Add("f0C", data.Array.TF32(0x0C))
-                                    .Add("f10", data.Array.TF32(0x10))
-                                    .Add("f14", data.Array.TF32(0x14))
-                                    .Add("f18", data.Array.TF32(0x18))
-                                    .Add("f1C", data.Array.TF32(0x1C))
-                                    .Add("f20", data.Array.TF32(0x20))
-                                    .Add("f24", data.Array.TF32(0x24))
-                                    .Add("f28", data.Array.TF32(0x28))
-                                    .Add("f2C", data.Array.TF32(0x2C))
-                                    .Add("f30", data.Array.TF32(0x30))
-                                    .Add("f34", data.Array.TF32(0x34))
-                                    .Add("f38", data.Array.TF32(0x38)));
+                                    .Add("ForceDuration", data.Array.TF32(0x00))
+                                    .Add("Parts", data.Array.TU8(0x04))
+                                    .Add("Type", data.Array.TU8(0x05))
+                                    .Add("IgnoreGravity", data.Array.TU8(0x06) != 0)
+                                    .Add("CycleType", data.Array.TU8(0x07))
+                                    .Add("ExternalForceX", data.Array.TF32(0x08))
+                                    .Add("ExternalForceY", data.Array.TF32(0x0C))
+                                    .Add("ExternalForceZ", data.Array.TF32(0x10))
+                                    .Add("ExternalForceCycleStrengthX", data.Array.TF32(0x14))
+                                    .Add("ExternalForceCycleStrengthY", data.Array.TF32(0x18))
+                                    .Add("ExternalForceCycleStrengthZ", data.Array.TF32(0x1C))
+                                    .Add("ExternalForceCycleX", data.Array.TF32(0x20))
+                                    .Add("ExternalForceCycleY", data.Array.TF32(0x24))
+                                    .Add("ExternalForceCycleZ", data.Array.TF32(0x28))
+                                    .Add("Cycle", data.Array.TF32(0x2C))
+                                    .Add("Phase", data.Array.TF32(0x30))
+                                    .Add("Force", data.Array.TF32(0x34))
+                                    .Add("Strength", data.Array.TF32(0x38))
+                                    .Add("StrengthTransition", data.Array.TF32(0x3C)));
                                 break;
-                            case 0x41:
+                            case 0x41: // OsageReset
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Iterations", data.Array.TI32(0x00)));
                                 break;
-                            case 0x42:
+                            case 0x42: // OsageStep
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Value", data.Array.TF32(0x00)));
                                 break;
@@ -844,9 +844,9 @@ RETURN:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00", data.Array.TI32(0x00)));
                                 break;
-                            case 0x47:
+                            case 0x47: // OsageMoveCancel
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("ID", data.Array[0x00])                    // 0 - All, 1 - Kami, 2 - Outer
+                                    .Add("ID", data.Array.TU8(0x00))                    // 0 - All, 1 - Kami, 2 - Outer
                                     .Add("Value", data.Array.TF32(0x04)));
                                 break;
                             case 0x48:
@@ -857,66 +857,66 @@ RETURN:
                                     .Add("i0C", data.Array.TI32(0x0C))
                                     .Add("i10", data.Array.TI32(0x10))
                                     .Add("i14", data.Array.TI32(0x14))
-                                    .Add("i18_8", data.Array[0x18])
-                                    .Add("i19_8", data.Array[0x19])
-                                    .Add("i1A_8", data.Array[0x1A]));
+                                    .Add("i18_8", data.Array.TU8(0x18))
+                                    .Add("i19_8", data.Array.TU8(0x19))
+                                    .Add("i1A_8", data.Array.TU8(0x1A)));
                                 break;
-                            case 0x49:
+                            case 0x49: // RobHandAdjust
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("hand", data.Array.TI16(0x00))
-                                    .Add("scale_select", data.Array.TI16(0x02))
-                                    .Add("trans_time", data.Array.TF32(0x04))
-                                    .Add("type", data.Array.TI16(0x08))
-                                    .Add("scale", data.Array.TF32(0x0C))
-                                    .Add("rot_blend", data.Array.TF32(0x10))
-                                    .Add("offset_x", data.Array.TF32(0x14))
-                                    .Add("offset_y", data.Array.TF32(0x18))
-                                    .Add("offset_z", data.Array.TF32(0x1C))
-                                    .Add("enable_scale", data.Array[0x20])
-                                    .Add("disable_x", data.Array[0x21])
-                                    .Add("disable_y", data.Array[0x22])
-                                    .Add("disable_z", data.Array[0x23])
-                                    .Add("offset_blend", data.Array.TF32(0x24))
-                                    .Add("f28", data.Array.TF32(0x28))
+                                    .Add("Hand", data.Array.TI16(0x00))
+                                    .Add("ScaleSelect", data.Array.TI16(0x02))
+                                    .Add("Duration", data.Array.TF32(0x04))
+                                    .Add("Type", data.Array.TI16(0x08))
+                                    .Add("Scale", data.Array.TF32(0x0C))
+                                    .Add("RotBlend", data.Array.TF32(0x10))
+                                    .Add("OffsetX", data.Array.TF32(0x14))
+                                    .Add("OffsetY", data.Array.TF32(0x18))
+                                    .Add("OffsetZ", data.Array.TF32(0x1C))
+                                    .Add("EnableScale", data.Array.TU8(0x20) != 0)
+                                    .Add("DisableX", data.Array.TU8(0x21) != 0)
+                                    .Add("DisableY", data.Array.TU8(0x22) != 0)
+                                    .Add("DisableZ", data.Array.TU8(0x23) != 0)
+                                    .Add("OffsetBlend", data.Array.TF32(0x24))
+                                    .Add("ArmLength", data.Array.TF32(0x28))
                                     .Add("i2C", data.Array.TI32(0x2C)));
                                 break;
                             case 0x4A:
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array[0x00])
-                                    .Add("i01_8", data.Array[0x01]));
+                                    .Add("i00_8", data.Array.TU8(0x00))
+                                    .Add("i01_8", data.Array.TU8(0x01)));
                                 break;
-                            case 0x4B:
+                            case 0x4B: // RobAdjustGlobal
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("i04_8", data.Array[0x04])
-                                    .Add("i05_8", data.Array[0x05])
-                                    .Add("f08", data.Array.TF32(0x08))
-                                    .Add("f0C", data.Array.TF32(0x0C))
-                                    .Add("f10", data.Array.TF32(0x10))
-                                    .Add("f14", data.Array.TF32(0x14))
-                                    .Add("f18", data.Array.TF32(0x18))
-                                    .Add("f1C", data.Array.TF32(0x1C))
-                                    .Add("f20", data.Array.TF32(0x20))
-                                    .Add("f24", data.Array.TF32(0x24))
-                                    .Add("f28", data.Array.TF32(0x28))
-                                    .Add("f2C", data.Array.TF32(0x2C))
-                                    .Add("f30", data.Array.TF32(0x30)));
+                                    .Add("ForceDuration", data.Array.TF32(0x00))
+                                    .Add("Type", data.Array.TU8(0x04))
+                                    .Add("CycleType", data.Array.TU8(0x05))
+                                    .Add("ExternalForceX", data.Array.TF32(0x08))
+                                    .Add("ExternalForceY", data.Array.TF32(0x0C))
+                                    .Add("ExternalForceZ", data.Array.TF32(0x10))
+                                    .Add("ExternalForceCycleStrengthX", data.Array.TF32(0x14))
+                                    .Add("ExternalForceCycleStrengthY", data.Array.TF32(0x18))
+                                    .Add("ExternalForceCycleStrengthZ", data.Array.TF32(0x1C))
+                                    .Add("ExternalForceCycleX", data.Array.TF32(0x20))
+                                    .Add("ExternalForceCycleY", data.Array.TF32(0x24))
+                                    .Add("ExternalForceCycleZ", data.Array.TF32(0x28))
+                                    .Add("Cycle", data.Array.TF32(0x2C))
+                                    .Add("Phase", data.Array.TF32(0x30)));
                                 break;
-                            case 0x4C:
+                            case 0x4C: // RobArmAdjust
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("hand", data.Array.TI16(0x00))
-                                    .Add("trans_time", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08)));
+                                    .Add("Index", data.Array.TI16(0x00))
+                                    .Add("Duration", data.Array.TF32(0x04))
+                                    .Add("Value", data.Array.TF32(0x08)));
                                 break;
-                            case 0x4D:
+                            case 0x4D: // DisableEyeMotion
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array[0x00]));
+                                    .Add("Value", data.Array.TU8(0x00) != 0));
                                 break;
                             case 0x4E:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00_16", data.Array.TI16(0x00))
-                                    .Add("i02_8", data.Array[0x02])
-                                    .Add("i03_8", data.Array[0x03])
+                                    .Add("i02_8", data.Array.TU8(0x02))
+                                    .Add("i03_8", data.Array.TU8(0x03))
                                     .Add("i04", data.Array.TI32(0x04))
                                     .Add("i08", data.Array.TI32(0x08))
                                     .Add("i0C", data.Array.TI32(0x0C))
@@ -924,14 +924,15 @@ RETURN:
                                     .Add("i14", data.Array.TI32(0x14))
                                     .Add("i18", data.Array.TI32(0x18)));
                                 break;
-                            case 0x4F:
+                            case 0x4F: // RobCharaColiRing
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array[0]));
+                                    .Add("Index", data.Array.TU8(0)));
                                 break;
-                            case 0x50:
+                            case 0x50: // AdjustGetGlobalTrans
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array[0]));
+                                    .Add("Value", data.Array.TU8(0) != 0));
                                 break;
+                            case 0x40: // WindReset
                             default:
                                 if (data.Array != null && data.Array.Length > 0)
                                 {
@@ -986,33 +987,34 @@ RETURN:
                 0x1D => 0x3C,
                 0x20 => 0x10,
                 0x21 => 0x18,
-                0x32 => 0x04,
-                0x35 => 0x14,
-                0x36 => 0x14,
-                0x37 => 0x14,
-                0x38 => 0x14,
-                0x39 => 0x14,
-                0x3A => 0x14,
-                0x3B => 0x04,
+                0x32 => 0x08, // SetFaceMotionId
+                0x35 => 0x14, // SetFaceMottblMotion
+                0x36 => 0x14, // SetHandRMottblMotion
+                0x37 => 0x14, // SetHandLMottblMotion
+                0x38 => 0x14, // SetMouthMottblMotion
+                0x39 => 0x14, // SetEyesMottblMotion
+                0x3A => 0x14, // SetEyelidMottblMotion
+                0x3B => 0x04, // SetRobCharaHeadObject
                 0x3C => 0x10,
-                0x3D => 0x08,
-                0x3E => 0x40,
-                0x41 => 0x04,
-                0x42 => 0x04,
+                0x3D => 0x08, // SetEyelidMotionFromFace
+                0x3E => 0x40, // RobPartsAdjust
+                0x40 => 0x00, // WindReset
+                0x41 => 0x04, // OsageReset
+                0x42 => 0x04, // OsageStep
                 0x43 => 0x08,
                 0x44 => 0x08,
                 0x45 => 0x04,
                 0x46 => 0x04,
-                0x47 => 0x08,
+                0x47 => 0x08, // OsageMoveCancel
                 0x48 => 0x1C,
-                0x49 => 0x30,
+                0x49 => 0x30, // RobHandAdjust
                 0x4A => 0x02,
-                0x4B => 0x34,
-                0x4C => 0x0C,
-                0x4D => 0x01,
+                0x4B => 0x34, // RobAdjustGlobal
+                0x4C => 0x0C, // RobArmAdjust
+                0x4D => 0x01, // DisableEyeMotion
                 0x4E => 0x1C,
-                0x4F => 0x01,
-                0x50 => 0x01,
+                0x4F => 0x01, // RobCharaColiRing
+                0x50 => 0x01, // AdjustGetGlobalTrans
                 _    => 0x00,
             };
 
@@ -1021,6 +1023,12 @@ RETURN:
                 0x00 => 0x1C,
                 0x01 => 0x08,
                 0x02 => 0x14,
+                0x28 => 0x10,
+                0x2E => 0x02,
+                0x33 => 0x02,
+                0x37 => 0x0C,
+                0x40 => 0x0C,
+                0x42 => 0x04,
                 0x44 => 0x04,
                 _    => 0x00,
             };
@@ -1075,10 +1083,26 @@ RETURN:
 
         public enum Type
         {
-            WindReset     = 0x40,
-            RobReset      = 0x41,
-            RobStep       = 0x42,
-            RobMoveCancel = 0x47,
+            SetFaceMotionId         = 0x32,
+            SetFaceMottblMotion     = 0x35,
+            SetHandRMottblMotion    = 0x36,
+            SetHandLMottblMotion    = 0x37,
+            SetMouthMottblMotion    = 0x38,
+            SetEyesMottblMotion     = 0x39,
+            SetEyelidMottblMotion   = 0x3A,
+            SetRobCharaHeadObject   = 0x3B,
+            SetEyelidMotionFromFace = 0x3D,
+            RobPartsAdjust          = 0x3E,
+            WindReset               = 0x40,
+            OsageReset              = 0x41,
+            OsageStep               = 0x42,
+            OsageMoveCancel         = 0x47,
+            RobHandAdjust           = 0x49,
+            RobAdjustGlobal         = 0x4B,
+            RobArmAdjust            = 0x4C,
+            DisableEyeMotion        = 0x4D,
+            RobCharaColiRing        = 0x4F,
+            AdjustGetGlobalTrans    = 0x50,
         }
     }
 }

@@ -78,12 +78,12 @@ namespace PD_Tool
                     {
                         state = a3da.A3DAReader(filepath);
                         if (state == 1)
-                            if (choose == "9") a3da.MsgPackWriter(filepath, json);
+                            if (choose[0] == '9') a3da.MsgPackWriter(filepath, json);
                             else
                             {
                                 a3da.Head.Format = format;
-                                File.WriteAllBytes(filepath + ".a3da", (choose == "1" ||
-                                    choose == "4") ? a3da.A3DAWriter() : a3da.A3DCWriter());
+                                File.WriteAllBytes(filepath + ".a3da", (choose[0] == '1' ||
+                                    choose[0] == '3') ? a3da.A3DAWriter() : a3da.A3DCWriter());
                             }
                     }
                 else if (ext == ".mp" || ext == ".json")
@@ -92,8 +92,8 @@ namespace PD_Tool
                         a3da.MsgPackReader(filepath, ext == ".json");
                         a3da.Head.Format = format;
 
-                        File.WriteAllBytes(filepath + ".a3da", (choose == "1" ||
-                            choose == "4") ? a3da.A3DAWriter() : a3da.A3DCWriter());
+                        File.WriteAllBytes(filepath + ".a3da", (choose[0] == '1' ||
+                            choose[0] == '3') ? a3da.A3DAWriter() : a3da.A3DCWriter());
                     }
             }
         }
@@ -127,7 +127,7 @@ namespace PD_Tool
                         {
                             KKdFARC.FARCFile file = farc.Files[i];
                             a3da.Head.Format = format;
-                            file.Data = (choose == "1"|| choose == "4")
+                            file.Data = (choose[0] == '1'|| choose[0] == '4')
                                 ? a3da.A3DAWriter() : a3da.A3DCWriter();
                             farc.Files[i] = file;
                         }
@@ -177,7 +177,7 @@ namespace PD_Tool
                 KKdFARC.FARCFile file = default;
                 file.Name = list[i];
                 a3daArray[i].Head.Format = format;
-                file.Data = (choose == "1" || choose == "4")
+                file.Data = (choose[0] == '1'|| choose[0] == '4')
                     ? a3daArray[i].A3DAWriter() : a3daArray[i].A3DCWriter();
                 farc.Files.Add(file);
             }

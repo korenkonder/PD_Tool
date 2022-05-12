@@ -126,6 +126,10 @@ namespace KKdBaseLib
         { if (isBE) { for (byte i = 0; i < 8; i++) { buf[i] = (byte)le; le >>= 8; } le = 0;
                 for (byte i = 0; i < 8; i++) { le |= buf[i]; if (i < 7) le <<= 8; } } return le; }
 
+        public static  sbyte TI8(this byte[] arr, int offset = 0)
+        {  sbyte val; fixed (byte* ptr = arr) val = *( sbyte*)(ptr + offset); return val; }
+        public static   byte TU8(this byte[] arr, int offset = 0)
+        {   byte val; fixed (byte* ptr = arr) val = *(  byte*)(ptr + offset); return val; }
         public static  short TI16(this byte[] arr, int offset = 0)
         {  short val; fixed (byte* ptr = arr) val = *( short*)(ptr + offset); return val; }
         public static ushort TU16(this byte[] arr, int offset = 0)
@@ -159,6 +163,10 @@ namespace KKdBaseLib
         public static   Quat TQ (this byte[] arr, int offset = 0)
         {   Quat val; fixed (byte* ptr = arr) val = *( Quat*)(ptr + offset); return val; }
 
+        public static void GBy(this byte[] arr,  sbyte val, int offset = 0)
+        { fixed (byte* ptr = arr) *( sbyte*)(ptr + offset) = val; }
+        public static void GBy(this byte[] arr,   byte val, int offset = 0)
+        { fixed (byte* ptr = arr) *(  byte*)(ptr + offset) = val; }
         public static void GBy(this byte[] arr,  short val, int offset = 0)
         { fixed (byte* ptr = arr) *( short*)(ptr + offset) = val; }
         public static void GBy(this byte[] arr, ushort val, int offset = 0)
