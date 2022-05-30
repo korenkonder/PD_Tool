@@ -2652,11 +2652,11 @@ namespace KKdMainLib
                         MsgPack instance = new MsgPack(Data.MObjectHRC[i0].Instances.Length, "Instance");
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Instances.Length; i1++)
                         {
-                            instance[i1] = MsgPack.New.Add(ref Data.MObjectHRC[i0].Instances[i1].MT)
-                                .Add("Name", Data.MObjectHRC[i0].Instances[i1].Name);
+                            MsgPack _instance = MsgPack.New.Add("Name", Data.MObjectHRC[i0].Instances[i1].Name);
                             if (Data.MObjectHRC[i0].Instances[i1].Shadow)
-                                instance[i1].Add("Shadow", true);
-                            instance[i1].Add("UIDName", Data.MObjectHRC[i0].Instances[i1].UIDName);
+                                _instance.Add("Shadow", true);
+                            _instance.Add("UIDName", Data.MObjectHRC[i0].Instances[i1].UIDName);
+                            instance[i1] = _instance.Add(ref Data.MObjectHRC[i0].Instances[i1].MT);
                         }
 
                         _mObjectHRC.Add(instance);
@@ -2667,19 +2667,19 @@ namespace KKdMainLib
                         MsgPack node = new MsgPack(Data.MObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.MObjectHRC[i0].Node.Length; i1++)
                         {
-                            node[i1] = MsgPack.New
+                            MsgPack _node = MsgPack.New
                                 .Add("Name"  , Data.MObjectHRC[i0].Node[i1].Name  )
-                                .Add("Parent", Data.MObjectHRC[i0].Node[i1].Parent)
-                                .Add(ref Data.MObjectHRC[i0].Node[i1].MT);
+                                .Add("Parent", Data.MObjectHRC[i0].Node[i1].Parent);
 
                             if (Data.MObjectHRC[i0].Node[i1].JointOrient.HasValue)
                             {
                                 Vec3 jointOrient = Data.MObjectHRC[i0].Node[i1].JointOrient.Value;
-                                node[i1] = node[i1].Add(new MsgPack("JointOrient")
+                                _node.Add(new MsgPack("JointOrient")
                                     .Add("X", jointOrient.X)
                                     .Add("Y", jointOrient.Y)
                                     .Add("Z", jointOrient.Z));
                             }
+                            node[i1] = _node.Add(ref Data.MObjectHRC[i0].Node[i1].MT);
                         }
                         _mObjectHRC.Add(node);
                     }
@@ -2737,10 +2737,11 @@ namespace KKdMainLib
                         MsgPack texPat = new MsgPack(Data.Object[i0].TexPat.Length, "TexturePattern");
                         for (i1 = 0; i1 < Data.Object[i0].TexPat.Length; i1++)
                         {
-                            texPat[i1] = MsgPack.New.Add("Name", Data.Object[i0].TexPat[i1].Name);
+                            MsgPack _texPat = MsgPack.New.Add("Name", Data.Object[i0].TexPat[i1].Name);
                             if (Data.Object[i0].TexPat[i1].Pat != null)
-                                texPat[i1] = texPat[i1].Add("Pat"      , Data.Object[i0].TexPat[i1].Pat      )
-                                                       .Add("PatOffset", Data.Object[i0].TexPat[i1].PatOffset);
+                                _texPat.Add("Pat"      , Data.Object[i0].TexPat[i1].Pat      )
+                                       .Add("PatOffset", Data.Object[i0].TexPat[i1].PatOffset);
+                            texPat[i1] = _texPat;
                         }
                         _object.Add(texPat);
                     }
@@ -2786,19 +2787,19 @@ namespace KKdMainLib
                         MsgPack node = new MsgPack(Data.ObjectHRC[i0].Node.Length, "Node");
                         for (i1 = 0; i1 < Data.ObjectHRC[i0].Node.Length; i1++)
                         {
-                            node[i1] = MsgPack.New
+                            MsgPack _node = MsgPack.New
                                 .Add("Name"  , Data.ObjectHRC[i0].Node[i1].Name  )
-                                .Add("Parent", Data.ObjectHRC[i0].Node[i1].Parent)
-                                .Add(ref Data.ObjectHRC[i0].Node[i1].MT);
+                                .Add("Parent", Data.ObjectHRC[i0].Node[i1].Parent);
 
                             if (Data.ObjectHRC[i0].Node[i1].JointOrient.HasValue)
                             {
                                 Vec3 jointOrient = Data.ObjectHRC[i0].Node[i1].JointOrient.Value;
-                                node[i1] = node[i1].Add(new MsgPack("JointOrient")
+                                _node.Add(new MsgPack("JointOrient")
                                     .Add("X", jointOrient.X)
                                     .Add("Y", jointOrient.Y)
                                     .Add("Z", jointOrient.Z));
                             }
+                            node[i1] = _node.Add(ref Data.ObjectHRC[i0].Node[i1].MT);
                         }
                         _objectHRC.Add(node);
                     }

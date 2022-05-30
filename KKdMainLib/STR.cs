@@ -178,10 +178,11 @@ namespace KKdMainLib
             MsgPack strings = new MsgPack(Strings.Length, "Strings");
             for (int i = 0; i < Strings.Length; i++)
             {
-                strings[i] = MsgPack.New.Add("ID", Strings[i].ID);
+                MsgPack @string = MsgPack.New.Add("ID", Strings[i].ID);
                 if (Strings[i].Str.V != null)
                     if (Strings[i].Str.V != "")
-                        strings[i] = strings[i].Add("Str", Strings[i].Str.V);
+                        @string.Add("Str", Strings[i].Str.V);
+                strings[i] = @string;
             }
             str.Add(strings);
 
