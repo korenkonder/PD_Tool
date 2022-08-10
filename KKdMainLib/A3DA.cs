@@ -371,6 +371,8 @@ namespace KKdMainLib
                                 dict.FV(out jointOrient.Z, nameView + ".joint_orient.z");
                                 Data.MObjectHRC[i0].Node[i1].JointOrient = jointOrient;
                             }
+                            else
+                                Data.MObjectHRC[i0].Node[i1].JointOrient = null;
 
                             dict.FV(out Data.MObjectHRC[i0].Node[i1].Name  , nameView + ".name"  );
                             dict.FV(out Data.MObjectHRC[i0].Node[i1].Parent, nameView + ".parent");
@@ -497,6 +499,8 @@ namespace KKdMainLib
                                 dict.FV(out jointOrient.Z, nameView + ".joint_orient.z");
                                 Data.ObjectHRC[i0].Node[i1].JointOrient = jointOrient;
                             }
+                            else
+                                Data.ObjectHRC[i0].Node[i1].JointOrient = null;
 
                             dict.FV(out Data.ObjectHRC[i0].Node[i1].Name  , nameView + ".name"  );
                             dict.FV(out Data.ObjectHRC[i0].Node[i1].Parent, nameView + ".parent");
@@ -811,8 +815,6 @@ namespace KKdMainLib
                             nameView = name + ".node." + soi1;
                             ref ObjectNode node = ref mObjectHRC.Node[soi1];
 
-                            W(ref node.MT, nameView, 0b10000);
-
                             if (node.JointOrient.HasValue)
                             {
                                 Vec3 jointOrient = node.JointOrient.Value;
@@ -820,6 +822,8 @@ namespace KKdMainLib
                                 W(nameView + ".joint_orient.y", jointOrient.Y);
                                 W(nameView + ".joint_orient.z", jointOrient.Z);
                             }
+
+                            W(ref node.MT, nameView, 0b10000);
 
                             W(nameView +   ".name", node.Name  );
                             W(nameView + ".parent", node.Parent);
@@ -967,8 +971,6 @@ namespace KKdMainLib
                             nameView = name + ".node." + soi1;
                             ref ObjectNode node = ref objectHRC.Node[soi1];
 
-                            W(ref node.MT, nameView, 0b10000);
-
                             if (node.JointOrient.HasValue)
                             {
                                 Vec3 jointOrient = node.JointOrient.Value;
@@ -976,6 +978,8 @@ namespace KKdMainLib
                                 W(nameView + ".joint_orient.y", jointOrient.Y);
                                 W(nameView + ".joint_orient.z", jointOrient.Z);
                             }
+
+                            W(ref node.MT, nameView, 0b10000);
 
                             W(nameView + ".name"  , node.Name  );
                             W(nameView + ".parent", node.Parent);
@@ -1434,13 +1438,6 @@ namespace KKdMainLib
                     for (i0 = 0; i0 < Data.Chara.Length; i0++)
                         WO(ref Data.Chara[i0].MT, ReturnToOffset);
 
-                if (Data.DOF != null)
-                {
-                    DOF dof = Data.DOF.Value;
-                    WO(ref dof.MT, ReturnToOffset);
-                    Data.DOF = dof;
-                }
-
                 if (Data.Light != null)
                     for (i0 = 0; i0 < Data.Light.Length; i0++)
                     {
@@ -1517,12 +1514,6 @@ namespace KKdMainLib
                     for (i0 = 0; i0 < Data.Curve.Length; i0++)
                         W(ref Data.Curve[i0].CV);
 
-                if (Data.DOF != null && (Head.Format == Format.AFT || Head.Format == Format.FT))
-                {
-                    DOF dof = Data.DOF.Value;
-                    W(ref dof.MT);
-                    Data.DOF = dof;
-                }
 
                 if (Data.Light != null)
                     for (i0 = 0; i0 < Data.Light.Length; i0++)
@@ -2303,7 +2294,7 @@ namespace KKdMainLib
                                 Parent = temp1[i1].RI32("Parent"),
                             };
 
-                            if ((temp2 = temp1["JointOrient"]).NotNull)
+                            if ((temp2 = temp1[i1]["JointOrient"]).NotNull)
                                 Data.MObjectHRC[i0].Node[i1].JointOrient = new Vec3
                                 {
                                     X = temp1.RF32("X"),
@@ -2427,7 +2418,7 @@ namespace KKdMainLib
                                 Parent = temp1[i1].RI32("Parent"),
                             };
 
-                            if ((temp2 = temp1["JointOrient"]).NotNull)
+                            if ((temp2 = temp1[i1]["JointOrient"]).NotNull)
                                 Data.ObjectHRC[i0].Node[i1].JointOrient = new Vec3
                                 {
                                     X = temp1.RF32("X"),

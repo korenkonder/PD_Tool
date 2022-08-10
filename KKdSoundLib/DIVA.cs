@@ -24,9 +24,10 @@ namespace KKdSoundLib
             Data.SampleRate = reader.RI32();
             Data.SamplesCount = reader.RI32();
             reader.RI64();
-            Data.Channels = reader.RU16();
+            Data.Channels = reader.RU8();
+            reader.RU8();
             reader.RU16();
-            Data.Name = reader.RS(0x20);
+            reader.RBy(0x20);
 
             byte value = 0;
             byte[] data = new byte[Data.SamplesCount * Data.Channels * 4];
@@ -39,6 +40,7 @@ namespace KKdSoundLib
             fixed (sbyte* stepindexPtr = stepindex)
             fixed (byte* ptr = data)
             {
+                reader.S(0, SeekOrigin.Begin);
                 float* dataPtr = (float*)ptr;
                 for (i = 0; i < Data.SamplesCount; i++)
                     for (c = 0; c < Data.Channels; c++, dataPtr++)
@@ -76,7 +78,7 @@ namespace KKdSoundLib
             if (!Header.IsSupported) { reader.C(); return; }
 
             Stream writer = File.OpenWriter(file + ".diva", true);
-            Data.Channels = Header.Channels;
+            Data.Channels = (byte)Header.Channels;
             Data.SampleRate = Header.SampleRate;
             Data.SamplesCount = Header.Size / Header.Channels / Header.Bytes;
             writer.PI64 = 0x40;
@@ -198,8 +200,7 @@ namespace KKdSoundLib
             public int Size;
             public int SampleRate;
             public int SamplesCount;
-            public string Name;
-            public ushort Channels;
+            public byte Channels;
             public byte[] Data;
         }
     }
