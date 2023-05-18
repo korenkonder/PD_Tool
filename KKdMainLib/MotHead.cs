@@ -202,8 +202,14 @@ RETURN:
                             int Size = GetSize(data.Type);
                             if (data.Array == null || data.Array.Length < 1 || Size < 1) continue;
 
-                            if ((int)data.Type == 0x3E || (int)data.Type == 0x49)
-                                s.A(0x20, true);
+                            switch ((int)data.Type)
+                            {
+                                case 0x3E:
+                                case 0x49:
+                                case 0x4B:
+                                    s.A(0x20, true);
+                                    break;
+                            }
 
                             if (data.Array.Length >= 4 && s.P % 0x4 != 0)
                                 s.A(0x04, true);
@@ -492,7 +498,7 @@ RETURN:
                             data.Array.GBy(temp.RF32("Duration"), 0x04);
                             break;
                         case 0x3E: // RobPartsAdjust
-                            data.Array.GBy(temp.RF32("ForceDuration"), 0x00);
+                            data.Array.GBy(temp.RI32("TransitionDuration"), 0x00);
                             data.Array.GBy(temp.RU8("Parts"), 0x04);
                             data.Array.GBy(temp.RU8("Type"), 0x05);
                             data.Array.GBy((byte)(temp.RB("IgnoreGravity") ? 1 : 0), 0x06);
@@ -510,7 +516,7 @@ RETURN:
                             data.Array.GBy(temp.RF32("Phase"), 0x30);
                             data.Array.GBy(temp.RF32("Force"), 0x34);
                             data.Array.GBy(temp.RF32("Strength"), 0x38);
-                            data.Array.GBy(temp.RF32("StrengthTransition"), 0x3C);
+                            data.Array.GBy(temp.RI32("StrengthTransition"), 0x3C);
                             break;
                         case 0x41: // OsageReset
                             data.Array.GBy(temp.RI32("Iterations"), 0x00);
@@ -570,7 +576,7 @@ RETURN:
                             data.Array.GBy(temp.RU8("i01_8"), 0x01);
                             break;
                         case 0x4B: // RobAdjustGlobal
-                            data.Array.GBy(temp.RI32("ForceDuration"), 0x00);
+                            data.Array.GBy(temp.RI32("TransitionDuration"), 0x00);
                             data.Array.GBy(temp.RU8("Type"), 0x04);
                             data.Array.GBy(temp.RU8("CycleType"), 0x05);
                             data.Array.GBy(temp.RF32("ExternalForceX"), 0x08);
@@ -798,7 +804,7 @@ RETURN:
                                 break;
                             case 0x3E: // RobPartsAdjust
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("ForceDuration", data.Array.TF32(0x00))
+                                    .Add("TransitionDuration", data.Array.TI32(0x00))
                                     .Add("Parts", data.Array.TU8(0x04))
                                     .Add("Type", data.Array.TU8(0x05))
                                     .Add("IgnoreGravity", data.Array.TU8(0x06) != 0)
@@ -816,7 +822,7 @@ RETURN:
                                     .Add("Phase", data.Array.TF32(0x30))
                                     .Add("Force", data.Array.TF32(0x34))
                                     .Add("Strength", data.Array.TF32(0x38))
-                                    .Add("StrengthTransition", data.Array.TF32(0x3C)));
+                                    .Add("StrengthTransition", data.Array.TI32(0x3C)));
                                 break;
                             case 0x41: // OsageReset
                                 arrayEntry.Add(new MsgPack("Data")
@@ -887,7 +893,7 @@ RETURN:
                                 break;
                             case 0x4B: // RobAdjustGlobal
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("ForceDuration", data.Array.TF32(0x00))
+                                    .Add("TransitionDuration", data.Array.TI32(0x00))
                                     .Add("Type", data.Array.TU8(0x04))
                                     .Add("CycleType", data.Array.TU8(0x05))
                                     .Add("ExternalForceX", data.Array.TF32(0x08))
