@@ -173,10 +173,8 @@ namespace KKdMainLib.IO
             else
                 ReadDigit(ref buf, ref c, dig_buf, ref buf_pos, buf_end);
 
-            bool f = false;
             if (c == '.')
             {
-                f = true;
                 dig_buf[buf_pos++] = (byte)c;
                 if ((c = ReadChar(ref buf)) == -1)
                     return null;
@@ -194,7 +192,7 @@ namespace KKdMainLib.IO
                 SeekOne(ref buf);
                 return obj;
             }
-            else if (c != 'e' && c != 'E' && !f)
+            else if (c != 'e' && c != 'E' && !fraction)
             {
                 string temp = dig_buf.ToUTF8();
                 int null_term = temp.IndexOf('\0');
@@ -243,7 +241,7 @@ namespace KKdMainLib.IO
             int fnull_term = ftemp.IndexOf('\0');
             if (fnull_term >= 0)
                 ftemp = ftemp.Substring(0, fnull_term);
-            if (!double.TryParse(ftemp, out double fval))
+            if (!ftemp.ToF64(out double fval))
                 return null;
 
             object fobj;
