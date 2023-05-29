@@ -1,12 +1,26 @@
-//Original or reader part: https://github.com/MarcosLopezC/LightJson/
-
 using KKdBaseLib;
+using System;
+using System.IO;
 using BaseExtensions = KKdBaseLib.Extensions;
 
 namespace KKdMainLib.IO
 {
     public struct JSON : System.IDisposable
     {
+        struct ReadBuffer
+        {
+            public char[] data;
+            public int first;
+            public int length;
+
+            public ReadBuffer(int size)
+            {
+                data = new char[size];
+                first = 0;
+                length = 0;
+            }
+        };
+
         public JSON(Stream _IO) => this._IO = _IO;
 
         private Stream _IO;
@@ -15,175 +29,500 @@ namespace KKdMainLib.IO
 
         public byte[] ToArray(bool Close = false) => _IO.ToArray(Close);
 
-        public MsgPack Read() => ReadValue();
-
-        private MsgPack ReadValue(string Key = null)
+        public MsgPack Read()
         {
-            char c = _IO.SW().PCUTF8();
-            object obj = null;
-            if (char.IsDigit(c))
-                obj = RF();
-            else
-                obj = c switch
-                {
-                    '"' => RS (),
-                    '{' => RO (),
-                    '[' => RA (),
-                    '-' => RF (),
-                    't' => RBo(),
-                    'f' => RBo(),
-                    'n' => RN (),
-                    _   => null ,
-                };
-            return new MsgPack(Key, obj);
+            ReadBuffer buf = new ReadBuffer(0x400);
+            buf.first = 0;
+            buf.length = 0;
+            buf.data[0] = '\0';
+            buf.data[buf.data.Length - 1] = '\0';
+            int c = ReadChar(ref buf);
+            return new MsgPack(null, ReadInner(ref buf, ref c));
         }
 
-        private string RS()
+        int ReadChar(ref ReadBuffer buf)
         {
-            if (!Extensions.As(_IO, '"')) return null;
-            char c;
-            string s = "";
-            while (true)
+            if (buf.length == 0)
             {
-                c = _IO.RCUTF8();
+                buf.first = 1;
+                buf.data[0] = buf.data[buf.data.Length - 1];
+                byte[] temp = _IO.RBy(buf.data.Length - 1);
+                buf.length = temp.Length;
+                Array.Copy(temp, 0, buf.data, 1, temp.Length);
+            }
+
+            if (buf.length < 1)
+                return -1;
+
+            int c = buf.data[buf.first];
+            buf.first++;
+            buf.length--;
+            return c;
+        }
+
+        void Seek(ref ReadBuffer buf, long offset)
+        {
+            if (buf.first < offset || offset >= buf.length - 1L) {
+                long pos = _IO.PI64 - buf.length - offset;
+                long off = pos % buf.data.Length;
+                pos -= off;
+                if (pos > 1)
+                {
+                    _IO.S(pos, SeekOrigin.Begin);
+                    buf.first = (int)off;
+                    byte[] temp = _IO.RBy(buf.data.Length);
+                    buf.length = temp.Length;
+                    Array.Copy(temp, 0, buf.data, 0, temp.Length);
+                }
+                else
+                {
+                    _IO.S(pos, SeekOrigin.Begin);
+                    buf.first = (int)(off + 1);
+                    buf.data[0] = '\0';
+                    byte[] temp = _IO.RBy(buf.data.Length - 1);
+                    buf.length = temp.Length;
+                    Array.Copy(temp, 0, buf.data, 1, temp.Length);
+                }
+                buf.length -= (int)off;
+            }
+            else
+            {
+                buf.first -= (int)offset;
+                buf.length += (int)offset;
+            }
+        }
+
+        void SeekOne(ref ReadBuffer buf)
+        {
+            buf.first--;
+            buf.length++;
+        }
+
+        object ReadInner(ref ReadBuffer buf, ref int c)
+        {
+            if (c == -1)
+                return null;
+
+            if (c == ' ' || c == '\n' || c == '\r' || c == '\t')
+                c = ReadChar(ref buf);
+
+            switch (c)
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '-':
+                    return ReadFloat(ref buf, ref c);
+                case '"':
+                    return ReadString(ref buf, ref c);
+                case '{':
+                    return ReadMap(ref buf, ref c);
+                case '[':
+                    return ReadArray(ref buf, ref c);
+                case 't':
+                    return ReadBool(ref buf, ref c);
+                case 'f':
+                    return ReadBool(ref buf, ref c);
+                case 'n':
+                    return ReadNull(ref buf, ref c);
+            }
+            return null;
+        }
+
+        void ReadDigit(ref ReadBuffer buf, ref int c, byte[] dig_buf, ref int dig_buf_pos, int dig_buf_end) {
+            int b = dig_buf_pos;
+            while (c >= '0' && c <= '9' && b < dig_buf_end) {
+                dig_buf[b++] = (byte)c;
+                if ((c = ReadChar(ref buf)) == -1)
+                    break;
+            }
+            dig_buf_pos = b;
+        }
+
+        object ReadFloat(ref ReadBuffer buf, ref int c)
+        {
+            byte[] dig_buf = new byte[0x100];
+            int buf_pos = 0;
+            int buf_end = dig_buf.Length;
+            bool negate = false;
+            bool zero = false;
+            bool fraction = false;
+
+            if (c == '-')
+            {
+                dig_buf[buf_pos++] = (byte)c;
+                if ((c = ReadChar(ref buf)) == -1)
+                    return null;
+                negate = true;
+            }
+
+            if (c == '0')
+            {
+                dig_buf[buf_pos++] = (byte)c;
+                if ((c = ReadChar(ref buf)) == -1)
+                    return null;
+                zero = true;
+            }
+            else
+                ReadDigit(ref buf, ref c, dig_buf, ref buf_pos, buf_end);
+
+            bool f = false;
+            if (c == '.')
+            {
+                f = true;
+                dig_buf[buf_pos++] = (byte)c;
+                if ((c = ReadChar(ref buf)) == -1)
+                    return null;
+                ReadDigit(ref buf, ref c, dig_buf, ref buf_pos, buf_end);
+                fraction = true;
+            }
+
+            if (zero && !fraction)
+            {
+                object obj;
+                if (negate)
+                    obj = -0.0f;
+                else
+                    obj = 0;
+                SeekOne(ref buf);
+                return obj;
+            }
+            else if (c != 'e' && c != 'E' && !f)
+            {
+                string temp = dig_buf.ToUTF8();
+                int null_term = temp.IndexOf('\0');
+                if (null_term >= 0)
+                    temp = temp.Substring(0, null_term);
+                if (!long.TryParse(temp, out long val))
+                    return null;
+
+                object obj;
+                unchecked
+                {
+                    if (val >= 0x00 && val < 0xFF)
+                        obj = (byte)val;
+                    else if (val >= (sbyte)0x80 && val <= (sbyte)0x7F)
+                        obj = (sbyte)val;
+                    else if (val >= 0x0000 && val < 0xFFFF)
+                        obj = (ushort)val;
+                    else if (val >= (short)0x8000 && val <= (short)0x7FFF)
+                        obj = (short)val;
+                    else if (val >= 0x00000000 && val <= 0xFFFFFFFF)
+                        obj = (uint)val;
+                    else if (val >= (int)0x80000000 && val <= (int)0x7FFFFFFF)
+                        obj = (int)val;
+                    else
+                        obj = val;
+                }
+                SeekOne(ref buf);
+                return obj;
+            }
+            else if (c == 'e' || c == 'E')
+            {
+                dig_buf[buf_pos++] = (byte)c;
+                if ((c = ReadChar(ref buf)) == -1)
+                    return null;
+
+                if (c == '+' || c == '-')
+                {
+                    dig_buf[buf_pos++] = (byte)c;
+                    if ((c = ReadChar(ref buf)) == -1)
+                        return null;
+                }
+                ReadDigit(ref buf, ref c, dig_buf, ref buf_pos, buf_end);
+            }
+
+            string ftemp = dig_buf.ToUTF8();
+            int fnull_term = ftemp.IndexOf('\0');
+            if (fnull_term >= 0)
+                ftemp = ftemp.Substring(0, fnull_term);
+            if (!double.TryParse(ftemp, out double fval))
+                return null;
+
+            object fobj;
+            if (fval == (float)fval)
+                fobj = (float)fval;
+            else
+                fobj = fval;
+            SeekOne(ref buf);
+            return fobj;
+        }
+
+        byte ReadStringHex(int c)
+        {
+            if (c >= '0' && c <= '9')
+                return (byte)(c - '0');
+            else if (c >= 'A' && c <= 'F')
+                return (byte)(c - 'A' + 0xA);
+            else if (c >= 'a' && c <= 'f')
+                return (byte)(c - 'a' + 0xA);
+            else
+                return 0;
+        }
+
+        string ReadStringInner(ref ReadBuffer buf, ref int c)
+        {
+            if (c != '"')
+                return null;
+
+            long pos = _IO.PI64 - buf.length;
+            ulong len = 0;
+            while (c != -1)
+            {
+                c = ReadChar(ref buf);
+                if (c == '\\')
+                {
+                    if ((c = ReadChar(ref buf)) == -1)
+                        break;
+
+                    switch (c)
+                    {
+                        case '"':
+                        case '\\':
+                        case '/':
+                        case 'b':
+                        case 'f':
+                        case 'n':
+                        case 'r':
+                        case 't':
+                            len++;
+                            break;
+                        case 'u':
+                            {
+                                uint uc = 0;
+                                if ((c = ReadChar(ref buf)) == -1)
+                                    break;
+                                uc |= (uint)ReadStringHex(c) << 24;
+
+                                if ((c = ReadChar(ref buf)) == -1)
+                                    break;
+                                uc |= (uint)ReadStringHex(c) << 16;
+
+                                if ((c = ReadChar(ref buf)) == -1)
+                                    break;
+                                uc |= (uint)ReadStringHex(c) << 8;
+
+                                if ((c = ReadChar(ref buf)) == -1)
+                                    break;
+                                uc |= (uint)ReadStringHex(c);
+
+                                if (uc <= 0x7F)
+                                    len++;
+                                else if (c <= 0x7FF)
+                                    len += 2;
+                                else
+                                    len += 3;
+                            }
+                            break;
+                    }
+                }
+                else if (c == '"')
+                    break;
+                else
+                    len++;
+            }
+            if (c == -1)
+                return null;
+            long pos_end = _IO.PI64 - buf.length;
+
+            Seek(ref buf, pos_end - pos);
+            byte[] temp = new byte[len + 1];
+            for (ulong i = 0; i < len;)
+            {
+                c = ReadChar(ref buf);
 
                 if (c == '\\')
                 {
-                    c = _IO.RCUTF8();
+                    c = ReadChar(ref buf);
 
-                    switch (char.ToLower(c))
+                    switch (c)
                     {
-                        case '"' :
+                        case '"':
+                            temp[i++] = (byte)'"';
+                            break;
                         case '\\':
-                        case '/' : s += c; break;
-                        case 'b' : s += '\b'; break;
-                        case 'f' : s += '\f'; break;
-                        case 'n' : s += '\n'; break;
-                        case 'r' : s += '\r'; break;
-                        case 't' : s += '\t'; break;
-                        case 'u' : s += RUL(); break;
-                        default: return null;
+                            temp[i++] = (byte)'\\';
+                            break;
+                        case '/':
+                            temp[i++] = (byte)'/';
+                            break;
+                        case 'b':
+                            temp[i++] = (byte)'\b';
+                            break;
+                        case 'f':
+                            temp[i++] = (byte)'\f';
+                            break;
+                        case 'n':
+                            temp[i++] = (byte)'\n';
+                            break;
+                        case 'r':
+                            temp[i++] = (byte)'\r';
+                            break;
+                        case 't':
+                            temp[i++] = (byte)'\t';
+                            break;
+                        case 'u':
+                            {
+                                uint uc = 0;
+                                uc |= (uint)ReadStringHex(ReadChar(ref buf)) << 24;
+                                uc |= (uint)ReadStringHex(ReadChar(ref buf)) << 16;
+                                uc |= (uint)ReadStringHex(ReadChar(ref buf)) << 8;
+                                uc |= (uint)ReadStringHex(ReadChar(ref buf));
+                                if (uc <= 0x7F)
+                                    temp[i] = (byte)uc;
+                                else if (uc <= 0x7FF)
+                                {
+                                    temp[i++] = (byte)(0xC0 | ((uc >> 6) & 0x1F));
+                                    temp[i] = (byte)(0x80 | (uc & 0x3F));
+                                }
+                                else
+                                {
+                                    temp[i++] = (byte)(0xE0 | ((uc >> 12) & 0xF));
+                                    temp[i++] = (byte)(0x80 | ((uc >> 6) & 0x3F));
+                                    temp[i++] = (byte)(0x80 | (uc & 0x3F));
+                                }
+                            }
+                            break;
                     }
                 }
-                else if (c == '"') break;
-                else if (char.IsControl(c))
+                else if (c == '"')
+                    break;
+                else
+                    temp[i++] = (byte)c;
+            }
+
+            if ((c = ReadChar(ref buf)) == -1)
+                return null;
+
+            string str = temp.ToUTF8();
+            int null_term = str.IndexOf('\0');
+            if (null_term >= 0)
+                str = str.Substring(0, null_term);
+            return str;
+        }
+
+        object ReadString(ref ReadBuffer buf, ref int c)
+        {
+            return ReadStringInner(ref buf, ref c);
+        }
+
+        void ReadSkipWhitespace(ref ReadBuffer buf, ref int c)
+        {
+            while ((c = ReadChar(ref buf)) != -1)
+            {
+                if (c == ' ' || c == '\n' || c == '\r' || c == '\t')
+                    continue;
+                break;
+            }
+        }
+
+        object ReadMap(ref ReadBuffer buf, ref int c)
+        {
+            KKdList<MsgPack> map = KKdList<MsgPack>.New;
+            if (c != '}')
+            {
+                while (true)
+                {
+                    ReadSkipWhitespace(ref buf, ref c);
+
+                    if (c == '}')
+                        break;
+
+                    string key = ReadStringInner(ref buf, ref c);
+                    if (key == null)
+                        return null;
+
+                    ReadSkipWhitespace(ref buf, ref c);
+                    if (c != ':')
+                        return null;
+                    ReadSkipWhitespace(ref buf, ref c);
+
+                    map.Add(new MsgPack(key, ReadInner(ref buf, ref c)));
+
+                    ReadSkipWhitespace(ref buf, ref c);
+
+                    if (c == '}')
+                        break;
+                    else if (c != ',')
+                        return null;
+                }
+            }
+
+            map.Capacity = map.Count;
+            return map;
+        }
+
+        object ReadArray(ref ReadBuffer buf, ref int c)
+        {
+            KKdList<MsgPack> array = KKdList<MsgPack>.New;
+            if (c != ']')
+            {
+                while (true)
+                {
+                    ReadSkipWhitespace(ref buf, ref c);
+
+                    if (c == ']')
+                        break;
+
+                    array.Add(new MsgPack(null, ReadInner(ref buf, ref c)));
+
+                    ReadSkipWhitespace(ref buf, ref c);
+
+                    if (c == ']')
+                        break;
+                    else if (c != ',')
+                        return null;
+                }
+            }
+
+            array.Capacity = array.Count;
+            return array.ToArray();
+        }
+
+        object ReadBool(ref ReadBuffer buf, ref int c)
+        {
+            if (c != 't')
+            {
+                if ((c = ReadChar(ref buf)) == -1 || c != 'a')
                     return null;
-                else s += c;
+                if ((c = ReadChar(ref buf)) == -1 || c != 'l')
+                    return null;
+                if ((c = ReadChar(ref buf)) == -1 || c != 's')
+                    return null;
+                if ((c = ReadChar(ref buf)) == -1 || c != 'e')
+                    return null;
+                return false;
             }
-
-            return s;
-        }
-
-        private char RUL() =>
-            (char)((((((RHD() << 4) | RHD()) << 4) | RHD()) << 4) | RHD());
-
-        private int RHD() => byte.Parse(_IO.RCUTF8().ToString(),
-            System.Globalization.NumberStyles.HexNumber);
-
-        private KKdList<MsgPack> RO()
-        {
-            KKdList<MsgPack> obj = KKdList<MsgPack>.New;
-            if (!Extensions.As(_IO, '{')) return KKdList<MsgPack>.Null;
-            if (_IO.SW().PCUTF8() == '}')
-            { _IO.RCUTF8(); return KKdList<MsgPack>.Null; }
-
-            string key;
-            char c;
-            while (true)
-            {
-                _IO.SW();
-
-                key = RS();
-                if (!Extensions.As(_IO.SW(), ':'))
-                    return KKdList<MsgPack>.Null;
-
-                obj.Add(ReadValue(key));
-                c = _IO.SW().PCUTF8();
-
-                     if (c == '}') { _IO.RCUTF8();    break; }
-                else if (c == ',') { _IO.RCUTF8(); continue; }
-                else return KKdList<MsgPack>.Null;
-            }
-            obj.Capacity = obj.Count;
-            return obj;
-        }
-
-        private MsgPack[] RA()
-        {
-            KKdList<MsgPack> obj = KKdList<MsgPack>.New;
-            if (!Extensions.As(_IO, '[')) return null;
-            if (_IO.SW().PCUTF8() == ']')
-            { _IO.RCUTF8(); return obj.ToArray(); }
-
-            char c;
-            while (true)
-            {
-                obj.Add(ReadValue(null));
-                c = _IO.SW().PCUTF8();
-
-                     if (c == ']') { _IO.RCUTF8();    break; }
-                else if (c == ',') { _IO.RCUTF8(); continue; }
-                else return null;
-            }
-            obj.Capacity = obj.Count;
-            return obj.ToArray();
-        }
-
-        private object RF()
-        {
-            string s = "";
-            _IO.SW();
-            bool negative = false;
-            if (_IO.PCUTF8() == '-') { _IO.RCUTF8(); negative = true; }
-            if (_IO.PCUTF8() == '0') s += _IO.RCUTF8();
-            else                     s +=     RD    ();
-            char c = _IO.PCUTF8();
-            if (c == '.') s += _IO.RCUTF8() + RD();
-            else if (negative && s == "0")
-                return (float)-0.0f;
-            else if (c != 'e' && c != 'E')
-            {
-                if (negative) s = "-" + s;
-                long val;
-                try { val = long.Parse(s); }
-                catch { return ulong.Parse(s); }
-                     if (val >=  0x00000000 && val < 0x000000100) return (  byte)val;
-                else if (val >= -0x00000080 && val < 0x000000080) return ( sbyte)val;
-                else if (val >= -0x00008000 && val < 0x000008000) return ( short)val;
-                else if (val >=  0x00000000 && val < 0x000010000) return (ushort)val;
-                else if (val >= -0x80000000 && val < 0x000800000) return (   int)val;
-                else if (val >=  0x00000000 && val < 0x100000000) return (  uint)val;
-                else                                              return         val;
-            }
-
-            c = _IO.PCUTF8();
-            if (c == 'e' || c == 'E')
-            {
-                s += _IO.RCUTF8();
-                c  = _IO.PCUTF8();
-                if (c == '+' || c == '-') s += _IO.RCUTF8();
-                s += RD();
-            }
-            double d = s.ToF64();
-            if ((float)d == d)
-                return negative ? (((float)d).ToU32() | 0x80000000).ToF32() : (float)d;
             else
-                return negative ? (d.ToU64() | 0x8000000000000000).ToF64() : d;
+            {
+                if ((c = ReadChar(ref buf)) == -1 || c != 'r')
+                    return null;
+                if ((c = ReadChar(ref buf)) == -1 || c != 'u')
+                    return null;
+                if ((c = ReadChar(ref buf)) == -1 || c != 'e')
+                    return null;
+                return true;
+            }
         }
 
-        private bool RBo()
+        object ReadNull(ref ReadBuffer buf, ref int c)
         {
-            char c = _IO.PCUTF8();
-                 if (c == 't' && _IO.As( "true")) return  true;
-            else if (c == 'f' && _IO.As("false")) return false;
-            return false;
+            if ((c = ReadChar(ref buf)) == -1 || c != 'u')
+                return null;
+            if ((c = ReadChar(ref buf)) == -1 || c != 'l')
+                return null;
+            if ((c = ReadChar(ref buf)) == -1 || c != 'l')
+                return null;
+
+            return null;
         }
-
-        private object RN() { _IO.As("null"); return null; }
-
-        private string RD()
-        { string s = ""; while (char.IsDigit(_IO.SW().
-            PCUTF8())) s += _IO.RCUTF8(); return s; }
 
         public JSON W(MsgPack msgPack, bool ignoreNull, string end = "\n", string tabChar = "  ") =>
             W(msgPack, ignoreNull, end, tabChar, "", true);
