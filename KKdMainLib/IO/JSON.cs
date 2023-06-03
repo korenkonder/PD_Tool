@@ -46,9 +46,9 @@ namespace KKdMainLib.IO
             {
                 buf.first = 1;
                 buf.data[0] = buf.data[buf.data.Length - 1];
-                byte[] temp = _IO.RBy(buf.data.Length - 1);
-                buf.length = temp.Length;
-                Array.Copy(temp, 0, buf.data, 1, temp.Length);
+                byte[] temp = new byte[buf.data.Length];
+                buf.length = _IO.RBy(buf.data.Length - 1, temp);
+                Array.Copy(temp, 0, buf.data, 1, buf.length);
             }
 
             if (buf.length < 1)
