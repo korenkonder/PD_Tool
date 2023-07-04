@@ -204,11 +204,11 @@ namespace KKdMainLib.IO
                 object obj;
                 unchecked
                 {
-                    if (val >= 0x00 && val < 0xFF)
+                    if (val >= 0x00 && val <= 0xFF)
                         obj = (byte)val;
                     else if (val >= (sbyte)0x80 && val <= (sbyte)0x7F)
                         obj = (sbyte)val;
-                    else if (val >= 0x0000 && val < 0xFFFF)
+                    else if (val >= 0x0000 && val <= 0xFFFF)
                         obj = (ushort)val;
                     else if (val >= (short)0x8000 && val <= (short)0x7FFF)
                         obj = (short)val;
