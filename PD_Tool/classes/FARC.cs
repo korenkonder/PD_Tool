@@ -68,7 +68,7 @@ namespace PD_Tool
                 }
                 else if (choose == "R") return;
                 else farc.Signature = KKdFARC.Farc.FArC;
-                farc.Pack(farc.Signature);
+                farc.Pack();
             }
         }
     }

@@ -1,6 +1,5 @@
 //Original: https://github.com/blueskythlikesclouds/MikuMikuLibrary/
 
-using System.IO.Compression;
 using System.Security.Cryptography;
 using KKdBaseLib;
 using KKdMainLib.IO;
@@ -139,7 +138,17 @@ namespace KKdMainLib
                     file.Size = reader.RI32E(true);
                     Flags Flags = (Flags)reader.RI32E(true);
 
-                    file.Compressed = file.Size != 0 || (FARCFlags & Flags.GZip) != 0;
+                    if (file.Size != 0)
+                    {
+                        file.Compressed = (FARCFlags & Flags.GZip) != 0;
+                    }
+                    else
+                    {
+                        file.Size = file.SizeComp;
+                        file.SizeComp = 0;
+                        file.Compressed = false;
+                    }
+                    
                     file.Encrypted = ((FARCFlags | Flags) & Flags.AES) != 0;
                     Files.Add(file);
                 }
@@ -152,8 +161,18 @@ namespace KKdMainLib
                     file.SizeComp = reader.RI32E(true);
                     file.Size = reader.RI32E(true);
 
-                    file.Compressed = file.Size != 0;
-                    file.Encrypted = (FARCFlags & Flags.AES) != 0;
+                    if (file.Size != 0)
+                    {
+                        file.Compressed = true;
+                    }
+                    else
+                    {
+                        file.Size = file.SizeComp;
+                        file.SizeComp = 0;
+                        file.Compressed = false;
+                    }
+
+                    file.Encrypted = false;
                     Files.Add(file);
                 }
             else
@@ -227,10 +246,18 @@ namespace KKdMainLib
             }
             else if (Signature == Farc.FArC)
             {
-                file.DataComp = reader.RBy(file.SizeComp);
-                file.Data = file.DataComp.InflateGZip(file.Size);
+                if (file.Compressed)
+                {
+                    file.DataComp = reader.RBy(file.SizeComp);
+                    file.Data = file.DataComp.InflateGZip(file.Size);
+                }
+                else
+                {
+                    file.DataComp = null;
+                    file.Data = reader.RBy(file.Size);
+                }
             }
-            else if (file.Encrypted || file.Compressed)
+            else if (file.Compressed || file.Encrypted)
             {
                 int tempSize = file.Encrypted ? file.SizeComp.A(0x10) : file.SizeComp;
 
@@ -266,15 +293,15 @@ namespace KKdMainLib
                 else
                     temp = reader.RBy(tempSize);
 
-                if (!file.Compressed)
-                {
-                    file.DataComp = null;
-                    file.Data = temp;
-                }
-                else
+                if (file.Compressed)
                 {
                     file.DataComp = temp;
                     file.Data = file.DataComp.InflateGZip(file.Size);
+                }
+                else
+                {
+                    file.DataComp = null;
+                    file.Data = temp;
                 }
             }
             else
@@ -294,15 +321,33 @@ namespace KKdMainLib
             return Files[i].Data;
         }
 
-        public void Pack(Farc signature = Farc.FArC)
+        public void Pack()
         {
             NewFARC();
             string[] files = Directory.GetFiles(DirectoryPath);
             Files.Capacity = files.Length;
+
+            bool compressed = false;
+            bool encrypted = false;
+            switch (Signature)
+            {
+                case Farc.FARC:
+                    compressed = (FARCFlags & Flags.GZip) != 0;
+                    encrypted = (FARCFlags & Flags.AES) != 0;
+                    break;
+                case Farc.FArC:
+                    FARCFlags = Flags.None;
+                    compressed = true;
+                    break;
+                default:
+                    FARCFlags = Flags.None;
+                    break;
+            }
+
             for (int i = 0; i < files.Length; i++)
-                Files.Add(new FARCFile { Name = Path.GetFileName(files[i]), Data = File.ReadAllBytes(files[i]) });
+                Files.Add(new FARCFile { Name = Path.GetFileName(files[i]),
+                    Data = File.ReadAllBytes(files[i]), Compressed = compressed, Encrypted = encrypted });
             files = null;
-            Signature = signature;
             Save();
         }
 
@@ -322,22 +367,28 @@ namespace KKdMainLib
 
             using (Stream headerWriter = File.OpenWriter())
             {
-                     if (Signature == Farc.FArc) headerWriter.WE(0x01, true);
-                else if (Signature == Farc.FArC) headerWriter.WE(0x01, true);
-                else if (Signature == Farc.FARC)
+                switch (Signature)
                 {
-                    headerWriter.WE((int)FARCFlags, true);
-                    headerWriter.W (0x00);
-                    headerWriter.WE(0x40, true);
-                    headerWriter.W (0x00);
-                    headerWriter.W (0x00);
+                    case Farc.FArc:
+                        headerWriter.WE(0x01, true);
+                        for (int i = 0; i < Files.Count; i++)
+                        { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); }
+                        break;
+                    case Farc.FArC:
+                        headerWriter.WE(0x01, true);
+                        for (int i = 0; i < Files.Count; i++)
+                        { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); headerWriter.W(0x00); }
+                        break;
+                    case Farc.FARC:
+                        headerWriter.WE((int)FARCFlags, true);
+                        headerWriter.W (0x00);
+                        headerWriter.WE(0x40, true);
+                        headerWriter.W (0x00);
+                        headerWriter.W (0x00);
+                        for (int i = 0; i < Files.Count; i++)
+                        { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); headerWriter.W(0x00L); }
+                        break;
                 }
-                if (Signature != Farc.FArc)
-                    for (int i = 0; i < Files.Count; i++)
-                    { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); headerWriter.W(0x00); }
-                else
-                    for (int i = 0; i < Files.Count; i++)
-                    { headerWriter.W(Files[i].Name + "\0"); headerWriter.W(0x00L); }
                 writer.WE(headerWriter.L, true);
                 writer.W (headerWriter.ToArray(true));
             }
@@ -351,13 +402,55 @@ namespace KKdMainLib
                 CompressStuff(i, ref writer);
 
             writer.P = Signature == Farc.FARC ? 0x1C : 0x0C;
-            for (int i = 0; i < Files.Count; i++)
+            switch (Signature)
             {
-                FARCFile file = Files[i];
-                writer.W (file.Name + "\0");
-                writer.WE(file.Offset, true);
-                if (Signature != Farc.FArc) writer.WE(file.SizeComp, true);
-                writer.WE(file.Size, true);
+                case Farc.FArc:
+                    for (int i = 0; i < Files.Count; i++)
+                    {
+                        FARCFile file = Files[i];
+                        writer.W (file.Name + "\0");
+                        writer.WE(file.Offset, true);
+                        writer.WE(file.Size  , true);
+                    }
+                    break;
+                case Farc.FArC:
+                    for (int i = 0; i < Files.Count; i++)
+                    {
+                        FARCFile file = Files[i];
+                        writer.W (file.Name + "\0");
+                        writer.WE(file.Offset  , true);
+                        if (file.Compressed)
+                        {
+                            writer.WE(file.SizeComp, true);
+                            writer.WE(file.Size    , true);
+                        }
+                        else
+                        {
+                            writer.WE(file.Size    , true);
+                            writer.WE(0x00         , true);
+                        }
+                    }
+                    break;
+                case Farc.FARC:
+                    for (int i = 0; i < Files.Count; i++)
+                    {
+                        FARCFile file = Files[i];
+                        writer.W (file.Name + "\0");
+                        writer.WE(file.Offset  , true);
+                        if (file.Compressed)
+                        {
+                            writer.WE(file.SizeComp, true);
+                            writer.WE(file.Size    , true);
+                        }
+                        else
+                        {
+                            writer.WE(file.Size    , true);
+                            writer.WE(0x00         , true);
+                        }
+                        writer.WE((uint)((file.Compressed ? Flags.GZip : 0x00)
+                            | (file.Encrypted ? Flags.AES : 0x00)), true);
+                    }
+                    break;
             }
             writer.Dispose();
         }
@@ -369,11 +462,11 @@ namespace KKdMainLib
             file.Size = file.Data.Length;
 
             byte[] data = file.Data;
-            if (Signature == Farc.FArC || (Signature == Farc.FARC && (FARCFlags & Flags.GZip) != 0))
+            if (file.Compressed)
                 data = file.Data.DeflateGZip(CompressionLevel);
             file.SizeComp = data.Length;
 
-            if (Signature == Farc.FARC && (FARCFlags & Flags.AES) != 0)
+            if (file.Encrypted)
             {
                 int alignLength = data.Length.A(0x40);
                 byte[] tempData = new byte[alignLength];
