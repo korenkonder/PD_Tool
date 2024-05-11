@@ -142,6 +142,9 @@ namespace KKdBaseLib.Auth3D
         public float? Max;
         public float Value;
         public bool RawData;
+        public bool RawDataBinary;
+        public int? RawDataValueListSize;
+        public int? RawDataValueListOffset;
         public KFT3[] Keys;
 
         public Key(A3DAKey k)
@@ -150,6 +153,9 @@ namespace KKdBaseLib.Auth3D
             Value = 0;
             BinOffset = null;
             RawData = default;
+            RawDataBinary = default;
+            RawDataValueListSize = null;
+            RawDataValueListOffset = null;
             Keys = null;
 
             EPTypePost = k.EPTypePost;

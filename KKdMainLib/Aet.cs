@@ -8,7 +8,6 @@ namespace KKdMainLib
 {
     public struct Aet : System.IDisposable
     {
-        private int i, i0, i1, i2;
         private Stream s;
         private const string x00 = "\0";
 
@@ -19,14 +18,127 @@ namespace KKdMainLib
             AET = default;
             s = File.OpenReader(file + ".bin", true);
 
-            int i = 0;
             int Pos = -1;
-            while (true) { Pos = s.RI32(); if (Pos != 0 && Pos < s.L) i++; else break; }
+            int count = 0;
+            while (true) { Pos = s.RI32(); if (Pos != 0 && Pos < s.L) count++; else break; }
 
             s.P = 0;
-            AET.Scenes = new Pointer<Scene>[i];
-            for (i = 0; i < AET.Scenes.Length; i++) AET.Scenes[i] = s.RP<Scene>();
-            for (i = 0; i < AET.Scenes.Length; i++) AETReader(ref AET.Scenes[i]);
+            AET.Scenes = new Pointer<Scene>[count];
+            for (int i = 0; i < AET.Scenes.Length; i++) AET.Scenes[i] = s.RP<Scene>();
+            for (int i = 0; i < AET.Scenes.Length; i++)
+            {
+                ref Pointer<Scene> aetData = ref AET.Scenes[i];
+
+                s.P = aetData.O;
+                ref Scene aet = ref aetData.V;
+
+                aet.Name = s.RPS();
+                aet.StartFrame  = s.RF32();
+                aet.EndFrame    = s.RF32();
+                aet.FrameRate   = s.RF32();
+                aet.BackColor   = s.RU32();
+                aet.Width       = s.RU32();
+                aet.Height      = s.RU32();
+                aet.Camera      = s.RP<Camera>();
+                aet.Composition = s.RCP<Composition>();
+                aet.Video       = s.RCP<Video      >();
+                aet.Audio       = s.RCP<Audio      >();
+
+                if (aet.Camera.O > 0)
+                {
+                    s.P = aet.Camera.O;
+                    ref Camera camera = ref aet.Camera.V;
+                    camera.      EyeX.O = s.RI32();
+                    camera.      EyeY.O = s.RI32();
+                    camera.      EyeZ.O = s.RI32();
+                    camera. PositionX.O = s.RI32();
+                    camera. PositionY.O = s.RI32();
+                    camera. PositionZ.O = s.RI32();
+                    camera.DirectionX.O = s.RI32();
+                    camera.DirectionY.O = s.RI32();
+                    camera.DirectionZ.O = s.RI32();
+                    camera. RotationX.O = s.RI32();
+                    camera. RotationY.O = s.RI32();
+                    camera. RotationZ.O = s.RI32();
+                    camera.     Zoom .O = s.RI32();
+                    RKF(ref camera.      EyeX);
+                    RKF(ref camera.      EyeY);
+                    RKF(ref camera.      EyeZ);
+                    RKF(ref camera. PositionX);
+                    RKF(ref camera. PositionY);
+                    RKF(ref camera. PositionZ);
+                    RKF(ref camera.DirectionX);
+                    RKF(ref camera.DirectionY);
+                    RKF(ref camera.DirectionZ);
+                    RKF(ref camera. RotationX);
+                    RKF(ref camera. RotationY);
+                    RKF(ref camera. RotationZ);
+                    RKF(ref camera.     Zoom );
+                }
+
+                if (aet.Audio.O > 0)
+                {
+                    s.P = aet.Audio.O;
+                    for (int j = 0; j < aet.Audio.C; j++)
+                    {
+                        ref Audio aif = ref aet.Audio.E[j];
+                        aif.O = s.P;
+                        aif.SoundID = s.RU32();
+                    }
+                }
+
+                s.P = aet.Composition.O;
+                for (int j = 0; j < aet.Composition.C; j++)
+                    aet.Composition[j] = new Composition() { P = s.P, C = s.RI32(), O = s.RI32() };
+
+                int id = 0;
+                RAL(ref aet.Composition.E[aet.Composition.C - 1], ref id);
+                for (int j = 0; j < aet.Composition.C - 1; j++)
+                    RAL(ref aet.Composition.E[j], ref id);
+
+                s.P = aet.Video.O;
+                for (int j = 0; j < aet.Video.C; j++)
+                    aet.Video[j] = new Video { O = s.P, Color = s.RU32(), Width = s.RU16(),
+                        Height = s.RU16(), Frames = s.RF32(), Identifiers = s.RCP<Video.Identifier>() };
+
+                for (int j = 0; j < aet.Video.C; j++)
+                {
+                    s.P = aet.Video[j].Identifiers.O;
+                    for (int k = 0; k < aet.Video[j].Identifiers.C; k++)
+                        aet.Video.E[j].Identifiers[k] = new Video.Identifier { Name = s.RPS(), ID = s.RU32() };
+                }
+
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    for (int k = 0; k < aet.Composition[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition[j].E[k];
+                        obj.DataID = -1;
+                        int dataOffset = obj.VidItmOff;
+                        if (dataOffset > 0)
+                                 if (obj.Type == Layer.AetLayerType.Video      )
+                                for (int l = 0; l < aet.Video      .C; l++)
+                                { if (aet.Video      [l].O == dataOffset) { obj.DataID = l; break; } }
+                            else if (obj.Type == Layer.AetLayerType.Audio      )
+                                for (int l = 0; l < aet.Audio      .C; l++)
+                                { if (aet.Audio      [l].O == dataOffset) { obj.DataID = l; break; } }
+                            else if (obj.Type == Layer.AetLayerType.Composition)
+                                for (int l = 0; l < aet.Composition.C; l++)
+                                { if (aet.Composition[l].P == dataOffset) { obj.DataID = l; break; } }
+
+                        int parentLayer = obj.ParentLayer;
+                        if (parentLayer > 0)
+                            for (int l = 0; l < aet.Composition.C; l++)
+                            {
+                                for (int m = 0; m < aet.Composition[l].C; m++)
+                                    if (aet.Composition[l].E[m].Offset == parentLayer)
+                                    { obj.ParentLayer = aet.Composition[l].E[m].ID; break; }
+                                if (parentLayer != obj.ParentLayer) break;
+                            }
+                        if (parentLayer == obj.ParentLayer) obj.ParentLayer = -1;
+                    }
+                }
+            }
 
             s.C();
         }
@@ -36,10 +148,400 @@ namespace KKdMainLib
             if (AET.Scenes == null || AET.Scenes.Length == 0) return;
             s = File.OpenWriter();
 
+            s.P = (AET.Scenes.Length * 0x04).A(0x20);
+
+            System.Collections.Generic.Dictionary<string, int> usedValues =
+                new System.Collections.Generic.Dictionary<string, int>();
+
             for (int i = 0; i < AET.Scenes.Length; i++)
             {
-                s.P = s.L + 0x20;
-                AETWriter(ref AET.Scenes[i]);
+                ref Pointer<Scene> aetData = ref AET.Scenes[i];
+
+                ref Scene aet = ref aetData.V;
+
+                for (int j = 0; j < aet.Video.C; j++)
+                {
+                    ref Video region = ref aet.Video.E[j];
+                    if (region.Identifiers.C == 0) { region.Identifiers.O = 0; continue; }
+                    if (region.Identifiers.C > 1) s.A(0x20);
+                    region.Identifiers.O = s.P;
+                    for (int k = 0; k < region.Identifiers.C; k++) s.W(0L);
+                }
+
+                if (aet.Video.C > 1) s.A(0x20);
+                aet.Video.O = s.P;
+                for (int j = 0; j < aet.Video.C; j++)
+                {
+                    ref Video region = ref aet.Video.E[j];
+                    region.O = s.P;
+                    s.W(region.Color  );
+                    s.W(region.Width  );
+                    s.W(region.Height );
+                    s.W(region.Frames );
+                    s.W(region.Identifiers);
+                }
+
+                if (aet.Composition.C > 1) s.A(0x20);
+                aet.Composition.O = s.P;
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    aet.Composition.E[j].O = s.P;
+                    s.W(0L);
+                }
+
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    if (aet.Composition.E[j].C < 1) continue;
+
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+                        if (obj.Marker.C > 0)
+                        {
+                            if (obj.Marker.C > 3) s.A(0x20);
+                            obj.Marker.O = s.P;
+                            for (int l = 0; l < obj.Marker.C; l++)
+                                s.W(0L);
+                        }
+
+                        if (obj.Video.O > 0)
+                        {
+                            ref VideoData video = ref obj.Video.V;
+                            if (video.Video3D.O > 0)
+                            {
+                                ref VideoData.Video3DData video3DData = ref video.Video3D.V;
+                                W(ref video3DData.   AnchorZ);
+                                W(ref video3DData. PositionZ);
+                                W(ref video3DData.DirectionX);
+                                W(ref video3DData.DirectionY);
+                                W(ref video3DData.DirectionZ);
+                                W(ref video3DData. RotationX);
+                                W(ref video3DData. RotationY);
+                                W(ref video3DData.    ScaleZ);
+                            }
+
+                            W(ref video.  AnchorX);
+                            W(ref video.  AnchorY);
+                            W(ref video.PositionX);
+                            W(ref video.PositionY);
+                            W(ref video.Rotation );
+                            W(ref video.   ScaleX);
+                            W(ref video.   ScaleY);
+                            W(ref video. Opacity );
+
+                            if (video.Video3D.O > 0)
+                            {
+                                s.A(0x20);
+                                video.Video3D.O = s.P;
+                                s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                                s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                            }
+                        }
+
+                        if (obj.Audio.O > 0)
+                        {
+                            ref AudioData audio = ref obj.Audio.V;
+                            W(ref audio.VolumeL);
+                            W(ref audio.VolumeR);
+                            W(ref audio.   PanL);
+                            W(ref audio.   PanR);
+                        }
+
+                        if (obj.Video.O > 0)
+                        {
+                            s.A(0x20);
+                            obj.Video.O = s.P;
+                            s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                            s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                        }
+
+                        if (obj.Audio.O > 0)
+                        {
+                            s.A(0x20);
+                            obj.Audio.O = s.P;
+                            s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                        }
+                    }
+
+                    s.A(0x20);
+                    aet.Composition.E[j].E[0].Offset = s.P;
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+                        obj.Offset = s.P;
+                        s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                    }
+                }
+
+                if (aet.Camera.O > 0)
+                {
+                    ref Camera camera = ref aet.Camera.V;
+                    s.A(0x10);
+                    W(ref camera.      EyeX);
+                    W(ref camera.      EyeY);
+                    W(ref camera.      EyeZ);
+                    W(ref camera. PositionX);
+                    W(ref camera. PositionY);
+                    W(ref camera. PositionZ);
+                    W(ref camera.DirectionX);
+                    W(ref camera.DirectionY);
+                    W(ref camera.DirectionZ);
+                    W(ref camera. RotationX);
+                    W(ref camera. RotationY);
+                    W(ref camera. RotationZ);
+                    W(ref camera.     Zoom );
+
+                    s.A(0x20);
+                    aet.Camera.O = s.P;
+                    s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                    s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                }
+
+                s.A(0x20);
+                aetData.O = s.P;
+                s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+                s.W(0L); s.W(0L); s.W(0L); s.W(0L);
+
+                s.A(0x10);
+            }
+
+            for (int i = 0; i < AET.Scenes.Length; i++)
+            {
+                ref Pointer<Scene> aetData = ref AET.Scenes[i];
+
+                ref Scene aet = ref aetData.V;
+
+                for (int j = 0; j < aet.Video.C; j++)
+                {
+                    ref Video region = ref aet.Video.E[j];
+                    for (int k = 0; k < region.Identifiers.C; k++)
+                        WPS(ref usedValues, ref region.Identifiers.E[k].Name);
+                }
+
+                //_IO.Align(0x4);
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+                        for (int l = 0; l < obj.Marker.C; l++)
+                            WPS(ref usedValues, ref obj.Marker.E[l].Name);
+                    }
+
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                        WPS(ref usedValues, ref aet.Composition.E[j].E[k].Name);
+                }
+
+                //_IO.Align(0x4);
+                aet.Name.O = s.P;
+                s.W(aet.Name.V + x00);
+                s.A(0x4);
+            }
+
+            s.F();
+
+            for (int i = 0; i < AET.Scenes.Length; i++)
+            {
+                ref Scene aet = ref AET.Scenes[i].V;
+
+                if (aet.Audio.C > 0)
+                {
+                    aet.Audio.O = s.P;
+                    for (int j = 0; j < aet.Audio.C; j++)
+                    {
+                        aet.Audio.E[j].O = s.P;
+                        s.W(aet.Audio[j].SoundID);
+                    }
+                }
+            }
+
+            int nullDataPos = s.P;
+            int nullDataCount = 0;
+            for (int i = 0; i < AET.Scenes.Length; i++)
+            {
+                ref Scene aet = ref AET.Scenes[i].V;
+
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    if (aet.Composition.E[j].C < 1) continue;
+
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+
+                        if (obj.Video.O > 0)
+                        {
+                            ref VideoData video = ref obj.Video.V;
+                            if (video.Video3D.O > 0)
+                            {
+                                ref VideoData.Video3DData video3DData = ref video.Video3D.V;
+                                s.P = video.Video3D.O;
+                                W(ref s, ref video3DData.   AnchorZ);
+                                W(ref s, ref video3DData. PositionZ);
+                                W(ref s, ref video3DData.DirectionX);
+                                W(ref s, ref video3DData.DirectionY);
+                                W(ref s, ref video3DData.DirectionZ);
+                                W(ref s, ref video3DData. RotationX);
+                                W(ref s, ref video3DData. RotationY);
+                                W(ref s, ref video3DData.    ScaleZ);
+                            }
+
+                            s.P = obj.Video.O;
+                            s.W((byte)video.TransferMode.BlendMode );
+                            s.W((byte)video.TransferMode.Flags     );
+                            s.W((byte)video.TransferMode.TrackMatte);
+                            s.W((byte)0);
+
+                            W(ref s, ref video.  AnchorX);
+                            W(ref s, ref video.  AnchorY);
+                            W(ref s, ref video.PositionX);
+                            W(ref s, ref video.PositionY);
+                            W(ref s, ref video.Rotation );
+                            W(ref s, ref video.   ScaleX);
+                            W(ref s, ref video.   ScaleY);
+                            W(ref s, ref video. Opacity );
+                            s.W(video.Video3D.O);
+                        }
+
+                        if (obj.Audio.O > 0)
+                        {
+                            ref AudioData audio = ref obj.Audio.V;
+                            s.P = obj.Audio.O;
+                            W(ref s, ref audio.VolumeL);
+                            W(ref s, ref audio.VolumeR);
+                            W(ref s, ref audio.   PanL);
+                            W(ref s, ref audio.   PanR);
+                        }
+                    }
+                }
+                
+                if (aet.Camera.O > 0)
+                {
+                    ref Camera camera = ref aet.Camera.V;
+                    s.P = aet.Camera.O;
+                    W(ref s, ref camera.      EyeX);
+                    W(ref s, ref camera.      EyeY);
+                    W(ref s, ref camera.      EyeZ);
+                    W(ref s, ref camera. PositionX);
+                    W(ref s, ref camera. PositionY);
+                    W(ref s, ref camera. PositionZ);
+                    W(ref s, ref camera.DirectionX);
+                    W(ref s, ref camera.DirectionY);
+                    W(ref s, ref camera.DirectionZ);
+                    W(ref s, ref camera. RotationX);
+                    W(ref s, ref camera. RotationY);
+                    W(ref s, ref camera. RotationZ);
+                    W(ref s, ref camera.     Zoom );
+                }
+
+                void W(ref Stream _IO, ref CountPointer<KFT2> keys)
+                {
+                    if (keys.C < 1) _IO.W(0L);
+                    else {
+                        if (keys.C > 0 && keys.O == 0)
+                        { keys.O = nullDataPos + (nullDataCount << 2); nullDataCount++; }
+                        _IO.W(keys);
+                    }
+                }
+            }
+
+            s.P = nullDataPos;
+            for (int j = 0; j < nullDataCount; j++)
+                s.W(0);
+            s.A(0x10, true);
+            s.F();
+
+            for (int i = 0; i < AET.Scenes.Length; i++)
+            {
+                ref Pointer<Scene> aetData = ref AET.Scenes[i];
+
+                ref Scene aet = ref aetData.V;
+
+                for (int j = 0; j < aet.Composition.C; j++)
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+                             if (obj.Type == Layer.AetLayerType.Video      ) obj.VidItmOff = aet.Video      [obj.DataID].O;
+                        else if (obj.Type == Layer.AetLayerType.Audio      ) obj.VidItmOff = aet.Audio      [obj.DataID].O;
+                        else if (obj.Type == Layer.AetLayerType.Composition) obj.VidItmOff = aet.Composition[obj.DataID].O;
+                        else obj.VidItmOff = 0;
+                    }
+
+                for (int j = 0; j < aet.Composition.C; j++)
+                    for (int k = 0; k < aet.Composition.E[j].C; k++)
+                    {
+                        ref Layer obj = ref aet.Composition.E[j].E[k];
+
+                        s.P = obj.Offset;
+                        s.W(obj.Name.O);
+                        s.W(obj.StartFrame);
+                        s.W(obj.EndFrame);
+                        s.W(obj.OffsetFrame);
+                        s.W(obj.TimeScale);
+                        s.W((ushort)obj.Flags  );
+                        s.W((  byte)obj.Quality);
+                        s.W((  byte)obj.Type   );
+                        s.W(obj.VidItmOff);
+
+                        if (obj.ParentLayer > -1)
+                        {
+                            bool Found = false;
+                            for (int l = 0; l < aet.Composition.C; l++)
+                                for (int m = 0; m < aet.Composition.E[l].C; m++)
+                                    if (aet.Composition[l].E[m].ID == obj.ParentLayer)
+                                    { Found = true; s.W(aet.Composition.E[l].E[m].Offset); break; }
+                            if (!Found) s.W(0);
+                        }
+                        else s.W(0);
+                        s.W(obj.Marker);
+                        s.W(obj.Video.O);
+                        s.W(obj.Audio.O);
+
+                        ref CountPointer<Marker> Marker = ref obj.Marker;
+                        s.P = Marker.O;
+                        for (int l = 0; l < Marker.C; l++)
+                        {
+                            s.W(Marker[l].Frame);
+                            s.W(Marker[l].Name.O);
+                        }
+                    }
+
+                for (int j = 0; j < aet.Video.C; j++)
+                {
+                    ref Video region = ref aet.Video.E[j];
+                    if (region.Identifiers.C == 0) continue;
+                    s.P = region.Identifiers.O;
+                    for (int k = 0; k < region.Identifiers.C; k++)
+                    {
+                        s.W(region.Identifiers[k].Name.O);
+                        s.W(region.Identifiers[k].ID);
+                    }
+                }
+
+                s.P = aet.Composition.O;
+                for (int j = 0; j < aet.Composition.C; j++)
+                {
+                    if (aet.Composition[j].C > 0)
+                    {
+                        s.W(aet.Composition[j].C);
+                        s.W(aet.Composition[j].E[0].Offset);
+                    }
+                    else s.W(0L);
+                }
+
+                s.P = aetData.O;
+                s.W(aet.Name.O);
+                s.W(aet.StartFrame);
+                s.W(aet.EndFrame);
+                s.W(aet.FrameRate);
+                s.W(aet.BackColor);
+                s.W(aet.Width);
+                s.W(aet.Height);
+                s.W(aet.Camera.O);
+                s.W(aet.Composition);
+                s.W(aet.Video);
+                s.W(aet.Audio);
+                s.W(0L);
             }
 
             s.P = 0;
@@ -53,454 +555,13 @@ namespace KKdMainLib
             data = null;
         }
 
-        private void AETReader(ref Pointer<Scene> aetData)
+        private void RAL(ref Composition layer, ref int id)
         {
-            s.P = aetData.O;
-            ref Scene aet = ref aetData.V;
-
-            aet.Name = s.RPS();
-            aet.StartFrame  = s.RF32();
-            aet.EndFrame    = s.RF32();
-            aet.FrameRate   = s.RF32();
-            aet.BackColor   = s.RU32();
-            aet.Width       = s.RU32();
-            aet.Height      = s.RU32();
-            aet.Camera      = s.RP<Vec2<CountPointer<KFT2>>>();
-            aet.Composition = s.RCP<Composition>();
-            aet.Video       = s.RCP<Video      >();
-            aet.Audio       = s.RCP<Audio      >();
-
-            if (aet.Camera.O > 0)
+            for (int i = 0; i < layer.C; i++, id++)
             {
-                s.P = aet.Camera.O;
-                aet.Camera.V.X.O = s.RI32();
-                aet.Camera.V.Y.O = s.RI32();
-                RKF(ref aet.Camera.V.X);
-                RKF(ref aet.Camera.V.Y);
-            }
-
-            if (aet.Audio.O > 0)
-            {
-                s.P = aet.Audio.O;
-                for (i = 0; i < aet.Audio.C; i++)
-                {
-                    ref Audio aif = ref aet.Audio.E[i];
-                    aif.O = s.P;
-                    aif.SoundID = s.RU32();
-                }
-            }
-
-            s.P = aet.Composition.O;
-            for (i = 0; i < aet.Composition.C; i++)
-                aet.Composition[i] = new Composition() { P = s.P, C = s.RI32(), O = s.RI32()};
-
-            i1 = 0;
-            RAL(ref aet.Composition.E[aet.Composition.C - 1]);
-            for (i = 0; i < aet.Composition.C - 1; i++)
-                RAL(ref aet.Composition.E[i]);
-
-            s.P = aet.Video.O;
-            for (i = 0; i < aet.Video.C; i++)
-                aet.Video[i] = new Video { O = s.P, Color = s.RU32(), Width = s.RU16(),
-                    Height = s.RU16(), Frames = s.RF32(), Identifiers = s.RCP<Video.Identifier>() };
-
-            for (i = 0; i < aet.Video.C; i++)
-            {
-                s.P = aet.Video[i].Identifiers.O;
-                for (i0 = 0; i0 < aet.Video[i].Identifiers.C; i0++)
-                    aet.Video.E[i].Identifiers[i0] = new Video.Identifier { Name = s.RPS(), ID = s.RU32() };
-            }
-
-            for (i = 0; i < aet.Composition.C; i++)
-            {
-                for (i0 = 0; i0 < aet.Composition[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition[i].E[i0];
-                    obj.DataID = -1;
-                    int dataOffset = obj.VidItmOff;
-                    if (dataOffset > 0)
-                             if (obj.Type == Layer.AetLayerType.Video      )
-                            for (i1 = 0; i1 < aet.Video      .C; i1++)
-                            { if (aet.Video      [i1].O == dataOffset) { obj.DataID = i1; break; } }
-                        else if (obj.Type == Layer.AetLayerType.Audio      )
-                            for (i1 = 0; i1 < aet.Audio      .C; i1++)
-                            { if (aet.Audio      [i1].O == dataOffset) { obj.DataID = i1; break; } }
-                        else if (obj.Type == Layer.AetLayerType.Composition)
-                            for (i1 = 0; i1 < aet.Composition.C; i1++)
-                            { if (aet.Composition[i1].P == dataOffset) { obj.DataID = i1; break; } }
-
-                    int parentLayer = obj.ParentLayer;
-                    if (parentLayer > 0)
-                        for (i1 = 0; i1 < aet.Composition.C; i1++)
-                        {
-                            for (i2 = 0; i2 < aet.Composition[i1].C; i2++)
-                                if (aet.Composition[i1].E[i2].Offset == parentLayer)
-                                { obj.ParentLayer = aet.Composition[i1].E[i2].ID; break; }
-                            if (parentLayer != obj.ParentLayer) break;
-                        }
-                    if (parentLayer == obj.ParentLayer) obj.ParentLayer = -1;
-                }
-            }
-        }
-
-        private void AETWriter(ref Pointer<Scene> aetData)
-        {
-            ref Scene aet = ref aetData.V;
-
-            for (i = 0; i < aet.Video.C; i++)
-            {
-                ref Video region = ref aet.Video.E[i];
-                if (region.Identifiers.C == 0) { region.Identifiers.O = 0; continue; }
-                if (region.Identifiers.C > 1) s.A(0x20);
-                region.Identifiers.O = s.P;
-                for (i0 = 0; i0 < region.Identifiers.C; i0++) s.W(0L);
-            }
-
-            s.A(0x20);
-            aet.Video.O = s.P;
-            for (i = 0; i < aet.Video.C; i++)
-            {
-                ref Video region = ref aet.Video.E[i];
-                region.O = s.P;
-                s.W(region.Color  );
-                s.W(region.Width  );
-                s.W(region.Height );
-                s.W(region.Frames );
-                s.W(region.Identifiers);
-            }
-
-            s.A(0x20);
-            aet.Composition.O = s.P;
-            for (i = 0; i < aet.Composition.C; i++)
-            {
-                aet.Composition.E[i].O = s.P;
-                s.W(0L);
-            }
-
-            for (i = 0; i < aet.Composition.C; i++)
-            {
-                if (aet.Composition.E[i].C < 1) continue;
-
-                for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition.E[i].E[i0];
-                    ref VideoData video = ref obj.Video.V;
-                    ref VideoData.Video3DData video3DData = ref video.Video3D.V;
-                    ref AudioData audio = ref obj.Audio.V;
-                    if (obj.Marker.C > 0)
-                    {
-                        if (obj.Marker.C > 3) s.A(0x20);
-                        obj.Marker.O = s.P;
-                        for (i1 = 0; i1 < obj.Marker.C; i1++)
-                            s.W(0L);
-                    }
-
-                    if (obj.Video.V.Video3D.O > 0)
-                    {
-                        W(ref video3DData.   AnchorZ);
-                        W(ref video3DData. PositionZ);
-                        W(ref video3DData.DirectionX);
-                        W(ref video3DData.DirectionY);
-                        W(ref video3DData.DirectionZ);
-                        W(ref video3DData. RotationX);
-                        W(ref video3DData. RotationY);
-                        W(ref video3DData.    ScaleZ);
-                    }
-
-                    if (obj.Video.O > 0)
-                    {
-                         W(ref video.  AnchorX);
-                         W(ref video.  AnchorY);
-                         W(ref video.PositionX);
-                         W(ref video.PositionY);
-                         W(ref video.Rotation );
-                         W(ref video.   ScaleX);
-                         W(ref video.   ScaleY);
-                         W(ref video. Opacity );
-                    }
-
-                    if (obj.Video.V.Video3D.O > 0)
-                    {
-                        s.A(0x20);
-                        video.Video3D.O = s.P;
-                        s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                        s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                    }
-
-                    if (obj.Audio.O > 0)
-                    {
-                        W(ref audio.VolumeL);
-                        W(ref audio.VolumeR);
-                        W(ref audio.   PanL);
-                        W(ref audio.   PanR);
-                    }
-
-                    if (obj.Video.O > 0)
-                    {
-                        s.A(0x20);
-                        obj.Video.O = s.P;
-                        s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                        s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                    }
-
-                    if (obj.Audio.O > 0)
-                    {
-                        s.A(0x20);
-                        obj.Audio.O = s.P;
-                        s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                    }
-                }
-
-                s.A(0x20);
-                aet.Composition.E[i].E[0].Offset = s.P;
-                for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition.E[i].E[i0];
-                    obj.Offset = s.P;
-                    s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-                }
-            }
-
-            if (aet.Camera.O > 0)
-            {
-                ref Vec2<CountPointer<KFT2>> pos = ref aet.Camera.V;
-                s.A(0x10);
-                W(ref pos.X);
-                W(ref pos.Y);
-
-                s.A(0x20);
-                aet.Camera.O = s.P;
-                s.W(pos.X);
-                s.W(pos.Y);
-
-                W(ref pos.X);
-                W(ref pos.Y);
-            }
-
-            s.A(0x20);
-            aetData.O = s.P;
-            s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-            s.W(0L); s.W(0L); s.W(0L); s.W(0L);
-
-            s.A(0x10);
-            {
-                System.Collections.Generic.Dictionary<string, int> usedValues =
-                    new System.Collections.Generic.Dictionary<string, int>();
-
-                for (i = 0; i < aet.Video.C; i++)
-                {
-                    ref Video region = ref aet.Video.E[i];
-                    for (i0 = 0; i0 < region.Identifiers.C; i0++)
-                        WPS(ref usedValues, ref region.Identifiers.E[i0].Name);
-                }
-
-                //_IO.Align(0x4);
-                for (i = 0; i < aet.Composition.C; i++)
-                {
-                    for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                    {
-                        ref Layer obj = ref aet.Composition.E[i].E[i0];
-                        for (i1 = 0; i1 < obj.Marker.C; i1++)
-                            WPS(ref usedValues, ref obj.Marker.E[i1].Name);
-                    }
-
-                    for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                        WPS(ref usedValues, ref aet.Composition.E[i].E[i0].Name);
-                }
-
-                //_IO.Align(0x4);
-                aet.Name.O = s.P;
-                s.W(aet.Name.V + x00);
-                s.SL(s.P);
-            }
-
-            aet.Audio.O = 0;
-            if (aet.Audio.C > 0)
-            {
-                s.A(0x10);
-                aet.Audio.O = s.P;
-                for (i = 0; i < aet.Audio.C; i++)
-                {
-                    aet.Audio.E[i].O = s.P;
-                    s.W(aet.Audio[i].SoundID);
-                }
-            }
-
-            for (i = 0; i < aet.Composition.C; i++)
-                for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition.E[i].E[i0];
-                         if (obj.Type == Layer.AetLayerType.Video      ) obj.VidItmOff = aet.Video      [obj.DataID].O;
-                    else if (obj.Type == Layer.AetLayerType.Audio      ) obj.VidItmOff = aet.Audio      [obj.DataID].O;
-                    else if (obj.Type == Layer.AetLayerType.Composition) obj.VidItmOff = aet.Composition[obj.DataID].O;
-                    else obj.VidItmOff = 0;
-                    if (obj.VidItmOff == 0)
-                    {
-
-                    }
-                }
-
-            s.A(0x4);
-            int returnPos = s.P;
-            int nvp = 0;
-
-            s.F();
-
-            for (i = 0; i < aet.Composition.C; i++)
-            {
-                if (aet.Composition.E[i].C < 1) continue;
-
-                for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition.E[i].E[i0];
-                    ref VideoData video = ref obj.Video.V;
-                    ref VideoData.Video3DData video3DData = ref video.Video3D.V;
-                    ref AudioData audio = ref obj.Audio.V;
-
-                    if (obj.Video.V.Video3D.O > 0)
-                    {
-                        s.P = video.Video3D.O;
-                        W(ref s, ref video3DData.   AnchorZ);
-                        W(ref s, ref video3DData. PositionZ);
-                        W(ref s, ref video3DData.DirectionX);
-                        W(ref s, ref video3DData.DirectionY);
-                        W(ref s, ref video3DData.DirectionZ);
-                        W(ref s, ref video3DData. RotationX);
-                        W(ref s, ref video3DData. RotationY);
-                        W(ref s, ref video3DData.    ScaleZ);
-                    }
-
-                    if (obj.Video.O > 0)
-                    {
-                        s.P = obj.Video.O;
-                        s.W((byte)video.TransferMode.BlendMode );
-                        s.W((byte)video.TransferMode.Flags     );
-                        s.W((byte)video.TransferMode.TrackMatte);
-                        s.W((byte)0);
-
-                        W(ref s, ref video.  AnchorX);
-                        W(ref s, ref video.  AnchorY);
-                        W(ref s, ref video.PositionX);
-                        W(ref s, ref video.PositionY);
-                        W(ref s, ref video.Rotation );
-                        W(ref s, ref video.   ScaleX);
-                        W(ref s, ref video.   ScaleY);
-                        W(ref s, ref video. Opacity );
-                        s.W(video.Video3D.O);
-                    }
-
-                    if (obj.Audio.O > 0)
-                    {
-                        s.P = obj.Audio.O;
-                        W(ref s, ref audio.VolumeL);
-                        W(ref s, ref audio.VolumeR);
-                        W(ref s, ref audio.   PanL);
-                        W(ref s, ref audio.   PanR);
-                    }
-
-                    void W(ref Stream _IO, ref CountPointer<KFT2> keys)
-                    {
-                        if (keys.C < 1) _IO.W(0L);
-                        else { if (keys.C > 0 && keys.O == 0)
-                            { keys.O = returnPos + (nvp << 2); nvp++; } _IO.W(keys); }
-
-                    }
-                }
-            }
-
-            s.P = returnPos;
-            for (i = 0; i < nvp; i++)
-                s.W(0);
-            s.A(0x10, true);
-
-            s.F();
-
-            for (i = 0; i < aet.Composition.C; i++)
-                for (i0 = 0; i0 < aet.Composition.E[i].C; i0++)
-                {
-                    ref Layer obj = ref aet.Composition.E[i].E[i0];
-
-                    s.P = obj.Offset;
-                    s.W(obj.Name.O);
-                    s.W(obj.StartFrame);
-                    s.W(obj.EndFrame);
-                    s.W(obj.OffsetFrame);
-                    s.W(obj.TimeScale);
-                    s.W((ushort)obj.Flags  );
-                    s.W((  byte)obj.Quality);
-                    s.W((  byte)obj.Type   );
-                    s.W(obj.VidItmOff);
-
-                    if (obj.ParentLayer > -1)
-                    {
-                        bool Found = false;
-                        for (i1 = 0; i1 < aet.Composition.C; i1++)
-                            for (i2 = 0; i2 < aet.Composition.E[i1].C; i2++)
-                                if (aet.Composition[i1].E[i2].ID == obj.ParentLayer)
-                                { Found = true; s.W(aet.Composition.E[i1].E[i2].Offset); break; }
-                        if (!Found) s.W(0);
-                    }
-                    else s.W(0);
-                    s.W(obj.Marker);
-                    s.W(obj.Video.O);
-                    s.W(obj.Audio.O);
-
-                    ref CountPointer<Marker> Marker = ref obj.Marker;
-                    s.P = Marker.O;
-                    for (i1 = 0; i1 < Marker.C; i1++)
-                    {
-                        s.W(Marker[i1].Frame);
-                        s.W(Marker[i1].Name.O);
-                    }
-                }
-
-            s.F();
-
-            for (i = 0; i < aet.Video.C; i++)
-            {
-                ref Video region = ref aet.Video.E[i];
-                if (region.Identifiers.C == 0) continue;
-                s.P = region.Identifiers.O;
-                for (i0 = 0; i0 < region.Identifiers.C; i0++)
-                {
-                    s.W(region.Identifiers[i0].Name.O);
-                    s.W(region.Identifiers[i0].ID);
-                }
-            }
-
-            s.P = aet.Composition.O;
-            for (i = 0; i < aet.Composition.C; i++)
-            {
-                if (aet.Composition[i].C > 0)
-                {
-                    s.W(aet.Composition[i].C);
-                    s.W(aet.Composition[i].E[0].Offset);
-                }
-                else s.W(0L);
-            }
-
-            s.P = aetData.O;
-            s.W(aet.Name.O);
-            s.W(aet.StartFrame);
-            s.W(aet.EndFrame);
-            s.W(aet.FrameRate);
-            s.W(aet.BackColor);
-            s.W(aet.Width);
-            s.W(aet.Height);
-            s.W(aet.Camera.O);
-            s.W(aet.Composition);
-            s.W(aet.Video);
-            s.W(aet.Audio);
-            s.W(0L);
-        }
-
-        private void RAL(ref Composition layer)
-        {
-            for (i0 = 0; i0 < layer.C; i0++, i1++)
-            {
-                layer.E[i0].ID = i1;
-                ref Layer obj = ref layer.E[i0];
-                s.P = obj.Offset = layer.O + i0 * 0x30;
+                layer.E[i].ID = id;
+                ref Layer obj = ref layer.E[i];
+                s.P = obj.Offset = layer.O + i * 0x30;
                 obj.Name = s.RPS();
                 obj.StartFrame    = s.RF32();
                 obj.  EndFrame    = s.RF32();
@@ -582,8 +643,8 @@ namespace KKdMainLib
                 }
 
                 s.P = obj.Marker.O;
-                for (i2 = 0; i2 < obj.Marker.C; i2++)
-                    obj.Marker[i2] = new Marker() { Frame = s.RF32(), Name = s.RPSSJIS() };
+                for (int j = 0; j < obj.Marker.C; j++)
+                    obj.Marker[j] = new Marker() { Frame = s.RF32(), Name = s.RPSSJIS() };
             }
         }
 
@@ -652,7 +713,6 @@ namespace KKdMainLib
 
         public void MsgPackReader(MsgPack msgPack, ref Pointer<Scene> aetData)
         {
-            int i, i0;
             aetData = default;
             ref Scene aet = ref aetData.V;
 
@@ -668,21 +728,34 @@ namespace KKdMainLib
             if ((temp = msgPack["Camera"]).NotNull)
             {
                 aet.Camera.O = 1;
-                aet.Camera.V.X = RKF(temp, "X");
-                aet.Camera.V.Y = RKF(temp, "Y");
+
+                ref Camera camera = ref aet.Camera.V;
+                camera.      EyeX = RKF(temp,       "EyeX");
+                camera.      EyeY = RKF(temp,       "EyeY");
+                camera.      EyeZ = RKF(temp,       "EyeZ");
+                camera. PositionX = RKF(temp,  "PositionX");
+                camera. PositionY = RKF(temp,  "PositionY");
+                camera. PositionZ = RKF(temp,  "PositionZ");
+                camera.DirectionX = RKF(temp, "DirectionX");
+                camera.DirectionY = RKF(temp, "DirectionY");
+                camera.DirectionZ = RKF(temp, "DirectionZ");
+                camera. RotationX = RKF(temp,  "RotationX");
+                camera. RotationY = RKF(temp,  "RotationY");
+                camera. RotationZ = RKF(temp,  "RotationZ");
+                camera.     Zoom  = RKF(temp,      "Zoom" );
             }
 
             if ((temp = msgPack["Audio", true]).NotNull)
             {
                 aet.Audio.C = temp.Array.Length;
-                for (i = 0; i < aet.Audio.C; i++)
+                for (int i = 0; i < aet.Audio.C; i++)
                     aet.Audio.E[i] = new Audio { SoundID = temp[i].RU32("SoundID") };
             }
 
             if ((temp = msgPack["Video", true]).NotNull)
             {
                 aet.Video.C = temp.Array.Length;
-                for (i = 0; i < aet.Video.C; i++)
+                for (int i = 0; i < aet.Video.C; i++)
                 {
                     ref Video region = ref aet.Video.E[i];
                     region = default;
@@ -695,9 +768,9 @@ namespace KKdMainLib
                     if (identifiers.NotNull)
                     {
                         region.Identifiers.C = identifiers.Array.Length;
-                        for (i0 = 0; i0 < region.Identifiers.C; i0++)
-                            region.Identifiers[i0] = new Video.Identifier() { Name = new Pointer<string>()
-                            { V = identifiers[i0].RS("Name") }, ID = identifiers[i0].RU32("ID") };
+                        for (int j = 0; j < region.Identifiers.C; j++)
+                            region.Identifiers[j] = new Video.Identifier() { Name = new Pointer<string>()
+                            { V = identifiers[j].RS("Name") }, ID = identifiers[j].RU32("ID") };
                     }
                 }
             }
@@ -705,7 +778,7 @@ namespace KKdMainLib
             if ((temp = msgPack["Composition", true]).NotNull)
             {
                 aet.Composition.C = temp.Array.Length + 1;
-                for (i = 0; i < aet.Composition.C - 1; i++)
+                for (int i = 0; i < aet.Composition.C - 1; i++)
                 {
                     ref Composition l = ref aet.Composition.E[i];
                     l = default;
@@ -713,8 +786,8 @@ namespace KKdMainLib
                     if (layer.NotNull)
                     {
                         l.C = layer.Array.Length;
-                        for (i0 = 0; i0 < l.C; i0++)
-                            RL(ref l.E[i0], layer[i0]);
+                        for (int j = 0; j < l.C; j++)
+                            RL(ref l.E[j], layer[j]);
                     }
                 }
             }
@@ -722,10 +795,10 @@ namespace KKdMainLib
 
             if ((temp = msgPack["Root", true]).NotNull)
             {
-                i = aet.Composition.C - 1;
-                aet.Composition.E[i].C = temp.Array.Length;
-                for (i0 = 0; i0 < aet.Composition[i].C; i0++)
-                    RL(ref aet.Composition.E[i].E[i0], temp[i0]);
+                ref Composition rootComp = ref aet.Composition.E[aet.Composition.C - 1];
+                rootComp.C = temp.Array.Length;
+                for (int j = 0; j < rootComp.C; j++)
+                    RL(ref rootComp.E[j], temp[j]);
             }
             temp.Dispose();
         }
@@ -734,7 +807,6 @@ namespace KKdMainLib
         {
             if (aetData.O <= 0) return default;
 
-            int i, i0;
             ref Scene aet = ref aetData.V;
 
             MsgPack msgPack = MsgPack.New.Add("Name", aet.Name.V).Add("StartFrame", aet.StartFrame)
@@ -743,28 +815,44 @@ namespace KKdMainLib
 
 
             if (aet.Camera.O > 0)
-                msgPack.Add(new MsgPack("Camera").Add(WMP(ref aet.Camera.V.X, "X"))
-                                               .Add(WMP(ref aet.Camera.V.Y, "Y")));
+            {
+                ref Camera camera = ref aet.Camera.V;
+                MsgPack cameraData = new MsgPack("Camera");
+
+                cameraData.Add(WMP(ref camera.      EyeX,       "EyeX"));
+                cameraData.Add(WMP(ref camera.      EyeY,       "EyeY"));
+                cameraData.Add(WMP(ref camera.      EyeZ,       "EyeZ"));
+                cameraData.Add(WMP(ref camera. PositionX,  "PositionX"));
+                cameraData.Add(WMP(ref camera. PositionY,  "PositionY"));
+                cameraData.Add(WMP(ref camera. PositionZ,  "PositionZ"));
+                cameraData.Add(WMP(ref camera.DirectionX, "DirectionX"));
+                cameraData.Add(WMP(ref camera.DirectionY, "DirectionY"));
+                cameraData.Add(WMP(ref camera.DirectionZ, "DirectionZ"));
+                cameraData.Add(WMP(ref camera. RotationX,  "RotationX"));
+                cameraData.Add(WMP(ref camera. RotationY,  "RotationY"));
+                cameraData.Add(WMP(ref camera. RotationZ,  "RotationZ"));
+                cameraData.Add(WMP(ref camera.     Zoom ,      "Zoom" ));
+            }
 
 
-            i = aet.Composition.C - 1;
-            MsgPack rootLayer = new MsgPack(aet.Composition[i].C, "Root");
-            for (i0 = 0; i0 < aet.Composition[i].C; i0++)
-                rootLayer[i0] = WL(ref aet.Composition[i].E[i0]);
+            ref Composition rootComp = ref aet.Composition.E[aet.Composition.C - 1];
+            MsgPack rootLayer = new MsgPack(rootComp.C, "Root");
+            for (int j = 0; j < rootComp.C; j++)
+                rootLayer[j] = WL(ref rootComp.E[j]);
             msgPack.Add(rootLayer);
 
             if (aet.Composition.C > 1)
             {
                 MsgPack compositions = new MsgPack(aet.Composition.C - 1, "Composition");
-                for (i = 0; i < aet.Composition.C - 1; i++)
+                for (int i = 0; i < aet.Composition.C - 1; i++)
                 {
                     ref Composition composition = ref aet.Composition.E[i];
                     MsgPack compos = MsgPack.New.Add("ID", i);
                     if (composition.C > 0)
                     {
                         MsgPack objects = new MsgPack(composition.C, "Layer");
-                        for (i0 = 0; i0 < composition.C; i0++)
-                            objects[i0] = WL(ref composition.E[i0]);
+                        for (int j = 0; j < composition.C; j++)
+                            objects[j] = WL(ref composition.E[j]);
                         compos.Add(objects);
                     }
                     compositions[i] = compos;
@@ -773,7 +861,7 @@ namespace KKdMainLib
             }
 
             MsgPack video = new MsgPack(aet.Video.C, "Video");
-            for (i = 0; i < aet.Video.C; i++)
+            for (int i = 0; i < aet.Video.C; i++)
             {
                 ref Video v = ref aet.Video.E[i];
                 MsgPack entry = MsgPack.New.Add("ID", i).Add("Width", v.Width)
@@ -783,9 +871,9 @@ namespace KKdMainLib
                 {
                     entry.Add("Frames", v.Frames);
                     MsgPack identifiers = new MsgPack(v.Identifiers.C, "Identifiers");
-                    for (i0 = 0; i0 < v.Identifiers.C; i0++)
-                        identifiers[i0] = MsgPack.New.Add("Name", v.Identifiers[i0].Name.V)
-                                                     .Add("ID"  , v.Identifiers[i0].ID);
+                    for (int j = 0; j < v.Identifiers.C; j++)
+                        identifiers[j] = MsgPack.New.Add("Name", v.Identifiers[j].Name.V)
+                                                     .Add("ID"  , v.Identifiers[j].ID);
                     entry.Add(identifiers);
                 }
                 video[i] = entry;
@@ -793,7 +881,7 @@ namespace KKdMainLib
             msgPack.Add(video);
 
             MsgPack audio = new MsgPack(aet.Audio.C, "Audio");
-            for (i = 0; i < aet.Audio.C; i++)
+            for (int i = 0; i < aet.Audio.C; i++)
                 audio[i] = MsgPack.New.Add("ID", i).Add("SoundID", aet.Audio[i].SoundID);
             msgPack.Add(audio);
 
@@ -802,7 +890,6 @@ namespace KKdMainLib
 
         private Layer RL(ref Layer layer, MsgPack msg)
         {
-            uint i;
             layer = default;
             layer.ID     = msg.RI32("ID"  );
             layer.Name.V = msg.RS  ("Name");
@@ -820,7 +907,7 @@ namespace KKdMainLib
             if ((temp = msg["Marker", true]).NotNull)
             {
                 layer.Marker.C = temp.Array.Length;
-                for (i = 0; i < layer.Marker.C; i++)
+                for (int i = 0; i < layer.Marker.C; i++)
                 {
                     layer.Marker.E[i].Frame   = temp[i].RF32("Frame");
                     layer.Marker.E[i]. Name.V = temp[i].RS  ( "Name");

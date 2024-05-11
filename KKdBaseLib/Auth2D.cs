@@ -16,10 +16,27 @@ namespace KKdBaseLib.Auth2D
         public uint BackColor;
         public uint Width;
         public uint Height;
-        public Pointer<Vec2<CountPointer<KFT2>>> Camera;
+        public Pointer<Camera> Camera;
         public CountPointer<Composition> Composition;
         public CountPointer<Video      > Video;
         public CountPointer<Audio      > Audio;
+    }
+
+    public struct Camera
+    {
+        public CountPointer<KFT2>       EyeX;
+        public CountPointer<KFT2>       EyeY;
+        public CountPointer<KFT2>       EyeZ;
+        public CountPointer<KFT2>  PositionX;
+        public CountPointer<KFT2>  PositionY;
+        public CountPointer<KFT2>  PositionZ;
+        public CountPointer<KFT2> DirectionX;
+        public CountPointer<KFT2> DirectionY;
+        public CountPointer<KFT2> DirectionZ;
+        public CountPointer<KFT2>  RotationX;
+        public CountPointer<KFT2>  RotationY;
+        public CountPointer<KFT2>  RotationZ;
+        public CountPointer<KFT2>      Zoom ;
     }
 
     public struct Composition

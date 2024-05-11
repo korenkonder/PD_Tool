@@ -140,7 +140,7 @@ namespace KKdMainLib
 
                     if (file.Size != 0)
                     {
-                        file.Compressed = (FARCFlags & Flags.GZip) != 0;
+                        file.Compressed = true;
                     }
                     else
                     {
@@ -172,7 +172,7 @@ namespace KKdMainLib
                         file.Compressed = false;
                     }
 
-                    file.Encrypted = false;
+                    file.Encrypted = (FARCFlags & Flags.AES) != 0;
                     Files.Add(file);
                 }
             else

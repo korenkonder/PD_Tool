@@ -5,7 +5,6 @@ using KKdBaseLib.Auth3D;
 using KKdMainLib.IO;
 using Object = KKdBaseLib.Auth3D.Object;
 using A3DADict = System.Collections.Generic.Dictionary<string, object>;
-using UsedDict = System.Collections.Generic.Dictionary<   int, KKdBaseLib.KeyValuePair<int, float>>;
 
 namespace KKdMainLib
 {
@@ -1075,7 +1074,7 @@ namespace KKdMainLib
         private Key RK(string str)
         {
             Key key = new Key();
-            if ( dict.FV(out key.BinOffset, str + BO     )) return  key;
+            if ( dict.FV(out key.BinOffset, str + BO     )) return key;
             if (!dict.FV(out int type     , str + ".type")) return default;
 
             key.Type = (KeyType)type;
@@ -1095,11 +1094,24 @@ namespace KKdMainLib
 
             if (keyType != 0)
             {
+                dict.FV(out string  valueType, str + ".raw_data.value_type");
+                dict.FV(out int valueListSize, str + ".raw_data.value_list_size");
+
+                if (dict.FV(out int valueListOffset, str + ".raw_data.value_list_offset"))
+                {
+                    if (keyType != 3)
+                        return default;
+
+                    key.RawData       = true;
+                    key.RawDataBinary = true;
+                    key.RawDataValueListSize   = valueListSize;
+                    key.RawDataValueListOffset = valueListOffset;
+                    return key;
+                }
+
                 string[] VL = null;
-                dict.FV(out string value_type, str + ".raw_data.value_type");
                 if (dict.FV(out value, str + ".raw_data.value_list"))
                     VL = value.Split(',');
-                dict.FV(out int valueListSize, str + ".raw_data.value_list_size");
                 value = "";
 
                 int ds = keyType + 1;
@@ -1180,7 +1192,7 @@ namespace KKdMainLib
 
         private void W(ref Key key, string str, bool a3dc)
         {
-            if (a3dc) { W(str + BO, key.BinOffset); return; }
+            if (a3dc && !(key.RawData && key.RawDataBinary)) { W(str + BO, key.BinOffset); return; }
 
             int i = 0;
             if (key.Type < KeyType.Linear || key.Keys == null || (key.Keys != null && key.Keys.Length == 0))
@@ -1216,30 +1228,37 @@ namespace KKdMainLib
             else if (key.Keys != null)
             {
                 int length = key.Keys.Length;
-                int keyType = 0;
-                IKF kf;
                 W(str + ".max", (float)(key.Max ?? Data.PlayControl.Size));
-                for (i = 0; i < length && keyType < 3; i++)
+                int keyType = 0;
+                if (key.RawDataBinary)
                 {
-                    kf = key.Keys[i].Check();
-                         if (kf is KFT0 && keyType < 0) keyType = 0;
-                    else if (kf is KFT1 && keyType < 1) keyType = 1;
-                    else if (kf is KFT2 && keyType < 2) keyType = 2;
-                    else if (kf is KFT3 && keyType < 3) keyType = 3;
+                    W(str + ".raw_data.value_list_offset", key.RawDataValueListOffset);
+                    keyType = 3;
                 }
-                int valueListSize = length * keyType + length;
-                s.W(str + ".raw_data.value_list=");
-                     if (keyType == 0) for (i = 0; i < length; i++)
-                        s.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
-                else if (keyType == 1) for (i = 0; i < length; i++)
-                        s.W(key.Keys[i].ToT1().ToString(false) + (i + 1 < length ? "," : ""));
-                else if (keyType == 2) for (i = 0; i < length; i++)
-                        s.W(key.Keys[i].ToT2().ToString(false) + (i + 1 < length ? "," : ""));
-                else if (keyType == 3) for (i = 0; i < length; i++)
-                        s.W(key.Keys[i]       .ToString(false) + (i + 1 < length ? "," : ""));
-                s.P--;
-                s.W('\n');
-                W(str + ".raw_data.value_list_size", valueListSize);
+                else
+                {
+                    for (i = 0; i < length && keyType < 3; i++)
+                    {
+                        IKF kf = key.Keys[i].Check();
+                             if (kf is KFT0 && keyType < 0) keyType = 0;
+                        else if (kf is KFT1 && keyType < 1) keyType = 1;
+                        else if (kf is KFT2 && keyType < 2) keyType = 2;
+                        else if (kf is KFT3 && keyType < 3) keyType = 3;
+                    }
+
+                    s.W(str + ".raw_data.value_list=");
+                         if (keyType == 0) for (i = 0; i < length; i++)
+                            s.W(key.Keys[i].ToT0().ToString(false) + (i + 1 < length ? "," : ""));
+                    else if (keyType == 1) for (i = 0; i < length; i++)
+                            s.W(key.Keys[i].ToT1().ToString(false) + (i + 1 < length ? "," : ""));
+                    else if (keyType == 2) for (i = 0; i < length; i++)
+                            s.W(key.Keys[i].ToT2().ToString(false) + (i + 1 < length ? "," : ""));
+                    else if (keyType == 3) for (i = 0; i < length; i++)
+                            s.W(key.Keys[i]       .ToString(false) + (i + 1 < length ? "," : ""));
+                    s.P--;
+                    s.W('\n');
+                }
+                W(str + ".raw_data.value_list_size", length * keyType + length);
                 W(str + ".raw_data.value_type"     , "float"      );
                 W(str + ".raw_data_key_type"       , keyType      );
                 W(str + ".type", (int)key.Type);
@@ -1673,14 +1692,15 @@ namespace KKdMainLib
 
         private void RMT(ref ModelTransform mt)
         {
-            if (mt.BinOffset == null) return;
+            if (mt.BinOffset.HasValue)
+            {
+                s.P = (int)mt.BinOffset;
 
-            s.P = (int)mt.BinOffset;
-
-            ReadOffset(out mt.Scale);
-            ReadOffset(out mt.Rot  );
-            ReadOffset(out mt.Trans);
-            mt.Visibility = new Key { BinOffset = s.RI32() };
+                ReadOffset(out mt.Scale);
+                ReadOffset(out mt.Rot);
+                ReadOffset(out mt.Trans);
+                mt.Visibility = new Key { BinOffset = s.RI32() };
+            }
 
             RV3(ref mt.Scale     );
             RV3(ref mt.Rot       , true);
@@ -1705,15 +1725,32 @@ namespace KKdMainLib
 
         private void RK(ref Key key, bool f16 = false)
         {
+            int length;
+            if (key.RawData)
+            {
+                if (!key.RawDataBinary)
+                    return;
+
+                s.P = (int)key.RawDataValueListOffset;
+                key.RawDataValueListOffset = 0;
+
+                length = (int)key.RawDataValueListSize / 4;
+                key.Keys = new KFT3[length];
+                for (int i = 0; i < key.Keys.Length; i++)
+                { ref KFT3 kf = ref key.Keys[i]; Vec4 v = s.RV4(); kf.F  = v.X; kf.V  = v.Y;
+                                                                   kf.T1 = v.Z; kf.T2 = v.W; }
+                return;
+            }
+
             if (key.BinOffset == null || key.BinOffset < 0) return;
 
             s.P = (int)key.BinOffset;
-            int Type = s.RI32();
+            int Type  = s.RI32();
             key.Value = s.RF32();
             key.Type = (KeyType)(Type & 0xFF);
             if (key.Type < KeyType.Linear) return;
-            key.Max    = s.RF32();
-            int length = s.RI32();
+            key.Max = s.RF32();
+            length  = s.RI32();
             key.EPTypePost = (EPType)((Type >> 12) & 0xF);
             key.EPTypePre  = (EPType)((Type >>  8) & 0xF);
             key.Keys = new KFT3[length];
@@ -1774,6 +1811,17 @@ namespace KKdMainLib
 
         private void W(ref Key key, bool f16 = false)
         {
+            if (key.RawData) {
+                if (!key.RawDataBinary)
+                    return;
+
+                key.RawDataValueListOffset = s.P;
+                key.RawDataValueListSize = key.Keys.Length * 4;
+                for (i = 0; i < key.Keys.Length; i++)
+                { ref KFT3 kf = ref key.Keys[i]; s.W(new Vec4(kf.F, kf.V, kf.T1, kf.T2)); }
+                return;
+            }
+
             key.BinOffset = s.P;
             if (key.Type > KeyType.Static && key.Keys != null)
             {
@@ -2906,7 +2954,8 @@ namespace KKdMainLib
             if (key.Type == 0) { key.Value = 0; return key; }
             else if (key.Type < KeyType.Linear) return key;
 
-            key.RawData = msgPack.RB("RawData");
+            key.RawData       = msgPack.RB("RawData");
+            key.RawDataBinary = msgPack.RB("RawDataBinary");
             MsgPack trans;
             if ((trans = msgPack["Keys", true]).IsNull && (trans = msgPack["Trans", true]).IsNull) return key;
 
@@ -2982,7 +3031,8 @@ namespace KKdMainLib
                 if (key.EPTypePre != EPType.None)
                     keys.Add("EPTypePre", key.EPTypePre.ToString());
 
-                if (key.RawData) keys.Add("RawData", true);
+                if (key.RawData      ) keys.Add("RawData"      , true);
+                if (key.RawDataBinary) keys.Add("RawDataBinary", true);
 
                 int length = key.Keys.Length;
                 MsgPack Keys = new MsgPack(length, "Keys");
