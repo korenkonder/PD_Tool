@@ -13,7 +13,7 @@ namespace KKdMainLib
         public FARC(string file, bool isDirectory = false)
         { if (isDirectory) DirectoryPath = file; else FilePath = file; NewFARC(); }
 
-        private void NewFARC() { Files = KKdList<FARCFile>.New; Signature = Farc.FArC; FT = false; }
+        private void NewFARC() { Files = KKdList<FARCFile>.New; FT = false; }
 
         public KKdList<FARCFile> Files = KKdList<FARCFile>.New;
         public Flags FARCFlags;

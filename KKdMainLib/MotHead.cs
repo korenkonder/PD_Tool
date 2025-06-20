@@ -1,6 +1,7 @@
 using KKdBaseLib;
 using KKdBaseLib.F2;
 using KKdMainLib.IO;
+using static KKdMainLib.FARC;
 
 namespace KKdMainLib
 {
@@ -487,11 +488,11 @@ RETURN:
                         case 0x3B: // SetRobCharaHeadObject
                             data.Array.GBy(temp.RI32("Index"), 0x00);
                             break;
-                        case 0x3C:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
-                            data.Array.GBy(temp.RF32("f04"), 0x04);
-                            data.Array.GBy(temp.RF32("f08"), 0x08);
-                            data.Array.GBy(temp.RF32("f0C"), 0x0C);
+                        case 0x3C: // SetLookCamera
+                            data.Array.GBy(temp.RI32("Enable"), 0x00);
+                            data.Array.GBy(temp.RF32("HeadRotStrength"), 0x04);
+                            data.Array.GBy(temp.RF32("EyesRotStrength"), 0x08);
+                            data.Array.GBy(temp.RF32("BlendDuration"), 0x0C);
                             break;
                         case 0x3D: // SetEyelidMotionFromFace
                             data.Array.GBy(temp.RI32("i00"), 0x00);
@@ -518,13 +519,15 @@ RETURN:
                             data.Array.GBy(temp.RF32("Strength"), 0x38);
                             data.Array.GBy(temp.RI32("StrengthTransition"), 0x3C);
                             break;
-                        case 0x41: // OsageReset
+                        case 0x40: // OsageReset
+                            break;
+                        case 0x41: // MotionSkinParam
                             data.Array.GBy(temp.RI32("Iterations"), 0x00);
                             break;
                         case 0x42: // OsageStep
                             data.Array.GBy(temp.RF32("Value"), 0x00);
                             break;
-                        case 0x43:
+                        case 0x43: // SleeveAdjust
                             data.Array.GBy(temp.RI32("i00"), 0x00);
                             data.Array.GBy(temp.RF32("f04"), 0x04);
                             break;
@@ -532,11 +535,11 @@ RETURN:
                             data.Array.GBy(temp.RI32("i00"), 0x00);
                             data.Array.GBy(temp.RF32("f04"), 0x04);
                             break;
-                        case 0x45:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
+                        case 0x45: // MotionMaxFrame
+                            data.Array.GBy(temp.RI32("MaxFrame"), 0x00);
                             break;
-                        case 0x46:
-                            data.Array.GBy(temp.RI32("i00"), 0x00);
+                        case 0x46: // CameraMaxFrame
+                            data.Array.GBy(temp.RI32("MaxFrame"), 0x00);
                             break;
                         case 0x47: // OsageMoveCancel
                             data.Array.GBy(temp.RU8("ID"), 0x00);                       // 0 - All, 1 - Kami, 2 - Outer
@@ -571,9 +574,9 @@ RETURN:
                             data.Array.GBy(temp.RF32("ArmLength"), 0x28);
                             data.Array.GBy(temp.RI32("i2C"), 0x2C);
                             break;
-                        case 0x4A:
-                            data.Array.GBy(temp.RU8("i00_8"), 0x00);
-                            data.Array.GBy(temp.RU8("i01_8"), 0x01);
+                        case 0x4A: // DisableCollision
+                            data.Array.GBy(temp.RU8("Parts"), 0x00);
+                            data.Array.GBy(temp.RU8("Disable"), 0x01);
                             break;
                         case 0x4B: // RobAdjustGlobal
                             data.Array.GBy(temp.RI32("TransitionDuration"), 0x00);
@@ -616,7 +619,6 @@ RETURN:
                         case 0x50: // AdjustGetGlobalTrans
                             data.Array.GBy((byte)(temp.RB("Value") ? 1 : 0), 0x00);
                             break;
-                        case 0x40: // WindReset
                         default:
                             break;
                     }
@@ -790,12 +792,12 @@ RETURN:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Index", data.Array.TI32(0x00)));
                                 break;
-                            case 0x3C:
+                            case 0x3C: // SetLookCamera
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00))
-                                    .Add("f04", data.Array.TF32(0x04))
-                                    .Add("f08", data.Array.TF32(0x08))
-                                    .Add("f0C", data.Array.TF32(0x0C)));
+                                    .Add("Enable", data.Array.TI32(0x00))
+                                    .Add("HeadRotStrength", data.Array.TF32(0x04))
+                                    .Add("EyesRotStrength", data.Array.TF32(0x08))
+                                    .Add("BlendDuration", data.Array.TF32(0x0C)));
                                 break;
                             case 0x3D: // SetEyelidMotionFromFace
                                 arrayEntry.Add(new MsgPack("Data")
@@ -824,7 +826,9 @@ RETURN:
                                     .Add("Strength", data.Array.TF32(0x38))
                                     .Add("StrengthTransition", data.Array.TI32(0x3C)));
                                 break;
-                            case 0x41: // OsageReset
+                            case 0x40: // OsageReset
+                                break;
+                            case 0x41: // MotionSkinParam
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Iterations", data.Array.TI32(0x00)));
                                 break;
@@ -832,7 +836,7 @@ RETURN:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Value", data.Array.TF32(0x00)));
                                 break;
-                            case 0x43:
+                            case 0x43: // SleeveAdjust
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("i00", data.Array.TI32(0x00))
                                     .Add("f04", data.Array.TF32(0x04)));
@@ -842,13 +846,13 @@ RETURN:
                                     .Add("i00", data.Array.TI32(0x00))
                                     .Add("f04", data.Array.TF32(0x04)));
                                 break;
-                            case 0x45:
+                            case 0x45: // MotionMaxFrame
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00)));
+                                    .Add("MaxFrame", data.Array.TI32(0x00)));
                                 break;
-                            case 0x46:
+                            case 0x46: // CameraMaxFrame
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00", data.Array.TI32(0x00)));
+                                    .Add("MaxFrame", data.Array.TI32(0x00)));
                                 break;
                             case 0x47: // OsageMoveCancel
                                 arrayEntry.Add(new MsgPack("Data")
@@ -886,10 +890,10 @@ RETURN:
                                     .Add("ArmLength", data.Array.TF32(0x28))
                                     .Add("i2C", data.Array.TI32(0x2C)));
                                 break;
-                            case 0x4A:
+                            case 0x4A: // DisableCollision
                                 arrayEntry.Add(new MsgPack("Data")
-                                    .Add("i00_8", data.Array.TU8(0x00))
-                                    .Add("i01_8", data.Array.TU8(0x01)));
+                                    .Add("Parts", data.Array.TU8(0x00))
+                                    .Add("Disable", data.Array.TU8(0x01)));
                                 break;
                             case 0x4B: // RobAdjustGlobal
                                 arrayEntry.Add(new MsgPack("Data")
@@ -938,7 +942,6 @@ RETURN:
                                 arrayEntry.Add(new MsgPack("Data")
                                     .Add("Value", data.Array.TU8(0) != 0));
                                 break;
-                            case 0x40: // WindReset
                             default:
                                 if (data.Array != null && data.Array.Length > 0)
                                 {
@@ -1001,20 +1004,20 @@ RETURN:
                 0x39 => 0x14, // SetEyesMottblMotion
                 0x3A => 0x14, // SetEyelidMottblMotion
                 0x3B => 0x04, // SetRobCharaHeadObject
-                0x3C => 0x10,
+                0x3C => 0x10, // SetLookCamera
                 0x3D => 0x08, // SetEyelidMotionFromFace
                 0x3E => 0x40, // RobPartsAdjust
-                0x40 => 0x00, // WindReset
-                0x41 => 0x04, // OsageReset
+                0x40 => 0x00, // OsageReset
+                0x41 => 0x04, // MotionSkinParam
                 0x42 => 0x04, // OsageStep
-                0x43 => 0x08,
+                0x43 => 0x08, // SleeveAdjust
                 0x44 => 0x08,
-                0x45 => 0x04,
-                0x46 => 0x04,
+                0x45 => 0x04, // MotionMaxFrame
+                0x46 => 0x04, // CameraMaxFrame
                 0x47 => 0x08, // OsageMoveCancel
                 0x48 => 0x1C,
                 0x49 => 0x30, // RobHandAdjust
-                0x4A => 0x02,
+                0x4A => 0x02, // DisableCollision
                 0x4B => 0x34, // RobAdjustGlobal
                 0x4C => 0x0C, // RobArmAdjust
                 0x4D => 0x01, // DisableEyeMotion
@@ -1039,7 +1042,7 @@ RETURN:
                 _    => 0x00,
             };
 
-    public void Dispose()
+        public void Dispose()
         { if (s != null) s.D(); s = null; Header = default; }
 
         public struct HeaderData
@@ -1097,13 +1100,18 @@ RETURN:
             SetEyesMottblMotion     = 0x39,
             SetEyelidMottblMotion   = 0x3A,
             SetRobCharaHeadObject   = 0x3B,
+            SetLookCamera           = 0x3C,
             SetEyelidMotionFromFace = 0x3D,
             RobPartsAdjust          = 0x3E,
-            WindReset               = 0x40,
-            OsageReset              = 0x41,
+            OsageReset              = 0x40,
+            MotionSkinParam         = 0x41,
             OsageStep               = 0x42,
+            SleeveAdjust            = 0x43,
+            MotionMaxFrame          = 0x45,
+            CameraMaxFrame          = 0x46,
             OsageMoveCancel         = 0x47,
             RobHandAdjust           = 0x49,
+            DisableCollision        = 0x4A,
             RobAdjustGlobal         = 0x4B,
             RobArmAdjust            = 0x4C,
             DisableEyeMotion        = 0x4D,

@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace KKdBaseLib
@@ -79,7 +80,7 @@ namespace KKdBaseLib
 
             if (trace > 0)
             {
-                double sq = System.Math.Sqrt(trace);
+                double sq = Math.Sqrt(trace);
 
                 q.W = (float)sq;
                 sq = 1.0 / (4.0 * sq);
@@ -89,7 +90,7 @@ namespace KKdBaseLib
             }
             else if (row0.X > row1.Y && row0.X > row2.Z)
             {
-                double sq = 2.0 * System.Math.Sqrt(1.0 + row0.X - row1.Y - row2.Z);
+                double sq = 2.0 * Math.Sqrt(1.0 + row0.X - row1.Y - row2.Z);
 
                 q.X = (float)(0.25 * sq);
                 sq = 1.0 / sq;
@@ -99,7 +100,7 @@ namespace KKdBaseLib
             }
             else if (row1.Y > row2.Z)
             {
-                double sq = 2.0 * System.Math.Sqrt(1.0 + row1.Y - row0.X - row2.Z);
+                double sq = 2.0 * Math.Sqrt(1.0 + row1.Y - row0.X - row2.Z);
 
                 q.Y = (float)(0.25 * sq);
                 sq = 1.0 / sq;
@@ -109,7 +110,7 @@ namespace KKdBaseLib
             }
             else
             {
-                double sq = 2.0 * System.Math.Sqrt(1.0 + row2.Z - row0.X - row1.Y);
+                double sq = 2.0 * Math.Sqrt(1.0 + row2.Z - row0.X - row1.Y);
 
                 q.Z = (float)(0.25 * sq);
                 sq = 1.0 / sq;
@@ -121,6 +122,33 @@ namespace KKdBaseLib
             return q.Normalized;
         }
 
+        public Vec3 GetRotation()
+        {
+            Vec3 rotation;
+            if (-Row0.Z >= 1.0f)
+                rotation.Y = (float)(Math.PI / 2.0);
+            else if (-Row0.Z <= -1.0f)
+                rotation.Y = (float)(-Math.PI / 2.0);
+            else
+                rotation.Y = (float)Math.Asin(-Row0.Z);
+
+            if (Math.Abs(Row0.Z) < 0.99999899f) {
+                rotation.X = (float)Math.Atan2(Row1.Z, Row2.Z);
+                rotation.Z = (float)Math.Atan2(Row0.Y, Row0.X);
+            }
+            else {
+                rotation.X = 0.0f;
+                rotation.Z = (float)Math.Atan2(Row2.Y, Row1.Y);
+                if (Row0.Z > 0.0f)
+                    rotation.Z = -rotation.Z;
+            }
+            return rotation;
+        }
+
+        public Vec3 GetScale() => new Vec3(Row0.Length, Row1.Length, Row2.Length);
+
+        public Vec3 GetTranslation() => Row3.XYZ;
+
         public Mat4 Invert() => -this;
 
         public Mat4 Translate(Vec3 vec)
@@ -129,7 +157,13 @@ namespace KKdBaseLib
         public Mat4 Translate(Vec4 vec)
         { Row3 = vec * this; return this; }
 
-        public static Mat4 operator +(Mat4 left, Mat4 right)
+        public void TransformVector(in Vec3 normal, out Vec3 normalOut) {
+            normalOut = (Row0 * new Vec4(normal.X) +
+                         Row1 * new Vec4(normal.Y) +
+                         Row2 * new Vec4(normal.Z)).XYZ;
+        }
+
+    public static Mat4 operator +(Mat4 left, Mat4 right)
         { left.Row0 += right.Row0; left.Row1 += right.Row1;
           left.Row2 += right.Row2; left.Row3 += right.Row3; return left; }
 

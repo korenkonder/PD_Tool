@@ -45,52 +45,9 @@ namespace KKdBaseLib
 
         public Vec3 XYZ { get => new Vec3(X, Y, Z); set { X = value.X; Y = value.Y; Z = value.Z; } }
 
-        public float Length        => (X * X + Y * Y + Z * Z + W * W).Sqrt();
-        public float LengthSquared =>  X * X + Y * Y + Z * Z + W * W;
-        public Quat Normalized => new Quat(X, Y, Z, W) * (Length == 0.0f ? 1.0f : (1.0f / Length));
-        public Vec3 Euler { get
-            {
-                if (LengthSquared == 0) return default;
-
-                const float SINGULARITY_THRESHOLD = 0.4999995f;
-                const float HalfPI = (float)(System.Math.PI * 0.5);
-
-                float sqx = X * X, sqy = Y * Y, sqz = Z * Z, sqw = W * W;
-                float unit = sqx + sqy + sqz + sqw;
-                float singularityTest = X * Z + Y * W;
-
-                     if (singularityTest >  SINGULARITY_THRESHOLD * unit)
-                    return new Vec3(0.0f,  HalfPI,  (float)(System.Math.Atan2(X, W) * 2.0));
-                else if (singularityTest < -SINGULARITY_THRESHOLD * unit)
-                    return new Vec3(0.0f, -HalfPI, -(float)(System.Math.Atan2(X, W) * 2.0));
-                else
-                    return new Vec3((float)System.Math.Atan2(2 * (X * W - Y * Z), sqw - sqx - sqy + sqz),
-                                    (float)System.Math.Asin (2 * singularityTest / unit),
-                                    (float)System.Math.Atan2(2 * (Z * W - X * Y), sqw + sqx - sqy - sqz));
-            }
-        }
-        public Vec3 EulerDeg { get
-            {
-                if (LengthSquared == 0) return default;
-
-                const float SINGULARITY_THRESHOLD = 0.4999995f;
-                const float HalfPI = (float)(System.Math.PI * 0.5);
-
-                float sqx = X * X, sqy = Y * Y, sqz = Z * Z, sqw = W * W;
-                float unit = sqx + sqy + sqz + sqw;
-                float singularityTest = X * Z + Y * W;
-
-                     if (singularityTest >  SINGULARITY_THRESHOLD * unit)
-                    return new Vec3(0.0f,  HalfPI,  (float)(System.Math.Atan2(X, W) * 2.0));
-                else if (singularityTest < -SINGULARITY_THRESHOLD * unit)
-                    return new Vec3(0.0f, -HalfPI, -(float)(System.Math.Atan2(X, W) * 2.0));
-                else
-                    return new Vec3((float)System.Math.Atan2(2 * (X * W - Y * Z), sqw - sqx - sqy + sqz),
-                                    (float)System.Math.Asin (2 * singularityTest / unit),
-                                    (float)System.Math.Atan2(2 * (Z * W - X * Y), sqw + sqx - sqy - sqz))
-                        * (float)(180.0 / System.Math.PI);
-            }
-        }
+        public readonly float Length        => (X * X + Y * Y + Z * Z + W * W).Sqrt();
+        public readonly float LengthSquared =>  X * X + Y * Y + Z * Z + W * W;
+        public readonly Quat Normalized => this * (Length == 0.0f ? 1.0f : (1.0f / Length));
 
         public static Quat operator +(Quat left, Quat right)
         { left.X += right.X; left.Y += right.Y; left.Z += right.Z; left.W += right.W; return left; }
@@ -125,34 +82,45 @@ namespace KKdBaseLib
         public Quat Round(int d) =>
             new Quat { X = X.Round(d), Y = Y.Round(d), Z = Z.Round(d), W = W.Round(d) };
 
-        public static Quat Slerp(Quat q1, Quat q2, float blend)
-        {
-            q1 = q1.Normalized;
-            q2 = q2.Normalized;
+        public static Quat Lerp(Quat left, Quat right, float blend) {
+            Quat x_t;
+            Quat y_t;
+            x_t = left;
+            y_t = right;
 
-            float dot = Dot(q1, q2);
+            if (Dot(x_t, y_t) < 0.0f)
+                x_t = -x_t;
+
+            return (x_t * (1.0f - blend) + y_t * blend).Normalized;
+        }
+
+        public static Quat Slerp(Quat left, Quat right, float blend)
+        {
+            Quat x_t;
+            Quat y_t;
+            x_t = left;
+            y_t = right;
+
+            float dot = Dot(x_t, y_t);
             if (dot < 0.0f)
             {
-                q2 = -q2;
                 dot = -dot;
+                y_t = -y_t;
             }
 
-            Quat result;
-            const float DOT_THRESHOLD = 0.9995f;
-            if (dot <= DOT_THRESHOLD)
-            {
-                float theta_0 = (float)System.Math.Acos(dot);
-                float theta = theta_0 * blend;
-                float sin_theta = (float)System.Math.Sin(theta);
-                float sin_theta_0 = (float)System.Math.Sin(theta_0);
+            if (1.0 - dot <= 0.08f)
+                return Lerp(x_t, y_t, blend);
 
-                float s0 = (float)System.Math.Cos(theta) - dot * sin_theta / sin_theta_0;
-                float s1 = sin_theta / sin_theta_0;
-                result = s0 * q1 + s1 * q2;
-            }
-            else
-                result = (1.0f - blend) * q1 + blend * q2;
-            return result.Normalized;
+            dot = System.Math.Min(dot, 1.0f);
+
+            float theta = (float)System.Math.Acos(dot);
+            if (theta == 0.0f)
+                return x_t;
+
+            float st = 1.0f / (float)System.Math.Sin(theta);
+            float s0 = (float)System.Math.Sin((1.0f - blend) * theta) * st;
+            float s1 = (float)System.Math.Sin(theta * blend) * st;
+            return (x_t * s0 + y_t * s1).Normalized;
         }
 
         public static explicit operator Vec4(Quat quat) =>

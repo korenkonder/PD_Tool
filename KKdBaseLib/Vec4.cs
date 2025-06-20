@@ -11,7 +11,7 @@ namespace KKdBaseLib
         [FieldOffset(0x0C)] public float W;
 
         public Vec4(float val)
-        { X = val; Y = val; Z = val; W = 0.0f; }
+        { X = val; Y = val; Z = val; W = val; }
 
         public Vec4(float X, float Y)
         { this.X = X; this.Y = Y; Z = 0.0f; W = 0.0f; }
